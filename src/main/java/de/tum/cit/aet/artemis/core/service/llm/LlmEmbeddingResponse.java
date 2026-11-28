@@ -30,7 +30,7 @@ public record LlmEmbeddingResponse(@Nullable List<Entry> data) {
 
         @Override
         public boolean equals(Object other) {
-            return other instanceof Entry that && Objects.equals(index, that.index) && Arrays.equals(embedding, that.embedding);
+            return other instanceof Entry(var otherIndex, var otherEmbedding) && Objects.equals(index, otherIndex) && Arrays.equals(embedding, otherEmbedding);
         }
 
         @Override
@@ -54,7 +54,7 @@ public record LlmEmbeddingResponse(@Nullable List<Entry> data) {
                 try {
                     bytes = Base64.getDecoder().decode(parser.getString());
                 }
-                catch (IllegalArgumentException ex) {
+                catch (IllegalArgumentException _) {
                     return context.reportInputMismatch(float[].class, "Invalid base64 embedding");
                 }
                 if (bytes.length % Float.BYTES != 0) {

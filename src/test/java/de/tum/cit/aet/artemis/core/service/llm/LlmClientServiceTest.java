@@ -18,6 +18,8 @@ import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.web.client.ResourceAccessException;
@@ -34,6 +36,7 @@ import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Api;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Endpoint;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.EndpointType;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Preset;
+import de.tum.cit.aet.artemis.core.exception.LlmResponseException;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
@@ -62,7 +65,11 @@ class LlmClientServiceTest {
 
     private volatile boolean trickleAnswer;
 
+    private volatile boolean truncateErrorBody;
+
     private volatile String retryAfter = "0";
+
+    private volatile String chatResponse = RESPONSE;
 
     private HttpServer server;
 
@@ -92,12 +99,19 @@ class LlmClientServiceTest {
                 }
                 Integer next = statusCodes.poll();
                 int status = next == null ? 200 : next;
-                String json = status >= 400 ? "{\"error\":\"provider unavailable\"}" : uri.getPath().endsWith("/responses") ? RESPONSE : EMBEDDINGS;
+                String json = status >= 400 ? "{\"error\":\"provider unavailable\"}" : uri.getPath().endsWith("/responses") ? chatResponse : EMBEDDINGS;
                 byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
                 exchange.getResponseHeaders().set("Content-Type", "application/json");
                 exchange.getResponseHeaders().set("Retry-After", retryAfter);
                 if (status == 307) {
                     exchange.getResponseHeaders().set("Location", "/redirect-target");
+                }
+                if (truncateErrorBody && status >= 400) {
+                    exchange.getResponseHeaders().set("Connection", "close");
+                    exchange.sendResponseHeaders(status, bytes.length + 1L);
+                    exchange.getResponseBody().write(bytes);
+                    exchange.getResponseBody().flush();
+                    return;
                 }
                 exchange.sendResponseHeaders(status, trickleAnswer ? 0 : bytes.length);
                 if (trickleAnswer) {
@@ -229,6 +243,30 @@ class LlmClientServiceTest {
         assertThat(requests).extracting(Captured::path).containsExactly("/v1/embeddings", "/v1/embeddings");
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "", "null", "invalid json" })
+    void rejectsEmptyOrMalformedProviderResponsesWithoutRetry(String payload) {
+        var preset = new Preset("main", "m", Api.RESPONSES, null, null, null, null, null, null, null, 2);
+        var service = service(Map.of("main", endpoint(EndpointType.OPENAI, "/v1", null)), Map.of("chat", preset));
+        chatResponse = payload;
+
+        assertThatThrownBy(() -> service.chatModel("chat").call(new Prompt("Hello"))).isInstanceOf(LlmResponseException.class)
+                .hasMessageContaining(payload.equals("invalid json") ? "Malformed responses response" : "Empty responses response");
+        assertThat(requests).hasSize(1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "Sun, 06 Nov 1994 08:49:37 GMT", "unparseable" })
+    void retriesTransientErrorWithPastOrMalformedRetryDate(String date) {
+        var preset = new Preset("main", "m", Api.RESPONSES, null, null, null, null, null, null, null, 1);
+        var service = service(Map.of("main", endpoint(EndpointType.OPENAI, "/v1", null)), Map.of("chat", preset));
+        retryAfter = date;
+        statusCodes.add(503);
+
+        assertThat(service.chatModel("chat").call(new Prompt("Hello")).getResult().getOutput().getText()).isEqualTo("OK");
+        assertThat(requests).hasSize(2);
+    }
+
     @Test
     void longerProviderCooldownIsPropagatedWithoutAnEarlyRetry() {
         var preset = new Preset("main", "m", Api.RESPONSES, null, null, null, null, null, null, null, 2);
@@ -238,6 +276,21 @@ class LlmClientServiceTest {
 
         assertThatThrownBy(() -> service.chatModel("chat").call(new Prompt("Hello"))).isInstanceOfSatisfying(RestClientResponseException.class,
                 ex -> assertThat(ex.getResponseHeaders().getFirst("Retry-After")).isEqualTo("3600"));
+        assertThat(requests).hasSize(1);
+    }
+
+    @Test
+    void truncatedRateLimitBodyRetainsStatusAndCooldown() {
+        var preset = new Preset("main", "m", Api.RESPONSES, null, null, null, null, null, null, Duration.ofSeconds(2), 1);
+        var service = service(Map.of("main", endpoint(EndpointType.OPENAI, "/v1", null)), Map.of("chat", preset));
+        statusCodes.add(429);
+        retryAfter = "60";
+        truncateErrorBody = true;
+
+        assertThatThrownBy(() -> service.chatModel("chat").call(new Prompt("Hello"))).isInstanceOfSatisfying(RestClientResponseException.class, ex -> {
+            assertThat(ex.getStatusCode().value()).isEqualTo(429);
+            assertThat(ex.getResponseHeaders().getFirst("Retry-After")).isEqualTo("60");
+        });
         assertThat(requests).hasSize(1);
     }
 

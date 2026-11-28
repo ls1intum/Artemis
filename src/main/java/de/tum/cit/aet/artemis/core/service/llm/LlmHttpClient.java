@@ -1,9 +1,11 @@
 package de.tum.cit.aet.artemis.core.service.llm;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -11,11 +13,11 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
@@ -27,6 +29,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Endpoint;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.EndpointType;
+import de.tum.cit.aet.artemis.core.exception.LlmResponseException;
 import io.micrometer.observation.ObservationRegistry;
 
 /** Synchronous JSON transport shared by the Responses and embeddings APIs. */
@@ -81,20 +84,7 @@ final class LlmHttpClient {
             }
             Duration delay;
             try {
-                byte[] bytes = client.post().uri(uri).body(body).exchange((sent, response) -> {
-                    var status = response.getStatusCode();
-                    byte[] content = response.getBody().readAllBytes();
-                    if (!status.is2xxSuccessful()) {
-                        throw new RestClientResponseException("LLM provider returned HTTP " + status.value(), status, response.getStatusText(), response.getHeaders(), content,
-                                StandardCharsets.UTF_8);
-                    }
-                    return content;
-                });
-                T response = bytes.length == 0 ? null : mapper.readValue(bytes, responseType);
-                if (response == null) {
-                    throw new RestClientException("Empty " + path + " response");
-                }
-                return response;
+                return exchange(uri, path, body, responseType);
             }
             catch (RestClientResponseException ex) {
                 if (attempt >= maxRetries || !isRetryable(ex)) {
@@ -112,16 +102,48 @@ final class LlmHttpClient {
                 }
                 delay = retryDelay(attempt, null);
             }
-            catch (JacksonException ex) {
-                throw new RestClientException("Malformed " + path + " response: " + ex.getOriginalMessage(), ex);
+            sleepBeforeRetry(delay);
+        }
+    }
+
+    private <T> T exchange(URI uri, String path, byte[] body, Class<T> responseType) {
+        byte[] bytes = client.post().uri(uri).body(body).exchange((sent, response) -> {
+            var status = response.getStatusCode();
+            if (!status.is2xxSuccessful()) {
+                throw new RestClientResponseException("LLM provider returned HTTP " + status.value(), status, response.getStatusText(), response.getHeaders(), errorBody(response),
+                        StandardCharsets.UTF_8);
             }
-            try {
-                Thread.sleep(delay);
+            return response.getBody().readAllBytes();
+        });
+        try {
+            T response = bytes == null || bytes.length == 0 ? null : mapper.readValue(bytes, responseType);
+            if (response == null) {
+                throw new LlmResponseException("Empty " + path + " response", null);
             }
-            catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-                throw new CancellationException("LLM retry interrupted");
-            }
+            return response;
+        }
+        catch (JacksonException ex) {
+            throw new LlmResponseException("Malformed " + path + " response: " + ex.getOriginalMessage(), ex);
+        }
+    }
+
+    private static byte[] errorBody(ClientHttpResponse response) {
+        try {
+            return response.getBody().readAllBytes();
+        }
+        catch (IOException _) {
+            // A truncated error body must still propagate the provider status and retry headers.
+            return new byte[0];
+        }
+    }
+
+    private static void sleepBeforeRetry(Duration delay) {
+        try {
+            Thread.sleep(delay);
+        }
+        catch (InterruptedException _) {
+            Thread.currentThread().interrupt();
+            throw new CancellationException("LLM retry interrupted");
         }
     }
 
@@ -130,7 +152,7 @@ final class LlmHttpClient {
         var url = UriComponentsBuilder.fromUri(base);
         if (endpoint.type() == EndpointType.MICROSOFT_FOUNDRY) {
             String version = endpoint.microsoftFoundryServiceVersion();
-            boolean legacy = !StringUtils.trimTrailingCharacter(base.getPath(), '/').endsWith("/openai/v1");
+            boolean legacy = !StringUtils.trimTrailingCharacter(Objects.toString(base.getPath(), ""), '/').endsWith("/openai/v1");
             if (legacy) {
                 url.pathSegment("openai");
                 if (!StringUtils.hasText(version)) {
@@ -164,7 +186,7 @@ final class LlmHttpClient {
                 try {
                     millis = headers.getFirstDate(HttpHeaders.RETRY_AFTER) - System.currentTimeMillis();
                 }
-                catch (IllegalArgumentException ignored) {
+                catch (IllegalArgumentException _) {
                     // Fall back to exponential backoff for a malformed HTTP date.
                 }
             }
@@ -173,7 +195,7 @@ final class LlmHttpClient {
             }
         }
         long backoff = 500L << Math.min(attempt, 4);
-        return Duration.ofMillis((long) (backoff * ThreadLocalRandom.current().nextDouble(0.75, 1)));
+        return Duration.ofMillis(ThreadLocalRandom.current().nextLong(backoff * 3 / 4, backoff));
     }
 
     private static @Nullable Long numericDelay(@Nullable String value, int millisPerUnit) {
@@ -184,7 +206,7 @@ final class LlmHttpClient {
             double amount = Double.parseDouble(value);
             return Double.isFinite(amount) ? (long) (amount * millisPerUnit) : null;
         }
-        catch (NumberFormatException ignored) {
+        catch (NumberFormatException _) {
             return null;
         }
     }

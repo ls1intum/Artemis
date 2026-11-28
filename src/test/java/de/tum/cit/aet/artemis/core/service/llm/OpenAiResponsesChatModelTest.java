@@ -113,6 +113,18 @@ class OpenAiResponsesChatModelTest {
     }
 
     @Test
+    void mutatingOptionsKeepsTheOriginalSchemaAndGenerationSettings() {
+        var original = LlmChatOptions.builder().model("m").maxCompletionTokens(55).reasoningEffort("medium").verbosity("low").parallelToolCalls(false).outputSchema("{}").build();
+        var copy = original.mutate().build();
+        var updated = copy.mutate().outputSchema("{\"type\":\"object\"}").build();
+
+        assertThat(copy).isEqualTo(original).hasSameHashCodeAs(original);
+        assertThat(updated).isNotEqualTo(original);
+        assertThat(original.getOutputSchema()).isEqualTo("{}");
+        assertThat(updated.getMaxCompletionTokens()).isEqualTo(55);
+    }
+
+    @Test
     void missingUsageIsPreservedAsAbsent() {
         var adapter = modelRespondingWith(response(List.of(message("done")), "missing-usage"));
         assertThat(adapter.call(new Prompt("hello")).getMetadata().getUsage()).isInstanceOf(EmptyUsage.class);
@@ -169,6 +181,24 @@ class OpenAiResponsesChatModelTest {
         assertThat(result.getResult().getMetadata().getFinishReason()).isEqualTo("unsupported_output");
         assertThat(result.hasToolCalls()).isFalse();
         assertThat(result.getMetadata().getUsage().getTotalTokens()).isEqualTo(12);
+    }
+
+    @ParameterizedTest
+    @MethodSource("malformedOutputItems")
+    void malformedSiblingSuppressesValidToolCallAndPreservesUsage(Map<String, Object> malformed) {
+        var reply = response(List.of(functionCall(), malformed), "malformed-output");
+        withUsage(reply, 10, 2);
+
+        var result = modelRespondingWith(reply).call(new Prompt("work"));
+
+        assertThat(result.getResult().getMetadata().getFinishReason()).isEqualTo("unsupported_output");
+        assertThat(result.hasToolCalls()).isFalse();
+        assertThat(result.getMetadata().getUsage().getTotalTokens()).isEqualTo(12);
+    }
+
+    private static Stream<Map<String, Object>> malformedOutputItems() {
+        return Stream.of(Map.of("type", "function_call", "name", "lookup"), Map.of("type", "message"),
+                Map.of("type", "message", "content", List.of(Map.of("type", "refusal", "refusal", "declined"))), Map.of("type", "unknown"));
     }
 
     @Test

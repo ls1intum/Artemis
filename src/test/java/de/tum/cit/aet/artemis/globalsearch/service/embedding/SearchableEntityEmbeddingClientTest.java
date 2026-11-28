@@ -181,6 +181,28 @@ class SearchableEntityEmbeddingClientTest {
     }
 
     @Test
+    void embedQueryDecodesLittleEndianBase64Floats() throws IOException {
+        // IEEE 754 little-endian encoding of 1.0 and -0.5.
+        var client = clientFor(_ -> """
+                {"data":[{"index":0,"embedding":"AACAPwAAAL8="}]}
+                """, Duration.ofSeconds(3), 32);
+
+        assertThat(client.embedQuery("query")).containsExactly(1f, -0.5f);
+    }
+
+    @Test
+    void embedQueryReadsEveryCoordinateOfALargeVector() throws IOException {
+        var vector = new float[768];
+        for (int i = 0; i < vector.length; i++) {
+            vector[i] = i - 0.5f;
+        }
+        var response = JsonObjectMapper.get().writeValueAsString(new LlmEmbeddingResponse(List.of(new LlmEmbeddingResponse.Entry(0L, vector))));
+        var client = clientFor(_ -> response, Duration.ofSeconds(3), 32);
+
+        assertThat(client.embedQuery("query")).containsExactly(vector);
+    }
+
+    @Test
     void embedQuery_turnsInvalidBase64EmbeddingIntoEmbeddingFailed() throws IOException {
         var client = clientFor(_ -> "{\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"index\":0,\"embedding\":\"not!base64\"}]}", Duration.ofSeconds(3), 32);
 

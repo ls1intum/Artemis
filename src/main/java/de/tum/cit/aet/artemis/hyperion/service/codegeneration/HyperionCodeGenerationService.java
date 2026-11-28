@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.exception.LlmResponseException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -474,6 +475,9 @@ public abstract class HyperionCodeGenerationService {
         }
         catch (ResourceAccessException e) {
             throw new NetworkingException("Temporary AI service issue. Please retry.", e);
+        }
+        catch (LlmResponseException e) {
+            throw new NetworkingException("AI response processing failed. Please retry.", e);
         }
         catch (RestClientException e) {
             if (e instanceof RestClientResponseException response && (response.getStatusCode().is5xxServerError() || response.getStatusCode().value() == 429

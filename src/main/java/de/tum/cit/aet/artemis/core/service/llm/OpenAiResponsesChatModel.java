@@ -59,6 +59,10 @@ public final class OpenAiResponsesChatModel implements ChatModel {
     /** Assistant metadata containing the original ordered Responses output items, each encoded as JSON. */
     public static final String RESPONSES_OUTPUT_ITEMS_METADATA_KEY = ResponsesOutputRepair.OUTPUT_ITEMS_METADATA_KEY;
 
+    private static final String MESSAGE = "message";
+
+    private static final String UNSUPPORTED_OUTPUT = "unsupported_output";
+
     private static final DefaultChatModelObservationConvention OBSERVATION_CONVENTION = new DefaultChatModelObservationConvention();
 
     private final LlmHttpClient client;
@@ -201,7 +205,7 @@ public final class OpenAiResponsesChatModel implements ChatModel {
     private OutputItem outputItem(String json) {
         try {
             OutputItem item = mapper.readerFor(OutputItem.class).with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).readValue(json);
-            if (item != null && ("reasoning".equals(item.type()) || "message".equals(item.type()) || "function_call".equals(item.type()))) {
+            if (item != null && ("reasoning".equals(item.type()) || MESSAGE.equals(item.type()) || "function_call".equals(item.type()))) {
                 return item;
             }
         }
@@ -213,68 +217,58 @@ public final class OpenAiResponsesChatModel implements ChatModel {
 
     private ChatResponse toChatResponse(Response response, String requestedModel) {
         var metadata = ChatResponseMetadata.builder().model(requestedModel);
-        if (response == null) {
-            return terminalResponse("unsupported_output", metadata);
-        }
         if (response.usage() != null) {
             try {
                 metadata.usage(mapper.readValue(response.usage(), Usage.class).toUsage());
             }
-            catch (JacksonException | IllegalArgumentException ex) {
+            catch (JacksonException | IllegalArgumentException _) {
                 return terminalResponse("invalid_usage", metadata);
             }
         }
         if (!(response.id() instanceof String id) || !(response.model() instanceof String model)) {
-            return terminalResponse("unsupported_output", metadata);
+            return terminalResponse(UNSUPPORTED_OUTPUT, metadata);
         }
         metadata.id(id).model(model);
         if (response.error() != null) {
             return terminalResponse("failed", metadata);
         }
         if (!(response.status() instanceof String status)) {
-            return terminalResponse(response.status() == null ? "missing_status" : "unsupported_output", metadata);
+            return terminalResponse(response.status() == null ? "missing_status" : UNSUPPORTED_OUTPUT, metadata);
         }
         if (!"completed".equals(status)) {
             boolean truncated = "incomplete".equals(status) && response.incompleteDetails() instanceof Map<?, ?> details && "max_output_tokens".equals(details.get("reason"));
             return terminalResponse(truncated ? "length" : status, metadata);
         }
 
+        return completedResponse(response.output(), metadata);
+    }
+
+    private ChatResponse completedResponse(List<String> output, ChatResponseMetadata.Builder metadata) {
         try {
-            if (response.output() == null) {
+            if (output == null) {
                 throw unsupported("missing output");
             }
             StringBuilder text = new StringBuilder();
             List<AssistantMessage.ToolCall> calls = new ArrayList<>();
-            for (String json : response.output()) {
+            for (String json : output) {
                 if (json == null) {
                     throw unsupported("null output item");
                 }
                 var item = outputItem(json);
-                if ("function_call".equals(item.type())) {
-                    if (item.callId() == null || item.name() == null || item.arguments() == null) {
-                        throw unsupported("incomplete function call");
-                    }
-                    calls.add(new AssistantMessage.ToolCall(item.callId(), "function", item.name(), item.arguments()));
-                }
-                else if ("message".equals(item.type())) {
-                    if (item.content() == null) {
-                        throw unsupported("missing message content");
-                    }
-                    for (Content content : item.content()) {
-                        if (content == null || !"output_text".equals(content.type()) || content.text() == null) {
-                            throw unsupported("message content");
-                        }
-                        text.append(content.text());
+                switch (item.type()) {
+                    case "function_call" -> calls.add(item.toolCall());
+                    case MESSAGE -> item.appendText(text);
+                    default -> { // Reasoning items are replayed unchanged.
                     }
                 }
             }
-            var assistant = AssistantMessage.builder().content(text.toString()).toolCalls(calls)
-                    .properties(Map.of(RESPONSES_OUTPUT_ITEMS_METADATA_KEY, List.copyOf(response.output()))).build();
+            var assistant = AssistantMessage.builder().content(text.toString()).toolCalls(calls).properties(Map.of(RESPONSES_OUTPUT_ITEMS_METADATA_KEY, List.copyOf(output)))
+                    .build();
             return new ChatResponse(List.of(new Generation(assistant)), metadata.build());
         }
-        catch (IllegalArgumentException ex) {
+        catch (IllegalArgumentException _) {
             // Keep billable usage, but never execute a tool returned alongside malformed or unsupported output.
-            return terminalResponse("unsupported_output", metadata);
+            return terminalResponse(UNSUPPORTED_OUTPUT, metadata);
         }
     }
 
@@ -298,7 +292,7 @@ public final class OpenAiResponsesChatModel implements ChatModel {
     private record MessageInput(String type, String role, String content) implements InputItem {
 
         MessageInput(String role, String content) {
-            this("message", role, Objects.requireNonNullElse(content, ""));
+            this(MESSAGE, role, Objects.requireNonNullElse(content, ""));
         }
     }
 
@@ -335,7 +329,7 @@ public final class OpenAiResponsesChatModel implements ChatModel {
         private final RawJsonStringDeserializer rawJson = new RawJsonStringDeserializer();
 
         @Override
-        public List<String> deserialize(JsonParser parser, DeserializationContext context) {
+        public @Nullable List<String> deserialize(JsonParser parser, DeserializationContext context) {
             if (!parser.isExpectedStartArrayToken()) {
                 parser.skipChildren();
                 return null;
@@ -352,6 +346,25 @@ public final class OpenAiResponsesChatModel implements ChatModel {
     private record OutputItem(String type, @JsonProperty("call_id") @JsonDeserialize(using = StrictStringDeserializer.class) String callId,
             @JsonDeserialize(using = StrictStringDeserializer.class) String name, @JsonDeserialize(using = StrictStringDeserializer.class) String arguments,
             List<Content> content) {
+
+        AssistantMessage.ToolCall toolCall() {
+            if (callId == null || name == null || arguments == null) {
+                throw unsupported("incomplete function call");
+            }
+            return new AssistantMessage.ToolCall(callId, "function", name, arguments);
+        }
+
+        void appendText(StringBuilder text) {
+            if (content == null) {
+                throw unsupported("missing message content");
+            }
+            for (Content part : content) {
+                if (part == null || !"output_text".equals(part.type()) || part.text() == null) {
+                    throw unsupported("message content");
+                }
+                text.append(part.text());
+            }
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
