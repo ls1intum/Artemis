@@ -1,4 +1,5 @@
-import { TumAetUiButtonDirective, TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { QuizExerciseEvaluationApi } from 'app/openapi/api/quiz-exercise-evaluation-api';
 import { toQuizExerciseReEvaluate } from 'app/quiz/shared/util/quiz-exercise-reevaluate-request.util';

@@ -1,4 +1,4 @@
-import { TumAetUiSkeletonComponent } from '@tumaet/ui-angular';
+import { TumAetUiSkeletonComponent } from '@tumaet/ui-angular/skeleton';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, viewChild, viewChildren } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {

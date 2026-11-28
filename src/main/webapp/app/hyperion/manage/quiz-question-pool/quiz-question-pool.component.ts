@@ -1,19 +1,16 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCardComponent,
-    TumAetUiConfirmDialogComponent,
-    TumAetUiConfirmationService,
-    TumAetUiEmptyStateComponent,
-    TumAetUiMessageComponent,
-    TumAetUiPanelComponent,
-    TumAetUiProgressBarComponent,
-    TumAetUiSelectComponent,
-    TumAetUiTagComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular/empty-state';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiProgressBarComponent } from '@tumaet/ui-angular/progress-bar';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faCircleCheck, faCircleInfo, faGear, faListCheck, faPlay, faRotate, faStop, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';

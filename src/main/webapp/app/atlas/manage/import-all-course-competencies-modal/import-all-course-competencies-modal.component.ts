@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 
 import { PagingService } from 'app/exercise/services/paging.service';
 import { Column } from 'app/shared-ui/import/import.component';

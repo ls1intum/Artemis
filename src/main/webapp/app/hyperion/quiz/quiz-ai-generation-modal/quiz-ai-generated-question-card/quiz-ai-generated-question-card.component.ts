@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { GeneratedQuestion, GeneratedQuestionType } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';

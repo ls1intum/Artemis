@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verify;
 
 import java.util.List;
 
@@ -9,10 +8,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.Message;
+import org.springframework.ai.session.SessionService;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.BatchRelationPreviewResponseDTO;
@@ -22,8 +20,7 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.SingleRelationPreviewResponse
 @ExtendWith(MockitoExtension.class)
 class AtlasAgentPreviewServiceTest {
 
-    @Mock
-    private ChatMemory chatMemory;
+    private SessionService sessionService;
 
     private AtlasAgentPreviewService previewService;
 
@@ -31,7 +28,8 @@ class AtlasAgentPreviewServiceTest {
 
     @BeforeEach
     void setUp() {
-        previewService = new AtlasAgentPreviewService(chatMemory);
+        sessionService = AtlasSessionTestSupport.newSessionService();
+        previewService = new AtlasAgentPreviewService(sessionService);
         previewServiceNullMemory = new AtlasAgentPreviewService(null);
     }
 
@@ -92,17 +90,17 @@ class AtlasAgentPreviewServiceTest {
     class AddAssistantMessageToMemory {
 
         @Test
-        void shouldAddMessageWhenChatMemoryPresent() {
+        void shouldAddMessageWhenSessionMemoryPresent() {
             String sessionId = "test_session";
             String message = "Assistant reply";
 
             previewService.addAssistantMessageToMemory(sessionId, message);
 
-            verify(chatMemory).add(sessionId, new AssistantMessage(message));
+            assertThat(sessionService.getMessages(sessionId)).extracting(Message::getText).containsExactly(message);
         }
 
         @Test
-        void shouldNotThrowWhenChatMemoryNull() {
+        void shouldNotThrowWhenSessionMemoryNull() {
             // Should not throw
             previewServiceNullMemory.addAssistantMessageToMemory("session", "message");
         }

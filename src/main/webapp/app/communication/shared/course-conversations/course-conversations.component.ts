@@ -22,7 +22,8 @@ import {
     faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiButtonDirective, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { canCreateChannel } from 'app/communication/conversations/conversation-permissions.utils';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';

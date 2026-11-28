@@ -1,5 +1,5 @@
 import { Directive, OnInit, WritableSignal, inject, isSignal } from '@angular/core';
-import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 
 function isWritableSignal(value: unknown): value is WritableSignal<unknown> {

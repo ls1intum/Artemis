@@ -4,7 +4,7 @@ import { IWatchParams, ReconnectionTimeMode, RxStomp, RxStompConfig, RxStompStat
 import { IMessage } from '@stomp/stompjs';
 import { parseJson } from 'app/foundation/util/json.util';
 import { gunzipSync, gzipSync, strFromU8, strToU8 } from 'fflate';
-import { BehaviorSubject, EMPTY, Observable, Subscription, of, timer } from 'rxjs';
+import { BehaviorSubject, EMPTY, Observable, Subscription, defer, of, timer } from 'rxjs';
 import { distinctUntilChanged, map, mergeMap, share, switchMap } from 'rxjs/operators';
 
 /**
@@ -28,6 +28,21 @@ export const COMPRESSION_HEADER: Record<string, string> = { [COMPRESSION_HEADER_
  * This grace period allows brief disconnections to recover without triggering UI warnings.
  */
 export const CONNECTION_STATE_DELAY_MS = 5000;
+
+/**
+ * Builds the absolute URL of the WebSocket endpoint of the server that served the page.
+ *
+ * The scheme is spelled out as `ws:` or `wss:` matching the protocol of the page. A scheme-relative URL (`//host/...`) is rejected by the
+ * `WebSocket` constructor of some browsers, e.g. Safari ("The string did not match the expected pattern").
+ *
+ * NOTE: 'websocket' appears twice to use STOMP without SockJS.
+ *
+ * @param location the location of the page
+ */
+export function buildWebsocketUrl(location: Pick<Location, 'protocol' | 'host'>): string {
+    const scheme = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${scheme}//${location.host}/websocket/websocket`;
+}
 
 /**
  * Public API for the WebSocket service used in Angular components.
@@ -314,8 +329,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             // reconnect would leave it watching a dead client and silently receiving nothing.
             this.sharedChannelObservables.clear();
         }
-        // NOTE: we add 'websocket' twice to use STOMP without SockJS
-        const url = `//${window.location.host}/websocket/websocket`;
+        const url = buildWebsocketUrl(window.location);
         const config: RxStompConfig = {
             brokerURL: url,
             connectHeaders: {},
@@ -599,9 +613,13 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         if (existing) {
             return existing as Observable<T>;
         }
-        const params: IWatchParams = { destination: channel, subHeaders: { id: this.sessionId + '-' + this.subscriptionCounter++ } };
+        const rxStomp = this.rxStomp;
         const decode = this.handleIncomingMessage<T>();
-        const shared = this.rxStomp.watch(params).pipe(
+        // `share` re-subscribes to its source every time a destination gains its first consumer again, and each of those subscriptions is a new STOMP
+        // SUBSCRIBE frame. The server handles the frames of one session concurrently, so the UNSUBSCRIBE of the previous subscription can arrive after the
+        // SUBSCRIBE of the next one. With an id that is reused, the broker rejects that SUBSCRIBE as a duplicate and closes the connection. Therefore every
+        // actual subscription gets a fresh id, taken when the watch is opened and not once per destination.
+        const shared = defer(() => rxStomp.watch(this.createWatchParams(channel))).pipe(
             // Drop a frame that cannot be decoded instead of letting it error the stream. All consumers of a
             // destination share one subscription, so an error would disconnect every one of them (and, because
             // `share` resets on error, silently leave them without a subscription) over a single bad message.
@@ -623,6 +641,13 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         // for a destination that is already subscribed, which is the broker error this cache exists to prevent.
         this.sharedChannelObservables.set(channel, shared);
         return shared;
+    }
+
+    /**
+     * The parameters of one STOMP subscription to a destination, with an id that no other subscription of this connection has used.
+     */
+    private createWatchParams(channel: string): IWatchParams {
+        return { destination: channel, subHeaders: { id: this.sessionId + '-' + this.subscriptionCounter++ } };
     }
 
     /**

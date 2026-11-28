@@ -6,7 +6,7 @@ import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
-import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { QuizQuestionPoolItemListComponent } from './quiz-question-pool-item-list/quiz-question-pool-item-list.component';
