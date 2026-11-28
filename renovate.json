@@ -14,6 +14,14 @@
   "pip_requirements": {
     "enabled": false
   },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Versions of tools that a script runs with pnpm dlx, declared as a constant below a '// renovate:' comment (they are not dependencies, so the npm manager does not see them)",
+      "managerFilePatterns": ["/^packages/tum-aet-ui/pack\\.mjs$/", "/^supporting_scripts/.*\\.mjs$/"],
+      "matchStrings": ["// renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)\\r?\\n\\s*const \\w+ = '(?<currentValue>[^']+)';"]
+    }
+  ],
   "packageRules": [
     {
       "description": "Node 26 is the supported runtime. @types/node 27 and later describe the APIs of newer Node versions, which we do not support yet. Move them together with the Node major (.nvmrc, Dockerfiles, CI), not on their own.",
