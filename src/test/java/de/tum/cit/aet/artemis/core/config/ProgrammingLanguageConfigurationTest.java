@@ -36,6 +36,22 @@ class ProgrammingLanguageConfigurationTest {
     }
 
     @Test
+    void testDefaultMemoryLimitsAreReadFromTheDefaultDockerFlags() {
+        var config = new ProgrammingLanguageConfiguration();
+        config.setDefaultDockerFlags(List.of(new ProgrammingLanguageConfiguration.DockerFlag("--cpus", "2"), new ProgrammingLanguageConfiguration.DockerFlag("--memory", "2g"),
+                new ProgrammingLanguageConfiguration.DockerFlag("--memory-swap", "512m")));
+
+        assertThat(config.getDefaultMemoryLimitMB()).isEqualTo(2048);
+        assertThat(config.getDefaultMemorySwapLimitMB()).isEqualTo(512);
+
+        config.setDefaultDockerFlags(List.of(new ProgrammingLanguageConfiguration.DockerFlag("--cpus", "2")));
+        assertThat(config.getDefaultMemoryLimitMB()).as("no limit configured").isZero();
+        assertThat(ProgrammingLanguageConfiguration.parseMemoryValueInMB("1073741824")).as("a plain number is in bytes").isEqualTo(1024);
+        assertThat(ProgrammingLanguageConfiguration.parseMemoryValueInMB("-1")).as("unlimited swap is no limit").isZero();
+        assertThat(ProgrammingLanguageConfiguration.parseMemoryValueInMB("lots")).isZero();
+    }
+
+    @Test
     void testLanguageMissing() {
         defaultConfig.remove("swift");
         var config = new ProgrammingLanguageConfiguration();

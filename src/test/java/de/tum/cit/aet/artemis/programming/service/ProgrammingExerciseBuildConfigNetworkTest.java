@@ -13,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.core.config.ContainerDefaults;
 import de.tum.cit.aet.artemis.core.config.ContainerDefaultsConfiguration;
+import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 
 class ProgrammingExerciseBuildConfigNetworkTest {
@@ -21,7 +22,7 @@ class ProgrammingExerciseBuildConfigNetworkTest {
 
     @BeforeEach
     void setUp() {
-        service = new ProgrammingExerciseBuildConfigService(mock(LicenseService.class),
+        service = new ProgrammingExerciseBuildConfigService(mock(LicenseService.class), mock(ProgrammingLanguageConfiguration.class),
                 new ContainerDefaults(new ContainerDefaultsConfiguration(List.of(), null), List.of("none")));
         ReflectionTestUtils.setField(service, "allowedNetworks", List.of("none", "host", "HOST", " host ", "container:other", "Container:other", "restricted"));
     }
