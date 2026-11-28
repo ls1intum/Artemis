@@ -175,6 +175,26 @@ function matchesPathFilter(name, files) {
         exclusions ? patterns.every((pattern) => !path.matchesGlob(file, pattern.slice(1))) : patterns.some((pattern) => path.matchesGlob(file, pattern)),
     );
 }
+test('security scans skip documentation-only PRs and always run on develop pushes', () => {
+    const condition = expression(
+        job('security')
+            .match(/    if: >-\n((?:      [^\n]*\n)+)/)[1]
+            .trim(),
+    );
+    function scans(event, branch, files, count = files.length) {
+        const values = needs();
+        values.detect_changes.outputs.security_relevant = String(matchesPathFilter('security', files));
+        return condition({ event_name: event, ref: `refs/heads/${branch}`, event: { pull_request: { base: { ref: branch }, changed_files: count } } }, values);
+    }
+    const docs = ['documentation/docs/developer/example.mdx'];
+    assert.equal(scans('pull_request', 'develop', docs), false);
+    assert.equal(scans('pull_request', 'develop', [...docs, 'README.md']), true);
+    assert.equal(scans('pull_request', 'develop', docs, 3000), true);
+    assert.equal(scans('pull_request', 'main', ['README.md']), false);
+    assert.equal(scans('push', 'develop', docs), true);
+    assert.equal(scans('push', 'main', ['README.md']), false);
+});
+
 function changeOutputs({ draft, files, paths, event = 'pull_request', force = false }) {
     const script = job('detect-changes')
         .match(/      - id: decide[\s\S]*?        run: \|\n((?:          [^\n]*\n|\n)+)/)[1]
@@ -268,7 +288,7 @@ test('manual area filtering can skip Test unless the full-CI override is enabled
     assert.equal(forced.run_e2e, 'true');
 });
 test('the existing summary records intentional test scope without allocating another job', () => {
-    const match = job('ci-summary').match(/      - name: "Test validation scope: (.+)"\n/);
+    const match = job('ci-summary').match(/      - name: "Test validation scope: (.+?) \(\$\{\{ needs\.test\.result \}\}\)"\n/);
     assert.ok(match, 'Expected run-attempt scope marker in the existing summary');
     const scope = expression(match[1]);
     const values = (deferred, result, affected = '') => ({ ...needs({ deferred }), test: { result, outputs: { affected_tests: affected } } });

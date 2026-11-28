@@ -57,6 +57,7 @@ jobs:
       current: ${{ steps.ready.outputs.current }}
       tests_deferred: ${{ steps.ready.outputs.tests_deferred }}
       build_relevant: ${{ steps.decide.outputs.build_relevant }}
+      security_relevant: ${{ steps.relevant.outputs.security }}
       has_java: ${{ steps.decide.outputs.has_java }}
       has_sandbox_tests: ${{ steps.decide.outputs.has_sandbox_tests }}
       has_docs: ${{ steps.decide.outputs.has_docs }}
@@ -112,6 +113,8 @@ jobs:
             build:
               - '!**/*.md'
               - '!LICENSE'
+              - '!documentation/**'
+            security:
               - '!documentation/**'
             # CodeQL scans what ships: server and client sources. Tests, translations, the generated
             # OpenAPI client, workflows and skills are not analysed (see .github/codeql/codeql-config.yml),
@@ -697,10 +700,11 @@ jobs:
       has_java: ${{ needs.detect-changes.outputs.has_java == 'true' }}
       has_tum_aet_ui: ${{ needs.detect-changes.outputs.has_tum_aet_ui == 'true' }}
 
+  # A push already validates the wrapper through ci-gradle-wrapper.yml's own push trigger (see the README).
   gradle-wrapper:
     name: Validate Gradle Wrapper
     needs: detect-changes
-    if: needs.detect-changes.outputs.has_gradle == 'true'
+    if: needs.detect-changes.outputs.has_gradle == 'true' && github.event_name != 'push'
     uses: ./.github/workflows/ci-gradle-wrapper.yml
     permissions:
       contents: read
@@ -1094,6 +1098,53 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
+  # Advisory. Runs inside this workflow so that a new push or closing the pull request cancels it with the rest of the run.
+  # Only develop pushes and PRs against develop that touch files outside documentation/. Large PRs may have a truncated file list.
+  # The whole-history scan keeps its own weekly schedule.
+  security:
+    name: Security Scans
+    needs: detect-changes
+    if: >-
+      needs.detect-changes.outputs.current == 'true' &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'develop' &&
+        (needs.detect-changes.outputs.security_relevant == 'true' || github.event.pull_request.changed_files >= 3000)) ||
+       (github.event_name == 'push' && github.ref == 'refs/heads/develop'))
+    uses: ./.github/workflows/security-scans.yml
+    permissions:
+      contents: read
+
+  # Advisory. Runs on a self-hosted runner and executes the checked-out code, so never for a fork pull request,
+  # and like the other test suites not for a draft. A merge group has already passed it on its pull request.
+  # Off unless the repository variable ANDROID_E2E is `true`: the Android runner pool takes no jobs at the moment, and
+  # a job waiting for it would keep the whole run open, so that no failed job could be re-run.
+  android:
+    name: Android E2E
+    needs: detect-changes
+    if: >-
+      vars.ANDROID_E2E == 'true' &&
+      needs.detect-changes.outputs.current == 'true' &&
+      needs.detect-changes.outputs.build_relevant == 'true' &&
+      needs.detect-changes.outputs.tests_deferred != 'true' &&
+      github.event_name != 'merge_group' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    uses: ./.github/workflows/test-android.yml
+    permissions:
+      contents: read
+      checks: write
+
+  # Advisory, and outside the required gate on purpose: a title fix only starts a metadata run, in which the gate does not run.
+  pr-title:
+    name: Validate PR Title
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    permissions:
+      contents: read
+    steps:
+      - uses: Slashgear/action-check-pr-title@76166c63ec0b25cdbe693e5e972e83ca186313fb  # v6.0.0
+        with:
+          regexp: '^`(Administration|Lectures|Tutorial groups|Communication|Notifications|Exercises|Programming exercises|Quiz exercises|Modeling exercises|Text exercises|File upload exercises|Team exercises|Exam mode|Integrated code lifecycle|LocalCI|LocalVC|Assessment|Grading|Plagiarism checks|Learning analytics|Adaptive learning|Learning path|Iris|Hyperion|Athena|Global search|Integrated markdown editor|Mobile apps|Scalability|Usability|Performance|Infrastructure|Migration|Development|General)`:\s[A-Z].*$'
+
   # The single required status check. Depends on every deterministic job — build, test, and
   # the quality gates — plus `e2e`. `e2e` is required, but with a flakiness-aware verdict: an E2E
   # result of `failure` includes test, infrastructure and unclassified failures. Helios history
@@ -1224,15 +1275,18 @@ jobs:
       - sonar
       - codeql
       - coverage-report
+      - security
+      - android
+      - pr-title
     runs-on: ubuntu-latest
     permissions:
       actions: read  # actions-timeline reads the run's jobs API
     timeout-minutes: 5
     steps:
-      # workflow_run reporters read this enum from this exact run attempt's GitHub job metadata.
+      # workflow_run reporters read the test scope and result from this exact run attempt's GitHub job metadata.
       # No fork-provided file is executed, and no extra reporting job or artifact is needed.
-      - name: "Test validation scope: ${{ needs.detect-changes.outputs.tests_deferred == 'true' && 'deferred' || needs.test.outputs.affected_tests == 'true' && 'affected' || needs.test.result == 'success' && 'full' || 'unavailable' }}"
-        run: echo 'Test validation scope is recorded in the step name.'
+      - name: "Test validation scope: ${{ needs.detect-changes.outputs.tests_deferred == 'true' && 'deferred' || needs.test.outputs.affected_tests == 'true' && 'affected' || needs.test.result == 'success' && 'full' || 'unavailable' }} (${{ needs.test.result }})"
+        run: echo 'Test validation scope and result are recorded in the step name.'
       - name: Render run timeline
         uses: Kesin11/actions-timeline@460b1f8a750077029ad3589824d371b200e91dcf  # v3.2.1
         with:
@@ -1242,8 +1296,8 @@ jobs:
           NEEDS: ${{ toJSON(needs) }}
           # Everything except these is required (i.e. in all-required-ci-passed's needs).
           # `e2e` is now required (blocks merge on a real, non-flaky regression; known-flaky-only
-          # runs are exonerated); only codeql and coverage-report remain advisory.
-          ADVISORY: codeql coverage-report
+          # runs are exonerated); codeql, coverage-report, security, android and pr-title remain advisory.
+          ADVISORY: codeql coverage-report security android pr-title
         run: |
           set -Eeuo pipefail
           icon() {

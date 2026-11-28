@@ -63,7 +63,7 @@ module.exports = async ({ github, context, core }) => {
         );
     } else if (testScope !== 'full') {
         lines.push(
-            `**Warning:** Full-suite coverage is unavailable for this run. Required coverage artifacts are missing or incomplete, so this run may contain only an affected-test selection. The workflow concluded with status \`${testConclusion}\`. See [workflow logs](${testRunUrl}).`,
+            `**Warning:** Full-suite coverage is unavailable for this run. Required coverage artifacts are missing or incomplete, so this run may contain only an affected-test selection. The test status was \`${testConclusion}\`. See [workflow logs](${testRunUrl}).`,
             '',
         );
     } else if (!coverageSuccess) {
