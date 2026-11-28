@@ -45,6 +45,7 @@
     transform: none;
     padding-right: 0;
     margin-top: 0.5rem;
+    justify-content: center;
 }
 
 .double-arrow {
@@ -53,10 +54,6 @@
     align-items: center;
     justify-content: flex-end;
     cursor: pointer;
-}
-
-.menu-collapsed.double-arrow {
-    justify-content: center;
 }
 
 .double-arrow-icon {

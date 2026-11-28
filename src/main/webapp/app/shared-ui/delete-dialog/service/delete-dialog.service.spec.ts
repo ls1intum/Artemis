@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { ActionType, DeleteDialogData } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { ApplicationRef, EventEmitter } from '@angular/core';
 import { Observable, Subject } from 'rxjs';

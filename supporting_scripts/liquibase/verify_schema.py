@@ -121,6 +121,10 @@ KNOWN_TYPE_NAMESPACES = ("java.sql.types.", "pg_catalog.")
 # blob/bytea are intentionally not covered; they are not unbounded free-form text. Deliberately decoupled
 # from the baseline so a re-cut cannot grow it -- only a reviewed edit here can.
 GRANDFATHERED_UNBOUNDED_TEXT: set[tuple[str, str]] = {
+    ("ai_session", "metadata"),
+    ("ai_session_event", "message_content"),
+    ("ai_session_event", "metadata"),
+    ("ai_session_event", "payload"),
     ("answer_post", "content"),
     ("apollon_diagram", "json_representation"),
     ("assessment_note", "note"),
@@ -185,6 +189,14 @@ GRANDFATHERED_UNBOUNDED_TEXT: set[tuple[str, str]] = {
 # Keyed by the full Liquibase changeset identity (id + author + file) so that reusing an id in the same file
 # under a different author does not inherit this approval.
 ALLOWED_TEXT_INTRODUCTIONS: dict[tuple[str, str, str, str, str], str] = {
+    ("config/liquibase/changelog/20261124081403_changelog.xml", "20261124081403-01-create-spring-ai-session-tables", "krusche", "ai_session", "metadata"):
+        "The metadata JSON of a Spring AI session, a map of attributes that Artemis leaves empty. Written by JdbcSessionRepository, whose own schema declares it unbounded.",
+    ("config/liquibase/changelog/20261124081403_changelog.xml", "20261124081403-01-create-spring-ai-session-tables", "krusche", "ai_session_event", "message_content"):
+        "The text of a message of the Atlas chat agent, searchable by the repository. The conversation of a user with an LLM has no sensible bound; it replaces spring_ai_chat_memory.content, which is grandfathered too.",
+    ("config/liquibase/changelog/20261124081403_changelog.xml", "20261124081403-01-create-spring-ai-session-tables", "krusche", "ai_session_event", "payload"):
+        "The JSON of the parts and metadata of a message, for example the arguments of a tool call. Written by JdbcSessionRepository, whose own schema declares it unbounded.",
+    ("config/liquibase/changelog/20261124081403_changelog.xml", "20261124081403-01-create-spring-ai-session-tables", "krusche", "ai_session_event", "metadata"):
+        "The metadata JSON of an event. Written by JdbcSessionRepository, whose own schema declares it unbounded.",
     ("config/liquibase/changelog/20260624180225_changelog.xml", "20260624180225-1-postgres", "matyasht", "exam", "exam_mode"):
         "A short enum ('REAL'/'TEST'/'TEST_WITH_SUPERVISED_SESSION'); MySQL uses ENUM(...), PostgreSQL has no inline enum so it is stored as text. Effectively bounded, not free-form text.",
     ("config/liquibase/changelog/20261029130730_changelog.xml", "20261029130730-1-create-tum-live-unit-upload", "pat", "tum_live_unit_upload", "expected_video_source"):

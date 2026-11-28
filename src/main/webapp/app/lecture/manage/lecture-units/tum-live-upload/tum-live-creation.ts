@@ -4,7 +4,7 @@ import { DestroyRef, Signal, computed, inject } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationBehaviorOptions, NavigationCancel, NavigationEnd, NavigationError, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiConfirmationRequest, TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationRequest, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TumLiveUploadService } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';

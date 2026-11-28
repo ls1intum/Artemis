@@ -8,7 +8,7 @@ import { PostingSummaryComponent } from 'app/communication/course-conversations-
 import { Subscription, take } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 
 @Component({
     selector: 'jhi-saved-posts',

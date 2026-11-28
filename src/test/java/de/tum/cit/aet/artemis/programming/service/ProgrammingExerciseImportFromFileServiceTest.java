@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localci.service.LegacyBuildPlanConverterService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -77,7 +78,7 @@ class ProgrammingExerciseImportFromFileServiceTest {
     void setUp() {
         programmingExerciseImportFromFileService = new ProgrammingExerciseImportFromFileService(programmingExerciseCreationUpdateService, programmingExerciseValidationService,
                 new ZipFileService(fileService), staticCodeAnalysisService, programmingExerciseProjectNameService, programmingExerciseImportRepositoryService, fileService,
-                profileService, buildPlanRepository, tempFileUtilService, Optional.of(legacyBuildPlanConverterService));
+                profileService, buildPlanRepository, tempFileUtilService, Optional.of(legacyBuildPlanConverterService), JsonObjectMapper.get());
     }
 
     @Test

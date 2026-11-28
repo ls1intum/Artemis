@@ -1,5 +1,7 @@
 import { Component, OnInit, inject, input, output, signal } from '@angular/core';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { RangeSliderComponent } from 'app/shared-ui/range-slider/range-slider.component';
 import { FeedbackAnalysisService } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 

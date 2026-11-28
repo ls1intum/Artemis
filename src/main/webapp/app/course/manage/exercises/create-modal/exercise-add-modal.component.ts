@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_FILEUPLOAD, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, MODULE_FEATURE_MODELING, MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';

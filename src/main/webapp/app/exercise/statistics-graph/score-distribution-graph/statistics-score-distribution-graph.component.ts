@@ -7,7 +7,7 @@ import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular/chart';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 

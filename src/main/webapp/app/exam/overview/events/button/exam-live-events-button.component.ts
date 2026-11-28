@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Subscription } from 'rxjs';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/overview/services/exam-participation-live-events.service';

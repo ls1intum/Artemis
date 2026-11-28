@@ -24,7 +24,7 @@ import { GradingKeyTableComponent } from 'app/assessment/manage/grading/grading-
 import { CollapsibleCardComponent } from 'app/exam/overview/summary/collapsible-card/collapsible-card.component';
 import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

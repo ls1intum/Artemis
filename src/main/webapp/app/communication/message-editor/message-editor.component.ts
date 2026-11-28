@@ -36,7 +36,9 @@ import {
     faUnderline,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { MessageCompletion, MessageEditorDom } from './message-editor-dom';

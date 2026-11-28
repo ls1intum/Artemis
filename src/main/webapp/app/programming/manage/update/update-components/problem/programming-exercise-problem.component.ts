@@ -14,7 +14,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { ProblemStatementService } from 'app/hyperion/problem-statement/problem-statement.service';
 import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH } from 'app/hyperion/problem-statement/problem-statement.utils';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
