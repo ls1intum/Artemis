@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -35,6 +36,7 @@ import org.springframework.core.io.ClassPathResource;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.CourseHomeQuestionState;
 import de.tum.cit.aet.artemis.communication.dto.CourseHomeQuestionsDTO;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.CourseHomeSectionStatus;
@@ -59,6 +61,8 @@ class CourseHomeWelcomeServiceTest {
 
     private static final String GOOD = "Try one manageable step, then reflect on what you learn from it.";
 
+    private static final Optional<CourseHomeAiPolicyService.Selection> LOCAL = Optional.of(new CourseHomeAiPolicyService.Selection(AiSelectionDecision.LOCAL_AI, "local"));
+
     private final CourseHomeService home = mock(CourseHomeService.class);
 
     private final CourseHomeAiPolicyService policy = mock(CourseHomeAiPolicyService.class);
@@ -78,9 +82,9 @@ class CourseHomeWelcomeServiceTest {
         user.setFirstName("PRIVATE_FIRST");
         user.setEmail("private@example.org");
         prompts = new CourseHomeAiPromptBuilderService(JsonObjectMapper.get(), new ClassPathResource("prompts/course/home-welcome-system.st"));
-        when(policy.canGenerate(7)).thenReturn(true);
+        when(policy.selection(7)).thenReturn(LOCAL);
         when(home.load(anyLong(), any(), any(), any())).thenReturn(fixture(false));
-        when(client.generate(any())).thenReturn(CompletableFuture.completedFuture(Optional.of(GOOD)));
+        when(client.generate(any(), any())).thenReturn(CompletableFuture.completedFuture(Optional.of(GOOD)));
         service = new CourseHomeWelcomeService(home, policy, prompts, Optional.of(client), new SimpleMeterRegistry());
     }
 
@@ -94,37 +98,47 @@ class CourseHomeWelcomeServiceTest {
 
     @Test
     void declinedOrUnavailableAiNeverCallsTheProvider() {
-        when(policy.canGenerate(7)).thenReturn(false);
+        when(policy.selection(7)).thenReturn(Optional.empty());
         assertFallback(generate().join());
-        verify(client, never()).generate(any());
+        verify(client, never()).generate(any(), any());
     }
 
     @Test
     void missingProviderReturnsTheSameUsableFallback() {
         service = new CourseHomeWelcomeService(home, policy, prompts, Optional.empty(), new SimpleMeterRegistry());
         assertFallback(generate().join());
-        verify(client, never()).generate(any());
+        verify(client, never()).generate(any(), any());
     }
 
     @Test
     void changedAuthorizedContextIsNotSentToTheProvider() {
         assertFallback(service.generate(42, user, new CourseHomeWelcomeRequestDTO("b".repeat(64), "en"), NOW).join());
-        verify(client, never()).generate(any());
+        verify(client, never()).generate(any(), any());
     }
 
     @Test
     void revocationImmediatelyBeforeDispatchPreventsModelWork() {
-        when(policy.canGenerate(7)).thenReturn(true, false);
+        when(policy.selection(7)).thenReturn(LOCAL, Optional.empty());
         assertFallback(generate().join());
-        verify(client, never()).generate(any());
+        verify(client, never()).generate(any(), any());
     }
 
     @Test
     void revocationWhileTheProviderIsRunningDiscardsItsWording() {
         var pending = new CompletableFuture<Optional<String>>();
-        when(client.generate(any())).thenReturn(pending);
+        when(client.generate(any(), any())).thenReturn(pending);
         var result = generate();
-        when(policy.canGenerate(7)).thenReturn(false);
+        when(policy.selection(7)).thenReturn(Optional.empty());
+        pending.complete(Optional.of(GOOD));
+        assertFallback(result.join());
+    }
+
+    @Test
+    void switchingModesWhileTheProviderIsRunningDiscardsItsWording() {
+        var pending = new CompletableFuture<Optional<String>>();
+        when(client.generate(eq("local"), any())).thenReturn(pending);
+        var result = generate();
+        when(policy.selection(7)).thenReturn(Optional.of(new CourseHomeAiPolicyService.Selection(AiSelectionDecision.CLOUD_AI, "cloud")));
         pending.complete(Optional.of(GOOD));
         assertFallback(result.join());
     }
@@ -133,33 +147,33 @@ class CourseHomeWelcomeServiceTest {
     void changedMembershipStillFailsAuthorization() {
         when(home.load(anyLong(), any(), any(), any())).thenThrow(new AccessForbiddenException("course", 42L));
         assertThatThrownBy(this::generate).isInstanceOf(AccessForbiddenException.class);
-        verify(client, never()).generate(any());
+        verify(client, never()).generate(any(), any());
     }
 
     @Test
     void providerFailureIsAFallback() {
-        when(client.generate(any())).thenReturn(CompletableFuture.failedFuture(new IllegalStateException("offline")));
+        when(client.generate(any(), any())).thenReturn(CompletableFuture.failedFuture(new IllegalStateException("offline")));
         assertFallback(generate().join());
     }
 
     @Test
     void emptyOrOverlongOutputIsAFallback() {
-        when(client.generate(any())).thenReturn(CompletableFuture.completedFuture(Optional.empty()));
+        when(client.generate(any(), any())).thenReturn(CompletableFuture.completedFuture(Optional.empty()));
         assertFallback(generate().join());
-        when(client.generate(any())).thenReturn(CompletableFuture.completedFuture(Optional.of("x".repeat(501))));
+        when(client.generate(any(), any())).thenReturn(CompletableFuture.completedFuture(Optional.of("x".repeat(501))));
         assertFallback(generate().join());
     }
 
     @Test
     void aNullProviderCompletionStillReturnsTheUsableFallback() {
-        when(client.generate(any())).thenReturn(CompletableFuture.completedFuture(null));
+        when(client.generate(any(), any())).thenReturn(CompletableFuture.completedFuture(null));
         assertFallback(generate().join());
     }
 
     @Test
     void plainEncouragementAtTheLengthLimitIsAccepted() {
         String output = "a".repeat(500);
-        when(client.generate(any())).thenReturn(CompletableFuture.completedFuture(Optional.of(output)));
+        when(client.generate(any(), any())).thenReturn(CompletableFuture.completedFuture(Optional.of(output)));
         assertThat(generate().join().message()).isEqualTo(output);
     }
 
@@ -167,7 +181,7 @@ class CourseHomeWelcomeServiceTest {
     void aDomainWithTheMostLabelsThatFitTheLengthLimitIsRejected() {
         String output = "a.".repeat(249) + "aa";
         assertThat(output).hasSize(500);
-        when(client.generate(any())).thenReturn(CompletableFuture.completedFuture(Optional.of(output)));
+        when(client.generate(any(), any())).thenReturn(CompletableFuture.completedFuture(Optional.of(output)));
         assertFallback(generate().join());
     }
 
@@ -176,7 +190,7 @@ class CourseHomeWelcomeServiceTest {
             "Heute musst du die Aufgabe abgeben.", "You have 42 exercises to finish.", "{\"message\":\"Keep learning\"}", "```Keep learning```", "Reflect at institut.example.",
             "Try x.---.example for help." })
     void malformedLinksAndNewTimeOrCountClaimsAreRejected(String output) {
-        when(client.generate(any())).thenReturn(CompletableFuture.completedFuture(Optional.of(output)));
+        when(client.generate(any(), any())).thenReturn(CompletableFuture.completedFuture(Optional.of(output)));
         assertFallback(generate().join());
     }
 
@@ -184,7 +198,7 @@ class CourseHomeWelcomeServiceTest {
     void thePromptContainsOnlyBoundedPublishedContext() {
         generate().join();
         var input = ArgumentCaptor.forClass(CourseHomeAiClient.Input.class);
-        verify(client).generate(input.capture());
+        verify(client).generate(eq("local"), input.capture());
         String all = input.getValue().userPrompt();
         assertThat(all).contains("Published course", "Learn by trying", "Public exercise").doesNotContain("private-user", "PRIVATE_FIRST", "private@example.org",
                 "private question", "private session", "PRIVATE_TRANSCRIPT", "PRIVATE_SOURCE");
@@ -196,7 +210,7 @@ class CourseHomeWelcomeServiceTest {
         when(home.load(anyLong(), any(), any(), any())).thenReturn(fixture(true));
         generate().join();
         var input = ArgumentCaptor.forClass(CourseHomeAiClient.Input.class);
-        verify(client).generate(input.capture());
+        verify(client).generate(eq("local"), input.capture());
         assertThat(input.getValue().userPrompt()).doesNotContain("private question", "private session", "19", "20");
     }
 
@@ -205,13 +219,13 @@ class CourseHomeWelcomeServiceTest {
             "The lecture starts at half past nine.", "Die Vorlesung beginnt um halb neun.", "Your quiz starts at thirteen.", "Die Prüfung beginnt um vierzehn.",
             "Die Vorlesung beginnt um viertel nach neun." })
     void spelledOutTimeClaimsAreRejected(String output) {
-        when(client.generate(any())).thenReturn(CompletableFuture.completedFuture(Optional.of(output)));
+        when(client.generate(any(), any())).thenReturn(CompletableFuture.completedFuture(Optional.of(output)));
         assertFallback(generate().join());
     }
 
     @Test
     void controlCharactersAreRejected() {
-        when(client.generate(any())).thenReturn(CompletableFuture.completedFuture(Optional.of("Keep exploring." + (char) 0)));
+        when(client.generate(any(), any())).thenReturn(CompletableFuture.completedFuture(Optional.of("Keep exploring." + (char) 0)));
         assertFallback(generate().join());
     }
 
@@ -224,7 +238,7 @@ class CourseHomeWelcomeServiceTest {
 
     @Test
     void aSynchronousProviderFailureIsAlsoAFallback() {
-        when(client.generate(any())).thenThrow(new IllegalStateException("provider rejected dispatch"));
+        when(client.generate(any(), any())).thenThrow(new IllegalStateException("provider rejected dispatch"));
         assertFallback(generate().join());
     }
 
@@ -234,7 +248,7 @@ class CourseHomeWelcomeServiceTest {
         prompts = new CourseHomeAiPromptBuilderService(JsonObjectMapper.get(), oversized);
         service = new CourseHomeWelcomeService(home, policy, prompts, Optional.of(client), new SimpleMeterRegistry());
         assertFallback(generate().join());
-        verify(client, never()).generate(any());
+        verify(client, never()).generate(any(), any());
     }
 
     @ParameterizedTest
