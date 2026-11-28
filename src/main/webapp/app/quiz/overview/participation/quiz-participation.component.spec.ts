@@ -533,6 +533,26 @@ describe('QuizParticipationComponent - live mode', () => {
         vi.useRealTimers();
     });
 
+    it.each([false, true])('reports success at the deadline only once the final autosave succeeds (failure=%s)', (failed) => {
+        fixture.detectChanges();
+        component.quizExercise().quizMode = QuizMode.BATCHED;
+        component.selectedAnswerOptions().set(2, [{ id: 1, invalid: false }]);
+        component.onSelectionChanged();
+        component.previousRunning = true;
+        component.remainingTimeSeconds.set(-1);
+        const alerts = vi.spyOn(TestBed.inject(AlertService), 'success');
+        component.checkForQuizEnd();
+        const save = httpMock.expectOne('/api/quiz/exercises/1/submissions/live?submit=false');
+        expect(alerts).not.toHaveBeenCalled();
+        if (failed) {
+            save.flush({}, { status: 503, statusText: 'Service Unavailable' });
+        } else {
+            save.flush({ submissionDate: now.toISOString() });
+        }
+        expect(alerts).toHaveBeenCalledTimes(failed ? 0 : 1);
+        expect(component.unsavedChanges()).toBe(failed);
+    });
+
     it('should refresh quiz when called directly', () => {
         fixture.detectChanges();
 

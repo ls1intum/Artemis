@@ -11,6 +11,7 @@ import Image, { ImageSize } from '../../../src/components/Image/Image';
 import importStudentsDialog from './assets/import_students_dialog.png';
 import addStudents from './assets/add_students.png';
 import individualWorkingTime from './assets/individual_working_time.png';
+import incompleteIndividualExam from './assets/prepare-and-test/incomplete-individual-exam.png';
 import testRunManagement from './assets/test_run_management.png';
 import createTestRunPopup from './assets/create_test_run.png';
 import testRunConduction from './assets/test_run_conduction.png';
@@ -104,6 +105,8 @@ If you delete an assigned exercise or its group, the confirmation dialog shows h
 lose an exercise. Adding a replacement to a group does not assign it to those students. Before the exam starts,
 run **Generate individual exams** and then **Prepare exercise start** again. Open an individual exam with **View**
 to see whether it contains fewer exercises than configured.
+
+<Image src={incompleteIndividualExam} alt="Individual exam detail showing one of two configured exercises for a student" size={ImageSize.large} caption="An individual exam with a missing exercise" />
 
 The same page lists every individual exam once it has been generated. **View** opens one and shows the student,
 their working time, their participation status, their summary and their scores, along with the assessor responsible

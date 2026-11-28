@@ -130,6 +130,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
 
     readonly isSubmitting = signal(false);
     private savingSubmission?: QuizSubmission;
+    private pendingEndNotification?: QuizSubmission;
     private answerRevision = 0;
     readonly lastSavedTimeText = signal('');
     readonly justSaved = signal(false);
@@ -567,13 +568,21 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
             // Rely on the grace period to store any unsaved changes at the end of the quiz
             if (!this.submission().submitted) {
                 this.stopAutoSave();
-                this.triggerSave();
                 if (this.hasAnyAnswer() && this.quizExercise().quizMode !== QuizMode.SYNCHRONIZED) {
-                    this.alertService.success('artemisApp.quizExercise.submitSuccess');
+                    this.pendingEndNotification = this.submission();
                 }
+                this.triggerSave();
+                this.notifyQuizEndIfSaved();
             }
         }
         this.previousRunning = running;
+    }
+
+    private notifyQuizEndIfSaved(): void {
+        if (this.pendingEndNotification === this.submission() && !this.unsavedChanges()) {
+            this.pendingEndNotification = undefined;
+            this.alertService.success('artemisApp.quizExercise.submitSuccess');
+        }
     }
 
     /**
@@ -899,6 +908,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
                     this.updateSubmissionTime();
                     if (this.answerRevision === revision) {
                         this.unsavedChanges.set(false);
+                        this.notifyQuizEndIfSaved();
                     } else {
                         // Send the latest answers after the older write finishes, even if the end-of-quiz timer has already stopped.
                         this.triggerSave();
