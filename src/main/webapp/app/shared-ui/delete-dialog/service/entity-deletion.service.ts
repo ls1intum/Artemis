@@ -1,7 +1,7 @@
 import { DestroyRef, Service, inject, signal } from '@angular/core';
 import { HttpClient, HttpContext, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, ReplaySubject, Subscription, filter, finalize, interval, skip, take, takeUntil } from 'rxjs';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { WebsocketService } from 'app/foundation/service/websocket.service';

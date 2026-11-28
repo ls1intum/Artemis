@@ -12,7 +12,7 @@ import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-to
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
+import { TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

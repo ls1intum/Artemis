@@ -6,7 +6,11 @@ import { Course, isMessagingEnabled } from 'app/course/shared/entities/course.mo
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiDatePickerComponent, TumAetUiMessageComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faUsers } from '@fortawesome/free-solid-svg-icons';
 import type { TutorialGroupsConfigurationSettings } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';

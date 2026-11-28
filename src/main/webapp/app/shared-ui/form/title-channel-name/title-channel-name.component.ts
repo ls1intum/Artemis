@@ -7,7 +7,8 @@ import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiInputDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 @Component({

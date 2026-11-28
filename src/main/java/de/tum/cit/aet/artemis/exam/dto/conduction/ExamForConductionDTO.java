@@ -12,8 +12,8 @@ import de.tum.cit.aet.artemis.exam.dto.CourseForStudentExamDTO;
  * Projection of an {@link Exam} as nested inside the conduction / summary student-exam payload.
  * <p>
  * Carries the exam-level fields the exam-taking client reads to render the cover page, the working-time / date window
- * and the confirmation texts. The nested {@code course} is reduced to {@link CourseForStudentExamDTO} (course-access
- * group names); the conduction client rebuilds the full course from the route, so the slim course is sufficient there.
+ * and the confirmation texts. The nested {@code course} is reduced to {@link CourseForStudentExamDTO}; the conduction
+ * client rebuilds the full course from the route, so the slim course is sufficient there.
  * <p>
  * {@code moduleNumber}, {@code courseName} and {@code examiner} are the configured exam metadata:
  * {@code ExamStartInformationComponent} builds an information box per field on the exam cover and

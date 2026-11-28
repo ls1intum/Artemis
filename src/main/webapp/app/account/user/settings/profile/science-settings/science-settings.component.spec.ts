@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { ScienceSettingsComponent } from 'app/account/user/settings/profile/science-settings/science-settings.component';
 import { ScienceCourseConsent, ScienceSettingsService } from 'app/account/user/settings/profile/science-settings/science-settings.service';
 import { AlertService } from 'app/foundation/service/alert.service';

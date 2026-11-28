@@ -1,4 +1,5 @@
-import { TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { EditorViewingPurpose } from 'app/exercise/shared/exercise-submission.interface';
 import { Component, ViewEncapsulation, effect, inject, input, signal, untracked } from '@angular/core';

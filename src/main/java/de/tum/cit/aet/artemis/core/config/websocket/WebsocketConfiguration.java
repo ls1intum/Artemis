@@ -486,7 +486,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
      * @param url the URL, e.g. {@code https://Artemis.tum.de:443/}
      * @return the origin, e.g. {@code https://artemis.tum.de}, or an empty string if the URL has no scheme and host
      */
-    static String normalizeOrigin(@Nullable String url) {
+    public static String normalizeOrigin(@Nullable String url) {
         try {
             URI uri = new URI(url == null ? "" : url.trim());
             if (uri.getScheme() == null || uri.getHost() == null) {

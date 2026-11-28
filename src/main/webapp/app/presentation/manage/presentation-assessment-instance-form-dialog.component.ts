@@ -8,15 +8,13 @@ import dayjs from 'dayjs/esm';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faCheck, faSave, faXmark } from '@fortawesome/free-solid-svg-icons';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiDatePickerComponent,
-    TumAetUiInputDirective,
-    TumAetUiMessageComponent,
-    TumAetUiProgressSpinnerComponent,
-    TumAetUiRadioButtonComponent,
-    TumAetUiSelectComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiRadioButtonComponent } from '@tumaet/ui-angular/radio-button';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

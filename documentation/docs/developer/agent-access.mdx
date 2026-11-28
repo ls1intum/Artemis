@@ -2,7 +2,7 @@
 id: agent-access
 title: Agent Access for Developers
 sidebar_label: Agent Access
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-25
 ---
 
 import Callout from '../../src/components/Callout/Callout';
@@ -64,6 +64,44 @@ published. After you opt an endpoint in or change its documentation, run:
 The run starts a throwaway server on port 8080 and its SSH server on 7921. If a development server uses them, move the throwaway
 server with `-PopenApiServerPort=<port>` and `-PopenApiSshPort=<port>`. The application specification, which feeds the generated
 client, is produced by the same command without `-PopenApiGroup=agent` and covers only the packages listed in `gradle/openapi.gradle`.
+
+## The protocol of the MCP endpoint
+
+`AgentMcpService` implements revision 2026-07-28 of the Model Context Protocol, and only that one, with `server/discover`, `tools/list` and
+`tools/call`. That revision has no `initialize` handshake, no `ping` and no session: every request carries the protocol version and the
+capabilities of the client in `params._meta`, and the transport mirrors the version, the method and, for a tool call, the tool name in the
+headers `MCP-Protocol-Version`, `Mcp-Method` and `Mcp-Name`. The service answers with the status the transport prescribes:
+
+| Case                                                           | Status | JSON-RPC error                                     |
+| -------------------------------------------------------------- | ------ | -------------------------------------------------- |
+| not JSON-RPC 2.0                                               | 400    | -32600                                             |
+| `_meta` without version or capabilities                        | 400    | -32602                                             |
+| a header missing or different from the message                 | 400    | -32020                                             |
+| a version other than 2026-07-28, also an `initialize` request  | 400    | -32022 with `data.supported` and `data.requested`  |
+| a method that does not exist                                   | 404    | -32601                                             |
+| a notification                                                 | 202    | none                                               |
+| an `Origin` that is not the origin of `server.url`             | 403    | none                                               |
+| GET or DELETE                                                  | 405    | none                                               |
+
+`tools/list` is `private` for caches, because the tools depend on the scopes of the token; `server/discover` is `public`. Every result
+carries `resultType: complete`.
+
+The protocol asks for authorization with an OAuth server and protected-resource metadata that names it. Artemis has no such server: a
+personal access token is created in the settings and sent as a header, which the protocol allows ("custom authentication"). Do not publish
+protected-resource metadata, because it would have to list an authorization server that does not exist.
+
+## Git with a token
+
+`LocalVCAgentTokenService` lets a personal access token be the password of git over HTTPS. `LocalVCServletService` recognizes the prefix
+`art_pat_` before any other credential and never tries such a secret as a password or as a VCS access token, so a wrong token cannot lead to a
+login attempt. The user name has to be the login of the token's owner. What the token opens is narrower than what its owner may open, and is
+decided in the same place for every request of a clone or a push: the scope `programming:repositories`, only the template, solution, tests
+and auxiliary repositories, no exam exercise, and for a push the draft rule of `ProgrammingExerciseDraftGuardService`, the same one the REST
+API applies to changing the exercise. The roles of the owner apply on top. Requests are written to the audit logger of the REST API and to the
+VCS access log with `AuthenticationMechanism.AGENT_ACCESS_TOKEN`, which is appended to the enum because the log stores its position.
+
+`GET /api/programming/programming-exercises/{id}/repositories` tells an agent where the repositories are and whether it may push now, so that it
+does not discover the draft rule by a refused push. SSH is not an option for a token.
 
 ## Tools of the MCP endpoint
 

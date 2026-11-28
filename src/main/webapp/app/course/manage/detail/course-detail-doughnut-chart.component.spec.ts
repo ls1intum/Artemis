@@ -13,7 +13,7 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiChartTooltipConfig, TumAetUiDoughnutChartComponent } from '@tumaet/ui-angular';
+import { TumAetUiChartTooltipConfig, TumAetUiDoughnutChartComponent } from '@tumaet/ui-angular/chart';
 
 describe('CourseDetailDoughnutChartComponent', () => {
     let fixture: ComponentFixture<CourseDetailDoughnutChartComponent>;

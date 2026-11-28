@@ -149,10 +149,6 @@ async function createCourse(client) {
 
     const createdCourse = response.data;
     console.log(`  Created course: ${createdCourse.title} (ID: ${createdCourse.id})`);
-    console.log(`    Student group: ${createdCourse.studentGroupName}`);
-    console.log(`    Tutor group: ${createdCourse.teachingAssistantGroupName}`);
-    console.log(`    Editor group: ${createdCourse.editorGroupName}`);
-    console.log(`    Instructor group: ${createdCourse.instructorGroupName}`);
     return createdCourse;
 }
 
