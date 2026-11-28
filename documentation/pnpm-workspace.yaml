@@ -40,7 +40,7 @@ overrides:
   # and CVE-2026-75931 (host confusion / SSRF via URI normalization).
   fast-uri: '4.2.3'
   follow-redirects: '1.16.3'
-  http-proxy-middleware: '4.2.1'
+  http-proxy-middleware: '4.2.2'
   # Must stay >= 2.0.3, which fixed GHSA-5p2g-fcmc-qvqq (JXL/HEIF) and GHSA-w3rx-r6r6-pgpr (ICNS): crafted images made
   # the parsers loop forever. @docusaurus/mdx-loader calls it to size every local image in the docs. Until 2.0.3 this
   # repository shipped its own patch for 2.0.2, the last release of the archived upstream.

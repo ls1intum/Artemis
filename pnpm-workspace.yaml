@@ -168,7 +168,7 @@ overrides:
   # and CVE-2026-75931 (host confusion / SSRF via URI normalization).
   fast-uri: '4.2.3'
   globals: '17.14.0'
-  http-proxy-middleware: '4.2.1'
+  http-proxy-middleware: '4.2.2'
   immutable: '5.2.1'
   # Moved to 5.x on 2026-11-14 although cosmiconfig asks for ^4: it is only used by stylelint and other lint tooling, which pass.
   js-yaml: '5.5.0'

@@ -174,7 +174,7 @@ overrides:
   colord: 2.12.0
   fast-uri: 4.2.3
   follow-redirects: 1.16.3
-  http-proxy-middleware: 4.2.1
+  http-proxy-middleware: 4.2.2
   image-size: 2.1.0
   joi: 18.3.2
   js-yaml: 5.5.0
@@ -3794,8 +3794,8 @@ packages:
     resolution: {integrity: sha512-4FbRdAX+bSdmo4AUFuS0WNiPz8NgFt+r8ThgNWmlrjQjt1Q7ZR9+zTlce2859x4KSXrwIsaeTqDoKQmtP8pLmQ==}
     engines: {node: '>= 0.8'}
 
-  http-proxy-middleware@4.2.1:
-    resolution: {integrity: sha512-60SmYZpPD4dPbC2GZVkVV4uP/V/cbsXSwzGQXeHWbbE3Q1XdccJpqHTg6NJ6iMpFGVA1OEry8c8kHhx4ahiU1w==}
+  http-proxy-middleware@4.2.2:
+    resolution: {integrity: sha512-GHP6tbjWsdSZbWSyqYvwPwoR76ozJ2IccVYoBR702N9vfqO0KBIwJ9vkDRErxwbb5Z6ej2Wn+9D/YitlUTseSQ==}
     engines: {node: ^22.15.0 || ^24.0.0 || >=26.0.0}
 
   http2-wrapper@2.2.1:
@@ -11073,7 +11073,7 @@ snapshots:
       statuses: 2.0.2
       toidentifier: 1.0.1
 
-  http-proxy-middleware@4.2.1(supports-color@8.1.1):
+  http-proxy-middleware@4.2.2(supports-color@8.1.1):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
       httpxy: 0.5.6
@@ -13592,7 +13592,7 @@ snapshots:
       connect-history-api-fallback: 2.0.0
       express: 5.3.0(supports-color@8.1.1)
       graceful-fs: 4.2.11
-      http-proxy-middleware: 4.2.1(supports-color@8.1.1)
+      http-proxy-middleware: 4.2.2(supports-color@8.1.1)
       ipaddr.js: 2.5.0
       launch-editor: 2.14.2
       open: 11.0.4

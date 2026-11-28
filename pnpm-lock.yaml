@@ -337,7 +337,7 @@ overrides:
   esbuild: 0.28.2
   fast-uri: 4.2.3
   globals: 17.14.0
-  http-proxy-middleware: 4.2.1
+  http-proxy-middleware: 4.2.2
   immutable: 5.2.1
   js-yaml: 5.5.0
   jsdom: 30.0.1
