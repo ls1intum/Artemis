@@ -330,6 +330,22 @@ use `supporting_scripts/client/duplicate-dependencies-allowlist.json` only with 
 as the duplicate is gone. Do not add a direct dependency that overlaps one we already ship. Details:
 [Duplicate dependencies](../../documentation/docs/developer/guidelines/client-development.mdx#duplicate-dependencies).
 
+## Tools fetched on demand
+
+publint, AreTheTypesWrong, knip and Lighthouse are not dependencies: the script that runs them fetches an exact version
+with `pnpm dlx` and declares it as a constant under a `// renovate:` comment. Follow that pattern for a tool that only a
+script uses instead of adding a dependency. Details:
+[Tools fetched on demand](../../documentation/docs/developer/guidelines/client-development.mdx#tools-fetched-on-demand).
+
+## Importing Apollon
+
+The root `@tumaet/apollon` is the whole modeling editor (about 1.3 MB raw). Import `importDiagram`, the Y.Doc helpers and the `UMLModel`
+type from `@tumaet/apollon/model`; `no-restricted-imports` fails the lint run on the values from the root. Only code that creates or
+renders an editor imports from the root. A component that uses `ModelingEditorComponent` in its template outside a `@defer` block loads
+the editor with every route that imports it. Inside `@defer` the import is lazy only if the editor component is standalone and the file
+references it nowhere else, such as in a query (`viewChild`) or in the class body. Details:
+[Importing Apollon](../../documentation/docs/developer/guidelines/client-development.mdx#importing-apollon).
+
 ## Other rules worth knowing
 
 Prefer `undefined` over `null`. Aim for full type safety; `localRules/no-as-any-cast` and
