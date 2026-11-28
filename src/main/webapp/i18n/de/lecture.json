@@ -32,6 +32,7 @@
             "channelName": "Kanalname",
             "channelNameHint": "Studierende besprechen die Vorlesung in einem Kurskanal mit diesem Namen. Er folgt dem Titel und darf Kleinbuchstaben, Ziffern und Bindestriche enthalten.",
             "description": "Beschreibung",
+            "descriptionMaxLength": "Die Beschreibung darf höchstens {{ max }} Zeichen lang sein.",
             "startDate": "Start",
             "endDate": "Ende",
             "course": "Kurs",
@@ -72,6 +73,7 @@
                 "createHint": "Speichere die Vorlesung, um Inhalte hinzuzufügen.",
                 "nothingToSave": "Die Vorlesungsdetails haben keine Änderungen zum Speichern. Inhalte werden automatisch gespeichert.",
                 "detailsIncomplete": "Fülle die Pflichtangaben aus, um zu speichern.",
+                "descriptionTooLong": "Kürze die Vorlesungsbeschreibung, um zu speichern.",
                 "periodInvalid": "Korrigiere den Zeitraum der Vorlesung, um zu speichern.",
                 "savingContent": "Inhalte werden gespeichert…"
             },
