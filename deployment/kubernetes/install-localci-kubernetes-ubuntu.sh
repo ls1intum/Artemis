@@ -220,6 +220,10 @@ generate_credentials() {
     mkdir -p "$STATE_DIRECTORY"
     chmod 700 "$STATE_DIRECTORY"
     if [[ -f "$CREDENTIALS_FILE" ]]; then
+        if ! grep -q '^REDIS_PASSWORD=' "$CREDENTIALS_FILE"; then
+            require_command openssl
+            printf 'REDIS_PASSWORD=%s\n' "$(openssl rand -hex 24)" >>"$CREDENTIALS_FILE"
+        fi
         log "Reusing the credentials in ${CREDENTIALS_FILE}"
         return
     fi
@@ -229,7 +233,7 @@ generate_credentials() {
         printf 'ARTEMIS_ADMIN_PASSWORD=%s\n' "$(openssl rand -base64 24 | tr -d '\n/+=' | cut -c1-24)"
         printf 'ARTEMIS_JWT_BASE64_SECRET=%s\n' "$(openssl rand -base64 64 | tr -d '\n')"
         printf 'POSTGRES_PASSWORD=%s\n' "$(openssl rand -base64 24 | tr -d '\n/+=' | cut -c1-24)"
-        printf 'REGISTRY_PASSWORD=%s\n' "$(openssl rand -base64 24 | tr -d '\n/+=' | cut -c1-24)"
+        printf 'REDIS_PASSWORD=%s\n' "$(openssl rand -base64 24 | tr -d '\n/+=' | cut -c1-24)"
         printf 'BROKER_PASSWORD=%s\n' "$(openssl rand -base64 24 | tr -d '\n/+=' | cut -c1-24)"
     } >"$CREDENTIALS_FILE"
     chmod 600 "$CREDENTIALS_FILE"
@@ -281,8 +285,8 @@ postgresql:
     accessMode: ReadWriteOnce
     size: 10Gi
 
-registry:
-  password: "${REGISTRY_PASSWORD}"
+redis:
+  password: "${REDIS_PASSWORD}"
 
 broker:
   deploy: true
@@ -320,7 +324,7 @@ EOF
 }
 
 install_chart() {
-    log "Installing the chart (this pulls PostgreSQL, the registry, and the broker on a first run)"
+    log "Installing the chart (this pulls PostgreSQL, Valkey, and the broker on a first run)"
     kube helm upgrade --install "$RELEASE_NAME" "${REPO_ROOT}/deployment/helm/artemis" \
         --namespace "$ARTEMIS_NAMESPACE" \
         --create-namespace \

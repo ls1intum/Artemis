@@ -21,11 +21,7 @@ public class ArtemisProperties {
 
     private final Security security = new Security();
 
-    private final Cache cache = new Cache();
-
     private final ClientApp clientApp = new ClientApp();
-
-    private final Registry registry = new Registry();
 
     private CorsConfiguration cors = new CorsConfiguration();
 
@@ -41,16 +37,8 @@ public class ArtemisProperties {
         return security;
     }
 
-    public Cache getCache() {
-        return cache;
-    }
-
     public ClientApp getClientApp() {
         return clientApp;
-    }
-
-    public Registry getRegistry() {
-        return registry;
     }
 
     public CorsConfiguration getCors() {
@@ -212,38 +200,6 @@ public class ArtemisProperties {
         }
     }
 
-    public static class Cache {
-
-        private final Hazelcast hazelcast = new Hazelcast();
-
-        public Hazelcast getHazelcast() {
-            return hazelcast;
-        }
-
-        public static class Hazelcast {
-
-            private int timeToLiveSeconds = 3600;
-
-            private int backupCount = 1;
-
-            public int getTimeToLiveSeconds() {
-                return timeToLiveSeconds;
-            }
-
-            public void setTimeToLiveSeconds(int timeToLiveSeconds) {
-                this.timeToLiveSeconds = timeToLiveSeconds;
-            }
-
-            public int getBackupCount() {
-                return backupCount;
-            }
-
-            public void setBackupCount(int backupCount) {
-                this.backupCount = backupCount;
-            }
-        }
-    }
-
     public static class ClientApp {
 
         private String name = "";
@@ -257,16 +213,4 @@ public class ArtemisProperties {
         }
     }
 
-    public static class Registry {
-
-        private String password = "";
-
-        public String getPassword() {
-            return password;
-        }
-
-        public void setPassword(String password) {
-            this.password = password;
-        }
-    }
 }

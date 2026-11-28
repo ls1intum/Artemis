@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.IrisCommandCoordinationService;
 
 /**
  * Unit tests for {@link IrisCommandWebsocketController}. The controller is the trust boundary for client acks, so the focus is on rejecting payloads that the coordination service
- * cannot handle (a null correlation id would fail the correlation-id lookup in the Hazelcast topic listener on every node).
+ * cannot handle (a null correlation id would fail the correlation-id lookup in the distributed topic listener on every node).
  */
 @ExtendWith(MockitoExtension.class)
 class IrisCommandWebsocketControllerTest {

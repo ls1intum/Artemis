@@ -2,7 +2,7 @@
 id: jenkins-localvc
 title: Jenkins and LocalVC Setup
 sidebar_label: Jenkins and LocalVC Setup
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -25,6 +25,10 @@ import authorizationPermissions from './assets/jenkins/jenkins_authorization_per
     and plan the migration of existing ones with the [Jenkins to LocalCI migration guide](/admin/jenkins-to-localci-migration).
     See also [Planned removals in Artemis 11](/admin/upgrade-guide#planned-removals-in-artemis-11).
 </Callout>
+
+For Artemis 10.9, a single Artemis core can use the default `Local` distributed data provider with Jenkins,
+including when Jenkins uses several executors. If you run multiple Artemis cores or a separate Artemis AI worker,
+configure Redis or Valkey for those processes. See the [10.9 upgrade instructions](/admin/upgrade-guide#select-the-distributed-data-provider).
 
 This section describes how to set up a programming exercise environment based on Jenkins and LocalVC, which is integrated in Artemis.
 Optional commands are in curly brackets `{}`.

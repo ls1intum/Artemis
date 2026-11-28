@@ -31,8 +31,8 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
  * which {@code @JsonIgnore} does not affect at all.</li>
  * <li>The database, closed by {@link BuildJob} copying named fields only.</li>
  * </ul>
- * The last test asserts the opposite direction: the token must survive Java serialization, or the agent never receives
- * it and every https clone silently falls back to the deprecated shared credential.
+ * The last test asserts the opposite direction: the token must survive serialization into the processing map, where a core node
+ * reads it to authorize a clone.
  */
 class BuildJobCloneTokenLeakTest {
 
@@ -76,9 +76,7 @@ class BuildJobCloneTokenLeakTest {
     }
 
     /**
-     * The inverse guard. Hazelcast transports this record with Java serialization, so if the token stopped surviving a
-     * round trip the agent would silently fall back to the deprecated shared credential, or fail to clone where none
-     * is configured. That failure would look like a configuration problem rather than a regression here.
+     * The processing map stores build jobs with Java serialization. Reading a job must preserve its clone token.
      */
     @Test
     void shouldKeepTheCloneTokenThroughJavaSerialization() throws IOException, ClassNotFoundException {
@@ -93,8 +91,7 @@ class BuildJobCloneTokenLeakTest {
             restored = (BuildJobQueueItem) in.readObject();
         }
 
-        assertThat(restored.cloneToken()).as("the agent receives the token through the distributed queue, which Hazelcast serializes with Java serialization")
-                .isEqualTo(CLONE_TOKEN);
+        assertThat(restored.cloneToken()).as("the processing map preserves the clone token").isEqualTo(CLONE_TOKEN);
     }
 
     /**

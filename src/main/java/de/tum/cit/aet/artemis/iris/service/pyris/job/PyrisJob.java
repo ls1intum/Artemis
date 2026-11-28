@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 /**
  * This interface represents a single job that is executed by the Pyris system.
  * This is used to reference the details of a job when Pyris sends a status update.
- * As it is stored within Hazelcast, it must be serializable.
+ * As it is stored in a distributed map, it must be serializable.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public interface PyrisJob extends Serializable {

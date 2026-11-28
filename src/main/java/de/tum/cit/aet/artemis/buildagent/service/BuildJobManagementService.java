@@ -120,7 +120,7 @@ public class BuildJobManagementService {
 
     /**
      * Scheduled future for retrying cluster connection and initialization.
-     * This is used when the build agent starts before any core node is available.
+     * This is used when a build agent cannot yet initialize its distributed topic.
      * Uses AtomicReference for thread-safe check-then-act operations.
      */
     private final AtomicReference<ScheduledFuture<?>> connectionRetryFuture = new AtomicReference<>();
@@ -130,11 +130,6 @@ public class BuildJobManagementService {
      * Uses AtomicBoolean to ensure thread-safe access from the retry task.
      */
     private final AtomicBoolean initialized = new AtomicBoolean(false);
-
-    /**
-     * UUID of the cancel build job message listener. Stored to allow removal on reconnection.
-     */
-    private java.util.UUID cancelListenerId;
 
     /**
      * Guards job lifecycle state transitions that must be atomic across multiple data structures:
@@ -210,40 +205,14 @@ public class BuildJobManagementService {
     /**
      * Initialize the service by setting up the cancel listener for build jobs.
      * <p>
-     * When running as a Hazelcast client with asyncStart=true, the client may not yet be
-     * connected to the cluster when this method is called. In that case, we schedule
-     * periodic retries until the connection is established and initialization completes.
-     * <p>
-     * Additionally, a connection state listener is registered to handle reconnection after
-     * a connection loss. When the client reconnects to the cluster, the listener re-initializes
-     * the distributed topic listener which may have been lost during the disconnection.
+     * If the provider is unavailable during startup, the service retries initialization periodically.
      * <p>
      * EventListener cannot be used here, as the bean is lazy
      * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
     @PostConstruct
     public void init() {
-        // Register a connection state listener to handle both initial connection and reconnection.
-        // On reconnection (isInitialConnection=false), the topic listener needs to be re-registered
-        // because it may have been lost when the connection was interrupted.
-        distributedDataAccessService.addConnectionStateListener(isInitialConnection -> {
-            if (!isInitialConnection) {
-                // This is a reconnection - reset the initialized flag so listeners are re-registered
-                log.info("Reconnected to the distributed data provider. Re-initializing BuildJobManagementService listeners.");
-                initialized.set(false);
-            }
-            boolean initSucceeded = tryInitialize();
-            // If initialization failed, schedule retries (handles both connection issues and transient failures)
-            if (!initSucceeded) {
-                scheduleConnectionRetryIfNeeded();
-            }
-        });
-
-        // If already connected, tryInitialize was called by the listener above.
-        // If not connected yet, schedule periodic retries as a fallback.
-        if (!initialized.get() && !distributedDataAccessService.isConnectedToCluster()) {
-            log.info("Not connected to the distributed data provider yet. Scheduling periodic initialization retries every {} seconds.",
-                    CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
+        if (!tryInitialize()) {
             scheduleConnectionRetryIfNeeded();
         }
     }
@@ -273,9 +242,7 @@ public class BuildJobManagementService {
     /**
      * Attempts to initialize the cancel listener for build jobs.
      * <p>
-     * This method checks if the Hazelcast client is connected to the cluster before
-     * attempting to access distributed data structures. If not connected, it returns
-     * false so the caller can retry later.
+     * Returns false while the provider is disconnected so the caller can retry.
      *
      * @return true if initialization succeeded, false if not connected to cluster
      */
@@ -292,13 +259,7 @@ public class BuildJobManagementService {
         try {
             var canceledBuildJobsTopic = distributedDataAccessService.getCanceledBuildJobsTopic();
 
-            // Remove old listener if it exists (prevents duplicate listeners on reconnection)
-            if (cancelListenerId != null) {
-                canceledBuildJobsTopic.removeMessageListener(cancelListenerId);
-                cancelListenerId = null;
-            }
-
-            cancelListenerId = canceledBuildJobsTopic.addMessageListener(buildJobId -> {
+            canceledBuildJobsTopic.addMessageListener(buildJobId -> {
                 jobLifecycleLock.lock();
                 try {
                     if (runningFutures.containsKey(buildJobId)) {

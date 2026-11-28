@@ -12,15 +12,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
 
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RLock;
 import org.redisson.api.RSet;
 
-import de.tum.cit.aet.artemis.core.service.distributed.api.lock.AbstractDistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.AbstractDistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.set.AbstractDistributedSet;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalSet;
+import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedSet;
 
 class DistributedDelegationTest {
@@ -84,9 +84,8 @@ class DistributedDelegationTest {
 
     @Test
     void lockPreservesTimeoutAndInterruption() throws Exception {
-        Lock nativeLock = mock(Lock.class);
-        var lock = new AbstractDistributedLock(nativeLock) {
-        };
+        RLock nativeLock = mock(RLock.class);
+        var lock = new RedissonDistributedLock(nativeLock);
         lock.lock();
         lock.unlock();
         verify(nativeLock).lock();

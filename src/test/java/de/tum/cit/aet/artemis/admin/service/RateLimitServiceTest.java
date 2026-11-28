@@ -38,14 +38,14 @@ import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
 import io.github.bucket4j.ConsumptionProbe;
 import io.github.bucket4j.distributed.BucketProxy;
-import io.github.bucket4j.grid.hazelcast.HazelcastProxyManager;
+import io.github.bucket4j.distributed.proxy.ProxyManager;
 
 @ExtendWith(MockitoExtension.class)
 @Isolated("Captures rejection logs without concurrent Spring logging reconfiguration")
 class RateLimitServiceTest {
 
     @Mock
-    private HazelcastProxyManager<String> proxyManager;
+    private ProxyManager<String> proxyManager;
 
     @Mock
     private RateLimitConfigurationService configurationService;

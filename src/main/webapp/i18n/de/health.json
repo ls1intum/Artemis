@@ -16,10 +16,6 @@
             "noBuildAgents": "Keine Build Agents gemeldet."
         },
         "indicator": {
-            "clientConfigServer": "Client Config Server",
-            "discoveryComposite": "Discovery Composite",
-            "configServer": "Microservice Config Server",
-            "hystrix": "Hystrix",
             "diskSpace": "Festplattenspeicher",
             "mail": "E-Mail",
             "db": "Datenbank",
@@ -28,8 +24,6 @@
             "readinessState": "Bereitschaft",
             "continuousIntegrationServer": "Kontinuierlicher Integrationsserver",
             "versionControlServer": "Versionskontrollserver",
-            "hazelcast": "Hazelcast",
-            "JHipsterRegistry": "JHipsterRegistry (Eureka Service Registry)",
             "websocketBroker": "Websocket Broker (Server -> Broker)",
             "athena": "Athena",
             "apollon": "Apollon Conversion Server",
@@ -38,8 +32,7 @@
             "hermes": "Hermes Push Notifications",
             "sharing": "Sharing Plattform Connector",
             "redis": "Redis",
-            "weaviate": "Weaviate",
-            "reactiveDiscoveryClients": "Reactive Discovery Clients"
+            "weaviate": "Weaviate"
         },
         "table": {
             "service": "Dienst Name",

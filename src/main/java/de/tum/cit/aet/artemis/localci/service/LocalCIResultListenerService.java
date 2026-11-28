@@ -42,7 +42,7 @@ public class LocalCIResultListenerService {
      * Processes any queued build results from the distributed build result queue.
      * <p>
      * This method is a fallback mechanism that runs on each core node every five
-     * seconds. It ensures that no results remain unprocessed in the Hazelcast-backed
+     * seconds. It ensures that no results remain unprocessed in the distributed
      * queue, for example if listener events were lost under high system load or
      * during short network interruptions.
      * </p>

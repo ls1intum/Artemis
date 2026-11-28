@@ -174,7 +174,7 @@ public class AtlasAgentService {
                     competencyPreviews != null ? competencyPreviews.size() : "null", relationPreviews != null ? relationPreviews.size() : "null", exerciseMappingPreview != null,
                     response != null ? response.length() : 0);
 
-            // Store preview data in Hazelcast cache (keyed by assistant message index) instead of embedding markers in chat memory.
+            // Store preview data in distributed cache (keyed by assistant message index) instead of embedding markers in chat memory.
             // Delegation has already stored a nonblank response, so its index is count - 1.
             if (hasPreviewData && replyIsPersisted(response)) {
                 int assistantIndex = countAssistantMessages(sessionId) - 1;

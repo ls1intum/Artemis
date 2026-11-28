@@ -2,7 +2,7 @@
 id: e2e-testing-playwright
 title: E2E Testing with Playwright
 sidebar_label: E2E Testing with Playwright
-last_reviewed: 2026-11-17
+last_reviewed: 2026-11-28
 ---
 
 import Callout from '../../src/components/Callout/Callout';
@@ -695,10 +695,7 @@ To request full CI and E2E for a branch, dispatch the **CI** workflow with `forc
 gh workflow run ci.yml --ref <branch> -f force_build=true
 ```
 
-Non-PR E2E uses the multi-node stack (three Artemis nodes behind nginx) with Redis (Valkey) as the distributed
-data provider, so no Hazelcast instance is created. The suite runs once, not once per provider, because E2E
-cleanup stops every container on its host. Locally, `run-e2e-tests-local-multinode.sh --middleware redis`
-(or the `-fast` variant) runs the same configuration; the default `hazelcast` middleware uses the embedded cluster.
+Non-PR E2E uses three Artemis nodes behind nginx and a shared Valkey store. The local multi-node runners use the same provider.
 
 The isolated E2E stacks exempt their loopback and private Docker client addresses from server-side
 rate limits through `ARTEMIS_RATELIMITING_EXEMPTADDRESSES`. Parallel workers share an address and
@@ -1111,7 +1108,7 @@ an existing spec starts exercising another module, as well as when a new spec is
                 <strong>System Status</strong>
             </td>
             <td>System status indicators</td>
-            <td>Continuous integration & VC server health; Database, Hazelcast, and WebSocket health; Readiness and ping checks</td>
+            <td>Continuous integration & VC server health; database and WebSocket health; Readiness and ping checks</td>
         </tr>
     </tbody>
 </table>

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * This service is only present on a node that runs the 'scheduling' profile.
- * As this node can handle all the processing without interaction with another node, everything is handled locally (without Hazelcast).
+ * As this node can handle all the processing without interaction with another node, everything is handled locally.
  * Important: There is no need to go through the broker, as this class is only active on the main instance!
  */
 @Lazy

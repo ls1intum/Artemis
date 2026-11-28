@@ -51,7 +51,7 @@ postgresql:
   persistence:
     size: 5Gi
 
-registry:
+redis:
   password: admin
 
 broker:

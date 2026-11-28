@@ -179,7 +179,7 @@ public class RedissonDistributedQueue<T> implements DistributedQueue<T> {
     @Override
     public String getName() {
         // The logical name rather than the Redis key: the namespace is an implementation detail of this provider, and
-        // Hazelcast answers with the plain name, so leaking the prefix here would make the two disagree.
+        // Expose the logical queue name to callers.
         return logicalName;
     }
 }

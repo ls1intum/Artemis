@@ -38,13 +38,11 @@ public class AtlasAgentSessionCacheService {
 
     /**
      * Cache name for tracking pending competency operations for each session.
-     * Must be configured in HazelcastConfiguration with appropriate TTL (2 hours recommended).
      */
     public static final String ATLAS_SESSION_PENDING_OPERATIONS_CACHE = "atlas-session-pending-operations";
 
     /**
      * Cache name for tracking pending relation operations for each session.
-     * Must be configured in CacheConfiguration with appropriate TTL (2 hours recommended).
      */
     public static final String ATLAS_SESSION_PENDING_RELATIONS_CACHE = "atlas-session-pending-relations";
 
@@ -62,9 +60,7 @@ public class AtlasAgentSessionCacheService {
     public static final String ATLAS_SESSION_PREVIEW_HISTORY_CACHE = "atlas-session-preview-history";
 
     /**
-     * Matches the two hours that {@code HazelcastConfiguration.createAtlasSessionMapConfig} sets for this map. Requested
-     * explicitly, because {@link DistributedDataProvider#getMap} returns a map whose entries never expire, so on a
-     * provider that does not read the Hazelcast map configuration the history of every session would be kept forever.
+     * Retention for per-session preview history, including abandoned sessions.
      */
     private static final Duration PREVIEW_HISTORY_TIME_TO_LIVE = Duration.ofHours(2);
 

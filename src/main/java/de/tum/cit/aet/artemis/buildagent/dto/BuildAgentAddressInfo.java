@@ -11,30 +11,17 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * The network addresses a build agent is observed to connect to the cluster from.
+ * A build agent periodically asks the core's git endpoint which address it observed and publishes the result under
+ * its short name. The provider expires the report when the agent stops refreshing it. Core nodes use the report to
+ * check the origin of git requests and to display the agent's network status.
  * <p>
- * Written by the core nodes rather than by the agent, and derived from the remote address of the agent's own
- * cluster connection. An agent cannot influence its entry, which is what makes this usable for authorizing the
- * agent's git requests: {@code BuildAgentDTO.memberAddress} is the agent's view of its local socket, so it is
- * pre-NAT and forgeable, while these addresses are what the middleware actually accepted the connection from.
- * <p>
- * An entry exists only while the agent holds a live cluster connection. That is what lets the per-build-job
- * clone token do without an expiry: a crashed agent that left a job behind in the processing list no longer has
- * a registered address, so a token recovered from that job fails the origin check.
- * <p>
- * NOTE: this data structure is shared between core and build agent nodes. Changing it requires that the shared
- * data structures in Hazelcast (or Redis) are migrated or cleared. Changes should be communicated in release
- * notes as potentially breaking changes.
+ * Core and build agents share this record. Changes to its serialized form must account for existing Redis entries.
  *
- * @param agentName       the build agent short name, which is also the key of this entry, the key of the build
- *                            agent information map and the name the middleware knows the client connection by
- * @param addresses       the host addresses the agent is currently observed to connect from, without ports.
- *                            More than one is normal while an agent reconnects, and several agents behind one
- *                            NAT gateway legitimately share an address
- * @param observedAt      when a core node last refreshed this entry
- * @param withinAllowlist whether every observed address lies inside the configured build agent network ranges.
- *                            Always {@code true} when no ranges are configured, since an empty allowlist means
- *                            no restriction
+ * @param agentName       the build agent short name and key of the report
+ * @param addresses       the host addresses observed at the git endpoint, without ports
+ * @param observedAt      when the agent measured the address
+ * @param withinAllowlist whether all addresses fall within the configured build agent network ranges, computed by
+ *                            the core for display. An empty allowlist permits every address.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

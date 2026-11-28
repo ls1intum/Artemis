@@ -12,7 +12,6 @@ import { MetricsSystemComponent } from './blocks/metrics-system/metrics-system.c
 import { MetricsGarbageCollectorComponent } from './blocks/metrics-garbagecollector/metrics-garbagecollector.component';
 import { MetricsRequestComponent } from './blocks/metrics-request/metrics-request.component';
 import { MetricsEndpointsRequestsComponent } from './blocks/metrics-endpoints-requests/metrics-endpoints-requests.component';
-import { MetricsCacheComponent } from './blocks/metrics-cache/metrics-cache.component';
 import { MetricsDatasourceComponent } from './blocks/metrics-datasource/metrics-datasource.component';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
@@ -36,7 +35,6 @@ interface NodeOption {
         MetricsGarbageCollectorComponent,
         MetricsRequestComponent,
         MetricsEndpointsRequestsComponent,
-        MetricsCacheComponent,
         MetricsDatasourceComponent,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,

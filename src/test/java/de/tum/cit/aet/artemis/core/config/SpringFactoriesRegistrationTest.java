@@ -25,8 +25,8 @@ import org.springframework.boot.EnvironmentPostProcessor;
 class SpringFactoriesRegistrationTest {
 
     @Test
-    void shouldRegisterTheRedisDiscoveryEnvironmentPostProcessorUnderTheInterfaceSpringReads() throws IOException {
-        String registeredClass = RedisDiscoveryEnvironmentPostProcessor.class.getName();
+    void shouldRegisterTheFileUploadPathProcessorUnderTheInterfaceSpringReads() throws IOException {
+        String registeredClass = FileUploadPathEnvironmentPostProcessor.class.getName();
         List<String> keysDeclaringIt = new ArrayList<>();
 
         for (URL resource : Collections.list(getClass().getClassLoader().getResources("META-INF/spring.factories"))) {

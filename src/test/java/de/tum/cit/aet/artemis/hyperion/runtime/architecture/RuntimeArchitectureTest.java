@@ -38,8 +38,9 @@ class RuntimeArchitectureTest {
 
     @Test
     void runtimeCannotUseDatabaseGridOrIncomingWebServices() {
-        noClasses().should().dependOnClassesThat().resideInAnyPackage("java.sql..", "javax.sql..", "jakarta.persistence..", "org.springframework.data..", "org.hibernate..",
-                "com.hazelcast..", "org.redisson..", "org.springframework.jdbc..", "jakarta.servlet..", "org.springframework.web.servlet..", "org.springframework.web.socket..")
+        noClasses()
+                .should().dependOnClassesThat().resideInAnyPackage("java.sql..", "javax.sql..", "jakarta.persistence..", "org.springframework.data..", "org.hibernate..",
+                        "org.redisson..", "org.springframework.jdbc..", "jakarta.servlet..", "org.springframework.web.servlet..", "org.springframework.web.socket..")
                 .check(classes);
     }
 

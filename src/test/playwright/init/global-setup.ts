@@ -36,7 +36,7 @@ async function globalSetup(config: FullConfig) {
     // Pre-authenticate all users and cache JWT tokens
     const adminJwt = await preAuthenticateUsers();
 
-    // Warm up server caches (JIT, Hibernate, Hazelcast, connection pools) by hitting a curated
+    // Warm up server caches (JIT, Hibernate, connection pools) by hitting a curated
     // set of slow read endpoints in parallel. Eliminates the 30-90s cold-start tail that
     // otherwise causes the first test of each feature area to hang on its initial waitForResponse.
     if (adminJwt) {
@@ -136,8 +136,7 @@ async function preAuthenticateUsers(): Promise<string | undefined> {
 
 /**
  * Pre-warm a curated set of read-only server endpoints with the admin JWT to force
- * JIT compilation of the Spring controller chain, populate Hibernate query plans and
- * second-level caches, initialize Hazelcast partition ownership, and fill the JDBC
+ * JIT compilation of the Spring controller chain, populate Hibernate query plans and fill the JDBC
  * connection pool. All seed IDs come from `support/seedData.ts` so a single source of
  * truth defines what the warmer touches.
  *

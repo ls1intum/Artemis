@@ -122,7 +122,7 @@ export default defineConfig({
                 viewport: { width: 1920, height: 1080 },
             },
         },
-        // Tests with @multi-node tag. These exercise the clustered Hazelcast / ActiveMQ stack and
+        // Tests with @multi-node tag. These exercise the Redis and ActiveMQ and
         // are skipped by the single-node fast pipeline. The multi-node runner opts in explicitly.
         // grepInvert excludes @kubernetes, because those tests need a Kubernetes cluster rather than
         // the Docker-based multi-node stack and would fail there on the configured build runner.

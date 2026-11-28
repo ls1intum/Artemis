@@ -15,62 +15,21 @@ import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.lang.ArchRule;
 
-/**
- * Keeps the distributed data provider abstraction the only way into Hazelcast and Redis.
- *
- * <p>
- * Artemis supports Hazelcast and Redis as interchangeable providers for all cross-node state, and intends to be able to
- * switch between them. That only holds as long as application code talks to
- * {@link de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider} rather than to a provider library directly:
- * a single {@code hazelcastInstance.getMap(...)} in a service silently pins the whole deployment to Hazelcast, and it
- * does so without failing any test, because the other provider simply never sees that state. That is exactly how the
- * abstraction drifted the first time, when 21 services across 8 modules had grown their own Hazelcast usage.
- *
- * <p>
- * The rules below therefore forbid every dependency on a provider library outside a small, explicitly named set of
- * infrastructure classes. Adding a class to {@link #INFRASTRUCTURE_ALLOWED_TO_USE_A_PROVIDER_LIBRARY_DIRECTLY} is a deliberate
- * decision that needs a reason recorded next to the entry, not a way to make a failing build green.
- */
+/** Restricts direct Redis dependencies to the infrastructure that implements the provider. */
 class DistributedDataProviderArchitectureTest extends AbstractArchitectureTest {
 
     /**
      * Packages of the provider libraries that application code must not reach into.
      */
-    private static final String[] PROVIDER_LIBRARY_PACKAGES = { "com.hazelcast..", "org.redisson..", "org.springframework.data.redis..", "org.springframework.boot.data.redis.." };
+    private static final String[] PROVIDER_LIBRARY_PACKAGES = { "org.redisson..", "org.springframework.data.redis..", "org.springframework.boot.data.redis.." };
 
-    /**
-     * The only production classes that may depend on a provider library directly.
-     *
-     * <p>
-     * Each entry is infrastructure that exists precisely to adapt one provider, and therefore cannot be written against
-     * the abstraction:
-     * <ul>
-     * <li>{@code core.service.distributed.hazelcast} / {@code core.service.distributed.redisson} — the two provider
-     * implementations the abstraction dispatches to.</li>
-     * <li>{@code HazelcastConfiguration}, {@code HazelcastClusterManager}, {@code HazelcastPathSerializer},
-     * {@code EurekaHazelcastDiscoveryStrategy(Factory)} — bootstrap of the Hazelcast instance and its cluster
-     * discovery, which has to exist before any provider can be built on top of it.</li>
-     * <li>{@code DisableRedisAutoConfig} — switches Spring Boot's Redis auto-configuration off when Redis is not the
-     * configured provider, so it necessarily names the auto-configuration classes.</li>
-     * <li>{@code RedissonCodecConfiguration} — aligns Redis serialization with Hazelcast's, which means naming the
-     * Redisson codec.</li>
-     * <li>{@code RateLimitConfig} — Bucket4j ships one storage module per provider and offers no common abstraction, so
-     * the bean that selects the storage has to name both.</li>
-     * <li>{@code HazelcastHealthIndicator}, {@code RedisHealthIndicator}, {@code ArtemisMetricsEndpoint} — report
-     * provider-specific health and statistics that have no equivalent on the other provider, and degrade to nothing when
-     * their provider is not the configured one.</li>
-     * </ul>
-     */
-    private static final List<String> INFRASTRUCTURE_ALLOWED_TO_USE_A_PROVIDER_LIBRARY_DIRECTLY = List.of("de.tum.cit.aet.artemis.core.service.distributed.hazelcast.",
-            "de.tum.cit.aet.artemis.core.service.distributed.redisson.", "de.tum.cit.aet.artemis.core.config.HazelcastConfiguration",
-            "de.tum.cit.aet.artemis.core.config.HazelcastClusterManager", "de.tum.cit.aet.artemis.core.config.HazelcastPathSerializer",
-            "de.tum.cit.aet.artemis.core.config.EurekaHazelcastDiscoveryStrategy", "de.tum.cit.aet.artemis.core.config.EurekaHazelcastDiscoveryStrategyFactory",
+    /** Redis adapters, configuration, rate limit storage and health checks require the provider library. */
+    private static final List<String> INFRASTRUCTURE_ALLOWED_TO_USE_A_PROVIDER_LIBRARY_DIRECTLY = List.of("de.tum.cit.aet.artemis.core.service.distributed.redisson.",
             "de.tum.cit.aet.artemis.core.config.RateLimitConfig", "de.tum.cit.aet.artemis.core.config.RedissonCodecConfiguration",
-            "de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint", "de.tum.cit.aet.artemis.core.service.connectors.HazelcastHealthIndicator",
             "de.tum.cit.aet.artemis.core.service.connectors.RedisHealthIndicator", "de.tum.cit.aet.artemis.config.DisableRedisAutoConfig");
 
     private static final String REASON = """
-            all cross-node state must go through DistributedDataProvider. Using Hazelcast or Redis directly pins the \
+            all cross-node state must go through DistributedDataProvider. Using Redis directly pins the \
             deployment to that provider without any test noticing, because the other provider never sees the state. If a \
             capability is genuinely missing from the abstraction, add it to DistributedDataProvider together with an \
             implementation for every provider and a case in AbstractDistributedDataTest, rather than reaching past it. \
@@ -106,7 +65,7 @@ class DistributedDataProviderArchitectureTest extends AbstractArchitectureTest {
         for (String allowed : INFRASTRUCTURE_ALLOWED_TO_USE_A_PROVIDER_LIBRARY_DIRECTLY) {
             boolean anyUsesAProviderLibrary = infrastructure.stream().filter(javaClass -> matches(javaClass.getFullName(), allowed))
                     .anyMatch(javaClass -> javaClass.getDirectDependenciesFromSelf().stream().anyMatch(dependency -> isProviderLibraryClass(dependency.getTargetClass())));
-            assertThat(anyUsesAProviderLibrary).as("Allowlist entry '%s' no longer uses Hazelcast or Redis directly, remove it", allowed).isTrue();
+            assertThat(anyUsesAProviderLibrary).as("Allowlist entry '%s' no longer uses Redis directly, remove it", allowed).isTrue();
         }
     }
 

@@ -15,10 +15,6 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 
 /**
  * Matches when Redis backs the distributed data provider on a node that needs one.
- *
- * <p>
- * See {@link HazelcastDistributedDataCondition} for why {@code core} is included alongside {@code localci} and
- * {@code buildagent}.
  */
 public class RedisDistributedDataCondition implements Condition {
 

@@ -25,7 +25,7 @@ function answerOptionsOf(quiz: QuizExercise, questionIndex = 0) {
  * <p>
  * The companion {@code QuizExerciseParticipation.spec.ts} already pins the live-mode UI flow with response-body assertions.
  * This file complements it by covering practice, training, and preview submission paths end-to-end (real HTTP through the
- * load balancer + Hazelcast cluster, real DB), each with strong assertions on the response shape and (where applicable) on
+ * load balancer and real DB), each with strong assertions on the response shape and (where applicable) on
  * the persisted state. Each test creates its own quiz exercise so the suite is safe to run in any order and on a multi-node
  * stack where the same test may execute on any node behind the round-robin LB.
  */

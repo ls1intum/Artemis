@@ -2,7 +2,7 @@
 id: terminology
 title: Terminology
 sidebar_label: Terminology
-last_reviewed: 2026-11-04
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -63,9 +63,9 @@ The rule is always the same: name the component. In this repository the componen
 | --- | --- |
 | The Angular application in `src/main/webapp` | the **client**, the **web client**, or the **user interface** |
 | The Spring Boot application in `src/main/java` | the **server**, the **application server**, or the specific service (`the grading service`, `the assessment service`) |
-| A swappable distributed data implementation (Hazelcast, Redis, Local) | a **provider**, matching `DistributedDataProvider` and `artemis.distributed-data.provider` |
+| A swappable distributed data implementation (Local or Redis) | a **provider**, matching `DistributedDataProvider` and `artemis.distributed-data.provider` |
 | The glue that binds one such implementation | an **adapter**, or a **provider implementation** |
-| The Hazelcast and Redisson client libraries | **provider libraries** |
+| The client libraries used to connect to Redis | **provider libraries** |
 | Weaviate's embedding component | the **embedding service** |
 | MySQL or PostgreSQL | the **database**, or the **dialect** where the difference is what matters |
 | The mail transport behind `MailSendingService` | the **mail transport** |
@@ -82,7 +82,7 @@ usually a sign the sentence has not decided what it is about yet.
 | "We should improve frontend performance." | "We should improve rendering performance in the user interface." |
 | "Let's deploy the backend." | "Let's deploy the assessment service to production." |
 | "The frontend consumes this DTO." | "The client consumes this DTO." |
-| "Implement it for all three backends." | "Implement it for all three providers." |
+| "Implement it for both backends." | "Implement it for both providers." |
 | "This is safe on both backends." | "This is safe on both databases." |
 
 ## Exceptions

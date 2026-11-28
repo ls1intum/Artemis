@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Arrays;
@@ -17,7 +16,6 @@ import org.springframework.boot.diagnostics.FailureAnalyzer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.PlaceholderResolutionException;
 
@@ -41,11 +39,8 @@ public class DeferredEagerBeanInitializer {
 
     private final ConfigurableApplicationContext context;
 
-    private final Environment env;
-
-    public DeferredEagerBeanInitializer(ConfigurableApplicationContext context, Environment env) {
+    public DeferredEagerBeanInitializer(ConfigurableApplicationContext context) {
         this.context = context;
-        this.env = env;
     }
 
     /**
@@ -54,17 +49,6 @@ public class DeferredEagerBeanInitializer {
      */
     public void initializeDeferredEagerBeans() {
         log.info("Start deferred eager initialization of all lazy singleton beans");
-        if (DistributedDataProviderResolver.isProvider(env, HAZELCAST)) {
-            try {
-                // Force eager initialization of HazelcastClusterManager first, so that connections are established as early as possible.
-                context.getBean(HazelcastClusterManager.class);
-                log.debug("Priority initialization of HazelcastClusterManager completed");
-            }
-            catch (Throwable ex) {
-                shutdownOnDeferredInitFailure("HazelcastClusterManager", ex);
-            }
-        }
-
         DefaultListableBeanFactory bf = (DefaultListableBeanFactory) context.getBeanFactory();
         Arrays.stream(bf.getBeanDefinitionNames()).filter(name -> {
             BeanDefinition def = bf.getBeanDefinition(name);

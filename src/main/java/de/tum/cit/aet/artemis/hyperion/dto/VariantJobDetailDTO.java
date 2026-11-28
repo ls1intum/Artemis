@@ -35,7 +35,7 @@ public record VariantJobDetailDTO(VariantJobDTO job, Map<VariantJobPhase, List<S
     }
 
     /**
-     * Maps the Hazelcast job record including step-output histories (EnumMap keeps pipeline/phase order).
+     * Maps the shared job record including step-output histories (EnumMap keeps pipeline/phase order).
      *
      * @param job the job record
      * @return the DTO

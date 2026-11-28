@@ -30,7 +30,6 @@ services:
         # expose the port to make it reachable docker internally even if the external port mapping changes
         expose:
             - "8080"
-            - "5701" # Hazelcast
             - "7921" # Git SSH
         networks:
             - artemis

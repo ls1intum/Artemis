@@ -36,9 +36,9 @@ class AiWorkerContractArchitectureTest {
     @Test
     void contractsAreIndependentOfImplementationsAndWorkloads() {
         noClasses().should().dependOnClassesThat().resideInAnyPackage("..hyperion..", "..aiworker.service..", "..aiworker.config..", "de.tum.cit.aet.artemis.core..",
-                "org.springframework..", "com.github.dockerjava..", "com.hazelcast..", "org.redisson..", "jakarta.persistence..").check(CLASSES);
+                "org.springframework..", "com.github.dockerjava..", "org.redisson..", "jakarta.persistence..").check(CLASSES);
         noClasses().should().dependOnClassesThat().resideInAnyPackage("..hyperion..", "..aiworker.service..", "..aiworker.config..", "de.tum.cit.aet.artemis.core..",
-                "org.springframework..", "com.github.dockerjava..", "com.hazelcast..", "org.redisson..", "jakarta.persistence..").check(PORTABLE_API);
+                "org.springframework..", "com.github.dockerjava..", "org.redisson..", "jakarta.persistence..").check(PORTABLE_API);
     }
 
     @Test

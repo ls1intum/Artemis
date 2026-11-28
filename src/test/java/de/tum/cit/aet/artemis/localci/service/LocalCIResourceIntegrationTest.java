@@ -281,31 +281,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     }
 
     /**
-     * The admin view has to show what actually authorizes a clone, which is the union of both sources: the addresses
-     * core nodes observed, and the ones the agents measured for themselves. Returning only the observed half would show
-     * an empty <i>Connects from</i> everywhere the middleware cannot observe an origin - every Redis installation -
-     * while the binding is in force, which is exactly the state an admin needs to be able to see.
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testGetBuildAgentAddresses_mergesObservedAndReported() throws Exception {
-        String agentName = agent1.buildAgent().name();
-        distributedDataAccessService.getDistributedBuildAgentAddresses().put(agentName, new BuildAgentAddressInfo(agentName, Set.of("10.0.0.5"), ZonedDateTime.now(), true));
-        distributedDataAccessService.getDistributedBuildAgentReportedAddresses().put(agentName,
-                new BuildAgentAddressInfo(agentName, Set.of("192.168.1.7"), ZonedDateTime.now(), true));
-        try {
-            var addresses = request.getList("/api/admin/build-agent-addresses", HttpStatus.OK, BuildAgentAddressInfo.class);
-
-            assertThat(addresses).singleElement().satisfies(info -> assertThat(info.addresses()).containsExactlyInAnyOrder("10.0.0.5", "192.168.1.7"));
-        }
-        finally {
-            distributedDataAccessService.getDistributedBuildAgentAddresses().remove(agentName);
-            distributedDataAccessService.getDistributedBuildAgentReportedAddresses().remove(agentName);
-        }
-    }
-
-    /**
-     * An agent known only from its own report - the Redis shape, where nothing can be observed - must still appear.
+     * The admin view includes the addresses measured on the git path.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")

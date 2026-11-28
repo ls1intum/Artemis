@@ -19,7 +19,6 @@ import org.springframework.stereotype.Component;
 
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.CacheStats;
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.DatabaseMetrics;
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.GarbageCollectorMetrics;
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.GaugeValue;
@@ -40,10 +39,6 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
  * <p>
  * Each node pushes a snapshot every 15 seconds. Stale entries (from nodes that
  * left the cluster) are evicted automatically via the map's time-to-live (60 seconds).
- * <p>
- * Note: uses the DistributedDataProvider (the abstraction is
- * scoped to LocalCI/BuildAgent profiles). When migrating to Redis, replace the
- * {@link #getMap()}, {@link #getLocalNodeId()}, and {@link #getLocalNodeLabel()} methods.
  */
 @Profile(PROFILE_CORE)
 @Component
@@ -115,7 +110,7 @@ public class NodeMetricsCollector {
     /**
      * Returns the latest metrics snapshot for a specific cluster node.
      *
-     * @param nodeId the Hazelcast member UUID of the node
+     * @param nodeId the identifier of the node
      * @return the metrics response, or null if the node is not found
      */
     public MetricsResponse getMetricsForNode(String nodeId) {
@@ -152,8 +147,7 @@ public class NodeMetricsCollector {
     // --- Aggregation ---
 
     private MetricsResponse aggregate(List<MetricsResponse> nodes) {
-        return new MetricsResponse(aggregateJvm(nodes), aggregateProcess(nodes), aggregateGc(nodes), aggregateHttp(nodes), aggregateCache(nodes), aggregateDatabases(nodes),
-                aggregateServices(nodes));
+        return new MetricsResponse(aggregateJvm(nodes), aggregateProcess(nodes), aggregateGc(nodes), aggregateHttp(nodes), aggregateDatabases(nodes), aggregateServices(nodes));
     }
 
     private Map<String, MemoryMetrics> aggregateJvm(List<MetricsResponse> nodes) {
@@ -229,20 +223,6 @@ public class NodeMetricsCollector {
             }
         }
         return new HttpRequestMetrics(new RequestCount(totalCount), perCode);
-    }
-
-    private Map<String, CacheStats> aggregateCache(List<MetricsResponse> nodes) {
-        Map<String, CacheStats> result = new TreeMap<>();
-        for (var node : nodes) {
-            if (node.cache() == null) {
-                continue;
-            }
-            for (var entry : node.cache().entrySet()) {
-                result.merge(entry.getKey(), entry.getValue(), (a, b) -> new CacheStats(a.hits() + b.hits(), a.misses() + b.misses(), a.puts() + b.puts(),
-                        a.evictions() + b.evictions(), a.removals() + b.removals(), a.size() + b.size()));
-            }
-        }
-        return result;
     }
 
     private DatabaseMetrics aggregateDatabases(List<MetricsResponse> nodes) {

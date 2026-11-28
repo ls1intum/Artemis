@@ -140,8 +140,7 @@ public class LocalVCBuildAgentAuthenticationService {
      * based - a job leaves the processing list when it finishes, is cancelled or hits the build timeout, and the token
      * stops working at that moment.
      * <p>
-     * The username is the agent's short name, which is an identifier and not a credential: it is the Hazelcast client
-     * name, the key of the build agent information map, and is shown in the admin UI. It selects whose jobs and whose
+     * The username is the agent's short name. It identifies the agent in the build agent information map, and is shown in the admin UI. It selects whose jobs and whose
      * addresses to check; the token is what authenticates.
      * <p>
      * Every failure falls through to normal user authentication rather than rejecting, because a short name could

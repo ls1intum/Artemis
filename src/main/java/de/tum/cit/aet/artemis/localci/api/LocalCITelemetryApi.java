@@ -31,25 +31,17 @@ public class LocalCITelemetryApi implements AbstractApi {
      */
     @Nullable
     public Integer getConnectedBuildAgentCount() {
-        var membership = provider.getClusterMembership();
-        var clients = membership.connectedClientNames();
-        var members = membership.clusterMemberAddresses();
-        if (clients.isEmpty() && members.isEmpty()) {
+        var members = provider.getClusterMemberAddresses();
+        if (members.isEmpty()) {
             return null;
         }
-        // Hazelcast can successfully observe zero clients. Its address API distinguishes that from an unavailable client service.
-        boolean clientMembershipUnknown = clients.isEmpty() && !provider.buildAgentsAppearInClusterMemberList() && provider.getConnectedClientAddresses().isEmpty();
         int count = 0;
         for (var information : data.getBuildAgentInformationMap().values()) {
             if (information == null || information.buildAgent() == null) {
                 continue;
             }
-            if (DistributedDataAccessService.appearsInMembership(information.buildAgent(), clients, members)) {
+            if (information.buildAgent().memberAddress() != null && members.contains(information.buildAgent().memberAddress())) {
                 count++;
-            }
-            else if (clientMembershipUnknown) {
-                // Do not classify unmatched agents as disconnected when the client lookup is unavailable.
-                return null;
             }
         }
         return count;

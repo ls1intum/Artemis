@@ -45,8 +45,7 @@ import de.tum.cit.aet.artemis.core.service.erroranalysis.ErrorAnalysisBuffer.Pen
  * <p>
  * The counts are per hour, which is as precise as the shortest time span needs. The two maps are bounded: at most
  * {@link ErrorAnalysisBuffer#MAX_GROUPS} groups, and an entry expires {@link ErrorAnalysisBuffer#RETENTION} after the last time
- * it was written. How long the data survives a restart depends on the provider: Hazelcast discards it when the whole cluster
- * stops, Redis keeps it. Only core nodes flush, so the errors of a build agent are not counted.
+ * it was written. The local provider loses its data on restart. A separate Redis instance retains it. Only core nodes flush, so the errors of a build agent are not counted.
  * <p>
  * Several nodes write the same entries, so every write is additive or a merge, and it is retried if another node wrote first.
  * <p>

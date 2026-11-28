@@ -246,7 +246,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
      * If the query param looks like an address (contains brackets and port), first tries to
      * resolve it to an agent name using the list of online agents. This handles the case where
      * the address in the URL has a different port than the current agent address (due to
-     * ephemeral Hazelcast client ports that change on reconnection).
+     * ephemeral client ports that change on reconnection).
      */
     loadAgentData() {
         // Check if agentName looks like an address (e.g., [192.168.1.1]:5701 or [2001:db8::1]:5701)

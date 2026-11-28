@@ -102,7 +102,6 @@ CLASS_ALLOWLIST: dict[str, str] = {
     "PostUpdateEventListener": "a Hibernate type that the page names",
     "PostDeleteEventListener": "a Hibernate type that the page names",
     "ExampleParticipationService": "an illustrative name in a guideline, not a real class",
-    "EntryListener": "a Hazelcast type that the page names to explain what the distributed data provider replaces",
     "TransactionSynchronizationManager": "a Spring type that the pages name to explain what a transaction boundary is needed for",
 }
 
@@ -110,6 +109,7 @@ CLASS_ALLOWLIST: dict[str, str] = {
 # An entry that ends with a dot also covers the keys below it, because the keys below a map are chosen by the administrator.
 PROPERTY_ALLOWLIST: dict[str, str] = {
     "artemis.atlas.orchestrator.max-atlasml-calls-per-run": "the AtlasML upgrade note explicitly tells administrators to remove this retired strict-binding setting",
+    "artemis.cache.hazelcast.time-to-live-seconds": "the 10.9 upgrade guide maps the retired cache setting to artemis.cache.time-to-live-seconds",
     "artemis.llm.model-costs": "the LLM configuration page tells administrators to remove this retired setting",
     "artemis.llm.endpoints.": "the keys below endpoints are endpoint names that the administrator chooses",
     "artemis.llm.presets.": "the keys below presets are preset names that the administrator chooses",

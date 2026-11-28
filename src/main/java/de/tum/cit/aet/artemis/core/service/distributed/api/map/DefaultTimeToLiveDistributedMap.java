@@ -7,9 +7,7 @@ import java.time.Duration;
  *
  * <p>
  * Deliberately provider-agnostic: each provider only implements per-entry TTL
- * ({@link DistributedMap#put(Object, Object, Duration)}), and the map-level default is layered on here. That keeps the
- * three providers from each reinventing the default, and it sidesteps Hazelcast's constraint that a map-level TTL comes
- * from a {@code MapConfig} which must exist before the proxy is created and cannot be registered from a client at all.
+ * ({@link DistributedMap#put(Object, Object, Duration)}). This class applies the configured default to ordinary puts.
  *
  * @param <K> key type
  * @param <V> value type

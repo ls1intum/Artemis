@@ -33,18 +33,11 @@ if [ "$CONFIGURATION" = "postgres" ]; then
   elif [ "$CONFIGURATION" = "postgres-localci" ]; then
     echo "Running for playwright (single node) with postgres-localci"
     COMPOSE_FILE="playwright-E2E-tests-postgres-localci.yml"
-  elif [ "$CONFIGURATION" = "multi-node" ]; then
-    echo "Running for playwright (multi-node)"
+  elif [ "$CONFIGURATION" = "multi-node" ] || [ "$CONFIGURATION" = "multi-node-redis" ]; then
+    echo "Running for Playwright (multi-node, Redis)"
     COMPOSE_FILE="playwright-E2E-tests-multi-node.yml"
-  elif [ "$CONFIGURATION" = "multi-node-redis" ]; then
-    echo "Running for playwright (multi-node, Redis distributed data provider)"
-    # Two files, spelled as the argument list `docker compose -f $COMPOSE_FILE` splits them into: the Redis file layers
-    # the Redis container and the per-node provider settings over the Hazelcast stack.
-    COMPOSE_FILE="playwright-E2E-tests-multi-node.yml -f playwright-E2E-tests-multi-node-redis.yml"
-    # ClusterFormation.spec.ts reads this to decide which node-identity shape it may assert.
-    export DISTRIBUTED_DATA_PROVIDER="redis"
   else
-      echo "Invalid configuration. Please choose among postgres, postgres-localci, multi-node or multi-node-redis."
+      echo "Invalid configuration. Please choose postgres, postgres-localci or multi-node."
       exit 1
 fi
 
@@ -76,9 +69,7 @@ rm -f ../../src/test/playwright/test-reports/.reporter-failed
 # ask Docker Hub: Docker Hub limits anonymous pulls per IP address and the runners share few addresses, so the
 # Docker Hub images of the stack come through the registry proxy and the others (ghcr.io, ...) directly.
 # --env-file ../../.env is needed because .env lives in the project root but we cd'd into deployment/docker/
-# COMPOSE_FILE intentionally contains both -f arguments for the Redis overlay.
-# shellcheck disable=SC2086
-STACK_IMAGES=$(docker compose --env-file ../../.env -f $COMPOSE_FILE config --images) || exit $?
+STACK_IMAGES=$(docker compose --env-file ../../.env -f "$COMPOSE_FILE" config --images) || exit $?
 STACK_IMAGES=$(printf '%s\n' "$STACK_IMAGES" | sort -u)
 # shellcheck disable=SC2086
 bash ../../supporting_scripts/ci/pull-through-registry-proxy.sh --refresh $STACK_IMAGES || exit $?
@@ -88,9 +79,7 @@ if [ -n "${ARTEMIS_EXPECTED_COMMIT_SHA:-}" ] || [ "${GITHUB_ACTIONS:-}" = "true"
     bash ../../supporting_scripts/ci/E2E-tests/verify-image-revision.sh || exit $?
 fi
 # Run the tests
-# COMPOSE_FILE intentionally contains both -f arguments for the Redis overlay.
-# shellcheck disable=SC2086
-docker compose --env-file ../../.env -f $COMPOSE_FILE up --exit-code-from artemis-playwright
+docker compose --env-file ../../.env -f "$COMPOSE_FILE" up --exit-code-from artemis-playwright
 
 exitCode=$?
 cd ../..

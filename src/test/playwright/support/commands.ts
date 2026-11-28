@@ -18,11 +18,7 @@ export class Commands {
         await Commands.logout(page);
         await page.context().clearCookies();
         const { username, password } = credentials;
-        // Retry the auth POST on transient 5xx — under heavy parallel multi-node load
-        // the JWT filter / Hazelcast cluster occasionally returns 503 for a few seconds
-        // while a node spins up its Eureka registration or rebalances. Bailing on the
-        // first attempt would surface as a flaky test failure that has nothing to do
-        // with the code under test.
+        // Retry transient authentication failures while the multi-node stack starts serving requests.
         const maxAttempts = 5;
         let response: Awaited<ReturnType<typeof page.request.post>> | undefined;
         for (let attempt = 0; attempt < maxAttempts; attempt++) {

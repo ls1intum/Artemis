@@ -12,7 +12,7 @@ import java.time.ZonedDateTime;
 import org.junit.jupiter.api.Test;
 
 /**
- * Guards the Hazelcast wire compatibility of {@link BuildAgentDetailsDTO}.
+ * Guards the serialized compatibility of {@link BuildAgentDetailsDTO}.
  * <p>
  * The DTO is stored in a distributed map with plain Java serialization, and a rolling upgrade temporarily runs nodes of two versions side by side. Bumping the serial
  * version would make each version reject the other's entries with an {@code InvalidClassException}, so the build agent overview would break for the duration of every

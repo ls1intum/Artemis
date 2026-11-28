@@ -26,11 +26,6 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
  * It routes by cache name: large blob values and the title lookups stay on the node that reads them, and every cache
  * whose entries have to be identical on all nodes stays shared. See {@link BlobCacheConfiguration} and
  * {@link BlobCacheConfiguration} for why those are local.
- *
- * <p>
- * Caching is enabled here rather than on the Hazelcast configuration, because that one only exists when Hazelcast is the
- * configured provider. Leaving {@code @EnableCaching} there would silently turn every {@code @Cacheable} into a plain
- * method call as soon as a deployment selects Redis.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -42,10 +37,7 @@ public class CacheManagerConfiguration {
      * Cluster-wide caches whose entries expire, with the lifetime each one needs.
      *
      * <p>
-     * Everything not listed here is invalidated explicitly by its writer and is created without expiry, which is what
-     * the Hazelcast map configuration did for those maps before the cache manager became provider-neutral. The Atlas
-     * agent caches hold per-session state that no writer ever cleans up when a user simply abandons a session, so they
-     * need a lifetime instead. Two hours matches the {@code createAtlasSessionMapConfig} lifetime they had.
+     * The other caches are invalidated explicitly by their writers. Atlas session data expires after inactivity.
      *
      * <p>
      * Named by literal rather than by the module constants, because {@code core} may not depend on a feature module.

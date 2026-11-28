@@ -1,8 +1,5 @@
 {{- /*
-Headless service governing the build-agent StatefulSet. StatefulSets require a governing service to
-give each pod a stable DNS name. Build agents talk to the cluster as Hazelcast clients and are never
-addressed by other pods, so this service only exists to satisfy that contract and to make the agents
-discoverable for debugging.
+Headless service giving each pod in the build-agent StatefulSet a stable DNS name.
 */ -}}
 {{- if .Values.buildAgents.enabled }}
 apiVersion: v1

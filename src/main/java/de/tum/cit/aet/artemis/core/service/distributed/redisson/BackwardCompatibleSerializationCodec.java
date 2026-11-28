@@ -15,11 +15,11 @@ import de.tum.cit.aet.artemis.core.service.distributed.DistributedDataTypeFilter
 import io.netty.buffer.ByteBuf;
 
 /**
- * Serializes Redis <em>map values</em> the way Hazelcast does, and leaves every other encoding untouched.
+ * Serializes Redis <em>map values</em> using Java serialization, and leaves every other encoding untouched.
  *
  * <p>
  * Redisson defaults to Kryo, which does not run a value's own {@code writeObject}: it walks the fields reflectively
- * instead. That is what made {@code savedPosts} answer 500 under Redis while working under Hazelcast - the cached
+ * instead. For example, the cached
  * {@code List<SavedPost>} reaches a {@code User} whose {@code authorities} is a lazy Hibernate collection, and Kryo
  * reads its size rather than letting it record that it is uninitialized. Map values are where that class of value
  * lives, because that is what backs the Spring caches.

@@ -9,12 +9,6 @@ import { expect } from '@playwright/test';
  * test because no test asserts on cluster membership directly. This test fails fast in the multi-node E2E pipeline if
  * cluster formation regresses.
  *
- * Provider-agnostic on purpose: Artemis reaches its cross-node state through the DistributedDataProvider abstraction and
- * supports both Hazelcast and Redis, so the same assertions have to hold on either. The two report node identity in
- * different namespaces — Hazelcast uses the member's `[host]:port`, the Redis provider uses the configured client name,
- * which has no port — so the shape assertions that only make sense for one of them are guarded by
- * DISTRIBUTED_DATA_PROVIDER, which the multi-node runners export.
- *
  * Note: the multi-node stack is asymmetric — only nodes with the `core` Spring profile register as cluster nodes.
  * Buildagent-only nodes are visible via /api/admin/build-agents instead.
  *
@@ -25,15 +19,13 @@ import { expect } from '@playwright/test';
 const EXPECTED_NODE_COUNT = parseInt(process.env.EXPECTED_CLUSTER_NODE_COUNT ?? '2', 10);
 const EXPECTED_MIN_BUILD_AGENTS = parseInt(process.env.EXPECTED_MIN_BUILD_AGENTS ?? '1', 10);
 const CLUSTER_FORMATION_TIMEOUT_MS = 60_000;
-const USES_HAZELCAST = (process.env.DISTRIBUTED_DATA_PROVIDER ?? 'hazelcast').toLowerCase() === 'hazelcast';
 
 interface WebsocketNodeDTO {
     memberId: string;
+    instanceId: string;
     address: string;
     host: string;
-    port: number;
     local: boolean;
-    instanceId?: string;
     brokerConnected: boolean;
 }
 
@@ -79,14 +71,10 @@ test.describe('Cluster formation', { tag: '@multi-node' }, () => {
         // Every node must report an identity and an address so we know the endpoint actually serialised real registry
         // data and not an empty stub.
         for (const node of nodes) {
+            expect(node.instanceId, 'configured instance id should be set').toBeTruthy();
             expect(node.memberId, 'node id should be set').toBeTruthy();
             expect(node.address, 'node address should be set').toBeTruthy();
             expect(node.host, 'node host should be set').toBeTruthy();
-            if (USES_HAZELCAST) {
-                // Hazelcast identifies a member by its endpoint, which the registry publishes as `[host]:port`.
-                expect(node.address, 'node address should be host:port on Hazelcast').toMatch(/.+:\d+$/);
-                expect(node.port, 'node port should be positive on Hazelcast').toBeGreaterThan(0);
-            }
         }
 
         // Exactly one node should report itself as local — the node that served this HTTP request
@@ -129,11 +117,6 @@ test.describe('Cluster formation', { tag: '@multi-node' }, () => {
         for (const agent of agents) {
             expect(agent.buildAgent.name, 'build agent name should be set').toBeTruthy();
             expect(agent.buildAgent.memberAddress, 'build agent member address should be set').toBeTruthy();
-            if (USES_HAZELCAST) {
-                // Hazelcast serialises a member address as `[host]:port` or `host:port`; the Redis provider reports the
-                // node's configured client name, which has no port at all.
-                expect(agent.buildAgent.memberAddress, 'build agent member address should look like a Hazelcast endpoint').toMatch(/^\[?[^\]]+\]?:\d+$/);
-            }
             expect(agent.maxNumberOfConcurrentBuildJobs, 'build agent should advertise capacity').toBeGreaterThan(0);
         }
 

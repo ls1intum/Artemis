@@ -2,12 +2,11 @@
 id: aiworker
 title: AI Worker Operations
 sidebar_label: AI Worker Setup
-last_reviewed: 2026-11-23
+last_reviewed: 2026-11-28
 ---
 
 AI Worker runs bounded, explicitly installed workloads outside the Artemis server.
-The worker has no database connection, repository credentials, incoming HTTP server,
-or Hazelcast cluster membership. It connects as a Hazelcast client or to Redis/Valkey
+The worker has no database connection, repository credentials or incoming HTTP server. It connects to Redis or Valkey
 through Artemis' distributed-data provider. Artemis core uses the same provider. Workload-specific authorization and persistence remain in
 the owning feature; [Hyperion](/admin/hyperion#whole-exercise-generation-workers) owns
 exercise generation and its teaching-quality review.
@@ -46,21 +45,14 @@ Block database, repository/NFS, management and cloud-metadata access.
 
 ## Distributed-data access
 
-The worker host must reach the same distributed-data store as the core nodes. For
-Hazelcast, the worker is a **client**, not a cluster member. Enable Eureka on core
-nodes and on the worker. The worker reads the core nodes' Hazelcast addresses from
-the same Eureka registry as a Build Agent. It does not register itself. Set
-`eureka.client.service-url.defaultZone` to the registry URL on each process.
-The addresses that core nodes publish must be reachable from the worker host.
-Do not configure a fixed list of core addresses on the worker.
-For Redis/Valkey, configure the same `spring.data.redis.*` endpoint and credentials
-used by the core deployment. Redis turns Eureka off. The normal Artemis entry point in worker-only mode
-rejects `local`: process-local state cannot carry worker messages.
+Set `artemis.distributed-data.provider: Redis` on every core and worker and configure the same Redis or Valkey
+endpoint and credentials. Choose a distinct client name starting with `artemis-` for each process. See
+[provider configuration](/admin/production-setup/distributed-data#configure-the-provider).
+A worker runs in its own JVM and cannot receive commands through process-local state.
 
-Keep the provider port private to trusted hosts. A host-loopback Docker port map
-does **not** block containers on the same application bridge from reaching the
-core container's IP. Bind Hazelcast to a separate internal provider network, and
-allow only the worker host to reach that address and port. The worker JVM can read
+Keep the store on a private network reachable only by trusted Artemis processes. A loopback port mapping on the host
+still permits other containers on the same bridge to reach the store at its container address.
+The worker JVM can read
 and write shared coordination data, so isolate the worker host and protect its
 credentials.
 Generated-code containers still have network `none` and never receive provider
@@ -92,8 +84,7 @@ artemis:
 ```
 
 Use the same authoritative `DistributedDataProvider` and worker configuration on all
-coordinators. Presence and slot reservations have explicit lifetimes on both Hazelcast
-and Redis. A claim is bound to execution UUID, worker incarnation, slot, workload
+coordinators. Presence and slot reservations have explicit lifetimes. A claim is bound to execution UUID, worker incarnation, slot, workload
 schema/profile and immutable image. Stale events cannot release a replacement claim.
 Workload resource identifiers are opaque to AI Worker.
 
@@ -132,15 +123,15 @@ and worker UID, and mounted read-only.
 spring:
     main:
         web-application-type: none
-eureka:
-    client:
-        enabled: true # Hazelcast only; Redis turns discovery off.
-        register-with-eureka: false
-        service-url:
-            defaultZone: http://admin:<registry-password>@registry.internal:8761/eureka/
+    data:
+        redis:
+            host: ${REDIS_HOST}
+            username: ${REDIS_USERNAME}
+            password: ${REDIS_PASSWORD}
+            client-name: artemis-worker-1
 artemis:
     distributed-data:
-        provider: hazelcast # Or redis, matching the core nodes.
+        provider: Redis
     aiworker:
         id: worker-1
         # Optional: override the shipped toolchain version for a private registry or custom image.
@@ -243,8 +234,7 @@ whether a retained result is usable and whether persistence requires operator re
 
 The `ls1intum.artemis.ai_worker` role deploys the supervisor on a dedicated host or VM
 with rootful Docker and no user-namespace remapping. It uses the same `valkey` map
-as core and Build Agents; without `valkey`, it uses `registry.url`,
-`artemis_eureka_urls` and `artemis_jhipster_registry_password` for Hazelcast discovery.
+as core and Build Agents. Configure it on all three roles.
 Set `artemis_aiworker_ids` on eligible core nodes. Hyperion generation starts worker
 coordination automatically; set `artemis_aiworker_enabled` only for coordination
 without Hyperion generation.

@@ -32,6 +32,8 @@ logging:
             total-size-cap: "10GB"
 
 artemis:
+    cache:
+        time-to-live-seconds: 3600
     course-home:
         ai:
             enabled: false
@@ -226,7 +228,7 @@ management:
         health:
             status:
                 # DEGRADED is reported by the optional external systems (Athena, Pyris, Hermes, Apollon, Weaviate, Sharing, Hyperion workers) when they are
-                # not available, see ConnectorHealth. Critical components (database, distributed data, websocket broker, registry) still report DOWN.
+                # not available, see ConnectorHealth. Critical components (database, distributed data, websocket broker) still report DOWN.
                 # The order decides the aggregate: any DOWN wins, then OUT_OF_SERVICE, then DEGRADED, and only if everything is UP the instance is UP.
                 order: DOWN, OUT_OF_SERVICE, DEGRADED, UP, UNKNOWN
                 # A configured mapping REPLACES the defaults of Spring Boot instead of extending them, so DOWN and OUT_OF_SERVICE must be listed to keep
@@ -241,10 +243,6 @@ management:
             enabled: false # When using the MailService, configure an SMTP server and set this to true
         ldap:
             enabled: false # Disabled to prevent periodic health checks that lead to null pointer exceptions if the ldap is not configured or not active
-        config:
-            enabled: false # Disabled because we do not use a Spring Cloud Config Server
-        refresh:
-            enabled: false # Disabled because we do not use a refresh scope
     prometheus:
         # Prometheus is the default metrics server
         metrics:
@@ -310,12 +308,6 @@ spring: #disabled by default, you must enable it
         name: Artemis
     jmx:
         enabled: false
-    cloud:
-        config:
-            import-check:
-                enabled: false
-        refresh:
-            enabled: false # Not required in Artemis
     data:
         jpa:
             repositories:
@@ -341,11 +333,8 @@ spring: #disabled by default, you must enable it
             hibernate.query.plan_cache_max_size: 4096
             hibernate.query.plan_parameter_metadata_max_size: 256
             # Hibernate L2 cache is intentionally disabled cluster-wide. See documentation/docs/developer/guidelines/caching.mdx.
-            # Spring @Cacheable continues to use HazelcastCacheManager directly, independent of L2.
             hibernate.cache.use_second_level_cache: false
             hibernate.cache.use_query_cache: false
-            # Still consumed by HazelcastConfiguration for the Hazelcast instance name.
-            hibernate.cache.hazelcast.instance_name: Artemis
             # modify batch size as necessary
             hibernate.jdbc.batch_size: 25
             hibernate.jdbc.time_zone: UTC
@@ -397,24 +386,8 @@ spring: #disabled by default, you must enable it
             username: guest
             password: guest
             addresses: "" # Comma separated list of hosts and ports of the brokers (e.g. "localhost:61613,localhost:61614")
-    hazelcast:
-        interface: "127.0.0.1" # The interface to bind to, if non is set, all interfaces will be bound
-        port: 5701 # The hazelcast port that this instance runs on and where other instances are expected
-        localInstances: false # Whether the other instances are expected locally (in dev mode) or external
-        phone:
-            home:
-                enabled: false
-        slow:
-            operation:
-                detector:
-                    enabled: true
     beaninfo:
         ignore: true
-
-hazelcast:
-    phone:
-        home:
-            enabled: false
 
 springdoc:
   api-docs: # Having these endpoints publicly available is a security risk, so we disable them by default
@@ -471,8 +444,6 @@ jhipster:
         #max-age: 1800
     mail:
         from: artemis@localhost
-    registry:
-        password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED (FROM REGISTRY CONFIG)
     http:
         cache:
             # Used by StaticResourcesConfiguration for files under /public. Those keep their path when they change — a
@@ -485,82 +456,6 @@ jhipster:
             # spares the server a great deal of work at the start of a lecture or an exam, when a cohort opens the
             # page at once.
             versionedAssetsTimeToLiveInDays: 30
-    cache: # Cache configuration
-        hazelcast: # Hazelcast distributed cache
-            time-to-live-seconds: 3600
-            backup-count: 1
-            # Fixed data-member count for Hyperion job/save map protection; worker clients do not count.
-            # When generation is enabled, every member must use the same value and all members must be present.
-            expected-data-member-count: 1
-
-# =======================================================================================
-# EUREKA CONFIGURATION (Service Discovery via JHipster Registry)
-# =======================================================================================
-# Eureka is used for service discovery, allowing Artemis nodes (core servers and build agents)
-# to find each other dynamically. The JHipster Registry acts as the Eureka server.
-#
-# Key use cases:
-# - Build agents discover core nodes to establish Hazelcast client connections
-# - Core nodes discover other core nodes for Hazelcast cluster formation
-# - Load balancers can use Eureka to find healthy instances
-# =======================================================================================
-eureka:
-    client:
-        region: default
-        shouldEnforceRegistrationAtInit: false
-        enabled: false
-        service-url:
-            defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
-        healthcheck:
-            # Keep this disabled: Eureka maps a health status it does not know, such as DEGRADED (see ConnectorHealth), to UNKNOWN
-            # and would then drop the instance from discovery like a DOWN one.
-            enabled: false
-        fetch-registry: true
-        register-with-eureka: true
-        instance-info-replication-interval-seconds: 15
-        registry-fetch-interval-seconds: 15
-        use-dns-for-fetching-service-urls: false
-    instance:
-        prefer-ip-address: true
-        appname: Artemis
-        instanceId: Artemis:1
-        # -----------------------------------------------------------------------------------
-        # EUREKA LEASE/HEARTBEAT CONFIGURATION
-        # -----------------------------------------------------------------------------------
-        # These settings control how quickly the Eureka server (JHipster Registry) detects
-        # that an Artemis instance (core node or build agent) has gone offline.
-        #
-        # How it works:
-        # - Each instance sends a heartbeat to Eureka every 'lease-renewal-interval-in-seconds'
-        # - If Eureka doesn't receive a heartbeat within 'lease-expiration-duration-in-seconds',
-        #   the instance is marked as DOWN and eventually evicted from the registry
-        #
-        # Values chosen (10s interval, 30s expiration):
-        # - Balanced between fast detection and tolerance for brief network issues
-        # - Allows for 3 missed heartbeats before declaring an instance as DOWN
-        # - More conservative than Hazelcast (5s/15s) because Eureka handles service discovery
-        #   across potentially less reliable networks, and false-positive deregistrations
-        #   can cause unnecessary service disruption
-        # - Still fast enough to remove crashed instances within ~30-45 seconds
-        #
-        # Note: The actual eviction time also depends on the Eureka server's eviction interval
-        # (configured on the JHipster Registry side, typically runs every 60 seconds by default)
-        #
-        # Comparison with Hazelcast timeouts:
-        # - Hazelcast client heartbeat: 5s interval, 15s timeout (for real-time build agent status)
-        # - Eureka lease: 10s interval, 30s timeout (for service discovery, more tolerant)
-        # -----------------------------------------------------------------------------------
-        lease-renewal-interval-in-seconds: 10
-        lease-expiration-duration-in-seconds: 30
-        status-page-url-path: ${management.endpoints.web.base-path}/info
-        health-check-url-path: ${management.endpoints.web.base-path}/health
-        metadata-map:
-            zone: primary # This is needed for the load balancer
-            profile: ${spring.profiles.active}
-            version: #project.version#
-            git-version: ${git.commit.id.describe:}
-            git-commit: ${git.commit.id.abbrev:}
-            git-branch: ${git.branch:}
 
 # Helios configuration
 # It is enabled and all the values are set by the ansible

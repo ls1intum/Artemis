@@ -7,7 +7,6 @@ import java.time.Duration;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.command.CommandAsyncExecutor;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
@@ -15,13 +14,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
 import io.github.bucket4j.BucketConfiguration;
 import io.github.bucket4j.distributed.ExpirationAfterWriteStrategy;
 import io.github.bucket4j.distributed.proxy.ProxyManager;
-import io.github.bucket4j.grid.hazelcast.Bucket4jHazelcast;
 import io.github.bucket4j.redis.redisson.Bucket4jRedisson;
 
 /**
@@ -43,29 +38,13 @@ import io.github.bucket4j.redis.redisson.Bucket4jRedisson;
 @Lazy
 public class RateLimitConfig {
 
-    private static final String BUCKET_MAP_NAME = "rate-limit-buckets";
-
-    /**
-     * Hazelcast-backed bucket storage. Uses an entry processor so the read-modify-write of a bucket runs on the partition
-     * owner instead of costing two round trips.
-     *
-     * @param hazelcastInstance the Hazelcast instance holding the bucket map
-     * @return bucket storage for the Hazelcast provider
-     */
-    @Bean
-    @Conditional(HazelcastDistributedDataCondition.class)
-    public ProxyManager<String> hazelcastRateLimitProxyManager(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
-        IMap<String, byte[]> bucketStateMap = hazelcastInstance.getMap(BUCKET_MAP_NAME);
-        return Bucket4jHazelcast.entryProcessorBasedBuilder(bucketStateMap).build();
-    }
-
     /**
      * Redis-backed bucket storage. Uses compare-and-swap, since Redis has no equivalent of a server-side entry processor.
      *
      * @param redissonClient the Redisson client holding the bucket state
      * @return bucket storage for the Redis provider
      */
-    // Exactly one of the three storages exists at runtime, because the conditions match one value of artemis.distributed-data.provider each. Static analysis
+    // Exactly one of the two storages exists at runtime, because the conditions match one value of artemis.distributed-data.provider each. Static analysis
     // cannot evaluate them and reports every injection of the ProxyManager as ambiguous (Sonar java:S9352); @Primary changes nothing at runtime.
     @Bean
     @Primary

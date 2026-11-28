@@ -3,14 +3,9 @@ package de.tum.cit.aet.artemis.admin.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,8 +60,8 @@ public class AdminBuildJobQueueResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminBuildJobQueueResource.class);
 
-    /** The Hazelcast address format, {@code [host]:port}. */
-    private static final Pattern HAZELCAST_ADDRESS = Pattern.compile("^\\[(.+)]:\\d+$");
+    /** The legacy build-agent address format, {@code [host]:port}. */
+    private static final Pattern BRACKETED_ADDRESS = Pattern.compile("^\\[(.+)]:\\d+$");
 
     private final BuildAgentNetworkPolicy buildAgentNetworkPolicy;
 
@@ -176,20 +171,13 @@ public class AdminBuildJobQueueResource {
     @GetMapping("build-agent-addresses")
     public ResponseEntity<List<BuildAgentAddressInfo>> getBuildAgentAddresses() {
         log.debug("REST request to get the registered network addresses of all build agents");
-        // The union of both sources, because that is what actually authorizes a clone. Showing only the addresses core
-        // nodes observed would display nothing at all wherever the middleware cannot observe them - every Redis
-        // installation - while the binding is in force, which is precisely the state an admin needs to be able to see.
-        Map<String, BuildAgentAddressInfo> merged = new HashMap<>(distributedDataAccessService.getBuildAgentReportedAddressMap());
-        distributedDataAccessService.getBuildAgentAddressMap()
-                .forEach((agentName, observed) -> merged.merge(agentName, observed,
-                        (reported, alsoObserved) -> new BuildAgentAddressInfo(agentName,
-                                Stream.concat(reported.addresses().stream(), alsoObserved.addresses().stream()).collect(Collectors.toCollection(LinkedHashSet::new)),
-                                alsoObserved.observedAt(), true)));
         // The allowlist verdict is recomputed rather than taken from the entry: an agent reporting its own address
         // cannot evaluate the core nodes' allowlist, so it stores a placeholder, and showing that would tell an admin
         // an agent outside the configured networks is inside them.
-        List<BuildAgentAddressInfo> addresses = merged.values().stream().map(info -> new BuildAgentAddressInfo(info.agentName(), info.addresses(), info.observedAt(),
-                info.addresses().stream().allMatch(buildAgentNetworkPolicy::isWithinAllowedRanges))).toList();
+        List<BuildAgentAddressInfo> addresses = distributedDataAccessService.getBuildAgentReportedAddressMap().values().stream()
+                .map(info -> new BuildAgentAddressInfo(info.agentName(), info.addresses(), info.observedAt(),
+                        info.addresses().stream().allMatch(buildAgentNetworkPolicy::isWithinAllowedRanges)))
+                .toList();
         return ResponseEntity.ok(addresses);
     }
 
@@ -208,7 +196,7 @@ public class AdminBuildJobQueueResource {
         Optional<BuildAgentInformation> buildAgentDetails = agents.stream().filter(agent -> agent.buildAgent().name().equals(agentName)).findFirst();
 
         // If not found by name, try to match by memberAddress using host-only comparison
-        // to handle Hazelcast addresses like "[192.168.1.1]:5701" where the port may differ
+        // to handle stored addresses like "[192.168.1.1]:5701" where the port may differ
         if (buildAgentDetails.isEmpty()) {
             String lookupHost = extractHostFromAddress(agentName);
             buildAgentDetails = agents.stream().filter(agent -> {
@@ -221,7 +209,7 @@ public class AdminBuildJobQueueResource {
     }
 
     /**
-     * Extracts the host portion from a Hazelcast member address.
+     * Extracts the host portion from a stored member address.
      * Handles formats like "[192.168.1.1]:5701" (returns "192.168.1.1"),
      * "[2001:db8::1]:5702" (returns "2001:db8::1"), or plain host strings.
      *
@@ -232,8 +220,8 @@ public class AdminBuildJobQueueResource {
         if (address == null) {
             return "";
         }
-        // Match Hazelcast address format: [host]:port
-        var matcher = HAZELCAST_ADDRESS.matcher(address);
+        // Match bracketed address format: [host]:port
+        var matcher = BRACKETED_ADDRESS.matcher(address);
         if (matcher.matches()) {
             return matcher.group(1);
         }

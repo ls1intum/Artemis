@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
  * Note: due to limitations with inheritance, we cannot declare this as a record, but we can use it in a similar way with final fields.
  */
 
-// NOTE: this data structure is used in shared code between core and build agent nodes. Changing it requires that the shared data structures in Hazelcast (or potentially Redis)
+// NOTE: this data structure is used in shared code between core and build agent nodes. Changing it requires that the shared data structures in Redis
 // in the future are migrated or cleared. Changes should be communicated in release notes as potentially breaking changes.
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

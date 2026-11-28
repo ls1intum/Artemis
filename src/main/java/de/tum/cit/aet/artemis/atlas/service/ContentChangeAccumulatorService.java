@@ -34,8 +34,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  * and reset the bucket, applying the per-day cap before returning a batch.
  * <p>
  * State lives in the cluster-shared {@code atlas-content-change-accumulator} map obtained through
- * the {@link DistributedDataProvider} abstraction, so the pipeline works on both Hazelcast and Redis
- * deployments without depending on {@code HazelcastInstance} directly. Every mutation runs inside a
+ * the {@link DistributedDataProvider} abstraction. Every mutation runs inside a
  * per-key {@link DistributedMap#lock(Object) lock}/{@link DistributedMap#unlock(Object) unlock}
  * critical section so concurrent updates from different nodes linearise against the key owner — we
  * never lose events under contention.

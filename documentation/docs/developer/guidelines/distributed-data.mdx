@@ -2,7 +2,7 @@
 id: distributed-data
 title: Distributed Data
 sidebar_label: Distributed Data
-last_reviewed: 2026-11-12
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -14,29 +14,21 @@ websocket broker status, LTI state, Pyris jobs, rate-limit buckets, the `@Cachea
 store.
 
 <Callout variant={CalloutVariant.danger}>
-  <strong>Never use Hazelcast or Redis directly.</strong> All cross-node state goes through
+  <strong>Use Redis clients only in provider adapters.</strong> All cross-node state goes through
   <code>DistributedDataProvider</code>. An ArchUnit rule
   (<code>DistributedDataProviderArchitectureTest</code>) fails the build if a production class outside the small,
-  explicitly named set of provider adapters depends on <code>com.hazelcast..</code>, <code>org.redisson..</code> or
+  explicitly named set of provider adapters depends on <code>org.redisson..</code> or
   <code>org.springframework.data.redis..</code>.
 </Callout>
 
 ## Why the abstraction exists
 
-Artemis supports two providers and intends to be able to switch between them:
+* **Local** keeps queues, maps, topics, caches and locks in one JVM. It is the default for single-process installations.
+* **Redis** uses an external Redis or Valkey store. Every process in a multi-node installation uses this provider,
+  including dedicated build agents and AI workers.
 
-* **Hazelcast** — embedded in every node, no extra container. This is what production runs today.
-* **Redis** — an external Redis or Valkey server, selected with `artemis.distributed-data.provider: Redis`. With it, no Hazelcast
-  instance is created at all.
-
-A third, **Local**, keeps everything inside one JVM. It exists for single-node development and has no cross-node
-semantics.
-
-That choice only stays real as long as no application code names a provider. A single `hazelcastInstance.getMap(...)` in a
-service pins the whole deployment to Hazelcast, and it does so without failing any test: the other provider simply never
-sees that state, and nothing reads it back to notice. That is exactly how the abstraction drifted the first time, when
-21 services across 8 modules had each grown their own Hazelcast usage, and where the providers disagreed nobody found out
-until a shared contract test suite was written for them.
+Application code obtains its state through the same interface in both environments. A direct Redis dependency would
+make single-process installations require an external service.
 
 ## The API
 
@@ -57,7 +49,7 @@ contract suite `AbstractDistributedDataTest`, which every provider runs:
 job slot from exactly one node.
 
 Redis implements `replace(key, expected, replacement)` and `remove(key, value)` by comparing the encoded bytes of
-`expected` with the stored bytes, while Hazelcast and the local provider use `equals`. A value that was read from the map
+`expected` with the stored bytes, while the local provider uses `equals`. A value that was read from the map
 therefore only works as `expected` if encoding it again reproduces the stored bytes. `Map.copyOf`, `Map.of` and the
 other immutable maps do not: their iteration order depends on a random per-JVM salt, so a map with two or more entries
 is written in another order after a round trip, and the operation fails every time. A retry loop around it never ends.
@@ -68,38 +60,17 @@ A canonical constructor can change the bytes of an older readable entry too. For
 retained reservations before stopping all old writers and clearing only that map. Do not reuse old CAS operands blindly.
 
 <Callout variant={CalloutVariant.warning}>
-  A provider-level map configuration is not a substitute for asking for what you need. A Hazelcast <code>MapConfig</code>
-  time-to-live applies on Hazelcast only, and silently does nothing on Redis. Request the lifetime at the call site with
+  Request the entry lifetime at the call site with
   <code>getExpiringMap</code>.
 </Callout>
 
 ## Selecting the provider
 
-`artemis.distributed-data.provider` takes `Hazelcast` (default), `Redis` or `Local`. As an environment variable that is
+`artemis.distributed-data.provider` takes `Local` (default) or `Redis`. As an environment variable that is
 `ARTEMIS_DISTRIBUTEDDATA_PROVIDER`. The superseded `artemis.continuous-integration.data-store`, which was named when the
 abstraction only carried the Local CI queue, is still honoured as a fallback for one release.
 
 An unsupported value fails at startup rather than leaving the application with no provider at all.
-
-### Redis needs no service registry
-
-Eureka exists in Artemis for one purpose: finding the addresses of Hazelcast members so a member or client can join the
-cluster. Every reader of the registry — `HazelcastConfiguration`, `HazelcastClusterManager`,
-`EurekaHazelcastDiscoveryStrategy` and the `EurekaInstanceHelper` they share — is conditional on Hazelcast. Nothing else
-in Artemis reads it: there are no `@LoadBalanced` clients, no `lb://` URIs and no Spring Cloud Config server.
-
-So on Redis, `RedisDiscoveryEnvironmentPostProcessor` sets both `eureka.client.enabled=false` and
-`spring.cloud.discovery.enabled=false` before the context is built, and Spring Cloud's own conditions then keep every
-Eureka and discovery auto-configuration out of it. Both are needed: the first stops the registration, the heartbeat and
-the registry health indicator, but on its own it leaves Spring Cloud's discovery health indicators behind reporting
-`Discovery Client not initialized`, which drags the whole health endpoint down. A Redis node ends up with no Eureka
-client, no registration, no heartbeat thread and no discovery health indicator at all — verified on a three-node
-cluster: zero Eureka threads, zero live `com.netflix.*` objects, zero references to port 8761, and a health endpoint
-with no discovery entries.
-
-**A Redis deployment therefore does not need to run a JHipster registry at all.** The local multi-node runner does not
-start one for `--middleware redis`, which is what keeps this property honest: if anything started depending on the
-registry again, that stack would stop coming up.
 
 ## Caches
 
@@ -121,7 +92,7 @@ The rest of the caching policy — in particular that Hibernate second-level cac
 If something you need is genuinely missing from `DistributedDataProvider`, add it there rather than reaching past it:
 
 1. Add the method to `DistributedDataProvider` with Javadoc that says what guarantee callers may rely on.
-2. Implement it for **all three** providers (`hazelcast`, `redisson`, `local`).
+2. Implement it for both providers (`local` and `redisson`).
 3. Add a case to `AbstractDistributedDataTest`, so every provider has to agree. Behaviour that only one provider supports
    must fail uniformly rather than work on one and silently do nothing on the other.
 
@@ -131,7 +102,7 @@ provider.
 
 ## Changing a stored type
 
-Hazelcast discards its data when the cluster stops. Redis and Valkey retain it so that, for example, a queued build
+Local discards its data when the JVM stops. Redis and Valkey retain it so that, for example, a queued build
 survives a deployment. Persistent data also means that a new release can encounter bytes written by an older one.
 Queue entries, set elements, topic messages, and map keys use positional Kryo encoding without an embedded schema
 version. An incompatible change can therefore cause a `KryoBufferUnderflowException` or produce plausible but incorrect
@@ -227,13 +198,9 @@ verification, cleanup, and rollback procedures.
 
 ## Testing
 
-* `AbstractDistributedDataTest` is the contract suite; `LocalDataTest`, `HazelcastDistributedDataTest` and
-  `RedissonDistributedDataTest` run it against the three providers.
-* The multi-node E2E runners take `--middleware hazelcast|redis` and run the identical suite on either provider:
+`LocalDataTest` and `RedissonDistributedDataTest` run the same `AbstractDistributedDataTest` contract suite.
+The multi-node E2E runner exercises cross-process behavior with Valkey.
 
 ```bash
-./supporting_scripts/e2e/run-e2e-tests-local-multinode-fast.sh --middleware redis
-./supporting_scripts/e2e/run-e2e-tests-local-multinode.sh --middleware redis --filter "ClusterFormation"
+./supporting_scripts/e2e/run-e2e-tests-local-multinode-fast.sh
 ```
-
-Hazelcast remains the default, because that is what production runs.

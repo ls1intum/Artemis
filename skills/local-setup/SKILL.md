@@ -118,10 +118,6 @@ values such as `Admin`, `Your University` or `<name>` are rejected), or set `inf
 **"Unable to determine Dialect".** The Spring profile set does not include a database profile, or
 an `autoconfigure.exclude` is replacing rather than merging the expected exclusions.
 
-**The server logs "Started ArtemisApp" but then shuts down.** A Spring Boot and Spring Cloud version
-mismatch does exactly this. The two are coupled: a Boot minor bump needs the matching Cloud release
-train. Both are pinned in `gradle.properties`.
-
 **Aggregate health reports DEGRADED.** An optional external system (Athena, Pyris, Hermes, Apollon,
 Weaviate, the sharing platform, the Hyperion workers) is not reachable or not configured. This is not
 an error: the aggregate answers HTTP 200 and the admin health page names the component. A `DOWN`

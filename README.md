@@ -191,7 +191,7 @@ Artemis is decomposed into an application client (Angular) and an application se
 For programming exercises, the server contains its own version control (**LocalVC**, an integrated Git
 server) and continuous integration (**LocalCI**, a build queue whose jobs run in Docker containers on
 horizontally scalable build agents). No external version control or CI system is needed. Shared state of
-a multi-node installation goes through a distributed data provider (Hazelcast or Redis), and data is
+a multi-node installation goes through the Redis provider, backed by Redis or Valkey. Course data is
 stored in PostgreSQL. Authentication can be delegated to an external user management system.
 
 ![Top-Level Design](documentation/docs/developer/assets/system-design/TopLevelDesign.svg 'Top-Level Design')

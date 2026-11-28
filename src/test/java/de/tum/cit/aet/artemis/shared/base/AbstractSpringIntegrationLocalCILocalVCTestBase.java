@@ -70,8 +70,7 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestContainerFactory;
  * <p>
  * Two contexts extend it, so that the classes of this topology run in two lanes rather than one. A bucket holds an
  * exclusive lock and therefore runs one class at a time however idle the machine is, so a second bucket is the only way
- * to give the topology a second lane. What has to differ per context - the ports it binds, the paths it writes to, its
- * Hazelcast instance and its Weaviate collection - stays in the subclasses.
+ * to give the topology a second lane. What has to differ per context - the ports it binds, the paths it writes to, its Weaviate collection - stays in the subclasses.
  *
  * @see AbstractSpringIntegrationLocalCILocalVCTest
  * @see AbstractSpringIntegrationLocalCILocalVCBatchTest

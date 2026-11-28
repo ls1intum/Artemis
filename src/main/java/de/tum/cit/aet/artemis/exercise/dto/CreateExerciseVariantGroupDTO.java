@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
  * Payload for creating a new {@link ExerciseVariantGroup}. The owning course is taken from the request path, not the
  * body, and is immutable afterwards.
  *
- * Serializable because it is embedded — via the variant-generation request's placement — in the Hazelcast-distributed
+ * Serializable because it is embedded — via the variant-generation request's placement — in the distributed
  * {@code VariantJob} record.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

@@ -46,9 +46,7 @@ import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
  * <p>
  * <strong>Design.</strong> The control is the plain queue from {@code getQueue} (a single {@code RPUSH}), measured
  * against the same container, network, codec and notification topic. Comparing the two isolates the cost of priority
- * insertion itself. Comparing against Hazelcast instead would be confounded, because Hazelcast only orders the queue
- * literally named {@code buildJobQueue} and a live {@code SharedQueueProcessingService} consumes that queue in tests,
- * which would change the queue depth during measurement.
+ * insertion itself.
  *
  * <p>
  * Opt-in, because it enqueues thousands of items and is far too slow for CI:

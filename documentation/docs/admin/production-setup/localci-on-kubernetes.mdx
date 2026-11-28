@@ -3,7 +3,7 @@ id: localci-on-kubernetes
 title: Operating LocalCI on Kubernetes
 sidebar_label: LocalCI on Kubernetes
 description: Configure, size, scale, update and monitor an Artemis installation that runs LocalCI builds as Kubernetes Jobs, using the Helm chart in the repository.
-last_reviewed: 2026-11-09
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -17,7 +17,7 @@ The installation itself is described in [Deploying](/admin/production-setup/buil
 <Callout variant={CalloutVariant.warning}>
 
   The Kubernetes runner and the chart are a proof of concept. They have not been through a production deployment. The chart provides no high availability for
-  PostgreSQL, the broker or the registry, no network policies, no resource quotas and no backups. Autoscaling of the build agents is optional and needs KEDA and Prometheus. This page says where each of these is left to you.
+  PostgreSQL, the broker or Valkey, no network policies, no resource quotas and no backups. Autoscaling of the build agents is optional and needs KEDA and Prometheus. This page says where each of these is left to you.
 
 </Callout>
 
@@ -30,7 +30,7 @@ The installation itself is described in [Deploying](/admin/production-setup/buil
 | Build agent controllers | StatefulSet in the Artemis namespace, `buildAgents.replicaCount` pods | Take jobs from the shared queue and create one Kubernetes Job per build. They never run student code. |
 | Build Jobs | Jobs in `buildAgents.namespace` | One per build. They run the exercise image and a trusted helper container. |
 | PostgreSQL | StatefulSet, optional | The database. Disable it with `postgresql.deploy: false` to use an external one. |
-| JHipster Registry | Deployment | The service registry through which core nodes find each other. |
+| Valkey | StatefulSet | Shared queues, caches and other distributed state. Deployed when `artemis.distributedDataProvider` is `Redis` (the chart default). |
 | ActiveMQ | Deployment, optional | The relay for WebSocket messages between core nodes. |
 | Gateway resources | Gateway API objects, optional | HTTP, HTTPS and git over SSH. |
 
@@ -39,12 +39,18 @@ This is why the controllers are a StatefulSet and not a Deployment, and why the 
 
 ## Configuring Artemis
 
+The chart sets `artemis.distributedDataProvider: Redis` and provisions Valkey even with just one core.
+Keep this setting when scaling down so queues and runtime state remain in the same store. For a single core with
+`buildAgents.enabled: false` and no external workers or agents, you can explicitly choose `Local` and omit
+`redis.password`. If you later add a process, [drain work and switch providers](/admin/upgrade-guide#select-the-distributed-data-provider)
+before scaling up.
+
 Three places hold configuration, depending on what the setting is.
 
 | What | Where |
 | --- | --- |
-| Settings that the chart knows | The values file, see the sections `artemis`, `buildAgents`, `postgresql`, `registry`, `broker`, `gateway` and `sharedStorage` in `values.yaml`. |
-| Secrets and the installation metadata | The values `artemis.config.admin.password`, `artemis.config.jwtBase64Secret`, `postgresql.auth.password`, `registry.password`, `broker.auth.password` and `artemis.config.operator.*`. The chart does not render without them. |
+| Settings that the chart knows | The values file, see the sections `artemis`, `buildAgents`, `postgresql`, `redis`, `broker`, `gateway` and `sharedStorage` in `values.yaml`. |
+| Secrets and the installation metadata | The values `artemis.config.admin.password`, `artemis.config.jwtBase64Secret`, `postgresql.auth.password`, `redis.password`, `broker.auth.password` and `artemis.config.operator.*`. Supply `redis.password` for the Redis provider and the credentials for other enabled services. |
 | Any other Artemis property of the core nodes | `artemis.extraEnv`, a list of environment variables, and `artemis.extraProfiles` for additional Spring profiles. |
 
 An Artemis property becomes an environment variable by upper-casing it and removing the dashes and dots, for example
@@ -184,7 +190,7 @@ buildAgents:
    kubectl -n <namespace> get pods
    ```
 
-   Skip the member command when there is no member StatefulSet. Repeat the last command until no core node and no build agent pod is left. PostgreSQL, the registry and the broker keep running.
+   Skip the member command when there is no member StatefulSet. Repeat the last command until no core node and no build agent pod is left. PostgreSQL, Valkey and the broker keep running.
 
    With [automatic scaling](#automatically), KEDA would start the build agents again. Instead of scaling the build agent StatefulSet, pin it to zero through the `ScaledObject`, which has the same name:
 
@@ -208,7 +214,8 @@ buildAgents:
 Take the image tags from the values file and use versioned tags, for the Artemis image and for the helper image. For a release without database migrations, a plain `helm upgrade` is enough.
 Rolling back an Artemis version after a migration needs the backup of step 1, see the warning in [Deploying a New Version](/admin/production-setup/multiple-artemis-instances#deploying-a-new-version).
 
-With Hazelcast, the chart default, the queue lives in the memory of the cluster. Builds that are queued when all nodes stop are not kept, and the missing-build check puts them back into the queue after the restart.
+Queued builds remain in Valkey while the core and agent pods restart. Back up the store before upgrading and follow the
+[distributed-data schema upgrade procedure](/admin/production-setup/distributed-data#prepare-an-upgrade).
 
 ## Monitoring
 
@@ -230,7 +237,7 @@ The chart sets none of the following. Add them according to your requirements.
 - **Resource quotas and limit ranges** for `buildAgents.namespace`. A quota there caps the concurrent builds independently of the number of controllers, and a build Pod that exceeds it fails to start.
 - **Network policies.** Build Pods run student code. Restrict what they may reach beyond the isolation that the exercise's network setting provides, see [Network access](/admin/production-setup/localci-build-environment#network-access).
 - **Pod Security.** The build namespace is labeled `privileged` through `buildAgents.podSecurityLevel`, because exercise images run as root and the network isolation container needs `NET_ADMIN`.
-- **High availability and backups** of PostgreSQL, the broker and the registry. The bundled PostgreSQL is a single instance, and the registry and the broker are single pods. Use managed services where availability matters.
+- **High availability and backups** of PostgreSQL, the broker and Valkey. The bundled PostgreSQL is a single instance, and Valkey and the broker are single pods. Use managed services where availability matters.
 - **Backups of the shared storage.** It holds the LocalVC repositories, uploads, exports and build logs.
 - **TLS and ingress.** The chart creates Gateway API resources, and a certificate can come from cert-manager through `gateway.tls.certManagerClusterIssuer`.
 - **Secret management.** The values file holds the secrets in plain text unless you inject them another way.

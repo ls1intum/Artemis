@@ -27,9 +27,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthContributor;
-import org.springframework.boot.health.contributor.HealthContributors;
 import org.springframework.boot.health.contributor.HealthIndicator;
-import org.springframework.cloud.client.discovery.health.DiscoveryCompositeHealthContributor;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
@@ -302,15 +300,6 @@ public class MetricsBean {
                         .tag(ARTEMIS_HEALTH_TAG, healthIndicator.getClass().getSimpleName().toLowerCase(Locale.ROOT)).register(meterRegistry);
             }
 
-            // The DiscoveryCompositeHealthContributor can consist of several HealthIndicators, so they must all be published
-            if (healthContributor instanceof DiscoveryCompositeHealthContributor discoveryCompositeHealthContributor) {
-                for (HealthContributors.Entry discoveryHealthContributor : discoveryCompositeHealthContributor) {
-                    if (discoveryHealthContributor.contributor() instanceof HealthIndicator healthIndicator) {
-                        Gauge.builder(ARTEMIS_HEALTH_NAME, healthIndicator, h -> mapHealthToDouble(h.health())).strongReference(true).description(ARTEMIS_HEALTH_DESCRIPTION)
-                                .tag(ARTEMIS_HEALTH_TAG, discoveryHealthContributor.name().toLowerCase(Locale.ROOT)).register(meterRegistry);
-                    }
-                }
-            }
         }
     }
 

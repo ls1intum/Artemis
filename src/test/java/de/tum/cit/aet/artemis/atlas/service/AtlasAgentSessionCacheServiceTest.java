@@ -149,9 +149,7 @@ class AtlasAgentSessionCacheServiceTest {
     }
 
     /**
-     * The preview history has to keep expiring. {@code HazelcastConfiguration} gives this map a two-hour TTL, but a map
-     * from {@code DistributedDataProvider#getMap} never expires by contract, so requesting a plain map here would keep
-     * every session's history forever on any provider that does not read the Hazelcast map configuration.
+     * Guard the two-hour retention policy for preview history.
      */
     @Test
     void shouldRequestTheExpiringPreviewHistoryMap() {

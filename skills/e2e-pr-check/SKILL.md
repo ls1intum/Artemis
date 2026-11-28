@@ -86,12 +86,10 @@ Treat a change as cluster-sensitive when it touches any of:
 - the build job queue and dispatch in `src/main/java/de/tum/cit/aet/artemis/localci/`
 - websocket broker or scheduling configuration
 
-If the change is specifically about the distributed data abstraction, run the suite on both
-providers. Redis has to pass the same tests as Hazelcast, and with `--middleware redis` no Hazelcast
-instance is created at all, which is what makes it a genuine test of the abstraction:
+For changes to the distributed data abstraction, run the shared provider contract tests and exercise cross-node behavior with the multi-node runner:
 
 ```bash
-./supporting_scripts/e2e/run-e2e-tests-local-multinode-fast.sh --middleware redis --specs "<paths>"
+./supporting_scripts/e2e/run-e2e-tests-local-multinode-fast.sh --specs "<paths>"
 ```
 
 ## Step 3: re-runs

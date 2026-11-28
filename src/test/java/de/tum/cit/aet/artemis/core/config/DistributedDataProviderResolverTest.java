@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL;
 import static de.tum.cit.aet.artemis.core.config.Constants.REDIS;
 import static de.tum.cit.aet.artemis.core.config.DistributedDataProviderResolver.LEGACY_PROVIDER_PROPERTY;
@@ -18,8 +17,8 @@ import org.springframework.mock.env.MockEnvironment;
 class DistributedDataProviderResolverTest {
 
     @Test
-    void testDefaultsToHazelcastWhenNeitherPropertyIsSet() {
-        assertThat(DistributedDataProviderResolver.resolveProvider(new MockEnvironment())).isEqualTo(HAZELCAST);
+    void testDefaultsToLocalWhenNeitherPropertyIsSet() {
+        assertThat(DistributedDataProviderResolver.resolveProvider(new MockEnvironment())).isEqualTo(LOCAL);
     }
 
     @Test
@@ -39,7 +38,7 @@ class DistributedDataProviderResolverTest {
      */
     @Test
     void testCurrentPropertyTakesPrecedenceOverLegacyProperty() {
-        MockEnvironment environment = new MockEnvironment().withProperty(LEGACY_PROVIDER_PROPERTY, HAZELCAST).withProperty(PROVIDER_PROPERTY, REDIS);
+        MockEnvironment environment = new MockEnvironment().withProperty(LEGACY_PROVIDER_PROPERTY, LOCAL).withProperty(PROVIDER_PROPERTY, REDIS);
         assertThat(DistributedDataProviderResolver.resolveProvider(environment)).isEqualTo(REDIS);
     }
 
@@ -59,15 +58,15 @@ class DistributedDataProviderResolverTest {
      */
     @Test
     void testRejectsUnsupportedProviderValue() {
-        MockEnvironment environment = new MockEnvironment().withProperty(PROVIDER_PROPERTY, "Rediss");
+        MockEnvironment environment = new MockEnvironment().withProperty(PROVIDER_PROPERTY, "Hazelcast");
 
-        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> DistributedDataProviderResolver.resolveProvider(environment)).withMessageContaining("Rediss")
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> DistributedDataProviderResolver.resolveProvider(environment)).withMessageContaining("Hazelcast")
                 .withMessageContaining(PROVIDER_PROPERTY);
     }
 
     @Test
     void testRejectsUnsupportedLegacyProviderValue() {
-        MockEnvironment environment = new MockEnvironment().withProperty(LEGACY_PROVIDER_PROPERTY, "Hazlecast");
+        MockEnvironment environment = new MockEnvironment().withProperty(LEGACY_PROVIDER_PROPERTY, "Hazelcast");
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> DistributedDataProviderResolver.resolveProvider(environment));
     }
@@ -83,14 +82,13 @@ class DistributedDataProviderResolverTest {
     void testBlankLegacyPropertyFallsBackToDefault() {
         MockEnvironment environment = new MockEnvironment().withProperty(LEGACY_PROVIDER_PROPERTY, "   ");
 
-        assertThat(DistributedDataProviderResolver.resolveProvider(environment)).isEqualTo(HAZELCAST);
+        assertThat(DistributedDataProviderResolver.resolveProvider(environment)).isEqualTo(LOCAL);
     }
 
     @Test
     void testIsProviderIgnoresCase() {
         MockEnvironment environment = new MockEnvironment().withProperty(PROVIDER_PROPERTY, "rEdIs");
         assertThat(DistributedDataProviderResolver.isProvider(environment, REDIS)).isTrue();
-        assertThat(DistributedDataProviderResolver.isProvider(environment, HAZELCAST)).isFalse();
         assertThat(DistributedDataProviderResolver.isProvider(environment, LOCAL)).isFalse();
     }
 }

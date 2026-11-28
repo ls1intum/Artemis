@@ -22,7 +22,7 @@ class ArtemisMetricsEndpointTest {
     @BeforeEach
     void setUp() {
         meterRegistry = new SimpleMeterRegistry();
-        // Use a mock ApplicationContext that has no beans — cache/DB will return empty/zeros
+        // Use a mock ApplicationContext that has no beans — database metrics will return zeros
         var emptyContext = new org.springframework.context.support.GenericApplicationContext();
         endpoint = new ArtemisMetricsEndpoint(meterRegistry, emptyContext);
     }
@@ -36,7 +36,6 @@ class ArtemisMetricsEndpointTest {
         assertThat(response.processMetrics()).isNotNull();
         assertThat(response.garbageCollector()).isNotNull();
         assertThat(response.httpServerRequests()).isNotNull();
-        assertThat(response.cache()).isNotNull();
         assertThat(response.databases()).isNotNull();
         assertThat(response.services()).isNotNull();
     }
@@ -87,13 +86,6 @@ class ArtemisMetricsEndpointTest {
         var stats200 = http.percode().get("200");
         assertThat(stats200.count()).isEqualTo(1);
         assertThat(stats200.mean()).isGreaterThanOrEqualTo(0);
-    }
-
-    @Test
-    void cacheMetrics_shouldReturnEmptyWithoutHazelcast() {
-        // Without HazelcastInstance, cache metrics are empty
-        var caches = endpoint.allMetrics().cache();
-        assertThat(caches).isEmpty();
     }
 
     @Test

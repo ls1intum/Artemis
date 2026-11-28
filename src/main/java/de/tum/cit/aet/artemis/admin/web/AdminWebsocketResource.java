@@ -66,9 +66,7 @@ public class AdminWebsocketResource {
     public ResponseEntity<Iterable<WebsocketNodeDTO>> getWebsocketNodes() {
         String localId = nodeRegistryService.getLocalNodeId();
         var brokerStatus = distributedDataProvider.<String, Boolean>getMap(WebsocketBrokerReconnectionService.WEBSOCKET_BROKER_STATUS_MAP);
-        // Only core nodes register with the node registry, so every entry here already serves websocket traffic. The
-        // previously reported liteMember flag existed purely to filter Hazelcast build-agent members out of the raw member
-        // list and no longer has a meaning, so it is gone from the response.
+        // Only core nodes register with the node registry.
         var nodes = nodeRegistryService.getLiveNodes().stream().map(node -> new WebsocketNodeDTO(node.nodeId(), node.address(), node.host(), node.port(),
                 node.nodeId().equals(localId), node.instanceId(), Boolean.TRUE.equals(brokerStatus.get(node.nodeId())))).toList();
         return ResponseEntity.ok(nodes);

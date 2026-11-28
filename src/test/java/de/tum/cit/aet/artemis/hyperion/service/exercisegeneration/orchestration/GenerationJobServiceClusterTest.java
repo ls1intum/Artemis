@@ -14,21 +14,20 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.redisson.api.RedissonClient;
 
-import com.hazelcast.config.Config;
-import com.hazelcast.config.JoinConfig;
-import com.hazelcast.config.NetworkConfig;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
+import com.redis.testcontainers.RedisContainer;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFeedbackDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationInputDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
 
-/** Checks per-exercise admission, cancellation and replay using two real Hazelcast members. This does not qualify automatic failover. */
+/** Checks per-exercise admission, cancellation and replay using independent Redis clients. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class GenerationJobServiceClusterTest {
 
@@ -36,9 +35,15 @@ class GenerationJobServiceClusterTest {
 
     private static final Duration MAX_JOB_DURATION = Duration.ofMinutes(30);
 
-    private HazelcastInstance firstMember;
+    private final RedisContainer store = ValkeyTestContainerFactory.create();
 
-    private HazelcastInstance secondMember;
+    private RedissonClient firstClient;
+
+    private RedissonClient secondClient;
+
+    private DistributedDataProvider firstProvider;
+
+    private DistributedDataProvider secondProvider;
 
     private GenerationJobService firstNode;
 
@@ -46,61 +51,37 @@ class GenerationJobServiceClusterTest {
 
     @BeforeAll
     void startCluster() {
-        String clusterName = "hyperion-job-service-cluster-test-" + System.nanoTime();
-        firstMember = Hazelcast.newHazelcastInstance(clusterConfig(clusterName, List.of()));
-        int firstMemberPort = firstMember.getCluster().getLocalMember().getSocketAddress().getPort();
-        secondMember = Hazelcast.newHazelcastInstance(clusterConfig(clusterName, List.of("127.0.0.1:" + firstMemberPort)));
-        await().atMost(Duration.ofSeconds(60))
-                .untilAsserted(() -> assertThat(firstMember.getCluster().getMembers()).hasSize(2).hasSameSizeAs(secondMember.getCluster().getMembers()));
-        assertThat(localMemberId(firstMember)).isNotEqualTo(localMemberId(secondMember));
-    }
-
-    /**
-     * Joins over TCP/IP on the loopback interface: multicast is unavailable or noisy on CI, and auto-detection could join a stray member from another build.
-     * <p>
-     * Each member requests an ephemeral port so other local test processes cannot capture its loopback connections.
-     * {@code seedMembers} must name the founding member's actual bound port: a bare host scans only the three ports from 5701.
-     * The founding member starts with no seeds and its bound port is read back for the second.
-     */
-    private static Config clusterConfig(String clusterName, List<String> seedMembers) {
-        Config config = new Config();
-        config.setClusterName(clusterName);
-        NetworkConfig network = config.getNetworkConfig();
-        network.setPort(0).setPortAutoIncrement(false);
-        network.getInterfaces().setEnabled(true).setInterfaces(List.of("127.0.0.1"));
-        JoinConfig join = network.getJoin();
-        join.getAutoDetectionConfig().setEnabled(false);
-        join.getMulticastConfig().setEnabled(false);
-        join.getTcpIpConfig().setEnabled(true).setMembers(seedMembers);
-        return config;
+        store.start();
+        String address = "redis://" + store.getHost() + ":" + store.getMappedPort(6379);
+        firstClient = GenerationRedisTestSupport.client(address, "artemis-generation-first");
+        secondClient = GenerationRedisTestSupport.client(address, "artemis-generation-second");
+        firstProvider = GenerationRedisTestSupport.provider(firstClient);
+        secondProvider = GenerationRedisTestSupport.provider(secondClient);
     }
 
     @BeforeEach
     void setUp() {
-        firstMember.getDistributedObjects().forEach(distributedObject -> distributedObject.destroy());
-        firstNode = nodeOn(firstMember);
-        secondNode = nodeOn(secondMember);
+        firstClient.getKeys().flushdb();
+        firstNode = nodeOn(firstProvider);
+        secondNode = nodeOn(secondProvider);
     }
 
     @AfterAll
     void stopCluster() {
-        if (secondMember != null) {
-            secondMember.shutdown();
+        if (secondClient != null) {
+            secondClient.shutdown();
         }
-        if (firstMember != null) {
-            firstMember.shutdown();
+        if (firstClient != null) {
+            firstClient.shutdown();
         }
+        store.stop();
     }
 
-    private static GenerationJobService nodeOn(HazelcastInstance member) {
-        GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(member), event -> {
+    private static GenerationJobService nodeOn(DistributedDataProvider provider) {
+        GenerationJobService service = new GenerationJobService(provider, event -> {
         }, mock(GenerationTokenUsageService.class), null, STALE_JOB_TIMEOUT, MAX_JOB_DURATION, Runnable::run);
         service.init();
         return service;
-    }
-
-    private static String localMemberId(HazelcastInstance member) {
-        return member.getCluster().getLocalMember().getUuid().toString();
     }
 
     private static User user(String login) {
@@ -117,10 +98,10 @@ class GenerationJobServiceClusterTest {
 
     @Test
     void inputAndDesignReplayAcrossNodesWithoutDisclosingOwnerFeedback() {
-        var firstReplay = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(firstMember), Duration.ofHours(4), Duration.ofHours(4),
-                HyperionDistributedDataTestProvider.provider(firstMember).getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
-        var secondReplay = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(secondMember), Duration.ofHours(4), Duration.ofHours(4),
-                HyperionDistributedDataTestProvider.provider(secondMember).getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
+        var firstReplay = new GenerationJobReplayStore(firstProvider, Duration.ofHours(4), Duration.ofHours(4),
+                firstProvider.getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
+        var secondReplay = new GenerationJobReplayStore(secondProvider, Duration.ofHours(4), Duration.ofHours(4),
+                secondProvider.getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
         var input = new ExerciseGenerationInputDTO("Keep the API.",
                 List.of(new ExerciseGenerationFeedbackDTO("SOLUTION_REPO", "src/Stack.java", 12, List.of("Handle empty stacks."))));
         var exercise = new ProgrammingExercise();

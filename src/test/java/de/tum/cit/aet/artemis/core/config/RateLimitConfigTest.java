@@ -23,7 +23,7 @@ import io.github.bucket4j.distributed.proxy.ProxyManager;
 class RateLimitConfigTest {
 
     /**
-     * Only the Local provider can be constructed without external infrastructure. Hazelcast and Redis need their client beans, which is why they are asserted
+     * Only the Local provider can be constructed without external infrastructure. Redis needs a client bean and is covered
      * through {@link #everySupportedProviderIsCoveredByBucketStorage()} instead of by starting a context.
      *
      * @param provider the configured provider name, in the spellings a deployment may use
@@ -56,7 +56,6 @@ class RateLimitConfigTest {
                 .filter(method -> ProxyManager.class.isAssignableFrom(method.getReturnType())).map(method -> method.getAnnotation(Conditional.class).value()[0].getSimpleName())
                 .toList();
 
-        assertThat(conditions).containsExactlyInAnyOrder(HazelcastDistributedDataCondition.class.getSimpleName(), RedisDistributedDataCondition.class.getSimpleName(),
-                LocalDataCondition.class.getSimpleName());
+        assertThat(conditions).containsExactlyInAnyOrder(RedisDistributedDataCondition.class.getSimpleName(), LocalDataCondition.class.getSimpleName());
     }
 }

@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 
 /**
  * Async dispatch for variant jobs — mirrors {@code HyperionCodeGenerationTaskService}. The @Async boundary is
- * what makes the wizard closable: the job never depends on the client connection; the Hazelcast job record is
+ * what makes the wizard closable: the job never depends on the client connection; the shared job record is
  * the source of truth.
  */
 @Service

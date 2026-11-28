@@ -15,7 +15,7 @@ services:
       &depends-on-base
       postgres:
         condition: service_healthy
-      jhipster-registry:
+      redis:
         condition: service_healthy
       activemq-broker:
         condition: service_healthy
@@ -58,16 +58,14 @@ services:
       - ./artemis/config/node3.env
       - ./artemis/config/playwright.env
 
-  jhipster-registry:
+  redis:
     extends:
-      file: ./broker-registry.yml
-      service: jhipster-registry
-    networks:
-      - artemis
+      file: ./redis.yml
+      service: redis
 
   activemq-broker:
     extends:
-      file: ./broker-registry.yml
+      file: ./broker.yml
       service: activemq-broker
     networks:
       - artemis
@@ -131,9 +129,7 @@ services:
       EXPECTED_CLUSTER_NODE_COUNT: '2'
       # node-2 and node-3 both run a build agent, each with its own short name (see node2.env / node3.env).
       EXPECTED_MIN_BUILD_AGENTS: '2'
-      # Which distributed data provider the stack runs on. ClusterFormation.spec.ts uses it to decide which node-identity
-      # shape it may assert: Hazelcast publishes `[host]:port`, the Redis provider publishes a client name with no port.
-      DISTRIBUTED_DATA_PROVIDER: '${DISTRIBUTED_DATA_PROVIDER:-hazelcast}'
+      DISTRIBUTED_DATA_PROVIDER: 'redis'
       # Direct per-core-node URLs, so the cross-node specs can address one specific node instead of whichever
       # the load balancer picks.
       MULTI_NODE_URLS: 'http://artemis-app-node-1:8080,http://artemis-app-node-2:8080'

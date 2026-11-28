@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -40,7 +39,6 @@ import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
-import org.springframework.core.env.Profiles;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -192,12 +190,6 @@ public class BuildAgentDockerService implements EnvironmentAware {
     @Value("${spring.data.redis.port:6379}")
     private int redisPort;
 
-    @Value("${spring.hazelcast.interface:}")
-    private String hazelcastInterface;
-
-    @Value("${spring.hazelcast.port:5701}")
-    private int hazelcastPort;
-
     /**
      * IDs of the build jobs that are currently pulling a Docker image, with the time the pull started.
      * <p>
@@ -256,7 +248,7 @@ public class BuildAgentDockerService implements EnvironmentAware {
     }
 
     /**
-     * Checks from a container on the default build network that the queue store, the cluster port and the configured services cannot be reached, and logs the outcome.
+     * Checks from a container on the default build network that the queue store and the configured services cannot be reached, and logs the outcome.
      * A failure of the check itself never affects the agent.
      */
     void checkNetworkIsolation() {
@@ -264,14 +256,9 @@ public class BuildAgentDockerService implements EnvironmentAware {
             if (dockerClientNotAvailable("Cannot check the network isolation of build containers.")) {
                 return;
             }
-            // Services that build containers must not reach, as host:port: the ones in the configuration, the queue store, and the cluster port of this node when it is a member
-            // of the cluster. A node without the core profile is a client of the cluster and listens on no cluster port.
             List<String> entries = new ArrayList<>(Binder.get(environment).bind(NETWORK_ISOLATION_CHECK_TARGETS_PROPERTY, Bindable.listOf(String.class)).orElse(List.of()));
             if (redisHost != null && !redisHost.isBlank()) {
                 entries.add(redisHost + ":" + redisPort);
-            }
-            if (hazelcastInterface != null && !hazelcastInterface.isBlank() && environment.acceptsProfiles(Profiles.of(PROFILE_CORE))) {
-                entries.add(hazelcastInterface + ":" + hazelcastPort);
             }
             BuildContainerIsolationProbe probe = new BuildContainerIsolationProbe(buildAgentConfiguration.getDockerClient(), networkIsolationCheckImage);
             List<BuildContainerIsolationProbe.Target> targets = BuildContainerIsolationProbe.parseTargets(entries);
@@ -723,7 +710,7 @@ public class BuildAgentDockerService implements EnvironmentAware {
      * <p>
      * Exception handling includes catching NotFoundException for cases where images are already deleted or not found during the cleanup process.
      *
-     * @implNote This method relies on Docker commands to list images and containers, and uses Hazelcast for managing image usage data.
+     * @implNote This method relies on Docker commands to list images and containers, and uses the distributed data provider for managing image usage data.
      * @throws NotFoundException if an attempt is made to delete an image that no longer exists on the Docker host.
      */
 

@@ -45,7 +45,7 @@ export class FinishedJobsTableComponent {
 
     /**
      * Computed mapping from build agent host to agent info (name and displayName).
-     * Uses host-only matching to handle Hazelcast ephemeral ports.
+     * Uses host-only matching to handle ephemeral client ports.
      */
     addressToAgentInfoMap = computed(() => createAddressToAgentInfoMap(this.buildAgents()));
 

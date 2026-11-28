@@ -10,7 +10,7 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Data transfer object containing detailed information about a build agent's status and performance metrics.
- * This information is stored in the distributed Hazelcast map and displayed in the build agent details UI.
+ * This information is stored in the distributed map and displayed in the build agent details UI.
  *
  * @param averageBuildDuration     the average duration of builds in seconds
  * @param successfulBuilds         the total number of successful builds processed by this agent
@@ -33,8 +33,7 @@ public record BuildAgentDetailsDTO(long averageBuildDuration, long successfulBui
     /**
      * Deliberately kept at 2 even though runner metadata was added.
      * <p>
-     * Hazelcast stores this DTO with plain Java serialization, and a rolling upgrade temporarily runs nodes of both versions. Bumping the serial version would make each
-     * version reject the other's entries with an {@code InvalidClassException}, so the build agent overview would break for the duration of every upgrade. Record
+     * The Redis map codec must be able to read entries written by earlier versions. Record
      * deserialization tolerates the added components on its own: a stream written by an older node simply leaves them at their default value, which {@link #readResolve()}
      * then fills in.
      */

@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------------------------------------------------
-# Fast multi-node E2E support stack (Postgres + Eureka + ActiveMQ + nginx LB only)
+# Fast multi-node E2E support stack (Postgres + Valkey + ActiveMQ + nginx LB only)
 #
 # Companion to supporting_scripts/e2e/run-e2e-tests-local-multinode-fast.sh: this compose brings up only the supporting
 # infrastructure. The 3 Artemis JVMs run on the host (java -jar against the WAR built by gradle)
@@ -9,16 +9,14 @@
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
-  jhipster-registry:
+  redis:
     extends:
-      file: ./broker-registry.yml
-      service: jhipster-registry
-    networks:
-      - artemis
+      file: ./redis.yml
+      service: redis
 
   activemq-broker:
     extends:
-      file: ./broker-registry.yml
+      file: ./broker.yml
       service: activemq-broker
     networks:
       - artemis

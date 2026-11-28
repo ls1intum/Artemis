@@ -20,7 +20,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentAddressInfo;
-import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -57,8 +56,6 @@ public class DistributedDataAccessService {
     private DistributedQueue<ResultQueueItem> deferredBuildResultQueue;
 
     private DistributedMap<String, BuildAgentInformation> buildAgentInformation;
-
-    private DistributedMap<String, BuildAgentAddressInfo> buildAgentAddresses;
 
     private DistributedMap<String, BuildAgentAddressInfo> buildAgentReportedAddresses;
 
@@ -128,7 +125,6 @@ public class DistributedDataAccessService {
      * @return a list of processing build jobs
      */
     public List<BuildJobQueueItem> getProcessingJobs() {
-        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
         return new ArrayList<>(getDistributedProcessingJobs().values());
     }
 
@@ -143,7 +139,6 @@ public class DistributedDataAccessService {
      * @return a list of processing job ids
      */
     public List<String> getProcessingJobIds() {
-        // NOTE: we should not use streams with IMap, because it can be unstable, when many items are added at the same time and there is a slow network condition
         return new ArrayList<>(getDistributedProcessingJobs().keySet());
     }
 
@@ -223,7 +218,6 @@ public class DistributedDataAccessService {
      * @return a map of build agent information
      */
     public Map<String, BuildAgentInformation> getBuildAgentInformationMap() {
-        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
         return getDistributedBuildAgentInformation().getMapCopy();
     }
 
@@ -239,77 +233,21 @@ public class DistributedDataAccessService {
      * @return a list of active build agent information (excludes disconnected agents on core nodes)
      */
     public List<BuildAgentInformation> getBuildAgentInformation() {
-        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
         List<BuildAgentInformation> allAgents = new ArrayList<>(getDistributedBuildAgentInformation().values());
 
         // Get current processing jobs to enrich agent information with accurate running jobs data
         List<BuildJobQueueItem> currentProcessingJobs = getProcessingJobs();
 
-        // The identifiers of the clients and of the cluster members the provider currently sees, read as one snapshot.
-        // Only core nodes can answer the first one. Asking for the two separately made Redis answer the same
-        // CLIENT LIST twice per call, on a method that runs on every build agent update.
-        var membership = distributedDataProvider.getClusterMembership();
-        Set<String> connectedClientIdentifiers = membership.connectedClientNames();
-        Set<String> liveNodeIdentifiers = membership.clusterMemberAddresses();
+        Set<String> liveNodes = distributedDataProvider.getClusterMemberAddresses();
 
         // Enrich and filter agents
         return allAgents.stream()
                 // Guard against null entries from distributed map
                 .filter(agent -> agent != null && agent.buildAgent() != null)
                 // Filter to only connected agents if we can determine connectivity
-                .filter(agent -> isConnected(agent, connectedClientIdentifiers, liveNodeIdentifiers))
+                .filter(agent -> liveNodes.isEmpty() || (agent.buildAgent().memberAddress() != null && liveNodes.contains(agent.buildAgent().memberAddress())))
                 // Enrich with current processing jobs for accurate runningBuildJobs data
                 .map(agent -> enrichWithCurrentProcessingJobs(agent, currentProcessingJobs)).toList();
-    }
-
-    /**
-     * Decides whether a build agent entry should be shown: when the provider cannot tell which clients are connected, every entry is, and otherwise only
-     * the entries {@link #appearsInMembership} matches.
-     *
-     * @param agent                      the stored build agent entry
-     * @param connectedClientIdentifiers the client identifiers the provider reports, empty if it cannot tell
-     * @param liveNodeIdentifiers        the identifiers of the nodes the provider reports as alive
-     * @return true if the agent should be shown
-     */
-    private static boolean isConnected(BuildAgentInformation agent, Set<String> connectedClientIdentifiers, Set<String> liveNodeIdentifiers) {
-        // An empty client list means connectivity could not be determined (a build agent asking, or a failed lookup).
-        // Showing every agent is the safe answer there: hiding them all would make a healthy cluster look like it has no
-        // build capacity at all.
-        if (connectedClientIdentifiers.isEmpty()) {
-            return true;
-        }
-        return appearsInMembership(agent.buildAgent(), connectedClientIdentifiers, liveNodeIdentifiers);
-    }
-
-    /**
-     * Decides whether a build agent belongs to a node the provider still sees.
-     *
-     * <p>
-     * A build agent can reach the cluster in three ways, and each shows up in a different place:
-     * <ul>
-     * <li><strong>A Hazelcast client</strong> (a node with only the {@code buildagent} profile) appears in the connected
-     * client list under the build agent short name, because that is what the Hazelcast client instance is named after.
-     * It is never a cluster member.</li>
-     * <li><strong>A Hazelcast cluster member that also runs a build agent</strong> (a node with {@code core} and
-     * {@code buildagent}, which is the standard Artemis topology) appears in neither: it is not a client, and the
-     * client list does not contain its short name. Its stored member address is in the member list instead. Matching
-     * only the client list hid this agent completely, so a node that was actively running builds looked absent and its
-     * capacity was missing from every capacity calculation.</li>
-     * <li><strong>Redis</strong> has no member/client distinction. It reports {@code spring.data.redis.client-name},
-     * which is the node identity and therefore exactly what the agent stored as its {@code memberAddress}; its short
-     * name never appears.</li>
-     * </ul>
-     * Accepting any of the three avoids asking the provider which shape it uses, which is the provider-specific knowledge
-     * this abstraction exists to keep out of the call sites.
-     *
-     * @param buildAgent                 the build agent of a stored entry
-     * @param connectedClientIdentifiers the client identifiers the provider reports
-     * @param liveNodeIdentifiers        the identifiers of the nodes the provider reports as alive
-     * @return true if the provider lists the agent's node in one of the three ways
-     */
-    public static boolean appearsInMembership(BuildAgentDTO buildAgent, Set<String> connectedClientIdentifiers, Set<String> liveNodeIdentifiers) {
-        String memberAddress = buildAgent.memberAddress();
-        return connectedClientIdentifiers.contains(buildAgent.name()) || connectedClientIdentifiers.contains(memberAddress) || liveNodeIdentifiers.contains(memberAddress);
     }
 
     /**
@@ -347,37 +285,7 @@ public class DistributedDataAccessService {
     }
 
     /**
-     * This method is used to get the distributed map of build agent network addresses. This should only be used in special cases like writing to the map or adding a listener.
-     * In general, the map should be accessed via the {@link DistributedDataAccessService#getBuildAgentAddressMap()} method.
-     * The map is initialized lazily the first time this method is called if it is still null.
-     *
-     * @return the distributed map of build agent network addresses, keyed by build agent short name
-     */
-    public DistributedMap<String, BuildAgentAddressInfo> getDistributedBuildAgentAddresses() {
-        if (this.buildAgentAddresses == null) {
-            this.buildAgentAddresses = this.distributedDataProvider.getMap("buildAgentAddresses");
-        }
-        return this.buildAgentAddresses;
-    }
-
-    /**
-     * This method is used to get a Map containing the network addresses of all registered build agents. This should be used for reading the map.
-     * If you want to write to the map or add a listener, use {@link DistributedDataAccessService#getDistributedBuildAgentAddresses()} instead.
-     *
-     * @return a map of build agent short name to the addresses that agent is observed to connect from
-     */
-    public Map<String, BuildAgentAddressInfo> getBuildAgentAddressMap() {
-        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
-        return getDistributedBuildAgentAddresses().getMapCopy();
-    }
-
-    /**
      * The addresses build agents report for themselves, keyed by build agent short name.
-     * <p>
-     * Separate from {@link #getDistributedBuildAgentAddresses()}, which core nodes fill from what the middleware
-     * observed, because the two have different writers and must not overwrite each other: an agent owns its own entry
-     * here, and no core node ever writes to it. The origin check reads the union, so an agent is bound to every address
-     * either source knows about.
      * <p>
      * Entries expire. An agent republishes while it lives, so a crashed one stops being registered on its own, with no
      * cleanup logic and no node needing to decide on another node's behalf whether an agent is gone - a decision no
@@ -396,31 +304,7 @@ public class DistributedDataAccessService {
      * @return a copy of the self-reported build agent addresses, for reading
      */
     public Map<String, BuildAgentAddressInfo> getBuildAgentReportedAddressMap() {
-        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
         return getDistributedBuildAgentReportedAddresses().getMapCopy();
-    }
-
-    /**
-     * @return whether a client's connection to the middleware terminates on a core node, and therefore whether the
-     *         address it was observed at is also the address it reaches the git server from
-     * @see de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider#clientsConnectDirectlyToCoreNodes()
-     */
-    public boolean clientsConnectDirectlyToCoreNodes() {
-        return distributedDataProvider.clientsConnectDirectlyToCoreNodes();
-    }
-
-    /**
-     * Retrieves the addresses each connected build agent is observed to connect from, as seen by the middleware.
-     * <p>
-     * This is the raw observation, not the registered snapshot: {@link BuildAgentAddressRegistryService} calls it to
-     * refresh {@link #getDistributedBuildAgentAddresses()}. Callers that want to authorize a git request should read
-     * the registry instead, which is maintained by the core nodes and does not require a provider-specific call.
-     *
-     * @return connected client name to observed remote host addresses, or empty if the provider cannot observe clients
-     *         or the query failed. That is different from a present but empty map, which means no client is connected.
-     */
-    public Optional<Map<String, Set<String>>> getConnectedClientAddresses() {
-        return distributedDataProvider.getConnectedClientAddresses();
     }
 
     /**
@@ -444,7 +328,6 @@ public class DistributedDataAccessService {
      * @return a map of docker image cleanup info
      */
     public Map<String, ZonedDateTime> getDockerImageCleanupInfoMap() {
-        // NOTE: we should not use streams with IMap directly, because it can be unstable, when many items are added at the same time and there is a slow network condition
         return new HashMap<>(getDistributedDockerImageCleanupInfo().getMapCopy());
     }
 
@@ -564,32 +447,6 @@ public class DistributedDataAccessService {
     }
 
     /**
-     * @return true if build agents appear in {@link #getClusterMemberAddresses()}, so that absence means offline
-     */
-    public boolean buildAgentsAppearInClusterMemberList() {
-        return distributedDataProvider.buildAgentsAppearInClusterMemberList();
-    }
-
-    /**
-     * Checks if there are no data members available in the cluster.
-     *
-     * @return {@code true} if all members in the cluster are lite members (i.e., no data members are available),
-     */
-    public boolean noDataMemberInClusterAvailable() {
-        return distributedDataProvider.noDataMemberInClusterAvailable();
-    }
-
-    /**
-     * Checks if the distributed data provider is connected and ready to use.
-     * For cluster members (core nodes), this is equivalent to isInstanceRunning().
-     * For clients (build agents with asyncStart=true), this checks if the client
-     * has established a connection to at least one cluster member.
-     *
-     * <p>
-     * This is important for async-start clients that may be running but not yet
-     * connected to the cluster. Operations on distributed objects will fail until
-     * the client is connected.
-     *
      * @return true if the instance is connected and ready to use, false otherwise
      */
     public boolean isConnectedToCluster() {
@@ -612,41 +469,9 @@ public class DistributedDataAccessService {
     }
 
     /**
-     * Registers a callback that will be invoked when the client connects or reconnects to the cluster.
-     * This is important for re-registering listeners on distributed objects after a connection loss.
+     * Registers a callback for Artemis nodes that leave Redis membership. The Local provider has no remote nodes.
      *
-     * <p>
-     * The callback receives a boolean indicating whether this is the initial connection (true)
-     * or a reconnection after disconnection (false). Services can use this to differentiate
-     * between first-time setup and re-initialization after connection loss.
-     *
-     * @param callback a consumer that receives true for initial connection, false for reconnection
-     * @return a unique identifier that can be used to remove the listener later
-     */
-    public UUID addConnectionStateListener(Consumer<Boolean> callback) {
-        return distributedDataProvider.addConnectionStateListener(callback);
-    }
-
-    /**
-     * Removes a previously registered connection state listener.
-     *
-     * @param listenerId the unique identifier returned by {@link #addConnectionStateListener}
-     * @return true if the listener was found and removed, false otherwise
-     */
-    public boolean removeConnectionStateListener(UUID listenerId) {
-        return distributedDataProvider.removeConnectionStateListener(listenerId);
-    }
-
-    /**
-     * Registers a callback that will be invoked when a client (build agent) disconnects from the cluster.
-     * This is only available on data members (core nodes), not on clients (build agents).
-     * On clients, this method returns null and the callback is never invoked.
-     *
-     * <p>
-     * This is important for cleaning up stale data when build agents crash or disconnect
-     * unexpectedly. The callback receives the client name (build agent short name) that disconnected.
-     *
-     * @param callback a consumer that receives the disconnected client's name
+     * @param callback a consumer that receives the disconnected node's provider identifier
      * @return a unique identifier that can be used to remove the listener later, or null if not supported
      */
     public UUID addClientDisconnectionListener(Consumer<String> callback) {

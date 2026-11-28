@@ -61,13 +61,7 @@
     <logger name="jakarta.management.remote" level="WARN"/>
     <logger name="jakarta.xml.bind" level="WARN"/>
     <logger name="jdk.event.security" level="INFO"/>
-    <logger name="com.hazelcast.cp" level="ERROR"/>
-    <logger name="com.hazelcast.core" level="WARN"/>
     <logger name="org.hibernate.boot.model.internal" level="ERROR"/>
-    <logger name="com.hazelcast" level="WARN"/>
-    <logger name="com.netflix" level="WARN"/>
-    <logger name="com.netflix.config.sources.URLConfigurationSource" level="ERROR"/>
-    <logger name="com.netflix.discovery" level="WARN"/>
     <logger name="com.ryantenney" level="WARN"/>
     <logger name="com.sun" level="WARN"/>
     <logger name="com.zaxxer" level="WARN"/>

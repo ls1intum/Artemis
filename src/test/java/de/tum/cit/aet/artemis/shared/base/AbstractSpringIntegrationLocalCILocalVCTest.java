@@ -55,9 +55,8 @@ import de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration;
         // race with it, so the task never fires on its own here (tests call pushDockerImageCleanupInfo() directly).
         "artemis.continuous-integration.image-cleanup.info-push-interval-seconds=31536000", "artemis.continuous-integration.image-cleanup.info-push-delay-seconds=31536000",
         "spring.liquibase.enabled=true", "artemis.iris.enabled=true", "artemis.iris.health-ttl=500", "info.contact=test@localhost",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localci_localvc", "artemis.version-control.build-agent-use-ssh=true",
-        "artemis.version-control.ssh-private-key-folder-path=local/server-integration-test-localci/ssh-keys", "artemis.hyperion.enabled=true", "artemis.deimos.enabled=true",
-        "artemis.atlas.enabled=true", "artemis.atlas.atlasllm.enabled=true",
+        "artemis.version-control.build-agent-use-ssh=true", "artemis.version-control.ssh-private-key-folder-path=local/server-integration-test-localci/ssh-keys",
+        "artemis.hyperion.enabled=true", "artemis.deimos.enabled=true", "artemis.atlas.enabled=true", "artemis.atlas.atlasllm.enabled=true",
         // Use separate repo paths for LocalCI/LocalVC tests to isolate from other test buckets
         "artemis.failed-build-logs-path=./local/server-integration-test-localci/failed-build-logs", "artemis.repo-clone-path=./local/server-integration-test-localci/repos",
         "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-localci/local-vcs-repos", "artemis.lti.enabled=true",
@@ -88,13 +87,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     private static final int sshPort;
 
-    private static final int hazelcastPort;
-
     // Static initializer runs before @DynamicPropertySource, ensuring ports are available when Spring context starts
     static {
         serverPort = findAvailableTcpPort();
         sshPort = findAvailableTcpPort();
-        hazelcastPort = findAvailableTcpPort();
     }
 
     @DynamicPropertySource
@@ -103,7 +99,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
         registry.add("artemis.version-control.url", () -> "http://localhost:" + serverPort);
         registry.add("artemis.version-control.ssh-port", () -> sshPort);
         registry.add("artemis.version-control.ssh-template-clone-url", () -> "ssh://git@localhost:" + sshPort + "/");
-        registry.add("spring.hazelcast.port", () -> hazelcastPort);
 
         WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer, "LocalCILocalVC_");
     }

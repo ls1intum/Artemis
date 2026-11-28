@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
  * <p>
  * <b>Test architecture:</b> This test class extends {@code AbstractProgrammingIntegrationLocalVCSamlTest}
  * which activates the {@code PROFILE_SCHEDULING} profile. This means {@code MainInstanceMessageSendService}
- * is used (synchronous direct calls) instead of the Hazelcast-based {@code DistributedInstanceMessageSendService}.
+ * is used (synchronous direct calls) instead of the distributed-topic-based {@code DistributedInstanceMessageSendService}.
  * The {@code scheduleService} and {@code programmingExerciseGradingService} are {@code @MockitoSpyBean}s
  * declared in {@code AbstractArtemisIntegrationTest} and shared across all test classes in the same Spring context.
  * <p>

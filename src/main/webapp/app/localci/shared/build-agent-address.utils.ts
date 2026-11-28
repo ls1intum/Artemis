@@ -11,14 +11,14 @@ export interface AgentInfo {
 }
 
 /**
- * Checks if a value looks like a Hazelcast member address (e.g., "[host]:port").
+ * Checks if a value looks like a stored build-agent address (e.g., "[host]:port").
  */
 export function looksLikeAddress(value: string): boolean {
     return /^\[.+\]:\d+$/.test(value);
 }
 
 /**
- * Extracts the host portion from a Hazelcast member address.
+ * Extracts the host portion from a stored build-agent address.
  * For "[192.168.1.1]:5701" returns "192.168.1.1".
  * For "[2001:db8::1]:5702" returns "2001:db8::1".
  * Returns the original value if it doesn't match the expected format.
@@ -30,7 +30,7 @@ export function extractHost(address: string): string {
 
 /**
  * Creates a mapping from build agent host (without port) to agent info (name and displayName).
- * Uses host-only matching to handle Hazelcast ephemeral ports that change on reconnection.
+ * Uses host-only matching to handle ephemeral client ports that change on reconnection.
  */
 export function createAddressToAgentInfoMap(agents: BuildAgentInformation[]): Map<string, AgentInfo> {
     const map = new Map<string, AgentInfo>();

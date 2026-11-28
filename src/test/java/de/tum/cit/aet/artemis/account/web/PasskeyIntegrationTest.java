@@ -777,7 +777,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(storedCredentialId).as("Stored credential ID should match the authenticator's credential ID").isEqualTo(expectedCredentialId);
 
             // Step 2: Get authentication options
-            // The challenge is stored in Hazelcast and looked up via a cookie
+            // The challenge is stored in the shared map and looked up via a cookie
             MockHttpServletResponse authOptionsResponse = request
                     .performMvcRequest(post("/webauthn/authenticate/options").contentType(MediaType.APPLICATION_JSON).with(anonymous())).andExpect(status().isOk()).andReturn()
                     .getResponse();

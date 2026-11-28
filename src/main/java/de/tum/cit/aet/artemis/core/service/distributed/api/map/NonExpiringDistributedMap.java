@@ -6,10 +6,7 @@ import java.time.Duration;
  * Rejects per-entry time-to-live on a map that was not requested as an expiring map.
  *
  * <p>
- * Providers differ in what they could technically do here: Hazelcast and the local provider accept a per-entry TTL on any
- * map, while Redisson's plain {@code RMap} has no notion of expiry at all. Allowing the call wherever a provider happens
- * to support it would mean code that works on Hazelcast silently stops expiring entries once the same deployment runs on
- * Redis. Failing uniformly instead forces callers to state the requirement by asking for
+ * Callers that require expiry must request
  * {@link de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider#getExpiringMap(String, Duration)}.
  *
  * @param <K> key type

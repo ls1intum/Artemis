@@ -82,8 +82,6 @@ public class ParticipationTeamWebsocketService {
 
     private final DistributedDataProvider distributedDataProvider;
 
-    // TODO: Follow-Up: move this into a separate service that contains all Hazelcast related data structures
-
     /** Always access using the getter to ensure that the map is initialized **/
     @Nullable
     private DistributedMap<String, String> destinationTracker;
@@ -414,7 +412,7 @@ public class ParticipationTeamWebsocketService {
      * @param sessionId id of the sessions which is unsubscribing
      */
     public void unsubscribe(String sessionId) {
-        // check if Hazelcast is still active, before invoking this
+        // check if the provider is still active, before invoking this
         try {
             if (distributedDataProvider.isInstanceRunning()) {
                 Optional.ofNullable(getDestinationTracker().get(sessionId)).ifPresent(destination -> {

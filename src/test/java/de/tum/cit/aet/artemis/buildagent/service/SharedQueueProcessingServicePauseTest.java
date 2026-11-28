@@ -276,7 +276,6 @@ class SharedQueueProcessingServicePauseTest {
         AtomicBoolean executorsClosed = new AtomicBoolean(false);
         when(buildAgentConfiguration.getBuildExecutor()).thenAnswer(invocation -> executorsClosed.get() ? null : buildExecutor);
         when(distributedDataAccessService.isConnectedToCluster()).thenReturn(true);
-        when(distributedDataAccessService.noDataMemberInClusterAvailable()).thenReturn(false);
         when(buildJobQueue.isEmpty()).thenReturn(false);
         when(buildJobQueue.poll()).thenReturn(queuedJob, (BuildJobQueueItem) null);
         when(buildJobManagementService.executeBuildJob(any())).thenAnswer(invocation -> {

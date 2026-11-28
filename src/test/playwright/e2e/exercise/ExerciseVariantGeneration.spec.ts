@@ -10,7 +10,7 @@ import { ExerciseVariantAiWizard } from '../../support/pageobjects/exercises/Exe
 /**
  * E2E tests for AI exercise-variant generation.
  *
- * The whole stack is real (server, client, Hazelcast job map, quiz adapters/toolset, WebSocket) except the
+ * The whole stack is real (server, client, distributed job map, quiz adapters/toolset, WebSocket) except the
  * LLM: Hyperion's Spring AI OpenAI client is pointed at a deterministic mock LLM
  * (src/test/playwright/support/hyperion-mock-llm/) that returns a canned ChangePlan for PLANNING, a single
  * `finish` tool call for TRANSFORMING (the provisioned clone is already a valid copy, so an unmodified-but-
@@ -22,7 +22,7 @@ import { ExerciseVariantAiWizard } from '../../support/pageobjects/exercises/Exe
  * When Hyperion is NOT enabled (the default), the suite skips itself, so it is a no-op in the per-pull-request CI runs.
  * The nightly workflow `nightly-hyperion-e2e.yml` enables Hyperion and runs it, and fails when the suite skipped itself.
  *
- * Note: one manual multi-node sanity run before the PR (the job map is Hazelcast-backed and the WebSocket
+ * Note: one manual multi-node sanity run before the PR (the nodes share the job map through Redis and the WebSocket
  * event must reach the user regardless of which node runs the job):
  *     RUN_HYPERION=true ./supporting_scripts/e2e/run-e2e-tests-local-multinode-fast.sh --filter "Variant"
  */

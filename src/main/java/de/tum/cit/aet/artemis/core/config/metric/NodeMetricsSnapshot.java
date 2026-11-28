@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.MetricsResponse;
 
 /**
- * Snapshot of a single node's metrics, stored in Hazelcast IMap for multi-node aggregation.
+ * Snapshot of a single node's metrics, stored in a distributed map for multi-node aggregation.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record NodeMetricsSnapshot(String nodeId, String nodeLabel, Instant timestamp, MetricsResponse metrics) implements Serializable {

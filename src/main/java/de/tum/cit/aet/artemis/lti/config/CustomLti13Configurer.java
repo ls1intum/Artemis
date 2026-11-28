@@ -271,7 +271,7 @@ public class CustomLti13Configurer extends Lti13Configurer {
 
     /**
      * Configures and returns an {@link StateBasedOptimisticAuthorizationRequestRepository} for handling OAuth2 authorization requests.
-     * This method sets up a multinode-distributed state repository for managing authorization requests using Hazelcast.
+     * This method sets up a multinode-distributed state repository for managing authorization requests using the distributed data provider.
      * This is necessary to support LTI on multinode systems where the different requests might get processed by different nodes.
      *
      * @return An instance of {@link StateBasedOptimisticAuthorizationRequestRepository} that combines session-based and distributed state management.

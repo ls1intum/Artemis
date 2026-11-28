@@ -2,13 +2,16 @@
 id: upgrade-guide
 title: Upgrade Guide
 sidebar_label: Upgrade Guide
-last_reviewed: 2026-11-25
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 
 This page documents the required upgrade path for Artemis, what the database migration does on startup, and how to verify that it worked.
+
+**Upgrading to 10.9?** Choose the distributed data provider for your deployment before starting the new version.
+See [10.9 provider migration](#select-the-distributed-data-provider).
 
 ## How the Schema Is Applied
 
@@ -197,6 +200,48 @@ Restore the backup taken in step 4 of the upgrade procedure if the cause cannot 
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
 
+### 10.9: Replace Hazelcast before starting the new version {/* #select-the-distributed-data-provider */}
+
+Artemis 10.9 removes Hazelcast. Startup fails if the effective provider is `Hazelcast`. With no provider setting,
+10.9 uses `Local`. **Check the number of Artemis processes before upgrading**: two cores that both default to
+`Local` have independent queues, node lists and feature toggles, even when they share a database.
+
+| Your deployment before the upgrade | What to configure for 10.9 |
+| --- | --- |
+| One Artemis core with external Jenkins | Use `Local`. Jenkins controllers and executors run outside Artemis. You can keep Jenkins for this upgrade. |
+| One Artemis JVM running both core and LocalCI build agent | Use `Local` if transient state can be lost on restart. Redis remains an option for persistence. |
+| Multiple cores, a dedicated Artemis build agent, or a separate AI worker | Set `artemis.distributed-data.provider: Redis` on **every** Artemis JVM, with the same Redis or Valkey endpoint. Count separate processes on the same host. |
+| Already using Redis or Valkey | Keep the existing endpoint, credentials and persistence. Follow the [store backup and schema upgrade steps](/admin/production-setup/distributed-data#prepare-an-upgrade). |
+
+**Update configuration before shutdown.** Set `artemis.distributed-data.provider` in the production configuration
+or `ARTEMIS_DISTRIBUTEDDATA_PROVIDER` in the service environment. If you used the older
+`artemis.continuous-integration.data-store` setting (`ARTEMIS_CONTINUOUSINTEGRATION_DATASTORE`), carry over
+`Redis` or `Local` as appropriate. Replace `Hazelcast` with the provider selected above. The new key takes
+precedence. Remove the old key once you have configured the replacement. Check service units, Compose environment files and chart overrides as well as YAML files.
+If you customized `artemis.cache.hazelcast.time-to-live-seconds`, copy its value to `artemis.cache.time-to-live-seconds`.
+Copy application settings previously supplied by a central configuration service into each role's Spring configuration
+or secret store. Remove obsolete bootstrap and discovery settings after those values are in place.
+See [provider configuration](/admin/production-setup/distributed-data#configure-the-provider) for the Redis connection
+settings and the Helm chart default.
+
+**When switching stores, schedule one maintenance window.** The new provider starts with empty runtime state.
+Course data and saved results remain in the Artemis database. Queued builds, undelivered results and runtime
+feature-toggle overrides do not transfer between providers.
+
+1. Back up the database, repositories and configuration as described in the upgrade procedure. Record runtime feature
+   overrides. Stop new submissions and build triggers. Keep LocalCI agents processing until queued and running builds
+   are finished and both result queues, including deferred results, are empty. If using Jenkins, let jobs finish and
+   their results reach Artemis. Let outstanding AI worker operations finish.
+2. Stop all old Artemis processes. Start one upgraded core and wait for `/management/health/readiness` to report
+   `UP`. Then start the remaining cores, build agents and AI workers on the same version.
+3. In **Administration → Websocket**, verify the expected core count. For LocalCI, check the build agents in the
+   build administration. Restore the feature overrides and submit a test programming exercise through your usual CI
+   system. Verify that the result and feedback appear before reopening submissions.
+
+If you need to roll back, stop the new processes first. Restore the pre-upgrade configuration and any backups required
+by the [database recovery instructions](#if-a-migration-fails) and the [Redis rollback procedure](/admin/production-setup/distributed-data#rollback).
+Work created in the new provider has no automatic transfer back to the old provider.
+
 ### 10.9: Personal VCS Access Tokens Are Deprecated
 
 <Callout variant={CalloutVariant.warning}>
@@ -282,7 +327,7 @@ share one budget of the login rate limits, and appear with one address in their 
 ### 10.8: Build Results in the Distributed Data
 
 With Redis or Valkey, this release changes the stored layout of build results (schema version `2`). **Finished build results that were still waiting in the result queues when you stop the old nodes are discarded**, and their submissions need a new build. Queued builds are kept. A build that was still running when you stopped its node is marked as missing and rebuilt automatically after about five to ten minutes.
-Pause all build agents and wait until the running builds have finished and the result queues are empty before you upgrade. Hazelcast keeps nothing across a restart and is not affected. See
+Pause all build agents and wait until the running builds have finished and the result queues are empty before you upgrade. See
 [Distributed Data with Redis or Valkey](/admin/production-setup/distributed-data#schema-1-to-2).
 
 ### 10.7: Rate Limit of Git Operations

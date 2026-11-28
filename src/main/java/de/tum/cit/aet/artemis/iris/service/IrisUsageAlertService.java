@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisAdminDashboardRepository;
  * Scheduled service that monitors Iris no-response rates and sends alert emails when thresholds are exceeded.
  * <p>
  * Uses a cooldown mechanism to avoid alert storms: after a successful send the service suppresses
- * further alerts for the configured cooldown period. Hazelcast distributed locking serializes
+ * further alerts for the configured cooldown period. Distributed locking serializes
  * concurrent executions across cluster nodes.
  * <p>
  * Delivery is <em>at-least-once</em>, not exactly-once: the cooldown state is written only after the
@@ -150,7 +150,7 @@ public class IrisUsageAlertService {
      * Skips execution when scheduling is inactive, the dev profile is active, the instance is a test server,
      * the alert feature is disabled, configuration is invalid, or the email service cannot send.
      * <p>
-     * Uses Hazelcast distributed locking to prevent concurrent executions across cluster nodes
+     * Uses Distributed locking to prevent concurrent executions across cluster nodes
      * and to enforce the cooldown period cluster-wide.
      */
     @Scheduled(fixedRateString = "${artemis.iris.dashboard.alert.check-interval-minutes:30}", initialDelayString = "${artemis.iris.dashboard.alert.check-interval-minutes:30}", timeUnit = TimeUnit.MINUTES)

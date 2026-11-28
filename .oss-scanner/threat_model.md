@@ -33,7 +33,7 @@ Untrusted input enters through:
   in the git servlet and SSH server, not in Spring Security. The pushed content is untrusted.
 - **Student code run by LocalCI.** Build agents execute submitted code in Docker containers, read test results from them
   and clone repositories from the core nodes over HTTPS (per-job clone token) or SSH (per-agent key). Core nodes and build
-  agents talk through a distributed-data cluster (Hazelcast on port 5701, or Redis), which is expected to sit on a private
+  agents talk through a distributed-data cluster (Redis or Valkey), which is expected to sit on a private
   network. Its members are trusted: a node in the cluster can already read any build job's clone token.
 - **User content shown to other users:** Markdown, LaTeX, PlantUML, HTML in problem statements, posts, lecture units and
   feedback; uploaded files and images; Apollon diagrams; imported programming exercise archives (ZIP).
@@ -79,7 +79,7 @@ Out of scope:
   (`mail`, `localci`, `jenkins`, `iris`, ...) are in scope.
 - `deployment/**`: example compose files, Helm charts and Kubernetes manifests.
 - Code that exists only for local development (`application-dev.yml`).
-- Anything that already requires membership of the Hazelcast or Redis cluster.
+- Anything that already requires membership of the Redis deployment.
 
 ## How to exercise it
 

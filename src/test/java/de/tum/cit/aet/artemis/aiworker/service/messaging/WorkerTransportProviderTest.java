@@ -16,10 +16,6 @@ import org.redisson.config.Config;
 import org.redisson.spring.data.connection.RedissonConnectionFactory;
 import org.testcontainers.DockerClientFactory;
 
-import com.hazelcast.client.HazelcastClient;
-import com.hazelcast.client.config.ClientConfig;
-import com.hazelcast.core.Hazelcast;
-
 import de.tum.cit.aet.artemis.aiworker.api.WorkerMessageCodecApi;
 import de.tum.cit.aet.artemis.aiworker.config.AiWorkerProperties;
 import de.tum.cit.aet.artemis.aiworker.domain.WorkerEventType;
@@ -31,7 +27,6 @@ import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
 import de.tum.cit.aet.artemis.aiworker.service.WorkerRegistryService;
 import de.tum.cit.aet.artemis.core.config.RedissonCodecConfiguration;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisClientListResolver;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedDataProviderService;
@@ -39,33 +34,6 @@ import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
 
 /** Checks callback retry and eventual abandoned-delivery cleanup across independent provider clients. */
 class WorkerTransportProviderTest {
-
-    @Test
-    void hazelcastClientSharesAcknowledgedEventWithCore() {
-        var config = new com.hazelcast.config.Config().setClusterName("worker-transport-" + UUID.randomUUID());
-        // Keep the client away from other local clusters, including members bound only to loopback.
-        config.getNetworkConfig().setPort(0).setPortAutoIncrement(false);
-        config.getNetworkConfig().getInterfaces().setEnabled(true).addInterface("127.0.0.1");
-        config.getNetworkConfig().getJoin().getAutoDetectionConfig().setEnabled(false);
-        config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
-        var first = Hazelcast.newHazelcastInstance(config);
-        try {
-            var clientConfig = new ClientConfig().setClusterName(config.getClusterName());
-            clientConfig.getConnectionStrategyConfig().getConnectionRetryConfig().setClusterConnectTimeoutMillis(10_000);
-            clientConfig.getNetworkConfig().addAddress("127.0.0.1:" + first.getCluster().getLocalMember().getSocketAddress().getPort());
-            var second = HazelcastClient.newHazelcastClient(clientConfig);
-            try {
-                verifyDelivery(new HazelcastDistributedDataProviderService(first), new HazelcastDistributedDataProviderService(second));
-            }
-            finally {
-                second.shutdown();
-            }
-        }
-        finally {
-            first.shutdown();
-        }
-    }
 
     @Test
     @EnabledIf("dockerAvailable")

@@ -91,7 +91,7 @@ carrying a TODO to refactor them away. A new class doing the same thing fails th
 list is grandfathering rather than permission. Raw JDBC
 has no per-class exceptions at all; only `core.config` may hold a `DataSource`.
 
-**Never touch Hazelcast or Redis directly.** All cross-node state goes through
+**Use Redis clients only in provider adapters.** All cross-node state goes through
 `DistributedDataProvider` in
 `src/main/java/de/tum/cit/aet/artemis/core/service/distributed/`. Enforced by
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/DistributedDataProviderArchitectureTest.java`.
@@ -157,8 +157,8 @@ rationale, and `reference/gates.md` for the pattern if you do proceed.
 
 ## Adding a capability to the distributed data layer
 
-If `DistributedDataProvider` lacks what you need, add it there, implement it for all three providers
-(Hazelcast, Redis, Local), and add a case to `AbstractDistributedDataTest`. That suite is what keeps
+If `DistributedDataProvider` lacks what you need, add it there, implement it for both providers
+(Local and Redis), and add a case to `AbstractDistributedDataTest`. That suite is what keeps
 the providers in agreement. Request entry lifetimes at the call site with
 `getExpiringMap(name, ttl)`; `getMap(name)` rejects a per-entry TTL deliberately, because a provider
 map configuration only applies to that one provider. Full guidance:

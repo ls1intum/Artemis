@@ -239,25 +239,11 @@ spring:
                 size: 8
     thymeleaf:
         mode: HTML
-    sleuth:
-        sampler:
-            probability: 1 # report 100% of traces
-    cloud:
-        discovery:
-            enabled: false
-        config:
-            discovery:
-                enabled: false
-            enabled: false
-            import-check:
-                enabled: false
     websocket:
         broker:
             username: guest
             password: guest
             addresses: ""
-    hazelcast:
-        interface: "127.0.0.1"
 
 zonky:
     test:
@@ -387,10 +373,3 @@ jhipster:
                 # Token is valid 24 hours
                 token-validity-in-seconds: 86400
                 token-validity-in-seconds-for-remember-me: 604800 # 7 days, matching what dev and prod ship, so the tests exercise the real value
-
-# Eureka configuration
-eureka:
-    client:
-        enabled: false
-        service-url:
-            defaultZone: http://admin:admin@localhost:8761/eureka/

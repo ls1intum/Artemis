@@ -2,7 +2,6 @@ export interface Metrics {
     jvm: { [key: string]: JvmMetrics };
     databases: Databases;
     'http.server.requests': HttpServerRequests;
-    cache: { [key: string]: CacheMetrics };
     garbageCollector: GarbageCollector;
     services: Services;
     processMetrics: ProcessMetrics;
@@ -54,14 +53,6 @@ export interface MaxMeanCount {
     max: number;
     mean: number;
     count: number;
-}
-
-export interface CacheMetrics {
-    'cache.gets.miss': number;
-    'cache.puts': number;
-    'cache.gets.hit': number;
-    'cache.removals': number;
-    'cache.evictions': number;
 }
 
 export interface GarbageCollector {

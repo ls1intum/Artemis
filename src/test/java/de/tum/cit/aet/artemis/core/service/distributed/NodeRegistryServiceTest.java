@@ -79,7 +79,7 @@ class NodeRegistryServiceTest {
     }
 
     /**
-     * A Hazelcast identifier carries the port, a Redis client name does not. Both have to yield a usable description,
+     * A host:port identifier and a bare client name are both supported. Both have to yield a usable description,
      * because the admin node overview renders the host and port separately.
      */
     @Test
@@ -111,7 +111,7 @@ class NodeRegistryServiceTest {
     }
 
     /**
-     * Deployments without a distributed provider (for example a node configured with neither Hazelcast nor Redis) must
+     * Deployments without a distributed provider must
      * not fail on startup or on every scheduled heartbeat.
      */
     @Test

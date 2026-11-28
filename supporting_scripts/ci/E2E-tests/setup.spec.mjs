@@ -109,25 +109,17 @@ printf "%s" "$TEST_REVISION"
 describe('image launched by every E2E configuration', () => {
     const dockerDirectory = path.resolve(import.meta.dirname, '../../../deployment/docker');
     const executeScript = readFileSync(path.resolve(import.meta.dirname, 'execute.sh'), 'utf8');
-    // Each selectable configuration assigns COMPOSE_FILE; an overlay is spelled as "base.yml -f overlay.yml".
-    const composeSelections = [...executeScript.matchAll(/^\s*COMPOSE_FILE="([^"]+)"/gm)].map((match) => match[1].split(/\s+-f\s+/));
+    const composeFiles = [...executeScript.matchAll(/^\s*COMPOSE_FILE="([^"]+)"/gm)].map((match) => match[1]);
 
     it('discovers the configurations selected by execute.sh', () => {
-        expect(composeSelections.flat()).toEqual(
+        expect(composeFiles).toEqual(
             expect.arrayContaining(['playwright-E2E-tests-postgres.yml', 'playwright-E2E-tests-postgres-localci.yml', 'playwright-E2E-tests-multi-node.yml']),
         );
     });
 
-    it.each(composeSelections.map((files) => [files.join(' + '), files]))('pins every Artemis node of %s to the verified commit tag', (_name, files) => {
-        const nodes = {};
-        for (const file of files) {
-            const { services } = parse(readFileSync(path.join(dockerDirectory, file), 'utf8'), { merge: true });
-            for (const [name, service] of Object.entries(services)) {
-                // Compose applies files in order, so a later file overrides an earlier one.
-                nodes[name] = { ...nodes[name], ...service };
-            }
-        }
-        const artemisNodes = Object.entries(nodes).filter(([, service]) => service.extends?.service === 'artemis-app');
+    it.each(composeFiles)('pins every Artemis node of %s to the verified commit tag', (file) => {
+        const { services } = parse(readFileSync(path.join(dockerDirectory, file), 'utf8'), { merge: true });
+        const artemisNodes = Object.entries(services).filter(([, service]) => service.extends?.service === 'artemis-app');
         expect(artemisNodes.length).toBeGreaterThan(0);
         for (const [name, service] of artemisNodes) {
             // Without a tag, artemis.yml supplies the mutable latest image, which verify-image-revision.sh never inspects.

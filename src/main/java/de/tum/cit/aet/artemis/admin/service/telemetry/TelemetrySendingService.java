@@ -199,7 +199,7 @@ public class TelemetrySendingService {
     /**
      * Reported because it is configured with a property and not with a profile, so the profiles do not show it.
      *
-     * @return {@code hazelcast}, {@code redis} or {@code local}
+     * @return {@code redis} or {@code local}
      */
     private String distributedDataProvider() {
         return DistributedDataProviderResolver.resolveProvider(env).toLowerCase(Locale.ROOT);

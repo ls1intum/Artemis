@@ -164,7 +164,7 @@ public class IrisGlobalSearchResource {
         // Note: do NOT remove the job on exception here. Transport-level failures are ambiguous —
         // Pyris may have received the request and already started the pipeline. Removing the job
         // would break WebSocket routing for any callbacks that arrive later.
-        // Jobs expire automatically via the Hazelcast TTL (default 5 minutes).
+        // Jobs expire automatically via the configured TTL (default 5 minutes).
         try {
             pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), job, selectedLlmUsage, accessContext, entityCandidates, scope.courseIds(),
                     scope.excludeCourseIds(), scope.searchesNothing());

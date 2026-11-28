@@ -29,7 +29,6 @@ describe('MetricsService', () => {
         const metrics = {
             jvm: {},
             'http.server.requests': {},
-            cache: {},
             services: {},
             databases: {},
             garbageCollector: {},

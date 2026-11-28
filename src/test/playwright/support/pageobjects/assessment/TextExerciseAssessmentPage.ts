@@ -46,8 +46,7 @@ export class TextExerciseAssessmentPage extends AbstractExerciseAssessmentPage {
     }
 
     override async submit() {
-        // Retry on multi-node 5xx flakes (Hazelcast Result.feedbacks ordered-list invalidation lag)
-        // so the test surfaces the genuine outcome instead of a transient cluster cache error.
+        // Retry transient assessment errors on multi-node runs.
         for (let attempt = 0; attempt < 3; attempt++) {
             const responsePromise = this.page.waitForResponse(`${BASE_API}/text/participations/*/results/*/submit-text-assessment`);
             await this.page.locator('#submit').click();

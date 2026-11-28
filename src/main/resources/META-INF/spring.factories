@@ -7,8 +7,7 @@ org.springframework.context.ApplicationContextInitializer=\
 de.tum.cit.aet.artemis.core.config.BeanNamesByTypeCacheWorkaround
 
 org.springframework.boot.EnvironmentPostProcessor=\
-de.tum.cit.aet.artemis.core.config.FileUploadPathEnvironmentPostProcessor,\
-de.tum.cit.aet.artemis.core.config.RedisDiscoveryEnvironmentPostProcessor
+de.tum.cit.aet.artemis.core.config.FileUploadPathEnvironmentPostProcessor
 
 org.springframework.boot.diagnostics.FailureAnalyzer=\
 de.tum.cit.aet.artemis.core.exception.failureAnalyzer.ConflictingPasskeyConfigurationFailureAnalyzer,\

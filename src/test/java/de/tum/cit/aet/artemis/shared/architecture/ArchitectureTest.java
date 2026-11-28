@@ -20,7 +20,6 @@ import static com.tngtech.archunit.lang.ConditionEvent.createMessage;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.have;
-import static com.tngtech.archunit.lang.conditions.ArchPredicates.is;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.constructors;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
@@ -87,7 +86,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.hazelcast.core.HazelcastInstance;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaAccess;
@@ -143,7 +141,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void testNoGoogleImport() {
         ArchRule noGoogleDependencies = noClasses().should().dependOnClassesThat().resideInAnyPackage("com.google..")
                 .because("Google libraries (Guava, Gson) are forbidden to reduce incompatibilities, to reduce dependencies and security risks. " + "Alternatives: "
-                        + "Guava Cache -> Spring CacheManager (see HazelcastConfiguration), " + "Guava Collections -> Java Collections API (List.of(), Set.of(), Map.of()), "
+                        + "Guava Cache -> Spring CacheManager, " + "Guava Collections -> Java Collections API (List.of(), Set.of(), Map.of()), "
                         + "Guava Strings -> Apache Commons Lang3 StringUtils or Spring StringUtils, "
                         + "Guava Preconditions -> for nullness, @NonNull or @Nullable from org.jspecify.annotations (see config/checkstyle/checkstyle.xml); "
                         + "for any other check, an explicit if throwing IllegalArgumentException or IllegalStateException, " + "Guava Optional -> java.util.Optional, "
@@ -859,13 +857,6 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule usage = noClasses().should().callMethod(Git.class, "commit").because("You should use GitService.commit() instead");
         var classesWithoutGitService = allClasses.that(not(assignableTo(GitService.class)));
         usage.check(classesWithoutGitService);
-    }
-
-    @Test
-    void testNoHazelcastUsageInConstructors() {
-        var notUseHazelcastInConstructor = methods().that().areDeclaredIn(HazelcastInstance.class).should().onlyBeCalled().byCodeUnitsThat(is(not(constructor())))
-                .because("Calling Hazelcast during Application startup might be slow since the Network gets used. Use @PostConstruct-methods instead.");
-        notUseHazelcastInConstructor.check(allClassesWithHazelcast);
     }
 
     @Test

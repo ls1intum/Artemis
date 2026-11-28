@@ -87,7 +87,7 @@ public class SharedQueueManagementService {
     }
 
     /**
-     * Initialize relevant data from hazelcast
+     * Initialize relevant data from the distributed store
      * EventListener cannot be used here, as the bean is lazy
      * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
      */
@@ -99,7 +99,6 @@ public class SharedQueueManagementService {
         // Register a listener for client (build agent) disconnections.
         // When a build agent disconnects, we remove its entry from the map which triggers
         // the MapEntryRemovedEvent and subsequently the orphan job handling.
-        // This is only active on core nodes (cluster members), not on build agents (clients).
         var listenerId = this.distributedDataAccessService.addClientDisconnectionListener(this::handleClientDisconnection);
         if (listenerId != null) {
             log.info("Registered client disconnection listener for build agent cleanup");
@@ -135,14 +134,7 @@ public class SharedQueueManagementService {
      * Resolves the key under which a disconnected client is stored in the build agent information map.
      *
      * <p>
-     * The identifier a provider reports is its own notion of client identity, and it does not have to be the map key:
-     * <ul>
-     * <li>Hazelcast names its client after {@code artemis.continuous-integration.build-agent.short-name}, which is
-     * exactly the map key, so the identifier matches directly.</li>
-     * <li>The Redis provider reports {@code spring.data.redis.client-name}, a property unrelated to the short name.
-     * It only ever matches the member address the agent stored for itself, so looking up by key alone silently misses
-     * and crashed agents would stay in the map forever.</li>
-     * </ul>
+     * Redis reports the node identity. A build agent records this as its member address under its own short name.
      *
      * @param clientIdentifier the identifier of the disconnected client
      * @return the map key of the matching build agent, or {@code null} if no agent matches
@@ -150,9 +142,6 @@ public class SharedQueueManagementService {
     @Nullable
     private String resolveBuildAgentKey(String clientIdentifier) {
         var buildAgents = this.distributedDataAccessService.getDistributedBuildAgentInformation();
-        if (buildAgents.get(clientIdentifier) != null) {
-            return clientIdentifier;
-        }
         for (var entry : buildAgents.entrySet()) {
             BuildAgentInformation agentInformation = entry.getValue();
             if (agentInformation != null && agentInformation.buildAgent() != null && clientIdentifier.equals(agentInformation.buildAgent().memberAddress())) {
@@ -163,7 +152,7 @@ public class SharedQueueManagementService {
     }
 
     /**
-     * Pushes the last build dates for all docker images to the hazelcast map dockerImageCleanupInfo, only executed on the main node (with active scheduling)
+     * Pushes the last build dates for all docker images to the distributed map dockerImageCleanupInfo, only executed on the main node (with active scheduling)
      * This method is scheduled to run every 5 minutes with an initial delay of 30 seconds. Both can be changed with
      * {@code artemis.continuous-integration.image-cleanup.info-push-interval-seconds} and
      * {@code artemis.continuous-integration.image-cleanup.info-push-delay-seconds}.
@@ -175,7 +164,7 @@ public class SharedQueueManagementService {
             distributedDataAccessService.getDistributedDockerImageCleanupInfo().clear();
             Set<DockerImageBuild> lastBuildDatesForDockerImages = buildJobRepository.findAllLastBuildDatesForDockerImages();
             for (DockerImageBuild dockerImageBuild : lastBuildDatesForDockerImages) {
-                // Hazelcast maps do not allow null keys or values, so skip entries with null values
+                // Distributed maps do not allow null keys or values, so skip entries with null values
                 if (dockerImageBuild.dockerImage() != null && dockerImageBuild.lastBuildCompletionDate() != null) {
                     distributedDataAccessService.getDistributedDockerImageCleanupInfo().put(dockerImageBuild.dockerImage(), dockerImageBuild.lastBuildCompletionDate());
                 }
@@ -557,7 +546,7 @@ public class SharedQueueManagementService {
      * This can happen when:
      * <ul>
      * <li>A build agent crashes</li>
-     * <li>A Hazelcast client (build agent) disconnects from the cluster</li>
+     * <li>A build agent disconnects from the cluster</li>
      * <li>Network issues cause the agent to be evicted</li>
      * </ul>
      *

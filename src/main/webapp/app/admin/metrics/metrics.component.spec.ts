@@ -18,7 +18,7 @@ describe('MetricsComponent', () => {
     let fixture: ComponentFixture<MetricsComponent>;
     let service: MetricsService;
 
-    const mockMetrics = { jvm: {}, processMetrics: {}, garbageCollector: {}, 'http.server.requests': {}, cache: {}, services: {}, databases: {} } as unknown as Metrics;
+    const mockMetrics = { jvm: {}, processMetrics: {}, garbageCollector: {}, 'http.server.requests': {}, services: {}, databases: {} } as unknown as Metrics;
     const mockThreadDump = { threads: [{ threadName: 'main', threadState: 'RUNNABLE' }] } as unknown as ThreadDump;
     const mockNodes: NodeInfo[] = [
         { nodeId: 'node-1', label: '192.168.1.1:8080' },
@@ -185,34 +185,34 @@ describe('MetricsComponent', () => {
     describe('metricsKeyExists', () => {
         it('should return false for undefined key', () => {
             comp.metrics.set({} as Metrics);
-            expect(comp.metricsKeyExists('cache')).toBe(false);
+            expect(comp.metricsKeyExists('databases')).toBe(false);
         });
 
         it('should return false for undefined value', () => {
-            comp.metrics.set({ cache: undefined } as unknown as Metrics);
-            expect(comp.metricsKeyExists('cache')).toBe(false);
+            comp.metrics.set({ databases: undefined } as unknown as Metrics);
+            expect(comp.metricsKeyExists('databases')).toBe(false);
         });
 
         it('should return true for defined value', () => {
-            comp.metrics.set({ cache: {} } as unknown as Metrics);
-            expect(comp.metricsKeyExists('cache')).toBe(true);
+            comp.metrics.set({ databases: {} } as unknown as Metrics);
+            expect(comp.metricsKeyExists('databases')).toBe(true);
         });
     });
 
     describe('metricsKeyExistsAndObjectNotEmpty', () => {
         it('should return false for undefined value', () => {
-            comp.metrics.set({ cache: undefined } as unknown as Metrics);
-            expect(comp.metricsKeyExistsAndObjectNotEmpty('cache')).toBe(false);
+            comp.metrics.set({ databases: undefined } as unknown as Metrics);
+            expect(comp.metricsKeyExistsAndObjectNotEmpty('databases')).toBe(false);
         });
 
         it('should return false for empty object', () => {
-            comp.metrics.set({ cache: {} } as unknown as Metrics);
-            expect(comp.metricsKeyExistsAndObjectNotEmpty('cache')).toBe(false);
+            comp.metrics.set({ databases: {} } as unknown as Metrics);
+            expect(comp.metricsKeyExistsAndObjectNotEmpty('databases')).toBe(false);
         });
 
         it('should return true for non-empty object', () => {
-            comp.metrics.set({ cache: { randomKey: {} } } as unknown as Metrics);
-            expect(comp.metricsKeyExistsAndObjectNotEmpty('cache')).toBe(true);
+            comp.metrics.set({ databases: { randomKey: {} } } as unknown as Metrics);
+            expect(comp.metricsKeyExistsAndObjectNotEmpty('databases')).toBe(true);
         });
     });
 });
