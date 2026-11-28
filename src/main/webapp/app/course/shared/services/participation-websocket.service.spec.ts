@@ -86,6 +86,54 @@ describe('ParticipationWebsocketService', () => {
         vi.restoreAllMocks();
     });
 
+    it('should evict removed participations from the cache and keep the others', () => {
+        participationWebsocketService.addParticipation(participation);
+        participationWebsocketService.addParticipation(participation2);
+        participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
+        expect(participationWebsocketService.getParticipationsForExercise(exercise1.id!)).toHaveLength(1);
+
+        // for example the participation of a team that the student left, which a page that opens later must not restore from the cache
+        participationWebsocketService.removeCachedParticipations([participation.id!, 12345]);
+
+        expect(participationWebsocketService.getParticipationsForExercise(exercise1.id!)).toEqual([]);
+        expect(participationWebsocketService.participationSubscriptionTypes.has(participation.id!)).toBe(false);
+        expect(participationWebsocketService.getParticipationsForExercise(exercise2.id!)).toHaveLength(1);
+    });
+
+    it('should keep the shared personal connection for the other participations when one participation is evicted', () => {
+        participationWebsocketService.addParticipation(participation);
+        const first = participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, true);
+        const second = participationWebsocketService.subscribeForLatestResultOfParticipation(participation2.id!, true);
+        // both participations are registered, although only the first one opened the connection
+        expect(participationWebsocketService.participationSubscriptionTypes.get(participation.id!)).toBe(true);
+        expect(participationWebsocketService.participationSubscriptionTypes.get(participation2.id!)).toBe(true);
+
+        participationWebsocketService.removeCachedParticipations([participation.id!]);
+
+        // the connection is shared by all personal participations, so it stays open as long as one of them is registered
+        expect(participationWebsocketService.openPersonalWebsocketSubscription?.closed).toBe(false);
+        const newResult: Result = { id: 14, rated: true, submission: { id: 2, participation: participation2 } };
+        receiveResultForParticipationSubject.next(newResult);
+        expect(second.value?.id).toBe(newResult.id);
+        expect(first.value).toBeUndefined();
+
+        // the connection closes with the last registered participation
+        participationWebsocketService.removeCachedParticipations([participation2.id!]);
+        expect(participationWebsocketService.openPersonalWebsocketSubscription).toBeUndefined();
+    });
+
+    it('should not open the topic of an exercise without an exercise id', () => {
+        // Without the exercise there is no topic to subscribe to, `/topic/exercise/undefined/newResults` is rejected by the server for every user.
+        const resultObservable = participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, false, undefined);
+
+        expect(subscribeSpy).not.toHaveBeenCalled();
+        expect(participationWebsocketService.openResultWebsocketSubscriptions.size).toBe(0);
+        expect(participationWebsocketService.subscribedExercises.size).toBe(0);
+        expect(participationWebsocketService.participationSubscriptionTypes.size).toBe(0);
+        // the caller still gets its observable, which delivers as soon as a subscription for the participation exists
+        expect(resultObservable.value).toBeUndefined();
+    });
+
     it('should setup a result subscriptions with the websocket service on subscribeForLatestResult for instructors', () => {
         participationWebsocketService.subscribeForLatestResultOfParticipation(participation.id!, false, exercise2.id);
         expect(subscribeSpy).toHaveBeenCalledOnce();
