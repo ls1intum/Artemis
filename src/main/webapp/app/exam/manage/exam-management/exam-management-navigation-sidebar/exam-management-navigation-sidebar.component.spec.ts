@@ -11,7 +11,7 @@ import { ActivatedRoute, Event, NavigationEnd, Router, convertToParamMap } from 
 import { Subject } from 'rxjs';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { faFlaskVial } from '@fortawesome/free-solid-svg-icons';
+import { faFlaskVial } from '@fortawesome/free-solid-svg-icons/faFlaskVial';
 
 describe('ExamManagementNavigationSidebarComponent', () => {
     let component: ExamManagementNavigationSidebarComponent;

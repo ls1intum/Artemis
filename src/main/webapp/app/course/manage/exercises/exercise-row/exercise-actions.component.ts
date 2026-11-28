@@ -2,21 +2,19 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject, finalize, take } from 'rxjs';
-import {
-    faChartBar,
-    faClipboardList,
-    faCode,
-    faEye,
-    faLightbulb,
-    faListAlt,
-    faPencilAlt,
-    faPlayCircle,
-    faRedo,
-    faRobot,
-    faStopCircle,
-    faTrash,
-    faUsers,
-} from '@fortawesome/free-solid-svg-icons';
+import { faChartBar } from '@fortawesome/free-solid-svg-icons/faChartBar';
+import { faClipboardList } from '@fortawesome/free-solid-svg-icons/faClipboardList';
+import { faCode } from '@fortawesome/free-solid-svg-icons/faCode';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faLightbulb } from '@fortawesome/free-solid-svg-icons/faLightbulb';
+import { faListAlt } from '@fortawesome/free-solid-svg-icons/faListAlt';
+import { faPencilAlt } from '@fortawesome/free-solid-svg-icons/faPencilAlt';
+import { faPlayCircle } from '@fortawesome/free-solid-svg-icons/faPlayCircle';
+import { faRedo } from '@fortawesome/free-solid-svg-icons/faRedo';
+import { faRobot } from '@fortawesome/free-solid-svg-icons/faRobot';
+import { faStopCircle } from '@fortawesome/free-solid-svg-icons/faStopCircle';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faUsers } from '@fortawesome/free-solid-svg-icons/faUsers';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseMode, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';

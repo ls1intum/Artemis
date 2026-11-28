@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
 import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { faSync } from '@fortawesome/free-solid-svg-icons/faSync';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

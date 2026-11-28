@@ -4,7 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { startWith, switchMap } from 'rxjs';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo';
 import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { TumAetUiRadioButtonComponent } from '@tumaet/ui-angular/radio-button';

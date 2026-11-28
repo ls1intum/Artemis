@@ -1,6 +1,12 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faBookOpen, faChevronRight, faCode, faKey, faUser, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faBookOpen } from '@fortawesome/free-solid-svg-icons/faBookOpen';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faCode } from '@fortawesome/free-solid-svg-icons/faCode';
+import { faKey } from '@fortawesome/free-solid-svg-icons/faKey';
+import { faUser } from '@fortawesome/free-solid-svg-icons/faUser';
+import { faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons/faWandMagicSparkles';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

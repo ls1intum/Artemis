@@ -3,7 +3,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { DoughnutChartType } from './course-detail.component';
 import { Router, RouterLink } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular/chart';

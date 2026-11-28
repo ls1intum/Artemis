@@ -1,5 +1,11 @@
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faBook, faCalendarCheck, faCube, faGraduationCap, faHashtag, faPhotoFilm, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faBook } from '@fortawesome/free-solid-svg-icons/faBook';
+import { faCalendarCheck } from '@fortawesome/free-solid-svg-icons/faCalendarCheck';
+import { faCube } from '@fortawesome/free-solid-svg-icons/faCube';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
+import { faHashtag } from '@fortawesome/free-solid-svg-icons/faHashtag';
+import { faPhotoFilm } from '@fortawesome/free-solid-svg-icons/faPhotoFilm';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
 import { SearchEntityType } from './searchable-entity.model';
 import { TypeFacetValue } from './search-token.model';
 import { LECTURE_CONTENT_TYPE } from './lecture-content-result.util';

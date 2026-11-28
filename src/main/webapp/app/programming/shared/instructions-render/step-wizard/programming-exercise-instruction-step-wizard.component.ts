@@ -7,7 +7,9 @@ import { TaskArray } from 'app/programming/shared/instructions-render/task/progr
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { faCheck, faCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faCircle } from '@fortawesome/free-solid-svg-icons/faCircle';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';

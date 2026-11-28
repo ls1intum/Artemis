@@ -13,7 +13,11 @@ import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model
 import { ActivatedRoute, Router } from '@angular/router';
 import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { catchError, finalize, tap } from 'rxjs/operators';
-import { faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { Subject, forkJoin, of } from 'rxjs';

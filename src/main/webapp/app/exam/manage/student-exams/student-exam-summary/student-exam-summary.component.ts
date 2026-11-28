@@ -8,7 +8,7 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faPrint } from '@fortawesome/free-solid-svg-icons';
+import { faPrint } from '@fortawesome/free-solid-svg-icons/faPrint';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({

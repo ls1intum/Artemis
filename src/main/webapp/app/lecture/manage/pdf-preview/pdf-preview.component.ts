@@ -12,7 +12,15 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { Subject, Subscription, exhaustMap, filter, take, timeout, timer } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { faArrowLeft, faCancel, faExclamationCircle, faEye, faEyeSlash, faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons/faArrowLeft';
+import { faCancel } from '@fortawesome/free-solid-svg-icons/faCancel';
+import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons/faExclamationCircle';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faEyeSlash } from '@fortawesome/free-solid-svg-icons/faEyeSlash';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import dayjs from 'dayjs/esm';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import type { HiddenPageInfo } from 'app/openapi/model/hidden-page-info';

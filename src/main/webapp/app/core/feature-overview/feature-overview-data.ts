@@ -1,37 +1,35 @@
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import {
-    faBan,
-    faBell,
-    faChartPie,
-    faCheckSquare,
-    faClipboardCheck,
-    faCode,
-    faCodeBranch,
-    faCogs,
-    faComment,
-    faCopy,
-    faCubes,
-    faEye,
-    faFile,
-    faFileAlt,
-    faFilePen,
-    faHdd,
-    faMagic,
-    faMicrochip,
-    faObjectGroup,
-    faPencilAlt,
-    faPlay,
-    faPuzzlePiece,
-    faQuestion,
-    faSearchPlus,
-    faShieldAlt,
-    faSignInAlt,
-    faSignal,
-    faTasks,
-    faThList,
-    faUserSecret,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faBell } from '@fortawesome/free-solid-svg-icons/faBell';
+import { faChartPie } from '@fortawesome/free-solid-svg-icons/faChartPie';
+import { faCheckSquare } from '@fortawesome/free-solid-svg-icons/faCheckSquare';
+import { faClipboardCheck } from '@fortawesome/free-solid-svg-icons/faClipboardCheck';
+import { faCode } from '@fortawesome/free-solid-svg-icons/faCode';
+import { faCodeBranch } from '@fortawesome/free-solid-svg-icons/faCodeBranch';
+import { faCogs } from '@fortawesome/free-solid-svg-icons/faCogs';
+import { faComment } from '@fortawesome/free-solid-svg-icons/faComment';
+import { faCopy } from '@fortawesome/free-solid-svg-icons/faCopy';
+import { faCubes } from '@fortawesome/free-solid-svg-icons/faCubes';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faFile } from '@fortawesome/free-solid-svg-icons/faFile';
+import { faFileAlt } from '@fortawesome/free-solid-svg-icons/faFileAlt';
+import { faFilePen } from '@fortawesome/free-solid-svg-icons/faFilePen';
+import { faHdd } from '@fortawesome/free-solid-svg-icons/faHdd';
+import { faMagic } from '@fortawesome/free-solid-svg-icons/faMagic';
+import { faMicrochip } from '@fortawesome/free-solid-svg-icons/faMicrochip';
+import { faObjectGroup } from '@fortawesome/free-solid-svg-icons/faObjectGroup';
+import { faPencilAlt } from '@fortawesome/free-solid-svg-icons/faPencilAlt';
+import { faPlay } from '@fortawesome/free-solid-svg-icons/faPlay';
+import { faPuzzlePiece } from '@fortawesome/free-solid-svg-icons/faPuzzlePiece';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
+import { faSearchPlus } from '@fortawesome/free-solid-svg-icons/faSearchPlus';
+import { faShieldAlt } from '@fortawesome/free-solid-svg-icons/faShieldAlt';
+import { faSignInAlt } from '@fortawesome/free-solid-svg-icons/faSignInAlt';
+import { faSignal } from '@fortawesome/free-solid-svg-icons/faSignal';
+import { faTasks } from '@fortawesome/free-solid-svg-icons/faTasks';
+import { faThList } from '@fortawesome/free-solid-svg-icons/faThList';
+import { faUserSecret } from '@fortawesome/free-solid-svg-icons/faUserSecret';
+import { faWrench } from '@fortawesome/free-solid-svg-icons/faWrench';
 
 /** The audience of a feature page. The value is the translation key segment below {@code featureOverview}. */
 export enum TargetAudience {

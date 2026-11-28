@@ -3,10 +3,11 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/sha
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
-import { faAward, faClipboard } from '@fortawesome/free-solid-svg-icons';
+import { faAward } from '@fortawesome/free-solid-svg-icons/faAward';
+import { faClipboard } from '@fortawesome/free-solid-svg-icons/faClipboard';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';

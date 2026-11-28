@@ -4,7 +4,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Subject, Subscription, concatMap, filter, tap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faEdit } from '@fortawesome/free-solid-svg-icons/faEdit';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';

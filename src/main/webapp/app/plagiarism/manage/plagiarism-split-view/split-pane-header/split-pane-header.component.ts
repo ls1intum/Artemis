@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, effect, input, output, signal, untracked } from '@angular/core';
-import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
 import { Subject, Subscription } from 'rxjs';
 import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/PlagiarismFileElement';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

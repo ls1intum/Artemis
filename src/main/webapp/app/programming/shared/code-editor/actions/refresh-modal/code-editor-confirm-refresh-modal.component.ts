@@ -1,7 +1,9 @@
 import { Component, inject } from '@angular/core';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
-import { faBan, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

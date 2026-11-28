@@ -5,8 +5,9 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
-import { faCopy } from '@fortawesome/free-regular-svg-icons';
-import { faEye, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
+import { faCopy } from '@fortawesome/free-regular-svg-icons/faCopy';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faPenToSquare } from '@fortawesome/free-solid-svg-icons/faPenToSquare';
 import { ProgrammingExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

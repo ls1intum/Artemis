@@ -4,7 +4,7 @@ import { ProgrammingExerciseTriggerBuildButtonComponent } from '../programming-e
 import { AlertService } from 'app/foundation/service/alert.service';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
-import { faRedo } from '@fortawesome/free-solid-svg-icons';
+import { faRedo } from '@fortawesome/free-solid-svg-icons/faRedo';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 import { BuildWindowPhase, getBuildTimeWindowFor, injectBuildWindowPhase, isBuildWindowEnforcedFor } from 'app/programming/shared/utils/build-time-window.utils';

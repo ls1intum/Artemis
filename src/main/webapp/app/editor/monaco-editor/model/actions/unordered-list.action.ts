@@ -1,5 +1,5 @@
 import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
-import { faListUl } from '@fortawesome/free-solid-svg-icons';
+import { faListUl } from '@fortawesome/free-solid-svg-icons/faListUl';
 import { TextEditor } from 'app/editor/monaco-editor/model/actions/adapter/text-editor.interface';
 import { TextEditorPosition } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { makeTextEditorRange } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-range.model';

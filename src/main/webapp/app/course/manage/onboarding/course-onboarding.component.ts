@@ -16,7 +16,14 @@ import { OnboardingAssessmentAiComponent } from './pages/onboarding-assessment-a
 import { OnboardingExploreComponent } from './pages/onboarding-explore.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChartLine, faCheck, faChevronLeft, faChevronRight, faCog, faComments, faRocket, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { faChartLine } from '@fortawesome/free-solid-svg-icons/faChartLine';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
+import { faComments } from '@fortawesome/free-solid-svg-icons/faComments';
+import { faRocket } from '@fortawesome/free-solid-svg-icons/faRocket';
+import { faUserPlus } from '@fortawesome/free-solid-svg-icons/faUserPlus';
 import dayjs from 'dayjs/esm';
 
 @Component({

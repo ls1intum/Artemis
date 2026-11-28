@@ -5,23 +5,21 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import {
-    faChartBar,
-    faDownload,
-    faEllipsisVertical,
-    faFileExport,
-    faFileSignature,
-    faFlask,
-    faHistory,
-    faListAlt,
-    faMagnifyingGlass,
-    faPencilAlt,
-    faTrash,
-    faUndo,
-    faUserCheck,
-    faUsers,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
+import { faChartBar } from '@fortawesome/free-solid-svg-icons/faChartBar';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
+import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
+import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
+import { faFileSignature } from '@fortawesome/free-solid-svg-icons/faFileSignature';
+import { faFlask } from '@fortawesome/free-solid-svg-icons/faFlask';
+import { faHistory } from '@fortawesome/free-solid-svg-icons/faHistory';
+import { faListAlt } from '@fortawesome/free-solid-svg-icons/faListAlt';
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlass';
+import { faPencilAlt } from '@fortawesome/free-solid-svg-icons/faPencilAlt';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo';
+import { faUserCheck } from '@fortawesome/free-solid-svg-icons/faUserCheck';
+import { faUsers } from '@fortawesome/free-solid-svg-icons/faUsers';
+import { faWrench } from '@fortawesome/free-solid-svg-icons/faWrench';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';

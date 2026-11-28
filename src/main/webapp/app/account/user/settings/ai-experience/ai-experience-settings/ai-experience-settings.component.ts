@@ -1,6 +1,6 @@
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faGhost } from '@fortawesome/free-solid-svg-icons';
+import { faGhost } from '@fortawesome/free-solid-svg-icons/faGhost';
 import { AiModeSelectorComponent } from 'app/logos/ai-mode-selector.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Component, DestroyRef, Injector, OnInit, computed, inject, signal } from '@angular/core';

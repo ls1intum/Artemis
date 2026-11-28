@@ -1,18 +1,16 @@
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import {
-    faBook,
-    faCalendarCheck,
-    faCheckDouble,
-    faComment,
-    faFileUpload,
-    faFont,
-    faGraduationCap,
-    faHashtag,
-    faKeyboard,
-    faProjectDiagram,
-    faQuestion,
-    faQuestionCircle,
-} from '@fortawesome/free-solid-svg-icons';
+import { faBook } from '@fortawesome/free-solid-svg-icons/faBook';
+import { faCalendarCheck } from '@fortawesome/free-solid-svg-icons/faCalendarCheck';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons/faCheckDouble';
+import { faComment } from '@fortawesome/free-solid-svg-icons/faComment';
+import { faFileUpload } from '@fortawesome/free-solid-svg-icons/faFileUpload';
+import { faFont } from '@fortawesome/free-solid-svg-icons/faFont';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
+import { faHashtag } from '@fortawesome/free-solid-svg-icons/faHashtag';
+import { faKeyboard } from '@fortawesome/free-solid-svg-icons/faKeyboard';
+import { faProjectDiagram } from '@fortawesome/free-solid-svg-icons/faProjectDiagram';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
 
 /**
  * Icon for a searchable entity type, shared between the search palette and the Iris answer's entity

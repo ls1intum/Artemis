@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, ElementRef, input, output, viewChild } from '@angular/core';
-import { faFile, faFolder } from '@fortawesome/free-solid-svg-icons';
+import { faFile } from '@fortawesome/free-solid-svg-icons/faFile';
+import { faFolder } from '@fortawesome/free-solid-svg-icons/faFolder';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

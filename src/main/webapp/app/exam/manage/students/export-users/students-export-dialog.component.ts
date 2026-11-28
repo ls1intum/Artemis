@@ -1,7 +1,8 @@
 import { Component, InputSignal, ModelSignal, WritableSignal, inject, input, model, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { faBan, faFileExport } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';

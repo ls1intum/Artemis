@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
 import { take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
@@ -50,6 +51,48 @@ describe('ExamParticipationService', () => {
         req.flush({ id: 3, exercises: [], exam: { startDate: '2026-10-25T08:00:00Z' } });
         expect(req.request.url).toBe('api/exam/courses/1/exams/2/student-exams/3/conduction/for-instructor');
         expect(dayjs.isDayjs(result?.exam?.startDate)).toBe(true);
+    });
+
+    describe('browser fingerprint of the exam session', () => {
+        let fingerprintService: BrowserFingerprintService;
+
+        beforeEach(() => {
+            fingerprintService = TestBed.inject(BrowserFingerprintService);
+        });
+
+        it('should wait for a pending fingerprint before it requests the conduction, which creates the exam session', async () => {
+            let releaseFingerprint!: (fingerprint: string) => void;
+            vi.spyOn(fingerprintService, 'isFingerprintPending').mockReturnValue(true);
+            vi.spyOn(fingerprintService, 'ensureFingerprint').mockReturnValue(new Promise((resolve) => (releaseFingerprint = resolve)));
+
+            service.loadStudentExamWithExercisesForConduction(1, 2, 3).subscribe();
+            await Promise.resolve();
+            httpMock.expectNone({ method: 'GET' });
+
+            releaseFingerprint('fingerprint');
+            await vi.waitFor(() => httpMock.expectOne({ method: 'GET' }).flush({ id: 3, exercises: [] }));
+        });
+
+        it('should request the conduction at once when the fingerprint is not pending', () => {
+            vi.spyOn(fingerprintService, 'isFingerprintPending').mockReturnValue(false);
+            const ensureFingerprint = vi.spyOn(fingerprintService, 'ensureFingerprint');
+
+            service.loadStudentExamWithExercisesForConduction(1, 2, 3).subscribe();
+
+            httpMock.expectOne({ method: 'GET' }).flush({ id: 3, exercises: [] });
+            expect(ensureFingerprint).not.toHaveBeenCalled();
+        });
+
+        it('should still load the exam when the fingerprint is not available in time', async () => {
+            vi.spyOn(fingerprintService, 'isFingerprintPending').mockReturnValue(true);
+            vi.spyOn(fingerprintService, 'ensureFingerprint').mockResolvedValue(undefined);
+            let result: StudentExam | undefined;
+
+            service.loadStudentExamWithExercisesForConduction(1, 2, 3).subscribe((value) => (result = value));
+            await vi.waitFor(() => httpMock.expectOne({ method: 'GET' }).flush({ id: 3, exercises: [] }));
+
+            expect(result?.id).toBe(3);
+        });
     });
 
     it('should load a StudentExam with exercises for conduction', async () => {

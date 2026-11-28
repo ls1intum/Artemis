@@ -4,7 +4,13 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faBrain, faComments, faCubesStacked, faMagnifyingGlass, faPenFancy, faPlusMinus, faQuestion } from '@fortawesome/free-solid-svg-icons';
+import { faBrain } from '@fortawesome/free-solid-svg-icons/faBrain';
+import { faComments } from '@fortawesome/free-solid-svg-icons/faComments';
+import { faCubesStacked } from '@fortawesome/free-solid-svg-icons/faCubesStacked';
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlass';
+import { faPenFancy } from '@fortawesome/free-solid-svg-icons/faPenFancy';
+import { faPlusMinus } from '@fortawesome/free-solid-svg-icons/faPlusMinus';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
 import { StandardizedCompetency } from 'app/atlas/shared/entities/standardized-competency.model';
 import { GraphNodeDimension } from 'app/atlas/shared/dag-graph/dag-graph.model';
 

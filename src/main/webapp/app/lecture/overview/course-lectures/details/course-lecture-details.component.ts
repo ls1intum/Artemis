@@ -16,7 +16,9 @@ import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/at
 import { onError } from 'app/foundation/util/global.utils';
 import { catchError, filter, finalize, switchMap, tap } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faChalkboardTeacher, faComment, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons/faChalkboardTeacher';
+import { faComment } from '@fortawesome/free-solid-svg-icons/faComment';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { ScienceEventType } from 'app/foundation/science/science.model';

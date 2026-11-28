@@ -1,7 +1,8 @@
 import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { Component, model, signal } from '@angular/core';
-import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faChevronUp } from '@fortawesome/free-solid-svg-icons/faChevronUp';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { getSemesters } from 'app/foundation/util/semester-utils';
 import { CourseCompetencyFilter } from 'app/foundation/pagination/pageable-table';

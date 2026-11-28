@@ -43,7 +43,8 @@ import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, UI_RELOAD_TIME } f
 import { debounce } from 'lodash-es';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { getCourseFromExercise, hasDueDatePassed } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faSync } from '@fortawesome/free-solid-svg-icons/faSync';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

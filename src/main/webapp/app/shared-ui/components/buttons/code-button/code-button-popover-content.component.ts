@@ -1,8 +1,13 @@
 import { Component, SecurityContext, computed, inject, input, linkedSignal, model, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCaretDown, faCheck, faCodeBranch, faExternalLink, faLaptopCode, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { faCopy } from '@fortawesome/free-regular-svg-icons';
+import { faCaretDown } from '@fortawesome/free-solid-svg-icons/faCaretDown';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faCodeBranch } from '@fortawesome/free-solid-svg-icons/faCodeBranch';
+import { faExternalLink } from '@fortawesome/free-solid-svg-icons/faExternalLink';
+import { faLaptopCode } from '@fortawesome/free-solid-svg-icons/faLaptopCode';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
+import { faCopy } from '@fortawesome/free-regular-svg-icons/faCopy';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
 import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';

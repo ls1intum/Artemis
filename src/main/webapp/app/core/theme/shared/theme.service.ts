@@ -1,5 +1,7 @@
 import { Service, computed, effect, inject, signal, untracked } from '@angular/core';
-import { IconDefinition, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
+import { faMoon } from '@fortawesome/free-solid-svg-icons/faMoon';
+import { faSun } from '@fortawesome/free-solid-svg-icons/faSun';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
 export const THEME_LOCAL_STORAGE_KEY = 'artemisapp.theme.preference';

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, model } from '@angular/core';
 
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { BuildPhase } from 'app/programming/shared/entities/build-plan-phases.model';
 import { BuildPhaseEditorComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/build-phase/build-phase-editor.component';

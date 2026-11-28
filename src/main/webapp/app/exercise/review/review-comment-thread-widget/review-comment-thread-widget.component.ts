@@ -10,7 +10,12 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowUpRightFromSquare, faChevronDown, faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons/faArrowUpRightFromSquare';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faEllipsisVertical } from '@fortawesome/free-solid-svg-icons/faEllipsisVertical';
+import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';

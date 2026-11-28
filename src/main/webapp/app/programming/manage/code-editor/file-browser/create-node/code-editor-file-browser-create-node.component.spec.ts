@@ -4,7 +4,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CodeEditorFileBrowserCreateNodeComponent } from 'app/programming/manage/code-editor/file-browser/create-node/code-editor-file-browser-create-node.component';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { faFile, faFolder } from '@fortawesome/free-solid-svg-icons';
+import { faFile } from '@fortawesome/free-solid-svg-icons/faFile';
+import { faFolder } from '@fortawesome/free-solid-svg-icons/faFolder';
 
 describe('CodeEditorFileBrowserCreateNodeComponent', () => {
     let fixture: ComponentFixture<CodeEditorFileBrowserCreateNodeComponent>;

@@ -5,7 +5,9 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { By } from '@angular/platform-browser';
-import { faFlaskVial, faGraduationCap, faVial } from '@fortawesome/free-solid-svg-icons';
+import { faFlaskVial } from '@fortawesome/free-solid-svg-icons/faFlaskVial';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
+import { faVial } from '@fortawesome/free-solid-svg-icons/faVial';
 
 describe('ExamModeBadgeComponent', () => {
     let fixture: ComponentFixture<ExamModeBadgeComponent>;

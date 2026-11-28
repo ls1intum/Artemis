@@ -16,20 +16,18 @@ import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture
 import type { LectureTranscription } from 'app/openapi/model/lecture-transcription';
 import { Subject, of } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
-import {
-    IconDefinition,
-    faFile,
-    faFileArchive,
-    faFileCode,
-    faFileCsv,
-    faFileExcel,
-    faFileImage,
-    faFileLines,
-    faFilePdf,
-    faFilePen,
-    faFilePowerpoint,
-    faFileWord,
-} from '@fortawesome/free-solid-svg-icons';
+import { faFile } from '@fortawesome/free-solid-svg-icons/faFile';
+import { faFileArchive } from '@fortawesome/free-solid-svg-icons/faFileArchive';
+import { faFileCode } from '@fortawesome/free-solid-svg-icons/faFileCode';
+import { faFileCsv } from '@fortawesome/free-solid-svg-icons/faFileCsv';
+import { faFileExcel } from '@fortawesome/free-solid-svg-icons/faFileExcel';
+import { faFileImage } from '@fortawesome/free-solid-svg-icons/faFileImage';
+import { faFileLines } from '@fortawesome/free-solid-svg-icons/faFileLines';
+import { faFilePdf } from '@fortawesome/free-solid-svg-icons/faFilePdf';
+import { faFilePen } from '@fortawesome/free-solid-svg-icons/faFilePen';
+import { faFilePowerpoint } from '@fortawesome/free-solid-svg-icons/faFilePowerpoint';
+import { faFileWord } from '@fortawesome/free-solid-svg-icons/faFileWord';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/foundation/service/file.service';
 import { AccountService } from 'app/core/auth/account.service';

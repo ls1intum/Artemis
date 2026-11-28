@@ -1,6 +1,13 @@
 import { Service, inject } from '@angular/core';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faBarsProgress, faBoxArchive, faBullhorn, faGraduationCap, faHashtag, faLayerGroup, faLock, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
+import { faBarsProgress } from '@fortawesome/free-solid-svg-icons/faBarsProgress';
+import { faBoxArchive } from '@fortawesome/free-solid-svg-icons/faBoxArchive';
+import { faBullhorn } from '@fortawesome/free-solid-svg-icons/faBullhorn';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
+import { faHashtag } from '@fortawesome/free-solid-svg-icons/faHashtag';
+import { faLayerGroup } from '@fortawesome/free-solid-svg-icons/faLayerGroup';
+import { faLock } from '@fortawesome/free-solid-svg-icons/faLock';
+import { faSquareCheck } from '@fortawesome/free-solid-svg-icons/faSquareCheck';
 import { TranslateService } from '@ngx-translate/core';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';

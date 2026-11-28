@@ -20,7 +20,8 @@ import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/su
 import { Course } from 'app/course/shared/entities/course.model';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
-import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faTimesCircle } from '@fortawesome/free-solid-svg-icons/faTimesCircle';
 import { isManualResult as isManualResultFunction } from 'app/exercise/result/result.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
 import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faFileExport } from '@fortawesome/free-solid-svg-icons';
+import { faFileExport } from '@fortawesome/free-solid-svg-icons/faFileExport';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

@@ -12,7 +12,16 @@ import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service'
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import dayjs from 'dayjs/esm';
-import { faAward, faClipboard, faEye, faFlaskVial, faListAlt, faThList, faTrash, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faAward } from '@fortawesome/free-solid-svg-icons/faAward';
+import { faClipboard } from '@fortawesome/free-solid-svg-icons/faClipboard';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faFlaskVial } from '@fortawesome/free-solid-svg-icons/faFlaskVial';
+import { faListAlt } from '@fortawesome/free-solid-svg-icons/faListAlt';
+import { faThList } from '@fortawesome/free-solid-svg-icons/faThList';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo';
+import { faUser } from '@fortawesome/free-solid-svg-icons/faUser';
+import { faWrench } from '@fortawesome/free-solid-svg-icons/faWrench';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';

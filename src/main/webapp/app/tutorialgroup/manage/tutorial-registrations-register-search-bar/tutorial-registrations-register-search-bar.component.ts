@@ -1,7 +1,9 @@
 import { Component, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleExclamation, faMagnifyingGlass, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons/faCircleExclamation';
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlass';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { TumAetUiIconFieldComponent } from '@tumaet/ui-angular/icon-field';
 import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { Overlay, OverlayModule, OverlayRef } from '@angular/cdk/overlay';

@@ -21,7 +21,7 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
-import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
 
 @Component({
     selector: 'jhi-plagiarism-cases-instructor-view',

@@ -4,7 +4,10 @@ import { CourseNotificationPresetPickerComponent } from 'app/notification/course
 import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
 import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { faBell, faBellSlash, faBullhorn, faSliders } from '@fortawesome/free-solid-svg-icons';
+import { faBell } from '@fortawesome/free-solid-svg-icons/faBell';
+import { faBellSlash } from '@fortawesome/free-solid-svg-icons/faBellSlash';
+import { faBullhorn } from '@fortawesome/free-solid-svg-icons/faBullhorn';
+import { faSliders } from '@fortawesome/free-solid-svg-icons/faSliders';
 import { CourseNotificationChannel } from 'app/notification/shared/entities/course-notification/course-notification-channel';
 import { CourseNotificationSettingsMap } from 'app/notification/shared/entities/course-notification/course-notification-settings-map';
 import { TranslateService } from '@ngx-translate/core';

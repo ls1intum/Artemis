@@ -2,7 +2,10 @@ import { ChangeDetectionStrategy, Component, inject, input, model, output, signa
 import { NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCloudUploadAlt, faDownload, faFileZipper, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faCloudUploadAlt } from '@fortawesome/free-solid-svg-icons/faCloudUploadAlt';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
+import { faFileZipper } from '@fortawesome/free-solid-svg-icons/faFileZipper';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';

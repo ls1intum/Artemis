@@ -5,18 +5,16 @@ import { catchError, finalize, map as rxMap, switchMap, tap } from 'rxjs/operato
 import { fromPairs, toPairs } from 'lodash-es';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { CodeEditorFileBrowserDeleteComponent } from 'app/programming/manage/code-editor/file-browser/delete/code-editor-file-browser-delete';
-import {
-    faAngleDoubleDown,
-    faAngleDoubleUp,
-    faChevronLeft,
-    faChevronRight,
-    faCircleNotch,
-    faFile,
-    faFolder,
-    faFolderOpen,
-    faListAlt,
-    faPlus,
-} from '@fortawesome/free-solid-svg-icons';
+import { faAngleDoubleDown } from '@fortawesome/free-solid-svg-icons/faAngleDoubleDown';
+import { faAngleDoubleUp } from '@fortawesome/free-solid-svg-icons/faAngleDoubleUp';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faFile } from '@fortawesome/free-solid-svg-icons/faFile';
+import { faFolder } from '@fortawesome/free-solid-svg-icons/faFolder';
+import { faFolderOpen } from '@fortawesome/free-solid-svg-icons/faFolderOpen';
+import { faListAlt } from '@fortawesome/free-solid-svg-icons/faListAlt';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { TEXT_FILE_EXTENSIONS } from 'app/foundation/constants/file-extensions.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

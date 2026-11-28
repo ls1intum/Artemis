@@ -24,7 +24,11 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { CsvRow, downloadCsv } from 'app/foundation/util/csv-download.util';
-import { faExclamationTriangle, faInfo, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faInfo } from '@fortawesome/free-solid-svg-icons/faInfo';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { GradingPresentationsComponent, PresentationType, PresentationsConfig } from 'app/assessment/manage/grading/grading-presentations/grading-presentations.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { GradingInfoModalComponent } from 'app/assessment/manage/grading/grading-info-modal/grading-info-modal.component';
@@ -43,7 +47,10 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
-import { faDownload, faFileImport, faMagic, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faMagic } from '@fortawesome/free-solid-svg-icons/faMagic';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 const csvColumnsGrade = Object.freeze({
     gradeName: 'gradeName',
     lowerBoundPercentage: 'lowerBoundPercentage',

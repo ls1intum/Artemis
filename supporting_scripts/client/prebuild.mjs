@@ -13,6 +13,7 @@ import { spawn } from 'node:child_process';
 import * as esbuild from 'esbuild';
 import { runViteOverrideCheck } from '../check-vite-override.mjs';
 import { LANDING_NAMESPACES } from './i18n-slice.mjs';
+import { generateIconModules } from './fontawesome-icons.mjs';
 
 // Runs on every `ng serve` and every client build: a vite version that does not match what
 // @angular/build expects breaks the dev server silently (blank page), so fail here instead.
@@ -21,6 +22,16 @@ runViteOverrideCheck();
 const __filename = fileURLToPath(import.meta.url);
 const repoRoot = path.resolve(path.dirname(__filename), '../..');
 process.chdir(repoRoot);
+
+// =====================
+// FontAwesome icons
+// =====================
+
+// One module per icon, which the `paths` of the tsconfig files map the imports of an icon to (see fontawesome-icons.mjs).
+const writtenIconModules = generateIconModules();
+if (writtenIconModules > 0) {
+    console.log(`Wrote ${writtenIconModules} FontAwesome icon modules`);
+}
 
 // =====================
 // Environment variables

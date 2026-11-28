@@ -36,7 +36,9 @@ import { AttachmentAction } from 'app/editor/monaco-editor/model/actions/attachm
 import { BulletedListAction } from 'app/editor/monaco-editor/model/actions/bulleted-list.action';
 import { StrikethroughAction } from 'app/editor/monaco-editor/model/actions/strikethrough.action';
 import { OrderedListAction } from 'app/editor/monaco-editor/model/actions/ordered-list.action';
-import { faGripLines, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faGripLines } from '@fortawesome/free-solid-svg-icons/faGripLines';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { TextEditorActionGroup } from 'app/editor/monaco-editor/model/actions/text-editor-action-group.model';
 import { HeadingAction } from 'app/editor/monaco-editor/model/actions/heading.action';

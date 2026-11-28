@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { faCog } from '@fortawesome/free-solid-svg-icons';
+import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
 import { getInitialsFromString } from 'app/foundation/util/text.utils';
 import { getBackgroundColorHue } from 'app/foundation/util/color.utils';
 import { RouterLink } from '@angular/router';

@@ -1,5 +1,7 @@
 import { Component, inject, input } from '@angular/core';
-import { IconDefinition, faComments, faLightbulb } from '@fortawesome/free-solid-svg-icons';
+import { faComments } from '@fortawesome/free-solid-svg-icons/faComments';
+import { faLightbulb } from '@fortawesome/free-solid-svg-icons/faLightbulb';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { TranslateService } from '@ngx-translate/core';
 import { FileBadge, FileBadgeType } from 'app/programming/shared/code-editor/model/code-editor.model';

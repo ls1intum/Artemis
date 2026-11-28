@@ -1,4 +1,4 @@
-import { faUnderline } from '@fortawesome/free-solid-svg-icons';
+import { faUnderline } from '@fortawesome/free-solid-svg-icons/faUnderline';
 import { TextStyleTextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/editor/monaco-editor/model/actions/adapter/text-editor.interface';
 import { TextEditorKeyCode, TextEditorKeyModifier, TextEditorKeybinding } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-keybinding.model';

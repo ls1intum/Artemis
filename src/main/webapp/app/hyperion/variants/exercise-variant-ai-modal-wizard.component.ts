@@ -20,25 +20,23 @@ import dayjs from 'dayjs/esm';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import {
-    faArrowLeft,
-    faArrowRight,
-    faBan,
-    faBookOpen,
-    faCheck,
-    faChevronDown,
-    faChevronRight,
-    faCircleCheck,
-    faEarthAmericas,
-    faGaugeHigh,
-    faGears,
-    faInfoCircle,
-    faLayerGroup,
-    faPenToSquare,
-    faRobot,
-    faTriangleExclamation,
-    faWandMagicSparkles,
-} from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons/faArrowLeft';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons/faArrowRight';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faBookOpen } from '@fortawesome/free-solid-svg-icons/faBookOpen';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faCircleCheck } from '@fortawesome/free-solid-svg-icons/faCircleCheck';
+import { faEarthAmericas } from '@fortawesome/free-solid-svg-icons/faEarthAmericas';
+import { faGaugeHigh } from '@fortawesome/free-solid-svg-icons/faGaugeHigh';
+import { faGears } from '@fortawesome/free-solid-svg-icons/faGears';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons/faInfoCircle';
+import { faLayerGroup } from '@fortawesome/free-solid-svg-icons/faLayerGroup';
+import { faPenToSquare } from '@fortawesome/free-solid-svg-icons/faPenToSquare';
+import { faRobot } from '@fortawesome/free-solid-svg-icons/faRobot';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
+import { faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons/faWandMagicSparkles';
 import { EMPTY, Subject, Subscription, catchError, switchMap } from 'rxjs';
 
 import { TranslateService } from '@ngx-translate/core';

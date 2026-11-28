@@ -1,6 +1,8 @@
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { Component, input } from '@angular/core';
-import { faEdit, faFile, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEdit } from '@fortawesome/free-solid-svg-icons/faEdit';
+import { faFile } from '@fortawesome/free-solid-svg-icons/faFile';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import { CodeEditorFileBrowserNodeComponent } from 'app/programming/manage/code-editor/file-browser/node/code-editor-file-browser-node.component';
 import { FileBadge } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

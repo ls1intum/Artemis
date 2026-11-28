@@ -1,20 +1,18 @@
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import {
-    faBug,
-    faChalkboardUser,
-    faCode,
-    faCodePullRequest,
-    faComments,
-    faEnvelope,
-    faFileSignature,
-    faLightbulb,
-    faListCheck,
-    faRobot,
-    faRoute,
-    faSquarePlus,
-    faStopwatch,
-    faWandMagicSparkles,
-} from '@fortawesome/free-solid-svg-icons';
+import { faBug } from '@fortawesome/free-solid-svg-icons/faBug';
+import { faChalkboardUser } from '@fortawesome/free-solid-svg-icons/faChalkboardUser';
+import { faCode } from '@fortawesome/free-solid-svg-icons/faCode';
+import { faCodePullRequest } from '@fortawesome/free-solid-svg-icons/faCodePullRequest';
+import { faComments } from '@fortawesome/free-solid-svg-icons/faComments';
+import { faEnvelope } from '@fortawesome/free-solid-svg-icons/faEnvelope';
+import { faFileSignature } from '@fortawesome/free-solid-svg-icons/faFileSignature';
+import { faLightbulb } from '@fortawesome/free-solid-svg-icons/faLightbulb';
+import { faListCheck } from '@fortawesome/free-solid-svg-icons/faListCheck';
+import { faRobot } from '@fortawesome/free-solid-svg-icons/faRobot';
+import { faRoute } from '@fortawesome/free-solid-svg-icons/faRoute';
+import { faSquarePlus } from '@fortawesome/free-solid-svg-icons/faSquarePlus';
+import { faStopwatch } from '@fortawesome/free-solid-svg-icons/faStopwatch';
+import { faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons/faWandMagicSparkles';
 import {
     MODULE_FEATURE_ATHENA,
     MODULE_FEATURE_ATLAS,

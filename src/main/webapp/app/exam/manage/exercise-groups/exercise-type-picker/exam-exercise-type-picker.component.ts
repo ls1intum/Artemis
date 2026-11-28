@@ -3,7 +3,12 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, input, mo
 import { Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faArrowRight, faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons/faArrowRight';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons/faCheckDouble';
+import { faFileUpload } from '@fortawesome/free-solid-svg-icons/faFileUpload';
+import { faFont } from '@fortawesome/free-solid-svg-icons/faFont';
+import { faKeyboard } from '@fortawesome/free-solid-svg-icons/faKeyboard';
+import { faProjectDiagram } from '@fortawesome/free-solid-svg-icons/faProjectDiagram';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

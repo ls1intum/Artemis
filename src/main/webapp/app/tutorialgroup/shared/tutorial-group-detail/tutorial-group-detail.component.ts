@@ -8,23 +8,21 @@ import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-p
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
-import {
-    faBan,
-    faBuildingColumns,
-    faCalendar,
-    faCheck,
-    faCircleExclamation,
-    faCirclePlay,
-    faClock,
-    faFlag,
-    faMapPin,
-    faPenToSquare,
-    faPlus,
-    faQuestion,
-    faTag,
-    faTrash,
-    faUsers,
-} from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faBuildingColumns } from '@fortawesome/free-solid-svg-icons/faBuildingColumns';
+import { faCalendar } from '@fortawesome/free-solid-svg-icons/faCalendar';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons/faCircleExclamation';
+import { faCirclePlay } from '@fortawesome/free-solid-svg-icons/faCirclePlay';
+import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
+import { faFlag } from '@fortawesome/free-solid-svg-icons/faFlag';
+import { faMapPin } from '@fortawesome/free-solid-svg-icons/faMapPin';
+import { faPenToSquare } from '@fortawesome/free-solid-svg-icons/faPenToSquare';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
+import { faTag } from '@fortawesome/free-solid-svg-icons/faTag';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faUsers } from '@fortawesome/free-solid-svg-icons/faUsers';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { FormsModule } from '@angular/forms';

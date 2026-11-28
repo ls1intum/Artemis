@@ -18,7 +18,10 @@ import {
     viewChild,
     viewChildren,
 } from '@angular/core';
-import { faArrowDown, faCircleNotch, faEnvelope, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faEnvelope } from '@fortawesome/free-solid-svg-icons/faEnvelope';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Observable, Subject, catchError, forkJoin, map, of, takeUntil } from 'rxjs';
 import { Post } from 'app/communication/shared/entities/post.model';

@@ -35,7 +35,7 @@ import {
 import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
 import { MAX_FEEDBACK_TEXT_LENGTH } from 'app/modeling/manage/assess/modeling-assessment.service';
-import { faCommentDots } from '@fortawesome/free-solid-svg-icons';
+import { faCommentDots } from '@fortawesome/free-solid-svg-icons/faCommentDots';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 import { getModelElementType, normalizeApollonModel } from 'app/modeling/shared/apollon-model.util';
 import { TranslateService } from '@ngx-translate/core';

@@ -1,33 +1,32 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
-import { IconDefinition, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import {
-    faBell,
-    faBookOpen,
-    faBroom,
-    faBug,
-    faChartLine,
-    faClipboardList,
-    faCubes,
-    faDownload,
-    faEye,
-    faFlag,
-    faFlask,
-    faGears,
-    faHeart,
-    faKey,
-    faList,
-    faLock,
-    faMagnifyingGlassChart,
-    faPlug,
-    faPuzzlePiece,
-    faRobot,
-    faStamp,
-    faTachometerAlt,
-    faTasks,
-    faToggleOn,
-    faUniversity,
-    faUser,
-} from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faBell } from '@fortawesome/free-solid-svg-icons/faBell';
+import { faBookOpen } from '@fortawesome/free-solid-svg-icons/faBookOpen';
+import { faBroom } from '@fortawesome/free-solid-svg-icons/faBroom';
+import { faBug } from '@fortawesome/free-solid-svg-icons/faBug';
+import { faChartLine } from '@fortawesome/free-solid-svg-icons/faChartLine';
+import { faClipboardList } from '@fortawesome/free-solid-svg-icons/faClipboardList';
+import { faCubes } from '@fortawesome/free-solid-svg-icons/faCubes';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faFlag } from '@fortawesome/free-solid-svg-icons/faFlag';
+import { faFlask } from '@fortawesome/free-solid-svg-icons/faFlask';
+import { faGears } from '@fortawesome/free-solid-svg-icons/faGears';
+import { faHeart } from '@fortawesome/free-solid-svg-icons/faHeart';
+import { faKey } from '@fortawesome/free-solid-svg-icons/faKey';
+import { faList } from '@fortawesome/free-solid-svg-icons/faList';
+import { faLock } from '@fortawesome/free-solid-svg-icons/faLock';
+import { faMagnifyingGlassChart } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlassChart';
+import { faPlug } from '@fortawesome/free-solid-svg-icons/faPlug';
+import { faPuzzlePiece } from '@fortawesome/free-solid-svg-icons/faPuzzlePiece';
+import { faRobot } from '@fortawesome/free-solid-svg-icons/faRobot';
+import { faStamp } from '@fortawesome/free-solid-svg-icons/faStamp';
+import { faTachometerAlt } from '@fortawesome/free-solid-svg-icons/faTachometerAlt';
+import { faTasks } from '@fortawesome/free-solid-svg-icons/faTasks';
+import { faToggleOn } from '@fortawesome/free-solid-svg-icons/faToggleOn';
+import { faUniversity } from '@fortawesome/free-solid-svg-icons/faUniversity';
+import { faUser } from '@fortawesome/free-solid-svg-icons/faUser';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

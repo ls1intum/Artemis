@@ -30,7 +30,10 @@ import { declareExerciseType } from 'app/exercise/shared/entities/exercise/exerc
 import { mean, median, standardDeviation } from 'app/foundation/util/statistics.util';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
-import { faCheckCircle, faDownload, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CsvExportRowBuilder } from 'app/shared-ui/export/row-builder/csv-export-row-builder';
 import { ExcelExportRowBuilder } from 'app/shared-ui/export/row-builder/excel-export-row-builder';

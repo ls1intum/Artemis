@@ -1,4 +1,4 @@
-import { faListOl } from '@fortawesome/free-solid-svg-icons';
+import { faListOl } from '@fortawesome/free-solid-svg-icons/faListOl';
 import { ListAction } from './list.action';
 
 /**

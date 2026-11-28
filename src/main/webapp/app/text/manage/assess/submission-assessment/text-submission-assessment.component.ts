@@ -33,7 +33,7 @@ import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
 import { Course } from 'app/course/shared/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons/faListAlt';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';

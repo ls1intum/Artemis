@@ -17,21 +17,19 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { TranslateService } from '@ngx-translate/core';
-import {
-    faBook,
-    faCode,
-    faExclamationTriangle,
-    faEye,
-    faFileSignature,
-    faLightbulb,
-    faPencilAlt,
-    faRedo,
-    faRobot,
-    faSignal,
-    faTrash,
-    faUsers,
-} from '@fortawesome/free-solid-svg-icons';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faBook } from '@fortawesome/free-solid-svg-icons/faBook';
+import { faCode } from '@fortawesome/free-solid-svg-icons/faCode';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faFileSignature } from '@fortawesome/free-solid-svg-icons/faFileSignature';
+import { faLightbulb } from '@fortawesome/free-solid-svg-icons/faLightbulb';
+import { faPencilAlt } from '@fortawesome/free-solid-svg-icons/faPencilAlt';
+import { faRedo } from '@fortawesome/free-solid-svg-icons/faRedo';
+import { faRobot } from '@fortawesome/free-solid-svg-icons/faRobot';
+import { faSignal } from '@fortawesome/free-solid-svg-icons/faSignal';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faUsers } from '@fortawesome/free-solid-svg-icons/faUsers';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons/faListAlt';
 import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

@@ -23,7 +23,10 @@ import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faDownload, faFileImport, faUserMinus, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faUserMinus } from '@fortawesome/free-solid-svg-icons/faUserMinus';
+import { faUserPlus } from '@fortawesome/free-solid-svg-icons/faUserPlus';
 import { CourseRoleMember } from 'app/course/shared/course-group/course-role-member.model';
 
 @Component({

@@ -6,7 +6,7 @@ import { LOAD_SHARING_COURSES, SharingCourse } from './sharing-course';
 import { SortService } from 'app/foundation/service/sort.service';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { SharingInfo, ShoppingBasket } from './sharing.model';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProgrammingExerciseSharingService } from './programming-exercise-sharing.service';
 import { FormsModule } from '@angular/forms';

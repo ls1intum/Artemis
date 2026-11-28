@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Renderer2, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, Renderer2, effect, inject, signal } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router, RouterOutlet } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
@@ -14,8 +14,11 @@ import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.compo
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
 import { ClientErrorHandler } from 'app/core/error-reporting/client-error.handler';
 import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.component';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { LLMSelectionLoadErrorComponent } from 'app/logos/llm-selection-load-error.component';
 import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/components/modal/global-search-modal.component';
 import { SetupPasskeyModalComponent } from 'app/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { EmbedPdfPreloadService } from 'app/core/pdf/embed-pdf-preload.service';
@@ -35,6 +38,7 @@ import { LazyRouteRecoveryService } from 'app/core/navigation/lazy-route-recover
         FooterComponent,
         CourseNotificationPopupOverlayComponent,
         LLMSelectionModalComponent,
+        LLMSelectionLoadErrorComponent,
         GlobalSearchModalComponent,
         SetupPasskeyModalComponent,
     ],
@@ -53,9 +57,14 @@ export class AppComponent implements OnInit, OnDestroy {
     private clientErrorHandler = inject(ClientErrorHandler);
     private lazyRouteRecoveryService = inject(LazyRouteRecoveryService);
     private accountService = inject(AccountService);
+    private browserFingerprintService = inject(BrowserFingerprintService);
+    private llmSelectionModalService = inject(LLMSelectionModalService);
 
     /** Whether a user is signed in: the global search is for signed-in users only, so its code is not loaded for a visitor of the sign-in page. */
     protected readonly isAuthenticated = this.accountService.authenticated;
+
+    /** Whether a request to choose how AI may be used waits for an answer: it creates the popup, whose code is not part of the first download. */
+    protected readonly isLlmSelectionModalOpen = this.llmSelectionModalService.isOpen;
 
     protected readonly FeatureToggle = FeatureToggle;
 
@@ -81,6 +90,12 @@ export class AppComponent implements OnInit, OnDestroy {
 
     constructor() {
         this.clientErrorHandler.reportIfPasskeyIsNotSupported();
+        // The browser fingerprint is recorded with an exam session, so a signed-in user gets it when the browser is idle, and a visitor of the sign-in page never loads it.
+        effect(() => {
+            if (this.isAuthenticated()) {
+                this.browserFingerprintService.startWhenIdle();
+            }
+        });
     }
 
     private getPageTitle(routeSnapshot: ActivatedRouteSnapshot): string {

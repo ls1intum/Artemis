@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
-import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
+import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons/faHourglassHalf';
 import dayjs from 'dayjs/esm';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 

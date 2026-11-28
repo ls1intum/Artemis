@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
+import { faHandshakeAngle } from '@fortawesome/free-solid-svg-icons/faHandshakeAngle';
 
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 

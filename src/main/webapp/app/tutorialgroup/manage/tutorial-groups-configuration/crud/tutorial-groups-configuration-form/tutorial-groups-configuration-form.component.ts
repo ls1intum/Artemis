@@ -12,7 +12,7 @@ import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faUsers } from '@fortawesome/free-solid-svg-icons/faUsers';
 import type { TutorialGroupsConfigurationSettings } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 
 export interface TutorialGroupsConfigurationFormData {

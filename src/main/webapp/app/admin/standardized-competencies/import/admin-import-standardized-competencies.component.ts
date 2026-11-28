@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { faBan, faChevronRight, faFileImport, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaValidators,

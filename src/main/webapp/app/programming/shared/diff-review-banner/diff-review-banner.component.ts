@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, input, model, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBan, faSave, faTableColumns } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
+import { faTableColumns } from '@fortawesome/free-solid-svg-icons/faTableColumns';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';

@@ -2,7 +2,7 @@ import { Component, computed, input, output } from '@angular/core';
 
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faDoorClosed } from '@fortawesome/free-solid-svg-icons';
+import { faDoorClosed } from '@fortawesome/free-solid-svg-icons/faDoorClosed';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isRealExam } from 'app/exam/overview/exam.utils';

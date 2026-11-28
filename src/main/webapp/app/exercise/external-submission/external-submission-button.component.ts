@@ -1,5 +1,5 @@
 import { Component, inject, input, output } from '@angular/core';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import type { Result } from 'app/openapi/model/result';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';

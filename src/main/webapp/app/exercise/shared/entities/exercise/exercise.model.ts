@@ -15,7 +15,12 @@ import { CompetencyExerciseLink, CourseCompetency } from 'app/atlas/shared/entit
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons/faCheckDouble';
+import { faFileUpload } from '@fortawesome/free-solid-svg-icons/faFileUpload';
+import { faFont } from '@fortawesome/free-solid-svg-icons/faFont';
+import { faKeyboard } from '@fortawesome/free-solid-svg-icons/faKeyboard';
+import { faProjectDiagram } from '@fortawesome/free-solid-svg-icons/faProjectDiagram';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
 import { CourseScores } from 'app/course/manage/course-scores/course-scores';
 
 export enum DifficultyLevel {

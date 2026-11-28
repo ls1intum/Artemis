@@ -67,7 +67,7 @@ if (prebuiltWebappDir.exists()) {
         inputs.files("pnpm-lock.yaml")
             .withPropertyName("pnpm-lock")
             .withPathSensitivity(PathSensitivity.RELATIVE)
-        inputs.files("package.json", "pnpm-workspace.yaml", "supporting_scripts/client/prebuild.mjs", ".postcssrc.json", ".browserslistrc")
+        inputs.files("package.json", "pnpm-workspace.yaml", "supporting_scripts/client/prebuild.mjs", "supporting_scripts/client/i18n-slice.mjs", "supporting_scripts/client/fontawesome-icons.mjs", ".postcssrc.json", ".browserslistrc")
             .withPropertyName("client-build-config")
             .withPathSensitivity(PathSensitivity.RELATIVE)
         inputs.files("build.gradle")

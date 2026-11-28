@@ -36,7 +36,7 @@ import { round } from 'app/foundation/util/utils';
 import { MAX_SIZE_UNIT } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import { ImageComponent, ImageLoadingStatus } from 'app/shared-ui/image/image.component';
 import { generateExerciseHintExplanation } from 'app/foundation/util/markdown.util';
-import { faFileImage } from '@fortawesome/free-regular-svg-icons';
+import { faFileImage } from '@fortawesome/free-regular-svg-icons/faFileImage';
 import { CdkDrag, CdkDragDrop, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
 import { MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH, MAX_QUIZ_QUESTION_POINTS } from 'app/foundation/constants/input.constants';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
@@ -51,22 +51,20 @@ import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-s
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
-import {
-    faAngleDown,
-    faAngleRight,
-    faBan,
-    faBars,
-    faCopy,
-    faEye,
-    faFont,
-    faPencilAlt,
-    faPlus,
-    faScissors,
-    faTrash,
-    faUndo,
-    faUnlink,
-    faUpload,
-} from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown } from '@fortawesome/free-solid-svg-icons/faAngleDown';
+import { faAngleRight } from '@fortawesome/free-solid-svg-icons/faAngleRight';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faBars } from '@fortawesome/free-solid-svg-icons/faBars';
+import { faCopy } from '@fortawesome/free-solid-svg-icons/faCopy';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faFont } from '@fortawesome/free-solid-svg-icons/faFont';
+import { faPencilAlt } from '@fortawesome/free-solid-svg-icons/faPencilAlt';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faScissors } from '@fortawesome/free-solid-svg-icons/faScissors';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo';
+import { faUnlink } from '@fortawesome/free-solid-svg-icons/faUnlink';
+import { faUpload } from '@fortawesome/free-solid-svg-icons/faUpload';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FileService } from 'app/foundation/service/file.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';

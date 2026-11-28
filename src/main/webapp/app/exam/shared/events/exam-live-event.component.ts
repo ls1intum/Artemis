@@ -1,5 +1,7 @@
 import { Component, input, output } from '@angular/core';
-import { faCheck, faEye, faPaperPlane } from '@fortawesome/free-solid-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faPaperPlane } from '@fortawesome/free-solid-svg-icons/faPaperPlane';
 import {
     ExamAttendanceCheckEvent,
     ExamLiveEvent,

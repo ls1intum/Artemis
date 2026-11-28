@@ -10,7 +10,12 @@ import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch'
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { getErrorMessage } from 'app/foundation/util/global.utils';
-import { faCircleQuestion, faFilter, faMessage, faSort, faSpinner, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons/faCircleQuestion';
+import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
+import { faMessage } from '@fortawesome/free-solid-svg-icons/faMessage';
+import { faSort } from '@fortawesome/free-solid-svg-icons/faSort';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
+import { faUsers } from '@fortawesome/free-solid-svg-icons/faUsers';
 import { SearchResult, SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { FeedbackModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback/feedback-modal.component';
 import { FeedbackFilterModalComponent, FilterData } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter/feedback-filter-modal.component';

@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { faChalkboardUser, faComments, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser } from '@fortawesome/free-solid-svg-icons/faChalkboardUser';
+import { faComments } from '@fortawesome/free-solid-svg-icons/faComments';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

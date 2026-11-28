@@ -1,6 +1,6 @@
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import { Component, OnDestroy, inject, input, output } from '@angular/core';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Subject } from 'rxjs';

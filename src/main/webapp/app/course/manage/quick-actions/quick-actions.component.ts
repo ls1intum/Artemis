@@ -1,7 +1,13 @@
 import { Component, inject, input, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
-import { faBullseye, faChalkboardTeacher, faCode, faFileAlt, faFileImport, faQuestion, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faBullseye } from '@fortawesome/free-solid-svg-icons/faBullseye';
+import { faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons/faChalkboardTeacher';
+import { faCode } from '@fortawesome/free-solid-svg-icons/faCode';
+import { faFileAlt } from '@fortawesome/free-solid-svg-icons/faFileAlt';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
+import { faUsers } from '@fortawesome/free-solid-svg-icons/faUsers';
 import { UserManagementDropdownComponent } from 'app/course/manage/user-management-dropdown/user-management-dropdown.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';

@@ -1,5 +1,9 @@
 import { Component, ElementRef, OnDestroy, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
-import { faBan, faCheck, faCircleNotch, faFileImport, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { cleanString } from 'app/foundation/util/utils';
 import { ParseResult, parse } from 'papaparse';
 import { AlertService } from 'app/foundation/service/alert.service';

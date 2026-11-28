@@ -1,7 +1,12 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faChevronUp, faCircleInfo, faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
+import { faChevronUp } from '@fortawesome/free-solid-svg-icons/faChevronUp';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons/faCircleInfo';
+import { faFile } from '@fortawesome/free-solid-svg-icons/faFile';
+import { faFilePdf } from '@fortawesome/free-solid-svg-icons/faFilePdf';
+import { faFileVideo } from '@fortawesome/free-solid-svg-icons/faFileVideo';
+import { faVideo } from '@fortawesome/free-solid-svg-icons/faVideo';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

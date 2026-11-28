@@ -1,6 +1,6 @@
 import { Component, computed, input, output } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { TumAetUiButtonDirective, TumAetUiButtonSeverity, TumAetUiButtonVariantOptions } from '@tumaet/ui-angular/button';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';

@@ -15,7 +15,7 @@ import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
-import { faSave } from '@fortawesome/free-solid-svg-icons';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { combineLatest, takeWhile } from 'rxjs';

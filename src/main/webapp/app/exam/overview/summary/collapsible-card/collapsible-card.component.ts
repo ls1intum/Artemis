@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { faAngleRight } from '@fortawesome/free-solid-svg-icons';
+import { faAngleRight } from '@fortawesome/free-solid-svg-icons/faAngleRight';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

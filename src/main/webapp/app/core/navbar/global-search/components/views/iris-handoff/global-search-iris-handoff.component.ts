@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faComment } from '@fortawesome/free-regular-svg-icons';
+import { faComment } from '@fortawesome/free-regular-svg-icons/faComment';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { OsDetectorService } from 'app/core/navbar/global-search/services/os-detector.service';
 import { IrisHandoffTarget, chatAnswer, handoffTarget } from 'app/core/navbar/global-search/util/iris-chat-handoff.util';

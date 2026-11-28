@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from '../programming-exercise-trigger-build-button.component';
 import { ConfirmAutofocusModalResult, openConfirmAutofocusDialog } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
-import { faRedo } from '@fortawesome/free-solid-svg-icons';
+import { faRedo } from '@fortawesome/free-solid-svg-icons/faRedo';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';

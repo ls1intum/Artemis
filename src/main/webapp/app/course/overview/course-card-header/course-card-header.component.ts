@@ -6,7 +6,7 @@ import { CommonModule, SlicePipe } from '@angular/common';
 import { getContrastingTextColor } from 'app/foundation/util/color.utils';
 import { CourseNotificationBubbleComponent } from 'app/notification/course-notification/course-notification-bubble/course-notification-bubble.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faWrench } from '@fortawesome/free-solid-svg-icons/faWrench';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({

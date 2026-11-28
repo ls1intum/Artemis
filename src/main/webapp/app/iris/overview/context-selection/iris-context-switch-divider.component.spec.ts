@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective } from 'ng-mocks';
-import { faChalkboardUser, faFont, faKeyboard } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser } from '@fortawesome/free-solid-svg-icons/faChalkboardUser';
+import { faFont } from '@fortawesome/free-solid-svg-icons/faFont';
+import { faKeyboard } from '@fortawesome/free-solid-svg-icons/faKeyboard';
 import { IrisContextSwitchDividerComponent } from './iris-context-switch-divider.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisContextSwitchMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';

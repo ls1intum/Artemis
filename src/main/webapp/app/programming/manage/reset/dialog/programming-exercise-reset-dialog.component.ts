@@ -8,7 +8,10 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseResetOptions, ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { faBan, faCircleNotch, faSpinner, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
+import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

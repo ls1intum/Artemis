@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileApiService } from 'app/account/user/settings/learning/learner-profile-api.service';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { faSave } from '@fortawesome/free-solid-svg-icons';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
 import { LearnerProfileDTO } from 'app/account/user/settings/learning/dto/learner-profile-dto.model';
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';

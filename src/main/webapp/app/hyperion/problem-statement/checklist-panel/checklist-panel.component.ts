@@ -8,24 +8,22 @@ import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
 import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
 import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
-import {
-    faArrowDown,
-    faArrowUp,
-    faBolt,
-    faCheckCircle,
-    faChevronDown,
-    faChevronRight,
-    faEquals,
-    faExclamationTriangle,
-    faInfoCircle,
-    faLink,
-    faMagic,
-    faQuestion,
-    faSpinner,
-    faSync,
-    faTrashCan,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown';
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp';
+import { faBolt } from '@fortawesome/free-solid-svg-icons/faBolt';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faEquals } from '@fortawesome/free-solid-svg-icons/faEquals';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons/faInfoCircle';
+import { faLink } from '@fortawesome/free-solid-svg-icons/faLink';
+import { faMagic } from '@fortawesome/free-solid-svg-icons/faMagic';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
+import { faSync } from '@fortawesome/free-solid-svg-icons/faSync';
+import { faTrashCan } from '@fortawesome/free-solid-svg-icons/faTrashCan';
+import { faWrench } from '@fortawesome/free-solid-svg-icons/faWrench';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HyperionProblemStatementApi } from 'app/openapi/api/hyperion-problem-statement-api';
 import { ChecklistAnalysisResponse } from 'app/openapi/model/checklist-analysis-response';

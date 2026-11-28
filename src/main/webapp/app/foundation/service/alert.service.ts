@@ -7,7 +7,11 @@ import { EventManager, EventWithContent } from 'app/foundation/service/event-man
 import { AlertError } from 'app/core/alert/alert-error.model';
 import { Subscription } from 'rxjs';
 import { captureException } from 'app/core/error-reporting/capture-exception';
-import { IconDefinition, faCheckCircle, faExclamationCircle, faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle';
+import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons/faExclamationCircle';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons/faInfoCircle';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import type { HttpErrorEvent } from 'app/core/interceptor/errorhandler.interceptor';
 import dayjs from 'dayjs/esm';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';

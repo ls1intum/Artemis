@@ -11,7 +11,8 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { faCheckCircle, faKeyboard } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle';
+import { faKeyboard } from '@fortawesome/free-solid-svg-icons/faKeyboard';
 import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/overview/summary/exercises/header/exam-result-summary-exercise-card-header.component';
 import { ResultSummaryExerciseInfo } from 'app/exam/overview/summary/exam-result-summary.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

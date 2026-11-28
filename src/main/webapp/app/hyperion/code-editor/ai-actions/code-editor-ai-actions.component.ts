@@ -3,7 +3,16 @@ import { ChangeDetectionStrategy, Component, ElementRef, computed, input, model,
 import { FormsModule } from '@angular/forms';
 import { UrlTree } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBan, faCheckDouble, faChevronDown, faClone, faListCheck, faPaperPlane, faPen, faSpinner, faTimes, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons/faCheckDouble';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faClone } from '@fortawesome/free-solid-svg-icons/faClone';
+import { faListCheck } from '@fortawesome/free-solid-svg-icons/faListCheck';
+import { faPaperPlane } from '@fortawesome/free-solid-svg-icons/faPaperPlane';
+import { faPen } from '@fortawesome/free-solid-svg-icons/faPen';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';

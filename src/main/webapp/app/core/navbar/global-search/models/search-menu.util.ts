@@ -1,4 +1,7 @@
-import { faBan, faGraduationCap, faLayerGroup, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
+import { faLayerGroup } from '@fortawesome/free-solid-svg-icons/faLayerGroup';
+import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons/faMagnifyingGlass';
 import { FilterToken, TypeFacetValue } from './search-token.model';
 import { ParsedOperator } from './search-operator.util';
 import { TYPE_FACETS, TYPE_FACET_ORDER, isContentSearchValue } from './facet-catalog';

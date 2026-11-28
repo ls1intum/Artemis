@@ -9,7 +9,8 @@ import { CourseNotificationPage } from 'app/notification/shared/entities/course-
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
 import { CourseNotificationChannel } from 'app/notification/shared/entities/course-notification/course-notification-channel';
 import dayjs from 'dayjs/esm';
-import { faComments, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faComments } from '@fortawesome/free-solid-svg-icons/faComments';
+import { faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons/faWandMagicSparkles';
 import { BehaviorSubject, distinctUntilChanged, firstValueFrom } from 'rxjs';
 import { User } from 'app/account/user/user.model';
 import { provideHttpClient } from '@angular/common/http';

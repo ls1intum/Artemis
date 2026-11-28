@@ -3,7 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
-import { faExpand, faScroll } from '@fortawesome/free-solid-svg-icons';
+import { faExpand } from '@fortawesome/free-solid-svg-icons/faExpand';
+import { faScroll } from '@fortawesome/free-solid-svg-icons/faScroll';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 
 @Component({

@@ -1,5 +1,7 @@
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faRotateLeft, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faRotateLeft } from '@fortawesome/free-solid-svg-icons/faRotateLeft';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
 import { TumAetUiButtonSeverity } from '@tumaet/ui-angular/button';
 import { CleanupAction } from 'app/admin/cleanup-service/cleanup-operation.model';
 

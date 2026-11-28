@@ -42,21 +42,19 @@ import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise
 import { round } from 'app/foundation/util/utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/quiz/manage/util/quiz-exercise-validation.directive';
-import {
-    faArrowLeft,
-    faCircleNotch,
-    faClock,
-    faExclamationTriangle,
-    faFloppyDisk,
-    faGear,
-    faGraduationCap,
-    faPaperPlane,
-    faPlus,
-    faQuestionCircle,
-    faWandMagicSparkles,
-    faWrench,
-    faXmark,
-} from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons/faArrowLeft';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faClock } from '@fortawesome/free-solid-svg-icons/faClock';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons/faExclamationTriangle';
+import { faFloppyDisk } from '@fortawesome/free-solid-svg-icons/faFloppyDisk';
+import { faGear } from '@fortawesome/free-solid-svg-icons/faGear';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
+import { faPaperPlane } from '@fortawesome/free-solid-svg-icons/faPaperPlane';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
+import { faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons/faWandMagicSparkles';
+import { faWrench } from '@fortawesome/free-solid-svg-icons/faWrench';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';

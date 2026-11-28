@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Service, inject, signal } from '@angular/core';
-import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
+import { faLightbulb } from '@fortawesome/free-solid-svg-icons/faLightbulb';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isRealExam } from 'app/exam/overview/exam.utils';
@@ -17,9 +17,10 @@ import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
 import dayjs from 'dayjs/esm';
-import { BehaviorSubject, Observable, Subject, of, throwError } from 'rxjs';
-import { catchError, filter, map, tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, Subject, from, of, throwError } from 'rxjs';
+import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { SidebarCardElement } from 'app/foundation/types/sidebar';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -30,6 +31,7 @@ export class ExamParticipationService {
     private httpClient = inject(HttpClient);
     private localStorageService = inject(LocalStorageService);
     private sessionStorageService = inject(SessionStorageService);
+    private browserFingerprintService = inject(BrowserFingerprintService);
 
     public currentlyLoadedStudentExam = new Subject<StudentExam>();
 
@@ -111,7 +113,11 @@ export class ExamParticipationService {
     ): Observable<StudentExam | undefined> {
         const suffix = purpose === 'instructor-owner' ? '/for-instructor' : '';
         const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/conduction' + suffix;
-        return this.getStudentExamFromServer(url).pipe(
+        // The request creates the exam session, which records the browser fingerprint, so it has to carry it. The wait is bounded, and there is none when
+        // the fingerprint is disabled or already available: a fingerprint that is not available never keeps a student from starting the exam.
+        const fingerprint$ = this.browserFingerprintService.isFingerprintPending() ? from(this.browserFingerprintService.ensureFingerprint()) : of(undefined);
+        return fingerprint$.pipe(
+            switchMap(() => this.getStudentExamFromServer(url)),
             // During the conduction, blocking the student on a failed request would be worse than letting them work on
             // the copy cached on this device, which is a faithful snapshot of the exam they were handed.
             catchError(() => of(this.getStudentExamFromLocalStorage(courseId, examId))),

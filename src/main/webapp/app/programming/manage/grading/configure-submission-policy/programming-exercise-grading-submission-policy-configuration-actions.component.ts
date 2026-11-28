@@ -1,5 +1,5 @@
 import { Component, input, output } from '@angular/core';
-import { faSave } from '@fortawesome/free-solid-svg-icons';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';

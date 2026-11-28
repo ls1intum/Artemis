@@ -29,6 +29,13 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     readonly isOnPremiseEnabled = signal<boolean>(undefined!);
 
     ngOnInit(): void {
+        // The popup is created when the first request arrives, after the request has been made: read the request that waits for its answer, because
+        // openModal$ only tells a popup about requests that come while it exists.
+        const pendingRequest = this.modalService.pendingRequest();
+        if (pendingRequest) {
+            this.currentSelection.set(pendingRequest.currentSelection);
+            this.open();
+        }
         this.modalSubscription = this.modalService.openModal$.subscribe((currentSelection) => {
             this.currentSelection.set(currentSelection);
             this.open();

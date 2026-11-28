@@ -13,7 +13,7 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ScoreType } from 'app/foundation/constants/score-type.constants';
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons/faArrowRight';
 import { CourseCardHeaderComponent } from 'app/course/overview/course-card-header/course-card-header.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';

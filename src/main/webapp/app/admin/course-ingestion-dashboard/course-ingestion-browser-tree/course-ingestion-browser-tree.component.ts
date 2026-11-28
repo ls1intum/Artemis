@@ -1,20 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, model, signal, untracked } from '@angular/core';
-import {
-    IconDefinition,
-    faAlignLeft,
-    faBook,
-    faBookOpen,
-    faChevronDown,
-    faChevronRight,
-    faCircleQuestion,
-    faClosedCaptioning,
-    faFileLines,
-    faGraduationCap,
-    faHashtag,
-    faImage,
-    faLayerGroup,
-    faListCheck,
-} from '@fortawesome/free-solid-svg-icons';
+import { faAlignLeft } from '@fortawesome/free-solid-svg-icons/faAlignLeft';
+import { faBook } from '@fortawesome/free-solid-svg-icons/faBook';
+import { faBookOpen } from '@fortawesome/free-solid-svg-icons/faBookOpen';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons/faCircleQuestion';
+import { faClosedCaptioning } from '@fortawesome/free-solid-svg-icons/faClosedCaptioning';
+import { faFileLines } from '@fortawesome/free-solid-svg-icons/faFileLines';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
+import { faHashtag } from '@fortawesome/free-solid-svg-icons/faHashtag';
+import { faImage } from '@fortawesome/free-solid-svg-icons/faImage';
+import { faLayerGroup } from '@fortawesome/free-solid-svg-icons/faLayerGroup';
+import { faListCheck } from '@fortawesome/free-solid-svg-icons/faListCheck';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

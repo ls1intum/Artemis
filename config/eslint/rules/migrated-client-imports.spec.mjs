@@ -60,6 +60,52 @@ describe('migrated client import restrictions', () => {
         }
     });
 
+    // The foundation/ and shared-ui/ blocks of the configuration override the rule, so each of them has to repeat the restriction.
+    const iconRestrictedFiles = [
+        picker,
+        ...otherMigratedFiles,
+        'src/main/webapp/app/foundation/service/alert.service.ts',
+        'src/main/webapp/app/shared-ui/delete-dialog/service/delete-dialog.service.ts',
+        'src/main/webapp/app/core/navbar/navbar.component.ts',
+    ];
+
+    it.each(iconRestrictedFiles)('rejects the root of an icon package in %s, where one module per icon is imported', async (filePath) => {
+        for (const source of [
+            'import { faTrash } from "@fortawesome/free-solid-svg-icons";',
+            'import { faCircle } from "@fortawesome/free-regular-svg-icons";',
+            'import * as icons from "@fortawesome/free-solid-svg-icons";',
+        ]) {
+            const errors = await importErrors(filePath, source);
+            expect(errors, `${filePath}: ${source}`).toHaveLength(1);
+            expect(errors[0]).toMatchObject({ ruleId: 'no-restricted-imports', severity: 2 });
+            expect(errors[0].message).toContain('from its own module');
+        }
+    });
+
+    it('lets the specs of TUM AET UI import icons from the package root, as the kit does, and keeps the other restrictions there', async () => {
+        const kitSpec = 'packages/tum-aet-ui/src/lib/button/tumaet-ui-button.component.spec.ts';
+
+        expect(await importErrors(kitSpec, 'import { faTrash } from "@fortawesome/free-solid-svg-icons";')).toEqual([]);
+        for (const source of [
+            'import * as dependency from "lodash";',
+            'import { NgZone } from "@angular/core";',
+            'import { TumAetUiButtonComponent } from "@tumaet/ui-angular";',
+        ]) {
+            expect(await importErrors(kitSpec, source), source).toHaveLength(1);
+        }
+    });
+
+    it.each(iconRestrictedFiles)('allows an icon from its own module and the other FontAwesome packages in %s', async (filePath) => {
+        for (const source of [
+            'import { faTrash } from "@fortawesome/free-solid-svg-icons/faTrash";',
+            'import { faCircle } from "@fortawesome/free-regular-svg-icons/faCircle";',
+            'import { IconDefinition } from "@fortawesome/fontawesome-svg-core";',
+            'import { FaIconComponent } from "@fortawesome/angular-fontawesome";',
+        ]) {
+            expect(await importErrors(filePath, source), `${filePath}: ${source}`).toEqual([]);
+        }
+    });
+
     it.each([picker, ...otherMigratedFiles])('keeps supported public imports available in %s', async (filePath) => {
         const imports = [
             'import { TumAetUiChipComponent } from "@tumaet/ui-angular/chip";',

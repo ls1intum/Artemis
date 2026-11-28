@@ -1,22 +1,20 @@
 import { TumAetUiSkeletonComponent } from '@tumaet/ui-angular/skeleton';
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, viewChild, viewChildren } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import {
-    faBook,
-    faCalendarCheck,
-    faCheckDouble,
-    faComment,
-    faCompass,
-    faFileUpload,
-    faFont,
-    faGraduationCap,
-    faHashtag,
-    faKeyboard,
-    faPhotoFilm,
-    faProjectDiagram,
-    faQuestion,
-    faQuestionCircle,
-} from '@fortawesome/free-solid-svg-icons';
+import { faBook } from '@fortawesome/free-solid-svg-icons/faBook';
+import { faCalendarCheck } from '@fortawesome/free-solid-svg-icons/faCalendarCheck';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons/faCheckDouble';
+import { faComment } from '@fortawesome/free-solid-svg-icons/faComment';
+import { faCompass } from '@fortawesome/free-solid-svg-icons/faCompass';
+import { faFileUpload } from '@fortawesome/free-solid-svg-icons/faFileUpload';
+import { faFont } from '@fortawesome/free-solid-svg-icons/faFont';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
+import { faHashtag } from '@fortawesome/free-solid-svg-icons/faHashtag';
+import { faKeyboard } from '@fortawesome/free-solid-svg-icons/faKeyboard';
+import { faPhotoFilm } from '@fortawesome/free-solid-svg-icons/faPhotoFilm';
+import { faProjectDiagram } from '@fortawesome/free-solid-svg-icons/faProjectDiagram';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons/faQuestionCircle';
 import { MIN_SEARCH_QUERY_LENGTH, SHORT_QUERY_MAX_LENGTH, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { LECTURE_CONTENT_TYPE } from 'app/core/navbar/global-search/models/lecture-content-result.util';
 import { COURSE_PAGE_TYPE } from 'app/core/navbar/global-search/models/course-page-results.util';

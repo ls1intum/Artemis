@@ -1,5 +1,9 @@
 import { Component, OnDestroy, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { faChevronLeft, faPeopleGroup, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
+import { faPeopleGroup } from '@fortawesome/free-solid-svg-icons/faPeopleGroup';
+import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
+import { faUserGroup } from '@fortawesome/free-solid-svg-icons/faUserGroup';
+import { faUserPlus } from '@fortawesome/free-solid-svg-icons/faUserPlus';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { TranslateService } from '@ngx-translate/core';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';

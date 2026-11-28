@@ -1,6 +1,11 @@
 import { ExamConductionCountsState } from 'app/exam/manage/exams/exam-checklist-component/exam-conduction-counts-state';
 import { Component, OnDestroy, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { faArrowRight, faCheckCircle, faCircleExclamation, faDotCircle, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons/faArrowRight';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle';
+import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons/faCircleExclamation';
+import { faDotCircle } from '@fortawesome/free-solid-svg-icons/faDotCircle';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
+import { faTimesCircle } from '@fortawesome/free-solid-svg-icons/faTimesCircle';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isActingAsTestExam, isRealExam } from 'app/exam/overview/exam.utils';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';

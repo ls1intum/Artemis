@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular
 import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular/list';
 import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';

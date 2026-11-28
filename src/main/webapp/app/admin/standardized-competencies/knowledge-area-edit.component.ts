@@ -1,5 +1,10 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, model, output } from '@angular/core';
-import { faBan, faPencil, faPlus, faSave, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faBan } from '@fortawesome/free-solid-svg-icons/faBan';
+import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faSave } from '@fortawesome/free-solid-svg-icons/faSave';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { KnowledgeArea, KnowledgeAreaDTO, KnowledgeAreaValidators } from 'app/atlas/shared/entities/standardized-competency.model';
 import { AbstractControl, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';

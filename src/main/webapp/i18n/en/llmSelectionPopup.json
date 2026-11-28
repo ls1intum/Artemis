@@ -2,6 +2,7 @@
     "artemisApp": {
         "llmSelectionPopup": {
             "header": "Choose Your AI Experience",
+            "loadFailedAlert": "<b>The dialog for choosing how AI may be used could not be loaded.</b> Artemis may have been updated in the meantime, or the connection was interrupted. Reloading usually resolves it.",
             "subtitleOne": "Your data, your choice.",
             "subtitleTwo": "Use Artemis with cutting-edge cloud models on Azure backed by enterprise-grade safeguards, or opt for open-source stack in the university datacenter for enhanced privacy.",
             "cloud": "Cloud",

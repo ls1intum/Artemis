@@ -1,5 +1,9 @@
 import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
-import { faEllipsis, faUser, faUserCheck, faUserGear, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
+import { faEllipsis } from '@fortawesome/free-solid-svg-icons/faEllipsis';
+import { faUser } from '@fortawesome/free-solid-svg-icons/faUser';
+import { faUserCheck } from '@fortawesome/free-solid-svg-icons/faUserCheck';
+import { faUserGear } from '@fortawesome/free-solid-svg-icons/faUserGear';
+import { faUserGraduate } from '@fortawesome/free-solid-svg-icons/faUserGraduate';
 import { User } from 'app/account/user/user.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';

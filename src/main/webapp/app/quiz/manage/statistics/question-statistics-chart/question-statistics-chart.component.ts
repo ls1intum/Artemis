@@ -5,7 +5,9 @@ import { TumAetUiChartData } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle';
+import { faSync } from '@fortawesome/free-solid-svg-icons/faSync';
+import { faTimesCircle } from '@fortawesome/free-solid-svg-icons/faTimesCircle';
 
 @Component({
     selector: 'jhi-question-statistics-chart',

@@ -1,7 +1,7 @@
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
 import { Component, OnInit, input, signal } from '@angular/core';
-import { faFlag } from '@fortawesome/free-solid-svg-icons';
+import { faFlag } from '@fortawesome/free-solid-svg-icons/faFlag';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';

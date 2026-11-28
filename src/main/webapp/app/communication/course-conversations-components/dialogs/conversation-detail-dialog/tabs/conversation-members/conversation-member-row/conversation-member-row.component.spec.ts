@@ -22,7 +22,9 @@ import { of } from 'rxjs';
 import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
+import { faUser } from '@fortawesome/free-solid-svg-icons/faUser';
+import { faUserCheck } from '@fortawesome/free-solid-svg-icons/faUserCheck';
+import { faUserGraduate } from '@fortawesome/free-solid-svg-icons/faUserGraduate';
 import { ConversationMemberRowComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-member-row/conversation-member-row.component';
 
 const memberTemplate = {

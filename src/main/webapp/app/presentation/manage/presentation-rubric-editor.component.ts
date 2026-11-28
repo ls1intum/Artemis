@@ -5,7 +5,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { merge, startWith, switchMap } from 'rxjs';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChevronDown, faChevronUp, faPlus, faTableCellsLarge, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faChevronUp } from '@fortawesome/free-solid-svg-icons/faChevronUp';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faTableCellsLarge } from '@fortawesome/free-solid-svg-icons/faTableCellsLarge';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular/empty-state';

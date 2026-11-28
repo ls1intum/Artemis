@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, input, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faFileAlt } from '@fortawesome/free-regular-svg-icons';
-import { faCircleNotch, faGear } from '@fortawesome/free-solid-svg-icons';
+import { faFileAlt } from '@fortawesome/free-regular-svg-icons/faFileAlt';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faGear } from '@fortawesome/free-solid-svg-icons/faGear';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';

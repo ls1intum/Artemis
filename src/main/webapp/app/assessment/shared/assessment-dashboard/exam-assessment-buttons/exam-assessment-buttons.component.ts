@@ -15,7 +15,9 @@ import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { faClipboardCheck, faSpinner, faUserCheck } from '@fortawesome/free-solid-svg-icons';
+import { faClipboardCheck } from '@fortawesome/free-solid-svg-icons/faClipboardCheck';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
+import { faUserCheck } from '@fortawesome/free-solid-svg-icons/faUserCheck';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 

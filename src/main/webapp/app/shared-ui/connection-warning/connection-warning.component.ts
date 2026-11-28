@@ -1,7 +1,8 @@
 import { Component, ElementRef, OnDestroy, OnInit, TemplateRef, ViewContainerRef, inject, signal, viewChild } from '@angular/core';
 import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { faExclamationCircle, faWifi } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationCircle } from '@fortawesome/free-solid-svg-icons/faExclamationCircle';
+import { faWifi } from '@fortawesome/free-solid-svg-icons/faWifi';
 import { Subscription, distinctUntilChanged, filter, map } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { NavigationEnd, Router } from '@angular/router';

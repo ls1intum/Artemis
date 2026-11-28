@@ -223,6 +223,11 @@ route uses into the first download. ESLint rejects the root. After a merge that 
 `node supporting_scripts/client/migrate-tum-aet-ui-imports.mjs` to rewrite it. Bootstrap, ng-bootstrap
 and PrimeNG are removed from the client; do not add them again.
 
+Import each FontAwesome icon from its own module for the same reason,
+`import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash'` (and `free-regular-svg-icons`), never from
+the package root. ESLint rejects the root; after a merge, `node supporting_scripts/client/migrate-fontawesome-imports.mjs`
+rewrites it. The build maps the import to an ES module that `pnpm run prebuild` generates.
+
 Choose button severity by the established action family and its context, following
 [Button intent and hierarchy](../../documentation/docs/developer/guidelines/client-theming.mdx#button-intent-and-hierarchy).
 Across the client, preserve blue workflow/navigation/Create/Save, yellow authoring/configuration, cyan

@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { NgClass } from '@angular/common';

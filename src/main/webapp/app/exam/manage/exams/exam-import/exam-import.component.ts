@@ -2,7 +2,7 @@ import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, inject, input, output, signal, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';

@@ -10,7 +10,7 @@ import { QuizPointStatistic } from 'app/quiz/shared/entities/quiz-point-statisti
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { blueColor } from 'app/quiz/manage/statistics/question-statistic.component';
 import { round } from 'app/foundation/util/utils';
-import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { faSync } from '@fortawesome/free-solid-svg-icons/faSync';
 import { calculateMaxScore } from 'app/quiz/manage/statistics/quiz-statistic/quiz-statistics.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

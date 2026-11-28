@@ -7,7 +7,7 @@ import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/mod
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faListAlt } from '@fortawesome/free-regular-svg-icons/faListAlt';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { SafeHtml } from '@angular/platform-browser';

@@ -9,7 +9,7 @@ import diff from 'html-diff-ts';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
-import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
 
 @Component({
     selector: 'jhi-exam-exercise-update-highlighter',

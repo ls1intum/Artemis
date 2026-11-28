@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OsDetectorService } from '../services/os-detector.service';
 import { SearchOverlayService } from '../services/search-overlay.service';

@@ -9,24 +9,22 @@ import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 
-import {
-    faChartBar,
-    faChevronLeft,
-    faChevronRight,
-    faCircleNotch,
-    faClipboard,
-    faEye,
-    faFlag,
-    faListAlt,
-    faQuestion,
-    faSync,
-    faTable,
-    faTableCells,
-    faTimes,
-    faTrash,
-    faUndo,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
+import { faChartBar } from '@fortawesome/free-solid-svg-icons/faChartBar';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faClipboard } from '@fortawesome/free-solid-svg-icons/faClipboard';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faFlag } from '@fortawesome/free-solid-svg-icons/faFlag';
+import { faListAlt } from '@fortawesome/free-solid-svg-icons/faListAlt';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
+import { faSync } from '@fortawesome/free-solid-svg-icons/faSync';
+import { faTable } from '@fortawesome/free-solid-svg-icons/faTable';
+import { faTableCells } from '@fortawesome/free-solid-svg-icons/faTableCells';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faUndo } from '@fortawesome/free-solid-svg-icons/faUndo';
+import { faWrench } from '@fortawesome/free-solid-svg-icons/faWrench';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { CourseExamArchiveButtonComponent } from 'app/shared-ui/components/buttons/course-exam-archive-button/course-exam-archive-button.component';
 import { CourseSidebarComponent, SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';

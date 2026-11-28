@@ -2,7 +2,7 @@ import { Component, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming/manage/assess/repo-export/export-dialog/programming-assessment-repo-export-dialog.component';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';

@@ -2,7 +2,12 @@ import { TumAetUiButtonDirective, TumAetUiButtonSeverity } from '@tumaet/ui-angu
 import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, ElementRef, Injector, OnDestroy, afterNextRender, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
-import { IconDefinition, faCheckCircle, faCircle, faDownload, faExpand, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle';
+import { faCircle } from '@fortawesome/free-solid-svg-icons/faCircle';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
+import { faExpand } from '@fortawesome/free-solid-svg-icons/faExpand';
+import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons/faExternalLinkAlt';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';

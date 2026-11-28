@@ -2,7 +2,7 @@ import { LectureUnitReleaseDateFormDirective } from '../lecture-unit-release-dat
 import dayjs from 'dayjs/esm';
 import { Component, computed, effect, inject, input, output } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { OnlineUnitApi } from 'app/openapi/api/online-unit-api';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';

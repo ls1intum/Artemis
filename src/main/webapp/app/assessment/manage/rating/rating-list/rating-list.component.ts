@@ -8,7 +8,7 @@ import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { RatingListItem } from 'app/assessment/shared/entities/rating-list-item.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+import { faFolderOpen } from '@fortawesome/free-solid-svg-icons/faFolderOpen';
 import { TranslatePipe } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { StarRatingComponent } from '../star-rating/star-rating.component';

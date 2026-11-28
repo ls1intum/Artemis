@@ -17,7 +17,10 @@ import {
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faFaceSmile, faFileArrowUp, faFileCircleQuestion, faFilePowerpoint } from '@fortawesome/free-solid-svg-icons';
+import { faFaceSmile } from '@fortawesome/free-solid-svg-icons/faFaceSmile';
+import { faFileArrowUp } from '@fortawesome/free-solid-svg-icons/faFileArrowUp';
+import { faFileCircleQuestion } from '@fortawesome/free-solid-svg-icons/faFileCircleQuestion';
+import { faFilePowerpoint } from '@fortawesome/free-solid-svg-icons/faFilePowerpoint';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';

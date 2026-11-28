@@ -11,20 +11,18 @@ import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import {
-    faBolt,
-    faChartBar,
-    faClipboard,
-    faEye,
-    faFileImport,
-    faFlag,
-    faGraduationCap,
-    faListAlt,
-    faQuestion,
-    faTable,
-    faTimes,
-    faWrench,
-} from '@fortawesome/free-solid-svg-icons';
+import { faBolt } from '@fortawesome/free-solid-svg-icons/faBolt';
+import { faChartBar } from '@fortawesome/free-solid-svg-icons/faChartBar';
+import { faClipboard } from '@fortawesome/free-solid-svg-icons/faClipboard';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faFileImport } from '@fortawesome/free-solid-svg-icons/faFileImport';
+import { faFlag } from '@fortawesome/free-solid-svg-icons/faFlag';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
+import { faListAlt } from '@fortawesome/free-solid-svg-icons/faListAlt';
+import { faQuestion } from '@fortawesome/free-solid-svg-icons/faQuestion';
+import { faTable } from '@fortawesome/free-solid-svg-icons/faTable';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
+import { faWrench } from '@fortawesome/free-solid-svg-icons/faWrench';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';

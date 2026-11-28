@@ -192,6 +192,44 @@ describe('LLMSelectionModalService', () => {
         });
     });
 
+    describe('pending request', () => {
+        it('should have no pending request and be closed before a request is made', () => {
+            expect(service.pendingRequest()).toBeUndefined();
+            expect(service.isOpen()).toBe(false);
+        });
+
+        it('should keep the request, with its selection, until the user answers, so that a popup created later can read it', () => {
+            void service.open(LLMSelectionDecision.LOCAL_AI);
+
+            expect(service.pendingRequest()).toEqual({ currentSelection: LLMSelectionDecision.LOCAL_AI });
+            expect(service.isOpen()).toBe(true);
+        });
+
+        it('should keep a request without a selection as a pending request', () => {
+            void service.open();
+
+            expect(service.pendingRequest()).toEqual({ currentSelection: undefined });
+            expect(service.isOpen()).toBe(true);
+        });
+
+        it('should clear the request when the user answers', async () => {
+            const result = service.open(LLMSelectionDecision.CLOUD_AI);
+
+            service.emitChoice(LLM_MODAL_DISMISSED);
+
+            expect(await result).toBe(LLM_MODAL_DISMISSED);
+            expect(service.pendingRequest()).toBeUndefined();
+            expect(service.isOpen()).toBe(false);
+        });
+
+        it('should replace the pending request when a new one is made', () => {
+            void service.open(LLMSelectionDecision.CLOUD_AI);
+            void service.open(LLMSelectionDecision.NO_AI);
+
+            expect(service.pendingRequest()).toEqual({ currentSelection: LLMSelectionDecision.NO_AI });
+        });
+    });
+
     describe('integration between open and emitChoice', () => {
         it('should complete open promise when emitChoice is called', async () => {
             const openPromise = service.open();

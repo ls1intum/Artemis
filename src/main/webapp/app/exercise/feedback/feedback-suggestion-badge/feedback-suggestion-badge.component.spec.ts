@@ -6,7 +6,8 @@ import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback
 import { MockDirective } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { faLightbulb, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faLightbulb } from '@fortawesome/free-solid-svg-icons/faLightbulb';
+import { faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons/faWandMagicSparkles';
 
 describe('FeedbackSuggestionBadgeComponent', () => {
     let component: FeedbackSuggestionBadgeComponent;

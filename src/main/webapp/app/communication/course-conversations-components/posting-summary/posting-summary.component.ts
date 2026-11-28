@@ -1,6 +1,12 @@
 import { Component, effect, input, output, signal, untracked } from '@angular/core';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
-import { faBarsProgress, faBookmark, faBoxArchive, faCheckSquare, faEllipsis, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
+import { faBarsProgress } from '@fortawesome/free-solid-svg-icons/faBarsProgress';
+import { faBookmark } from '@fortawesome/free-solid-svg-icons/faBookmark';
+import { faBoxArchive } from '@fortawesome/free-solid-svg-icons/faBoxArchive';
+import { faCheckSquare } from '@fortawesome/free-solid-svg-icons/faCheckSquare';
+import { faEllipsis } from '@fortawesome/free-solid-svg-icons/faEllipsis';
+import { faHashtag } from '@fortawesome/free-solid-svg-icons/faHashtag';
+import { faLock } from '@fortawesome/free-solid-svg-icons/faLock';
 import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

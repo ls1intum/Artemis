@@ -1,5 +1,9 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { IconDefinition, faCheck, faFileVideo, faLink, faScroll } from '@fortawesome/free-solid-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faFileVideo } from '@fortawesome/free-solid-svg-icons/faFileVideo';
+import { faLink } from '@fortawesome/free-solid-svg-icons/faLink';
+import { faScroll } from '@fortawesome/free-solid-svg-icons/faScroll';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { RouterLink } from '@angular/router';

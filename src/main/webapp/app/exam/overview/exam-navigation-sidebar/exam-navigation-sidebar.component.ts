@@ -10,7 +10,10 @@ import { ButtonTooltipType, ExamParticipationService } from 'app/exam/overview/s
 import { map } from 'rxjs/operators';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faAnglesLeft, faAnglesRight, faFileLines, faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
+import { faAnglesLeft } from '@fortawesome/free-solid-svg-icons/faAnglesLeft';
+import { faAnglesRight } from '@fortawesome/free-solid-svg-icons/faAnglesRight';
+import { faFileLines } from '@fortawesome/free-solid-svg-icons/faFileLines';
+import { faHourglassHalf } from '@fortawesome/free-solid-svg-icons/faHourglassHalf';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';

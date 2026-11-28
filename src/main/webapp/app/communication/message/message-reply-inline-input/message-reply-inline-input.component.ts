@@ -9,7 +9,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { DraftMessageInputDirective } from '../draft-message-input.directive';
 import { Subscription } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 
 @Component({

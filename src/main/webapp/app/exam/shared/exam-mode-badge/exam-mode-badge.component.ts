@@ -2,7 +2,9 @@ import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
-import { faFlaskVial, faGraduationCap, faVial } from '@fortawesome/free-solid-svg-icons';
+import { faFlaskVial } from '@fortawesome/free-solid-svg-icons/faFlaskVial';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
+import { faVial } from '@fortawesome/free-solid-svg-icons/faVial';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

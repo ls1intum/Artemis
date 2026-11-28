@@ -1,7 +1,7 @@
 import { TranslateService } from '@ngx-translate/core';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faFilter } from '@fortawesome/free-solid-svg-icons';
+import { faFilter } from '@fortawesome/free-solid-svg-icons/faFilter';
 import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiButtonGroupComponent } from '@tumaet/ui-angular/button-group';
 import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';

@@ -1,7 +1,13 @@
 import { ChangeDetectionStrategy, Component, Injector, computed, inject, input, model } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import type { IconDefinition } from '@fortawesome/free-solid-svg-icons';
-import { faBook, faBrain, faCompass, faLightbulb, faShieldHalved, faThumbsUp, faUser } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faBook } from '@fortawesome/free-solid-svg-icons/faBook';
+import { faBrain } from '@fortawesome/free-solid-svg-icons/faBrain';
+import { faCompass } from '@fortawesome/free-solid-svg-icons/faCompass';
+import { faLightbulb } from '@fortawesome/free-solid-svg-icons/faLightbulb';
+import { faShieldHalved } from '@fortawesome/free-solid-svg-icons/faShieldHalved';
+import { faThumbsUp } from '@fortawesome/free-solid-svg-icons/faThumbsUp';
+import { faUser } from '@fortawesome/free-solid-svg-icons/faUser';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';

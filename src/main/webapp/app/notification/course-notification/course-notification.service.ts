@@ -1,5 +1,10 @@
 import { OnDestroy, Service, inject } from '@angular/core';
-import { faComments, faPersonChalkboard, faRectangleList, faRobot, faTriangleExclamation, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+import { faComments } from '@fortawesome/free-solid-svg-icons/faComments';
+import { faPersonChalkboard } from '@fortawesome/free-solid-svg-icons/faPersonChalkboard';
+import { faRectangleList } from '@fortawesome/free-solid-svg-icons/faRectangleList';
+import { faRobot } from '@fortawesome/free-solid-svg-icons/faRobot';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
+import { faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons/faWandMagicSparkles';
 import dayjs from 'dayjs/esm';
 import { CourseNotification, courseNotificationEnumValueFromName } from 'app/notification/shared/entities/course-notification/course-notification';
 import { HttpClient, HttpResponse } from '@angular/common/http';

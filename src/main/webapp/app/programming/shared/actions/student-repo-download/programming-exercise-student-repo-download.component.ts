@@ -3,7 +3,7 @@ import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
 import { take } from 'rxjs';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';

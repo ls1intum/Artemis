@@ -6,7 +6,7 @@ import { Router } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faTimes } from '@fortawesome/free-solid-svg-icons/faTimes';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { UnitFormChange } from 'app/lecture/manage/lecture-units/unit-form-change.model';

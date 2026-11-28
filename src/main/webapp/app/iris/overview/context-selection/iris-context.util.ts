@@ -1,5 +1,7 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faChalkboardUser, faFont, faKeyboard } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser } from '@fortawesome/free-solid-svg-icons/faChalkboardUser';
+import { faFont } from '@fortawesome/free-solid-svg-icons/faFont';
+import { faKeyboard } from '@fortawesome/free-solid-svg-icons/faKeyboard';
 import { IrisMessageContent, isJsonContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { ChatServiceMode, SessionContext } from 'app/iris/shared/entities/iris-session-context.model';
 

@@ -5,7 +5,7 @@ import { StringCountService } from 'app/text/overview/service/string-count.servi
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { faListAlt } from '@fortawesome/free-solid-svg-icons';
+import { faListAlt } from '@fortawesome/free-solid-svg-icons/faListAlt';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/foundation/constants/input.constants';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';

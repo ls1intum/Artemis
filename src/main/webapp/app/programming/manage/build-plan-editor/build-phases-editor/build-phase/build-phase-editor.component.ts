@@ -1,7 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, model, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 
-import { faArrowDown, faArrowUp, faPlus, faTrash, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown } from '@fortawesome/free-solid-svg-icons/faArrowDown';
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons/faTriangleExclamation';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import {
     BUILD_PHASE_CONDITION,
     BUILD_PHASE_NAME_PATTERN,

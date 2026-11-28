@@ -12,7 +12,10 @@ import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.compo
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { Subject, Subscription } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
-import { faArchive, faCircleNotch, faDownload, faEraser } from '@fortawesome/free-solid-svg-icons';
+import { faArchive } from '@fortawesome/free-solid-svg-icons/faArchive';
+import { faCircleNotch } from '@fortawesome/free-solid-svg-icons/faCircleNotch';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
+import { faEraser } from '@fortawesome/free-solid-svg-icons/faEraser';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';

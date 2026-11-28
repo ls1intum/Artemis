@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, DeferBlockBehavior, DeferBlockState, TestBed } from '@angular/core/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { By } from '@angular/platform-browser';
 import { NgClass } from '@angular/common';
@@ -27,6 +27,14 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
 import { LtiService } from 'app/foundation/service/lti.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
+import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { LLMSelectionLoadErrorComponent } from 'app/logos/llm-selection-load-error.component';
+import { Alert, AlertService } from 'app/foundation/service/alert.service';
+import { WINDOW_INJECTOR_TOKEN } from 'app/core/interceptor/artemis-version.interceptor';
+import { LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { AccountService } from 'app/core/auth/account.service';
+import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
+import { User } from 'app/account/user/user.model';
 
 class MockThemeService {
     initialize() {
@@ -39,9 +47,10 @@ describe('AppComponent', () => {
     let comp: AppComponent;
     let handleNavigationError: ReturnType<typeof vi.fn>;
 
-    beforeEach(async () => {
+    async function createAppComponent(deferBlockBehavior = DeferBlockBehavior.Playthrough) {
         handleNavigationError = vi.fn();
         await TestBed.configureTestingModule({
+            deferBlockBehavior,
             imports: [
                 AppComponent,
                 RouterModule.forRoot([
@@ -64,6 +73,7 @@ describe('AppComponent', () => {
                     useValue: { getFeatureToggleActive: () => of(false), subscribeFeatureToggleUpdates: () => {}, unsubscribeFeatureToggleUpdates: () => {} },
                 },
                 { provide: JhiLanguageHelper, useValue: { updateTitle: vi.fn() } },
+                { provide: WINDOW_INJECTOR_TOKEN, useValue: { location: { reload: vi.fn() } } },
                 { provide: LazyRouteRecoveryService, useValue: { handleNavigationError } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -81,6 +91,7 @@ describe('AppComponent', () => {
                         MockComponent(FooterComponent),
                         MockComponent(CourseNotificationPopupOverlayComponent),
                         MockComponent(LLMSelectionModalComponent),
+                        LLMSelectionLoadErrorComponent,
                         MockComponent(GlobalSearchModalComponent),
                         MockComponent(SetupPasskeyModalComponent),
                     ],
@@ -91,6 +102,10 @@ describe('AppComponent', () => {
         fixture = TestBed.createComponent(AppComponent);
         comp = fixture.componentInstance;
         fixture.detectChanges();
+    }
+
+    beforeEach(async () => {
+        await createAppComponent();
     });
 
     afterEach(() => {
@@ -119,6 +134,66 @@ describe('AppComponent', () => {
 
     // Driven through real navigations to the routes registered above, so the router reports the NavigationError the
     // same way it does in the browser rather than the test pushing a synthetic event into its event stream.
+    describe('LLM selection popup', () => {
+        it('should not create the popup, and so not load its code, before a request to open it', async () => {
+            TestBed.inject(AccountService).userIdentity.set({ id: 1, login: 'student' } as User);
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(fixture.debugElement.query(By.css('jhi-llm-selection-modal'))).toBeNull();
+        });
+
+        it('should create the popup when a signed-in user makes a request to open it, although no popup existed to hear the request', async () => {
+            TestBed.inject(AccountService).userIdentity.set({ id: 1, login: 'student' } as User);
+            fixture.detectChanges();
+            void TestBed.inject(LLMSelectionModalService).open();
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(fixture.debugElement.query(By.css('jhi-llm-selection-modal'))).not.toBeNull();
+        });
+    });
+
+    describe('when the code of the LLM selection popup cannot be loaded', () => {
+        beforeEach(async () => {
+            // The defer blocks are driven by hand, so that the test can put the block of the popup into the state of a failed download.
+            TestBed.resetTestingModule();
+            await createAppComponent(DeferBlockBehavior.Manual);
+        });
+
+        it('should answer the request as dismissed and offer a reload, instead of leaving the caller waiting', async () => {
+            const addAlert = vi.spyOn(TestBed.inject(AlertService), 'addAlert').mockReturnValue({} as Alert);
+            TestBed.inject(AccountService).userIdentity.set({ id: 1, login: 'student' } as User);
+            fixture.detectChanges();
+            const answer = TestBed.inject(LLMSelectionModalService).open();
+            const [popupBlock] = await fixture.getDeferBlocks();
+
+            await popupBlock.render(DeferBlockState.Error);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(await answer).toBe(LLM_MODAL_DISMISSED);
+            expect(addAlert).toHaveBeenCalledWith(expect.objectContaining({ message: 'artemisApp.llmSelectionPopup.loadFailedAlert' }));
+            expect(fixture.debugElement.query(By.css('jhi-llm-selection-modal'))).toBeNull();
+        });
+    });
+
+    describe('browser fingerprint', () => {
+        it('should start the fingerprint for a signed-in user only, so a visitor of the sign-in page never loads it', () => {
+            const startWhenIdle = vi.spyOn(TestBed.inject(BrowserFingerprintService), 'startWhenIdle');
+            const accountService = TestBed.inject(AccountService);
+
+            fixture.detectChanges();
+            expect(startWhenIdle).not.toHaveBeenCalled();
+
+            accountService.userIdentity.set({ id: 1, login: 'student' } as User);
+            fixture.detectChanges();
+
+            expect(startWhenIdle).toHaveBeenCalled();
+        });
+    });
+
     describe('navigation errors', () => {
         it('should hand a failed route chunk to the recovery service', async () => {
             const router = TestBed.inject(Router);

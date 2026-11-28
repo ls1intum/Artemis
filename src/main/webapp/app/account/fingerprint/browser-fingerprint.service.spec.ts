@@ -1,7 +1,7 @@
 /**
  * Vitest tests for BrowserFingerprintService.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -28,6 +28,7 @@ describe('BrowserFingerprintService', () => {
     const BROWSER_SESSION_KEY = 'sessionIdentifier';
 
     beforeEach(() => {
+        vi.mocked(FingerprintJS.load).mockClear();
         TestBed.configureTestingModule({
             providers: [BrowserFingerprintService, LocalStorageService, SessionStorageService],
         });
@@ -37,8 +38,14 @@ describe('BrowserFingerprintService', () => {
         sessionStorageService = TestBed.inject(SessionStorageService);
     });
 
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
+        delete (window as { requestIdleCallback?: unknown }).requestIdleCallback;
+    });
+
     describe('initialize', () => {
-        it('should set fingerprint, instance, and session when browserFingerprintsEnabled is true', async () => {
+        it('should set instance and session identifiers when browserFingerprintsEnabled is true, without loading the fingerprint library', () => {
             const localStoreSpy = vi.spyOn(localStorageService, 'store');
             const sessionStoreSpy = vi.spyOn(sessionStorageService, 'store');
             vi.spyOn(localStorageService, 'retrieve').mockReturnValue(undefined);
@@ -46,17 +53,15 @@ describe('BrowserFingerprintService', () => {
 
             service.initialize(true);
 
-            // Wait for async operations
-            await vi.waitFor(() => {
-                expect(service.browserFingerprint.value).toBe('test-visitor-id');
-            });
             expect(service.browserInstanceId.value).toBeDefined();
             expect(service.browserSessionId.value).toBeDefined();
             expect(localStoreSpy).toHaveBeenCalledWith(BROWSER_INSTANCE_KEY, expect.any(String));
             expect(sessionStoreSpy).toHaveBeenCalledWith(BROWSER_SESSION_KEY, expect.any(String));
+            expect(service.browserFingerprint.value).toBeUndefined();
+            expect(FingerprintJS.load).not.toHaveBeenCalled();
         });
 
-        it('should set fingerprint, instance, and session when browserFingerprintsEnabled is undefined', async () => {
+        it('should set instance and session identifiers when browserFingerprintsEnabled is undefined', () => {
             const localStoreSpy = vi.spyOn(localStorageService, 'store');
             const sessionStoreSpy = vi.spyOn(sessionStorageService, 'store');
             vi.spyOn(localStorageService, 'retrieve').mockReturnValue(undefined);
@@ -64,9 +69,6 @@ describe('BrowserFingerprintService', () => {
 
             service.initialize(undefined);
 
-            await vi.waitFor(() => {
-                expect(service.browserFingerprint.value).toBe('test-visitor-id');
-            });
             expect(service.browserInstanceId.value).toBeDefined();
             expect(service.browserSessionId.value).toBeDefined();
             expect(localStoreSpy).toHaveBeenCalled();
@@ -145,6 +147,113 @@ describe('BrowserFingerprintService', () => {
         });
     });
 
+    describe('startWhenIdle', () => {
+        it('should generate the fingerprint when the browser is idle', async () => {
+            const requestIdleCallback = vi.fn((callback: () => void) => callback());
+            (window as { requestIdleCallback?: unknown }).requestIdleCallback = requestIdleCallback;
+            service.initialize(true);
+            expect(FingerprintJS.load).not.toHaveBeenCalled();
+
+            service.startWhenIdle();
+
+            expect(requestIdleCallback).toHaveBeenCalledWith(expect.any(Function), { timeout: 5000 });
+            await vi.waitFor(() => expect(service.browserFingerprint.value).toBe('test-visitor-id'));
+        });
+
+        it('should fall back to a timer when the browser has no idle callback', async () => {
+            vi.useFakeTimers();
+            service.initialize(true);
+
+            service.startWhenIdle();
+            await vi.advanceTimersByTimeAsync(2999);
+            expect(FingerprintJS.load).not.toHaveBeenCalled();
+            await vi.advanceTimersByTimeAsync(1);
+
+            expect(FingerprintJS.load).toHaveBeenCalledOnce();
+        });
+
+        it('should schedule the generation only once however often it is called', () => {
+            const requestIdleCallback = vi.fn();
+            (window as { requestIdleCallback?: unknown }).requestIdleCallback = requestIdleCallback;
+            service.initialize(true);
+
+            service.startWhenIdle();
+            service.startWhenIdle();
+
+            expect(requestIdleCallback).toHaveBeenCalledOnce();
+        });
+
+        it('should do nothing before the service is initialized or when fingerprints are disabled', () => {
+            const requestIdleCallback = vi.fn();
+            (window as { requestIdleCallback?: unknown }).requestIdleCallback = requestIdleCallback;
+
+            service.startWhenIdle();
+            service.initialize(false);
+            service.startWhenIdle();
+
+            expect(requestIdleCallback).not.toHaveBeenCalled();
+            expect(FingerprintJS.load).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('isFingerprintPending', () => {
+        it('should be false before initialization and when fingerprints are disabled', () => {
+            expect(service.isFingerprintPending()).toBe(false);
+
+            service.initialize(false);
+
+            expect(service.isFingerprintPending()).toBe(false);
+        });
+
+        it('should be true while the fingerprint is enabled but not available, and false once it is', async () => {
+            service.initialize(true);
+            expect(service.isFingerprintPending()).toBe(true);
+
+            await service.ensureFingerprint();
+
+            expect(service.isFingerprintPending()).toBe(false);
+        });
+    });
+
+    describe('ensureFingerprint', () => {
+        it('should start the generation at once and resolve to the fingerprint', async () => {
+            service.initialize(true);
+
+            await expect(service.ensureFingerprint()).resolves.toBe('test-visitor-id');
+
+            expect(service.browserFingerprint.value).toBe('test-visitor-id');
+        });
+
+        it('should load the library only once for repeated calls', async () => {
+            service.initialize(true);
+
+            await service.ensureFingerprint();
+            await service.ensureFingerprint();
+
+            expect(FingerprintJS.load).toHaveBeenCalledOnce();
+        });
+
+        it('should resolve to undefined without loading the library when fingerprints are disabled or the service is not initialized', async () => {
+            await expect(service.ensureFingerprint()).resolves.toBeUndefined();
+            service.initialize(false);
+            await expect(service.ensureFingerprint()).resolves.toBeUndefined();
+
+            expect(FingerprintJS.load).not.toHaveBeenCalled();
+        });
+
+        it('should stop waiting after the time limit when the library is slow', async () => {
+            vi.useFakeTimers();
+            vi.mocked(FingerprintJS.load).mockReturnValueOnce(new Promise(() => {}));
+            service.initialize(true);
+
+            const result = service.ensureFingerprint();
+            await vi.advanceTimersByTimeAsync(3000);
+
+            await expect(result).resolves.toBeUndefined();
+            expect(service.browserFingerprint.value).toBeUndefined();
+        });
+    });
+
     describe('when the library fails to load', () => {
         it('should leave the fingerprint unset and not reject, while the identifiers are still set', async () => {
             vi.mocked(FingerprintJS.load).mockRejectedValueOnce(new Error('Failed to fetch dynamically imported module'));
@@ -152,9 +261,11 @@ describe('BrowserFingerprintService', () => {
             process.on('unhandledRejection', unhandledRejection);
 
             service.initialize(true);
+            const result = await service.ensureFingerprint();
             await new Promise((resolve) => setTimeout(resolve, 0));
 
             process.off('unhandledRejection', unhandledRejection);
+            expect(result).toBeUndefined();
             expect(unhandledRejection).not.toHaveBeenCalled();
             expect(service.browserFingerprint.value).toBeUndefined();
             expect(service.browserInstanceId.value).toBeDefined();

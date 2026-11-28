@@ -4,7 +4,11 @@ import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/qui
 import { QuizExerciseLifecycleService, canEndQuiz, canManageQuizBatches, canSetQuizVisible, canStartQuiz } from 'app/quiz/manage/lifecyle-buttons/quiz-exercise-lifecycle.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faBoxesStacked, faEye, faPlayCircle, faPlus, faStopCircle } from '@fortawesome/free-solid-svg-icons';
+import { faBoxesStacked } from '@fortawesome/free-solid-svg-icons/faBoxesStacked';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { faPlayCircle } from '@fortawesome/free-solid-svg-icons/faPlayCircle';
+import { faPlus } from '@fortawesome/free-solid-svg-icons/faPlus';
+import { faStopCircle } from '@fortawesome/free-solid-svg-icons/faStopCircle';
 import { Subject } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

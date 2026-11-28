@@ -1,6 +1,8 @@
 import { Signal, computed } from '@angular/core';
-import type { IconDefinition } from '@fortawesome/free-solid-svg-icons';
-import { faBrain, faCompass, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faBrain } from '@fortawesome/free-solid-svg-icons/faBrain';
+import { faCompass } from '@fortawesome/free-solid-svg-icons/faCompass';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 
 export interface IrisSuggestionChip {

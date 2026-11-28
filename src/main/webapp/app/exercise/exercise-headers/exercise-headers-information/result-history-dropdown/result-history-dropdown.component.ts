@@ -9,8 +9,10 @@ import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shar
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
-import { faAngleDown, faRobot } from '@fortawesome/free-solid-svg-icons';
-import { faClock, faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { faAngleDown } from '@fortawesome/free-solid-svg-icons/faAngleDown';
+import { faRobot } from '@fortawesome/free-solid-svg-icons/faRobot';
+import { faClock } from '@fortawesome/free-regular-svg-icons/faClock';
+import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons/faQuestionCircle';
 import { type AnimationProp, FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

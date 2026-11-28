@@ -1,6 +1,8 @@
 import { Component, ElementRef, computed, input, linkedSignal, model, output, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown } from '@fortawesome/free-solid-svg-icons/faChevronDown';
+import { faChevronUp } from '@fortawesome/free-solid-svg-icons/faChevronUp';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ResizableDirective, ResizableSizeEvent } from 'app/shared-ui/directives/resizable.directive';
 

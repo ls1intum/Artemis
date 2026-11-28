@@ -1,5 +1,5 @@
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faDownload } from '@fortawesome/free-solid-svg-icons/faDownload';
 import { Component, inject, input } from '@angular/core';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { TeamService } from '../team.service';

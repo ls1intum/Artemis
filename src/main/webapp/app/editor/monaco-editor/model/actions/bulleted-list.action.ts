@@ -1,4 +1,4 @@
-import { faListUl } from '@fortawesome/free-solid-svg-icons';
+import { faListUl } from '@fortawesome/free-solid-svg-icons/faListUl';
 import { ListAction } from './list.action';
 
 const BULLET_PREFIX = '- ';

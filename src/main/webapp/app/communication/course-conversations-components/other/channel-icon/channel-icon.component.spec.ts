@@ -2,7 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBullhorn, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
+import { faBullhorn } from '@fortawesome/free-solid-svg-icons/faBullhorn';
+import { faHashtag } from '@fortawesome/free-solid-svg-icons/faHashtag';
+import { faLock } from '@fortawesome/free-solid-svg-icons/faLock';
 
 describe('ChannelIconComponent', () => {
     let component: ChannelIconComponent;

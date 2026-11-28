@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheck, faForwardStep, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCheck } from '@fortawesome/free-solid-svg-icons/faCheck';
+import { faForwardStep } from '@fortawesome/free-solid-svg-icons/faForwardStep';
+import { faXmark } from '@fortawesome/free-solid-svg-icons/faXmark';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HyperionStepState } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
 

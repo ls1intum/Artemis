@@ -1,4 +1,4 @@
-import { faItalic } from '@fortawesome/free-solid-svg-icons';
+import { faItalic } from '@fortawesome/free-solid-svg-icons/faItalic';
 import { TextStyleTextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from './adapter/text-editor.interface';
 import { TextEditorKeyCode, TextEditorKeyModifier, TextEditorKeybinding } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-keybinding.model';

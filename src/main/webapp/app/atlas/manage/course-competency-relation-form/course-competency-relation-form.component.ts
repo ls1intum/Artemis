@@ -4,7 +4,7 @@ import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency } from 
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { getCurrentLocaleSignal, getErrorMessage } from 'app/foundation/util/global.utils';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

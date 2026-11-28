@@ -37,7 +37,14 @@ import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/fo
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
-import { faBars, faChevronRight, faCog, faFlag, faLock, faSignOutAlt, faUser, faUserShield } from '@fortawesome/free-solid-svg-icons';
+import { faBars } from '@fortawesome/free-solid-svg-icons/faBars';
+import { faChevronRight } from '@fortawesome/free-solid-svg-icons/faChevronRight';
+import { faCog } from '@fortawesome/free-solid-svg-icons/faCog';
+import { faFlag } from '@fortawesome/free-solid-svg-icons/faFlag';
+import { faLock } from '@fortawesome/free-solid-svg-icons/faLock';
+import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons/faSignOutAlt';
+import { faUser } from '@fortawesome/free-solid-svg-icons/faUser';
+import { faUserShield } from '@fortawesome/free-solid-svg-icons/faUserShield';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { onError } from 'app/foundation/util/global.utils';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';

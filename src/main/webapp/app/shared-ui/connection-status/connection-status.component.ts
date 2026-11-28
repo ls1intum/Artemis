@@ -1,5 +1,7 @@
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
-import { faCircle, faExclamation, faTowerBroadcast } from '@fortawesome/free-solid-svg-icons';
+import { faCircle } from '@fortawesome/free-solid-svg-icons/faCircle';
+import { faExclamation } from '@fortawesome/free-solid-svg-icons/faExclamation';
+import { faTowerBroadcast } from '@fortawesome/free-solid-svg-icons/faTowerBroadcast';
 import { Subscription } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { NgClass } from '@angular/common';

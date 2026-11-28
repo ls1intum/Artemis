@@ -1,6 +1,11 @@
 import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { IconDefinition, faGraduationCap, faListAlt, faPersonChalkboard, faSchool, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faGraduationCap } from '@fortawesome/free-solid-svg-icons/faGraduationCap';
+import { faListAlt } from '@fortawesome/free-solid-svg-icons/faListAlt';
+import { faPersonChalkboard } from '@fortawesome/free-solid-svg-icons/faPersonChalkboard';
+import { faSchool } from '@fortawesome/free-solid-svg-icons/faSchool';
+import { faUser } from '@fortawesome/free-solid-svg-icons/faUser';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
