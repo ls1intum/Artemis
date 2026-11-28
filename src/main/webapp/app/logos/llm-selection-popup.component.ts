@@ -48,6 +48,10 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
         this.isVisible.set(false);
     }
 
+    /**
+     * Closes the modal without a choice. It must resolve the pending choice: otherwise a choice made later elsewhere,
+     * e.g. in the user settings, would resolve it and resume the action that opened the modal.
+     */
     dismiss(): void {
         this.choice.emit(LLM_MODAL_DISMISSED);
         this.modalService.emitChoice(LLM_MODAL_DISMISSED);

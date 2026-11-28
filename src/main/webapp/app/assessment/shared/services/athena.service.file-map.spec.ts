@@ -13,6 +13,9 @@ import { ProgrammingFeedback } from 'app/openapi/model/programming-feedback';
 import { TextFeedback } from 'app/openapi/model/text-feedback';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('AthenaService file map behaviour', () => {
     let service: AthenaService;
@@ -41,13 +44,20 @@ describe('AthenaService file map behaviour', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [AthenaService, provideHttpClient(), provideHttpClientTesting(), { provide: ProfileService, useClass: MockProfileService }],
+            providers: [
+                AthenaService,
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: AccountService, useClass: MockAccountService },
+            ],
         });
 
         service = TestBed.inject(AthenaService);
         httpMock = TestBed.inject(HttpTestingController);
         profileService = TestBed.inject(ProfileService);
         vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+        TestBed.inject(AccountService).userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as any);
     });
 
     afterEach(() => {

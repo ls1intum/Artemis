@@ -3,6 +3,8 @@ import { HttpContext } from '@angular/common/http';
 import { Observable, map, of } from 'rxjs';
 import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { isAcceptedLLMSelection } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
@@ -17,6 +19,7 @@ import { GradingInstruction } from 'app/exercise/structured-grading-criterion/gr
 export class AthenaService {
     private readonly athenaApi = inject(AthenaApi);
     private profileService = inject(ProfileService);
+    private accountService = inject(AccountService);
 
     /** The assessment shows its own error for a failed suggestion request, so the global HTTP alert stays silent. */
     private readonly skipErrorAlert = { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) };
@@ -28,7 +31,14 @@ export class AthenaService {
      * @return observable that emits the feedback suggestions
      */
     private getFeedbackSuggestions<T>(request: () => Observable<T[]>): Observable<T[]> {
-        return this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA) ? request() : of([]);
+        if (!this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA)) {
+            return of([]);
+        }
+        // Never send submission content to Athena unless the assessor has consented to AI usage themselves.
+        if (!isAcceptedLLMSelection(this.accountService.userIdentity()?.selectedLLMUsage)) {
+            return of([]);
+        }
+        return request();
     }
 
     /**

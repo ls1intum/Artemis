@@ -52,6 +52,9 @@ import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedba
 import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
 import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { AiExperienceOptInService } from 'app/logos/ai-experience-opt-in.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -90,6 +93,8 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private translateService = inject(TranslateService);
     private athenaService = inject(AthenaService);
     private datePipe = inject(ArtemisDatePipe);
+    private aiExperienceOptInService = inject(AiExperienceOptInService);
+    private profileService = inject(ProfileService);
     private participationPrivacyService = inject(ParticipationPrivacyService);
 
     readonly codeEditorContainer = viewChild<CodeEditorContainerComponent>(CodeEditorContainerComponent);
@@ -238,7 +243,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             ),
     );
 
-    readonly isFeedbackSuggestionsEnabled = computed(() => Boolean(getCourseFromExercise(this.exercise())?.athenaGradingFeedbackEnabled));
+    readonly isFeedbackSuggestionsEnabled = computed(
+        () => Boolean(getCourseFromExercise(this.exercise())?.athenaGradingFeedbackEnabled) && this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATHENA),
+    );
+
+    readonly requiresAiExperienceOptIn = computed(() => this.isFeedbackSuggestionsEnabled() && !this.aiExperienceOptInService.hasAcceptedAiUsage());
+    readonly hasChosenNoAi = computed(() => this.aiExperienceOptInService.hasChosenNoAi());
 
     constructor() {
         this.translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
@@ -449,8 +459,16 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.calculateTotalScore();
         // Only load suggestions for new assessments, they don't make sense later.
         // The assessment is new if it only contains automatic feedback.
-        if ((this.manualResult()?.feedbacks?.length ?? 0) === this.automaticFeedback().length) {
-            await this.loadFeedbackSuggestions();
+        if (this.isEligibleForFeedbackSuggestions()) {
+            // Another tab may have changed the AI Experience choice since this tab cached it; re-check right before
+            // deciding whether to auto-fetch, so a stale "accepted" cache doesn't fire a request the server will reject.
+            // The router can reuse this component for another submission while the refresh is pending; that
+            // submission runs its own eligibility check, so this continuation must not fetch on its behalf.
+            const manualResultAtStart = this.manualResult();
+            await firstValueFrom(this.aiExperienceOptInService.refreshAiExperience());
+            if (this.submission() === submission && this.manualResult() === manualResultAtStart && !this.requiresAiExperienceOptIn()) {
+                await this.loadFeedbackSuggestions();
+            }
         }
     }
 
@@ -469,6 +487,29 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         } else if (error?.error) {
             this.onError(error?.error?.detail || 'Not Found');
         }
+    }
+
+    onOptInToAiFeedbackSuggestions(): void {
+        // The router can reuse this component for another submission while the modal or the preference update is
+        // pending; only fetch for the submission that showed the hint, and only while it is still unassessed.
+        const submissionAtPrompt = this.submission();
+        const manualResultAtPrompt = this.manualResult();
+        this.aiExperienceOptInService.promptForAiUsage(() => {
+            if (this.submission() !== submissionAtPrompt || this.manualResult() !== manualResultAtPrompt || !this.isEligibleForFeedbackSuggestions()) {
+                return;
+            }
+            void this.loadFeedbackSuggestions();
+        });
+    }
+
+    /** Suggestions only make sense for a new assessment, i.e. one that contains nothing but automatic feedback. */
+    isEligibleForFeedbackSuggestions(): boolean {
+        return (
+            this.isFeedbackSuggestionsEnabled() &&
+            (this.manualResult()?.feedbacks?.length ?? 0) === this.automaticFeedback().length &&
+            this.referencedFeedback().length === 0 &&
+            this.unreferencedFeedback().length === 0
+        );
     }
 
     /**
@@ -508,9 +549,18 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 // Auto-accepted suggestions are unsaved changes: warn on navigation away like any other edit.
                 this.hasPendingChanges = true;
                 this.handleFeedback();
+                // Suggestions loaded from the opt-in hint arrive after the assessment was validated without them.
+                this.validateFeedback();
             }
-        } catch {
-            if (!isStale()) {
+        } catch (error) {
+            if (isStale()) {
+                return;
+            }
+            if ((error as HttpErrorResponse)?.error?.errorKey === 'llmSelectionRequired') {
+                // The assessor's AI Experience choice changed (e.g. in another tab) between this tab caching it and
+                // this request; refresh so the opt-in hint reacts instead of leaving this silently failed.
+                await firstValueFrom(this.aiExperienceOptInService.refreshAiExperience());
+            } else {
                 // Not onError(): that also clears the save/submit busy flags, which a pending save still relies on.
                 this.alertService.error('artemisApp.programmingAssessment.loadFeedbackSuggestionsFailed');
             }
@@ -633,6 +683,10 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                 // there are no unassessed submissions
                 if (!response) {
                     this.submission.set(undefined);
+                    this.manualResult.set(undefined);
+                    this.isAssessor.set(false);
+                    this.automaticFeedback.set([]);
+                    this.hasAcceptedFeedbackSuggestions.set(false);
                     return;
                 }
 
