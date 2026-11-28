@@ -15,14 +15,25 @@ prove that the text is still true. Only a person can, so this script makes that 
     changed repository path or the class of a changed Java file. It is advice, so it never fails.
   * `--unreviewed` lists the pages that the change touched without updating `last_reviewed`, because whoever
     edits a page has compared it with the code. It is advice as well.
+  * A page may carry `globs: [src/main/webapp/app/lecture/manage/**, 'src/main/java/.../lecture/dto/**']` in its
+    front matter, a one-line list of the repository paths whose behavior it describes. `*` and `?` stay within one
+    path segment, `**` spans any number of them, and nothing else is special. `--validate` fails when the list is
+    malformed or empty, or when a pattern is absolute, contains `..`, `!` or `{`, or matches no tracked file.
+  * `--select` picks the pages that describe what the change affects, the same way every time: a page is selected
+    when one of its globs matches a changed path, when a screenshot of documentation/screenshots/manifest.json shows
+    it and has a changed `source`, when it mentions a changed file as `--impact` does, or when the change edits it.
+    It also lists every changed path below src/main/ that no page claims, and warns when more than `--max-pages`
+    pages are selected. `--json` prints the same as JSON for a script. It is advice, so it never fails.
 
 The change is the difference between `--base` and HEAD, or the file names in the file of `--files-from`, which is
-how a workflow with a shallow checkout passes the list of the files of a pull request.
+how a workflow with a shallow checkout passes the list of the files of a pull request. A renamed file contributes its
+old and its new path; in a `--files-from` file, a line `old<TAB>new` names a rename.
 
 Usage:
     python3 supporting_scripts/check_docs_freshness.py --validate
     python3 supporting_scripts/check_docs_freshness.py --stale 365
     python3 supporting_scripts/check_docs_freshness.py --impact --base origin/develop
+    python3 supporting_scripts/check_docs_freshness.py --select --base origin/develop --json
     python3 supporting_scripts/check_docs_freshness.py --self-test
 """
 
@@ -30,16 +41,25 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import functools
+import glob
+import json
 import re
 import subprocess
 import sys
+from collections.abc import Callable, Iterable
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Literal
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DOCS_ROOT = REPO_ROOT / "documentation" / "docs"
 FRONT_MATTER = re.compile(r"\A---\n(.*?)\n---\n", re.S)
 LAST_REVIEWED = re.compile(r"^last_reviewed:\s*['\"]?([^'\"\n]*?)['\"]?\s*$", re.M)
 INLINE_CODE = re.compile(r"`([^`\n]+)`")
+GLOBS = re.compile(r"^globs:(.*)$", re.M)
+FLOW_LIST = re.compile(r"\A\s*\[(.*)\]\s*\Z")
+MANIFEST = REPO_ROOT / "documentation" / "screenshots" / "manifest.json"
 
 
 # Pages that a program writes, and that a test or a build step compares with its output. They are as current as the code
@@ -74,12 +94,15 @@ def reviewed_on(text: str) -> tuple[datetime.date | None, str | None]:
 
 def validate(today: datetime.date) -> list[str]:
     problems = []
+    tracked = functools.cache(lambda: git("ls-files").splitlines())
     for page in pages():
-        date, reason = reviewed_on(page.read_text(encoding="utf-8"))
+        text = page.read_text(encoding="utf-8")
+        date, reason = reviewed_on(text)
         if reason:
             problems.append(f"{rel(page)}: {reason}")
         elif date > today:
             problems.append(f"{rel(page)}: last_reviewed {date} is in the future")
+        problems.extend(f"{rel(page)}: {problem}" for problem in glob_problems(text, tracked))
     return problems
 
 
@@ -116,8 +139,18 @@ def git(*args: str) -> str:
 
 def changed_files(base: str, files_from: str | None) -> list[str]:
     if files_from:
-        return [line.strip() for line in Path(files_from).read_text(encoding="utf-8").splitlines() if line.strip()]
-    return [line for line in git("diff", "--name-only", f"{base}...HEAD").splitlines() if line]
+        return paths_of_lines(Path(files_from).read_text(encoding="utf-8").splitlines())
+    return paths_of_name_status(git("diff", "--name-status", "-M", f"{base}...HEAD"))
+
+
+def paths_of_lines(lines: list[str]) -> list[str]:
+    """The paths of a --files-from file: one per line, or `old<TAB>new` for a rename."""
+    return [path.strip() for line in lines for path in line.split("\t") if path.strip()]
+
+
+def paths_of_name_status(output: str) -> list[str]:
+    """The paths of `git diff --name-status`: a rename or copy row `R100<TAB>old<TAB>new` contributes both."""
+    return [path for line in output.splitlines() if line for path in line.split("\t")[1:]]
 
 
 def references_of(text: str) -> set[str]:
@@ -135,13 +168,19 @@ def references_of(text: str) -> set[str]:
     return spans
 
 
-def impact(changed: list[str]) -> dict[Path, list[str]]:
-    """Maps every page to the changed files that it mentions."""
+def names_of(changed: list[str]) -> dict[str, str]:
+    """Maps every name by which a page can mention a changed file to the file: its path and, for Java, its class."""
     names = {}
     for path in changed:
         names.setdefault(path, path)
         if path.endswith(".java"):
             names.setdefault(Path(path).stem, path)
+    return names
+
+
+def impact(changed: list[str]) -> dict[Path, list[str]]:
+    """Maps every page to the changed files that it mentions."""
+    names = names_of(changed)
     result: dict[Path, list[str]] = {}
     for page in pages():
         if rel(page) in changed:
@@ -151,6 +190,162 @@ def impact(changed: list[str]) -> dict[Path, list[str]]:
         if hits:
             result[page] = hits
     return result
+
+
+def globs_of(text: str) -> tuple[tuple[str, ...], str | None]:
+    """The glob patterns of a page's front matter and, when the `globs` key is malformed, the reason."""
+    front = FRONT_MATTER.match(text)
+    m = GLOBS.search(front.group(1)) if front else None
+    if not m:
+        return (), None
+    flow = FLOW_LIST.match(m.group(1))
+    if not flow:
+        return (), "has a globs key that is not a one-line list of the form [pattern, 'pattern']"
+    items = [item.strip() for item in flow.group(1).split(",")]
+    patterns = tuple(item[1:-1].strip() if len(item) >= 2 and item[0] == item[-1] and item[0] in "'\"" else item for item in items)
+    if not any(patterns):
+        return (), "has an empty globs list"
+    if not all(patterns):
+        return (), "has an empty item in its globs list"
+    return patterns, None
+
+
+@functools.cache
+def glob_regex(pattern: str) -> re.Pattern[str]:
+    return re.compile(glob.translate(pattern, recursive=True, include_hidden=True))
+
+
+def glob_problems(text: str, tracked: Callable[[], list[str]]) -> list[str]:
+    """Everything wrong with the globs of a page. `tracked` lists the files of the repository, and is only called when needed."""
+    patterns, reason = globs_of(text)
+    if reason:
+        return [reason]
+    problems = []
+    for pattern in patterns:
+        if pattern.startswith("/") or ".." in pattern or pattern.startswith("!") or "{" in pattern:
+            problems.append(f"has the glob '{pattern}', which is absolute or contains '..', '!' or '{{'")
+        elif not any(glob_regex(pattern).match(path) for path in tracked()):
+            problems.append(f"has the glob '{pattern}', which matches no tracked file")
+    return problems
+
+
+Source = Literal["globs", "manifest", "mentions", "edited"]
+
+
+@dataclass(frozen=True)
+class Reason:
+    path: str  # the changed repository path
+    source: Source
+    via: str  # the glob, the manifest source path, the inline code span, or the page itself
+
+
+@dataclass(frozen=True)
+class Selection:
+    changed: tuple[str, ...]  # sorted, both sides of renames
+    pages: dict[str, tuple[Reason, ...]]  # page path (repository-relative) -> reasons, sorted by page
+    unmatched: tuple[str, ...]  # changed paths below src/main/ that no page claims
+    over_cap: bool  # len(pages) > max_pages
+
+
+@dataclass(frozen=True)
+class Page:
+    path: str  # repository-relative
+    text: str
+    globs: tuple[str, ...]
+    sources: tuple[str, ...]  # the `source` paths of the manifest screenshots that the page shows
+
+
+def claimed_by_globs(page: Page, changed: list[str]) -> Iterable[tuple[str, str]]:
+    return ((path, pattern) for pattern in page.globs for path in changed if glob_regex(pattern).match(path))
+
+
+def claimed_by_manifest(page: Page, changed: list[str]) -> Iterable[tuple[str, str]]:
+    return ((path, source) for source in page.sources for path in changed if path == source or path.startswith(source.rstrip("/") + "/"))
+
+
+def claimed_by_mentions(page: Page, changed: list[str]) -> Iterable[tuple[str, str]]:
+    spans = references_of(page.text)
+    return ((path, name) for name, path in names_of(changed).items() if name in spans)
+
+
+def claimed_by_edit(page: Page, changed: list[str]) -> Iterable[tuple[str, str]]:
+    return [(page.path, page.path)] if page.path in changed else []
+
+
+# Each source yields the changed paths that a page claims, with what made the claim. The order is the order of the output.
+MATCHERS: dict[Source, Callable[[Page, list[str]], Iterable[tuple[str, str]]]] = {
+    "globs": claimed_by_globs,
+    "manifest": claimed_by_manifest,
+    "mentions": claimed_by_mentions,
+    "edited": claimed_by_edit,
+}
+
+
+def read_manifest() -> dict:
+    return json.loads(MANIFEST.read_text(encoding="utf-8")) if MANIFEST.exists() else {}
+
+
+def select(changed: list[str], max_pages: int, page_texts: dict[str, str] | None = None, manifest: dict | None = None) -> Selection:
+    """Selects the pages that describe what the change affects. `page_texts` maps repository-relative page paths to their
+    text and `manifest` is the screenshot manifest; both are read from the repository when omitted."""
+    if page_texts is None:
+        page_texts = {rel(page): page.read_text(encoding="utf-8") for page in pages()}
+    if manifest is None:
+        manifest = read_manifest()
+    sources: dict[str, list[str]] = {}
+    for entry in manifest.get("screenshots", []):
+        for page in entry.get("pages", []):
+            sources.setdefault(f"documentation/docs/{page}", []).extend(entry.get("source", []))
+    paths = sorted(set(changed))
+    order = list(MATCHERS)
+    selected: dict[str, tuple[Reason, ...]] = {}
+    for path, text in sorted(page_texts.items()):
+        if path in GENERATED_PAGES:
+            continue
+        page = Page(path, text, globs_of(text)[0], tuple(sources.get(path, [])))
+        reasons = {Reason(hit, source, via) for source, matcher in MATCHERS.items() for hit, via in matcher(page, paths)}
+        if reasons:
+            selected[path] = tuple(sorted(reasons, key=lambda r: (order.index(r.source), r.path, r.via)))
+    claimed = {reason.path for reasons in selected.values() for reason in reasons}
+    unmatched = tuple(path for path in paths if path.startswith("src/main/") and path not in claimed)
+    return Selection(tuple(paths), selected, unmatched, len(selected) > max_pages)
+
+
+def selection_markdown(selection: Selection, max_pages: int) -> str:
+    lines = [f"{len(selection.pages)} page(s) selected, {len(selection.unmatched)} changed path(s) below src/main/ claimed by no page."]
+    if selection.over_cap:
+        lines.append(f"The selection exceeds the cap of {max_pages} pages. Every candidate is listed; review the scope before verification.")
+    lines.append("")
+    for page, reasons in selection.pages.items():
+        lines.append(f"* `{page}`")
+        for source in MATCHERS:
+            hits = [r for r in reasons if r.source == source]
+            if hits:
+                more = f" and {len(hits) - 5} more" if len(hits) > 5 else ""
+                lines.append(f"  * {source}: {', '.join(f'`{r.path}` (`{r.via}`)' for r in hits[:5])}{more}")
+    if selection.unmatched:
+        lines.append("\nUnclaimed paths:\n")
+        directories: dict[str, list[str]] = {}
+        for path in selection.unmatched:
+            directories.setdefault(path.rpartition("/")[0], []).append(path.rpartition("/")[2])
+        for directory, files in directories.items():
+            more = ", ..." if len(files) > 3 else ""
+            lines.append(f"* `{directory}/` ({len(files)}): {', '.join(f'`{f}`' for f in files[:3])}{more}")
+    return "\n".join(lines)
+
+
+def selection_json(selection: Selection, max_pages: int) -> str:
+    return json.dumps(
+        {
+            "changed": list(selection.changed),
+            "max_pages": max_pages,
+            "over_cap": selection.over_cap,
+            "pages": {page: [{"path": r.path, "source": r.source, "via": r.via} for r in reasons] for page, reasons in selection.pages.items()},
+            "unmatched": list(selection.unmatched),
+        },
+        indent=2,
+        sort_keys=True,
+    )
 
 
 def unreviewed(base: str, changed: list[str]) -> list[str]:
@@ -185,16 +380,59 @@ def self_test() -> None:
     assert owners_of("documentation/docs/admin/y.mdx", owners) == ["@b", "@c"]
     assert owners_of("documentation/docs/admin/x.mdx", owners) == ["@d"], "the last matching pattern wins"
     assert owners_of("documentation/docs/admin/a.png", owners) == ["@e"]
+
+    def front(globs: str) -> str:
+        return f"---\ntitle: x\nglobs: {globs}\nlast_reviewed: 2026-11-03\n---\nText\n"
+
+    assert globs_of(front("[a/**,  'b/*.ts' , \"c/?\"]")) == (("a/**", "b/*.ts", "c/?"), None)
+    assert globs_of(ok) == ((), None), "the key is optional"
+    assert "empty" in globs_of(front("[]"))[1]
+    assert "one-line" in globs_of("---\nglobs:\n  - a/**\n---\n")[1], "a block list is rejected"
+    def tracked() -> list[str]:
+        return ["src/main/a/b.ts"]
+
+    assert glob_problems(front("[src/main/**]"), tracked) == []
+    for bad in ("/src/**", "src/../x", "!src/**", "src/{main}/**", "src/main/z/**"):
+        assert len(glob_problems(front(f"[{bad}]"), tracked)) == 1, bad
+    assert glob_regex("src/**/x.ts").match("src/x.ts") and glob_regex("src/**/x.ts").match("src/a/b/x.ts")
+    assert glob_regex("src/*.ts").match("src/x.ts") and not glob_regex("src/*.ts").match("src/a/x.ts"), "* stays in one segment"
+    assert not glob_regex("src/X.ts").match("src/x.ts"), "patterns are case sensitive"
+    assert glob_regex("dir/**").match("dir/a/b.ts") and not glob_regex("dir/**").match("dir2/x")
+    assert paths_of_name_status("M\ta.ts\nR087\told.ts\tnew.ts\n") == ["a.ts", "old.ts", "new.ts"]
+    assert paths_of_lines(["a.ts", "old.ts\tnew.ts", " "]) == ["a.ts", "old.ts", "new.ts"]
+
+    texts = {
+        "documentation/docs/g.mdx": front("[src/main/webapp/app/lecture/**]"),
+        "documentation/docs/m.mdx": ok,
+        "documentation/docs/t.mdx": "See `FooService` for details.\n",
+        "documentation/docs/e.mdx": ok,
+        "documentation/docs/developer/tum-aet-ui.mdx": front("[src/**]"),
+    }
+    manifest = {"screenshots": [{"pages": ["m.mdx"], "source": ["src/main/webapp/app/exam"]}]}
+    changed = ["src/main/webapp/app/lecture/x.ts", "src/main/webapp/app/exam/x.ts", "src/main/webapp/app/examination/x.ts", "src/main/java/FooService.java", "documentation/docs/e.mdx", "build.gradle"]
+    picked = select(changed, 8, texts, manifest)
+    assert picked.changed == tuple(sorted(changed))
+    assert picked.pages["documentation/docs/g.mdx"] == (Reason("src/main/webapp/app/lecture/x.ts", "globs", "src/main/webapp/app/lecture/**"),)
+    assert picked.pages["documentation/docs/m.mdx"] == (Reason("src/main/webapp/app/exam/x.ts", "manifest", "src/main/webapp/app/exam"),), "the prefix ends at a segment"
+    assert picked.pages["documentation/docs/t.mdx"] == (Reason("src/main/java/FooService.java", "mentions", "FooService"),)
+    assert picked.pages["documentation/docs/e.mdx"] == (Reason("documentation/docs/e.mdx", "edited", "documentation/docs/e.mdx"),)
+    assert "documentation/docs/developer/tum-aet-ui.mdx" not in picked.pages, "generated pages are never selected"
+    assert picked.unmatched == ("src/main/webapp/app/examination/x.ts",), picked.unmatched
+    assert not picked.over_cap and select(changed, 3, texts, manifest).over_cap and not select(changed, 4, texts, manifest).over_cap
+    assert json.loads(selection_json(picked, 8))["pages"]["documentation/docs/e.mdx"] == [{"path": "documentation/docs/e.mdx", "source": "edited", "via": "documentation/docs/e.mdx"}]
     print("Self-test passed.")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--self-test", action="store_true")
-    parser.add_argument("--validate", action="store_true", help="fail when a page has no valid review date")
+    parser.add_argument("--validate", action="store_true", help="fail when a page has no valid review date or invalid globs")
     parser.add_argument("--stale", type=int, metavar="DAYS", help="list the pages that were not reviewed for DAYS days")
     parser.add_argument("--impact", action="store_true", help="list the pages that mention a file that the change touches")
     parser.add_argument("--unreviewed", action="store_true", help="list the pages that the change touches without a newer review date")
+    parser.add_argument("--select", action="store_true", help="select the pages that describe what the change affects")
+    parser.add_argument("--max-pages", type=int, default=8, metavar="N", help="the number of pages above which --select warns")
+    parser.add_argument("--json", action="store_true", help="print the selection of --select as JSON")
     parser.add_argument("--base", default="origin/develop", help="the commit that the change is compared with")
     parser.add_argument("--files-from", metavar="FILE", help="the changed files, one per line, instead of the difference to --base")
     args = parser.parse_args()
@@ -208,7 +446,7 @@ def main() -> int:
         for problem in problems:
             print(problem)
         if problems:
-            print(f"\n{len(problems)} page(s) have no valid last_reviewed date.")
+            print(f"\n{len(problems)} problem(s) in the front matter of the documentation pages.")
             return 1
         print("Documentation freshness check passed.")
         return 0
@@ -229,6 +467,10 @@ def main() -> int:
             print("These pages mention files or classes that this change touches. Check that they are still correct:\n")
             for page, hits in found.items():
                 print(f"* `{rel(page)}` mentions {', '.join(f'`{h}`' for h in hits[:5])}{' and more' if len(hits) > 5 else ''}")
+        return 0
+    if args.select:
+        selection = select(changed_files(args.base, args.files_from), args.max_pages)
+        print(selection_json(selection, args.max_pages) if args.json else selection_markdown(selection, args.max_pages))
         return 0
     if args.unreviewed:
         found = unreviewed(args.base, changed_files(args.base, args.files_from))

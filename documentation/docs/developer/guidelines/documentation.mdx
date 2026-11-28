@@ -65,6 +65,16 @@ sidebar_label: Exam Timeline
 - **`sidebar_label`** is the entry in the navigation tree. It is usually shorter than the title, because the sidebar
   is narrow and the surrounding category already supplies context.
 
+A page may carry an optional fourth key, **`globs`**: a one-line list of the repository paths whose behavior the page
+describes. When a change matches one of them, the page is selected for the `verify-artemis` skill. The selection obliges
+whoever verifies the change to check the page's claims that bear on it. It does not attach the page as context, and it
+proves nothing by itself. Keep each pattern narrow: a folder or a file that the page's workflow calls, never a whole module.
+`*` stays within one path segment and `**` spans several.
+
+```yaml
+globs: [src/main/webapp/app/lecture/manage/**, src/main/java/de/tum/cit/aet/artemis/lecture/dto/**]
+```
+
 **Do not write an H1 in the body.** Docusaurus renders one from `title` whenever the body has no top-level heading
 of its own: `DocItemContent` in `@docusaurus/theme-classic` synthesises the heading when `contentTitle` is
 undefined. Writing the title once means it cannot drift out of sync with the tab, the sidebar entry and the search
@@ -399,9 +409,10 @@ Checks keep these habits honest. They only report what they can prove, so they d
 | --- | --- | --- |
 | `python3 supporting_scripts/check_docs_references.py` | Every page is in its sidebar. Inline code names an existing repository path, an existing class and, for `Class.method()`, an existing method. Properties (`artemis.*`), environment variables (`ARTEMIS_*`) and the keys of a YAML example are defined in the configuration or the source. A bold label after a verb such as "Click" is a text of the English translation files. | Every pull request (`docs-checks`) |
 | `python3 supporting_scripts/check_docs_consistency.py` | The numbers, commands and examples next to the names are true. **Versions** (Java, Node, Angular, Spring Boot, PostgreSQL, Gradle) match the build files. **Defaults** of `artemis.*` properties match the YAML. **Commands** (`pnpm run`, `./gradlew`, Spring profiles, paths in shell examples) exist. **Routes** of the client pages and `/api/` paths consist of segments that the route definitions and mappings contain. **Images** are referenced, have alt text and stay within the size budget. **Examples** in JSON parse, shell passes `bash -n`, YAML has no tabs. **Removal markers** (`REMOVE_IN_ARTEMIS_<n>`) are gone once that version is reached. **Glossary**: no page uses a word of the Avoid column of the [glossary](/developer/glossary). | Every pull request (`docs-checks`) |
-| `python3 supporting_scripts/check_docs_freshness.py --validate` | Every page has a valid `last_reviewed` date in its front matter. | Every pull request (`docs-checks`) |
+| `python3 supporting_scripts/check_docs_freshness.py --validate` | Every page has a valid `last_reviewed` date in its front matter. Its `globs`, when present, are a well-formed list, and each pattern matches a tracked file. | Every pull request (`docs-checks`) |
 | `python3 supporting_scripts/generate_architecture_diagrams.py --check` | The UML diagrams of the [system design](/developer/system-design) are what their generator draws. | Every pull request (`docs-checks`) |
 | `python3 supporting_scripts/check_docs_freshness.py --impact` | Lists the pages that mention a file or a class that the pull request changes, and the edited pages that kept an old review date. It is advice and never fails. | The summary of the `docs-checks` job |
+| `python3 supporting_scripts/check_docs_freshness.py --select` | Lists the pages that a change affects, through their `globs`, the screenshot manifest, their mentions of changed files and their own edits, and the changed paths below `src/main/` that no page claims. It is advice and never fails. | The `verify-artemis` skill |
 | `python3 supporting_scripts/check_docs_screenshots.py` | Every entry of the screenshot manifest names an existing image that its pages show, a known user, a route with a known placeholder, and existing source paths. | Every pull request (`docs-checks`) |
 | `docs-maintenance.yml` | Opens an issue for every page that was not reviewed for a year, with the owner from `.github/CODEOWNERS` of each page, one for external links that no longer work, and one for screenshots whose component or translations changed after the image. | Weekly |
 
