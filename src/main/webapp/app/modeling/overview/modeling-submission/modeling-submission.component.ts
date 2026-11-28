@@ -73,7 +73,8 @@ const FEEDBACK_PREVIEW_HIGHLIGHT = 'var(--apollon-interactive-selection)';
         ModelingAssessmentPanelDirective,
         NgTemplateOutlet,
     ],
-    host: { '(window:beforeunload)': 'unloadNotification($event)' },
+    // aria-busy is true until the submission is loaded: a page that waits for the content (the PDF export of the exam summary) reads it.
+    host: { '(window:beforeunload)': 'unloadNotification($event)', '[attr.aria-busy]': 'isLoading()' },
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate, ExerciseSubmission {
     private modelingSubmissionService = inject(ModelingSubmissionService);
@@ -266,9 +267,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         if (modelingSubmission) {
                             this.updateModelingSubmission(modelingSubmission);
                             this.setupMode();
+                        } else {
+                            // nothing to show: the request failed, which was reported
+                            this.isLoading.set(false);
                         }
                     },
                     error: (error) => {
+                        this.isLoading.set(false);
                         onError(this.alertService, error);
                     },
                 });

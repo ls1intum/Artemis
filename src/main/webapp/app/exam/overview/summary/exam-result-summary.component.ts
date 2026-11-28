@@ -2,7 +2,7 @@ import { EMPTY, Subscription, catchError, defer, expand, filter, interval, map, 
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { Component, DestroyRef, OnInit, effect, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
@@ -73,6 +73,9 @@ type StateBeforeResetting = {
     isBonusGradingKeyCollapsed: boolean;
 };
 
+/** How long the PDF export waits for the modeling summaries to render and load their submission before it prints what is there. */
+const MODELING_SUMMARY_WAIT_LIMIT_MS = 15_000;
+
 @Component({
     selector: 'jhi-exam-participation-summary',
     templateUrl: './exam-result-summary.component.html',
@@ -104,6 +107,7 @@ type StateBeforeResetting = {
     ],
 })
 export class ExamResultSummaryComponent implements OnInit {
+    private elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
     private route = inject(ActivatedRoute);
     private destroyRef = inject(DestroyRef);
     private serverDateService = inject(ArtemisServerDateService);
@@ -140,7 +144,10 @@ export class ExamResultSummaryComponent implements OnInit {
     readonly plagiarismCaseInfos = signal<{ [exerciseId: number]: PlagiarismCaseInfo }>({});
     readonly exampleSolutionPublished = signal(false);
 
+    private destroyed = false;
+
     constructor() {
+        this.destroyRef.onDestroy(() => (this.destroyed = true));
         effect(() => {
             const se = this.studentExam();
             const gradeInfo = this.studentExamGradeInfoDTO();
@@ -363,6 +370,10 @@ export class ExamResultSummaryComponent implements OnInit {
         this.expandProblemStatement.set(true);
 
         await this.waitForDeferredSummaries();
+        if (this.destroyed) {
+            // The student left the summary while the modeling content loaded: print() would print the page they went to.
+            return;
+        }
         await this.themeService.print();
 
         this.isPrinting.set(false);
@@ -372,19 +383,32 @@ export class ExamResultSummaryComponent implements OnInit {
     }
 
     /**
-     * The modeling summaries are rendered in deferred blocks, because they bring the diagram editor. On a page that has just loaded, the
-     * chunk may still be downloading when the student exports the PDF, and the print dialog would capture the page without the diagram.
-     * The import resolves when the chunk of the summary and the editor it imports are loaded; the blocks render with it, and the delay of
-     * {@link ThemeService.print} covers the rendering itself. A chunk that cannot be loaded does not stop the export.
+     * The modeling summaries are rendered in deferred blocks, because they bring the diagram editor, and each of them then loads its
+     * submission. On a page that has just loaded, both may still be going on when the student exports the PDF, and the print dialog
+     * would capture the page without the diagram and its feedback. So the export first waits for the code (the import resolves when the
+     * chunk of the summary and the editor it imports have loaded), then until every modeling summary is rendered and none of them is
+     * busy ({@link ModelingSubmissionComponent} sets aria-busy until its submission is loaded). The delay of {@link ThemeService.print}
+     * covers the drawing of the diagram. The wait is bounded, and a chunk or a request that fails does not stop the export.
      */
     private async waitForDeferredSummaries(): Promise<void> {
-        if (!this.studentExam().exercises?.some((exercise) => exercise.type === ExerciseType.MODELING)) {
+        const expectedSummaries = this.studentExam().exercises?.filter((exercise) => exercise.type === ExerciseType.MODELING).length ?? 0;
+        if (expectedSummaries === 0) {
             return;
         }
         try {
             await this.loadModelingSummary();
         } catch {
-            // print what is there
+            return; // print what is there
+        }
+        const root: HTMLElement = this.elementRef.nativeElement;
+        const deadline = Date.now() + MODELING_SUMMARY_WAIT_LIMIT_MS;
+        while (Date.now() < deadline) {
+            const renderedSummaries = root.querySelectorAll('jhi-modeling-exam-summary').length;
+            const busySubmissions = root.querySelectorAll('jhi-modeling-submission[aria-busy="true"]').length;
+            if (renderedSummaries >= expectedSummaries && busySubmissions === 0) {
+                return;
+            }
+            await new Promise<void>((resolve) => setTimeout(resolve, 50));
         }
     }
 
