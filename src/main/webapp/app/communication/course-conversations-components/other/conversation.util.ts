@@ -1,7 +1,7 @@
 import { User } from 'app/account/user/user.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
-import { TumAetUiDialogOptions } from '@tumaet/ui-angular';
+import { TumAetUiDialogOptions } from '@tumaet/ui-angular/dialog';
 
 export function getUserLabel({ firstName, lastName, login }: User | ConversationUserDTO, showLogin = true) {
     let label = '';

@@ -124,7 +124,11 @@ Everything that is optional in the diagram is left out in a small installation: 
 
 The Artemis application server uses the following (simplified) data model in its relational database (PostgreSQL).
 It supports multiple courses with multiple exercises.
-Each student in the participating student group can participate in the exercise by clicking
+A user takes part in a course through course roles. Each `UserCourseRole` entry connects one user with one course and
+one role (student, tutor, editor or instructor), so a user can hold several roles in the same course. A course role
+applies only in its course and is separate from the global authorities of a user, see
+[Authorization](/developer/guidelines/rest-api#authorization).
+Each student of the course can participate in the exercise by clicking
 the **Start Exercise** button.
 Then a repository for the student (User) will be created and configured.
 With the deprecated Jenkins integration, Artemis additionally creates a build plan for each student.

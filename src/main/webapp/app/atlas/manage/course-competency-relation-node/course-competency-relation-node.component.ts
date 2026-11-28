@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, computed, inject, input, output }
 import { SizeUpdate } from 'app/atlas/manage/competency-node/competency-node.component';
 import { CourseCompetencyGraphNode, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({

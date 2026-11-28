@@ -13,8 +13,8 @@ import {
     TumAetUiMenuItemDirective,
     TumAetUiMenuSeparatorComponent,
     TumAetUiMenuTriggerDirective,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+} from '@tumaet/ui-angular/menu';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { User } from 'app/account/user/user.model';
 import {
     MODULE_FEATURE_ATLAS,

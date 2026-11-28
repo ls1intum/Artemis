@@ -381,10 +381,6 @@ public class UserTestService {
         assertThat(scienceEventRepository.findById(scienceEvent.getId()).orElseThrow().getIdentity()).isEqualTo(student.getLogin());
     }
 
-    // NOTE: updateUserGroups test removed — the admin user update API (ManagedUserVM) no longer
-    // carries group strings (UserDTO dropped the groups field in Phase 6). Course membership is
-    // now managed via user_course_role; see UserUtilService.enrollUserInCourse().
-
     // Test
     public User createExternalUser_asAdmin_isSuccessful() throws Exception {
         String password = "foobar1234";

@@ -8,7 +8,7 @@ import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar
 import { faTable, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 

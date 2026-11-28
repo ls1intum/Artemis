@@ -1,7 +1,7 @@
 import { Directive, computed, forwardRef, inject, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
 import dayjs from 'dayjs/esm';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 
 /**
  * Binds a `tumaet-ui-date-picker` to a reactive-forms control (`formControlName` / `formControl`).

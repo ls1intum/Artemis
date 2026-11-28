@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import angularPlugin from '@angular-eslint/eslint-plugin';
 import prettierPlugin from 'eslint-plugin-prettier';
@@ -54,10 +56,20 @@ const noDirectCloneDeepImports = [
         message: "Import deepClone / cloneWith / hydrate from 'app/foundation/util/deep-clone.util' instead of lodash cloneDeep.",
     },
 ];
+// The entry points of TUM AET UI: one per component, listed in the `exports` of the package. A bundler that splits code per file loads everything that a
+// lazy route takes from the package root, so the client imports from the entry point of each component. Both rules follow the `exports`.
+const tumAetUiEntryPoints = Object.keys(JSON.parse(readFileSync(resolve(import.meta.dirname, 'packages/tum-aet-ui/package.json'), 'utf8')).exports)
+    .filter((subpath) => subpath !== '.')
+    .map((subpath) => `@tumaet/ui-angular/${subpath.slice(2)}`);
 const tumAetUiConsumerImportPatterns = [
     {
-        group: ['@tumaet/ui-angular/**'],
-        message: 'Import TUM AET UI symbols from the @tumaet/ui-angular public entry point, not a package-internal path.',
+        regex: '^@tumaet/ui-angular$',
+        message:
+            'Import from the entry point of the component, for example @tumaet/ui-angular/button, not from the package root: the root pulls the code of every component into the bundle.',
+    },
+    {
+        group: ['@tumaet/ui-angular/**', ...tumAetUiEntryPoints.map((entryPoint) => `!${entryPoint}`)],
+        message: 'Import from an entry point of TUM AET UI (@tumaet/ui-angular/<component>), not from a package-internal path.',
     },
 ];
 // The client modules, all of which use TUM AET UI and Tailwind. Bootstrap, ng-bootstrap and PrimeNG are removed from the
@@ -456,6 +468,13 @@ export default tseslint.config(
             'localRules/prefer-signal-template-state': 'error',
         },
     },
+    {
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-aet-ui/src/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'localRules/sharing-module-boundary': 'error',
+        },
+    },
     // Copy objects with deepClone, never with object spread, Object.assign or structuredClone. All three
     // alternatives are wrong in ways the type checker cannot see: structuredClone drops prototypes, so a cloned
     // dayjs date loses its methods while isDayjs() still returns true (the bug behind PR #11910); spread and
@@ -640,6 +659,10 @@ export default tseslint.config(
                         {
                             group: ['app', 'app/**', 'test', 'test/**', '!storybook/test', 'primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
                             message: 'TUM AET UI must not depend on Artemis or its application UI frameworks. Move host-specific code to app/shared-ui/tum-aet-ui-integration.',
+                        },
+                        {
+                            group: ['@tumaet/ui-angular/**'],
+                            message: 'Inside TUM AET UI, import from a relative path, not the entry point of a component.',
                         },
                     ],
                 },

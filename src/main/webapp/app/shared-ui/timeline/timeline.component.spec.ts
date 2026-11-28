@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 
 import { TimelineComponent, TimelineItem, TimelineStatus } from './timeline.component';
 import { TranslateService } from '@ngx-translate/core';

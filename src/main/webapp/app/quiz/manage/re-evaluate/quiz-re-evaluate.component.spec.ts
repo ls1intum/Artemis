@@ -10,7 +10,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizReEvaluateComponent } from 'app/quiz/manage/re-evaluate/quiz-re-evaluate.component';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockRouter } from 'src/test/javascript/spec/helpers/mocks/mock-router';
 import { MockProvider } from 'ng-mocks';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';

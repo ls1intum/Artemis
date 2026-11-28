@@ -2,7 +2,7 @@
 id: builds-and-dependencies
 title: Builds and Dependency Management
 sidebar_label: Builds and Dependency Management
-last_reviewed: 2026-11-16
+last_reviewed: 2026-11-27
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -30,6 +30,24 @@ reusable workflows use relative paths. The
 [workflow reference](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/README.md#action-pinning-policy)
 describes the policy, and the [Scorecard report](https://scorecard.dev/viewer/?uri=github.com/ls1intum/Artemis)
 shows dependency-pinning findings alongside other repository security checks.
+
+## Scripts for builds, CI and repository tasks {/* #scripts */}
+
+Write a new script for the build, for CI, for a repository check or for other tooling in TypeScript or JavaScript, as an ES module
+that Node runs (`.mjs`), and not in Python. Every developer machine and every job that builds the client already has Node and the
+installed packages of the workspace, so a script can use the libraries the client tooling uses (the TypeScript compiler, `parse5`,
+`fflate`, `yaml`, `postcss`) without a second runtime or a second dependency lock. The checks that guard the client, the linting
+and the formatting then cover the scripts and their tests as well, and one language for all of them keeps a script readable for
+every contributor.
+
+- **Where.** A helper that a workflow calls lives in `.github/scripts/`, other tooling in `supporting_scripts/<area>/`.
+- **Tests.** Put a test beside the script and run it with `node --test`. A script that cannot be tested without a build or a server
+  keeps its logic in functions that the test imports. Register the test in the job `test-selection` of
+  `.github/workflows/ci-workflows.yml`, which runs the Node script tests.
+- **Shell.** A workflow step may call a few commands directly. A step that parses, branches over data or builds a report belongs in a
+  script with a test, and the step calls it.
+- **Existing Python scripts.** They stay until someone changes them substantially; port such a script in the same pull request.
+  A Python script for a new task needs a reason in the pull request description, for example a library that has no equivalent in Node.
 
 ## Installer, container and Python dependencies
 

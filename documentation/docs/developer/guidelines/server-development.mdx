@@ -384,6 +384,20 @@ default boolean isLocked() {
 }
 ```
 
+## Third-party libraries
+
+Every library on the runtime classpath ships in the WAR and the Docker image, is scanned for vulnerabilities and must be
+kept up to date. Before adding one:
+
+* Check what it brings in with `./gradlew dependencies --configuration runtimeClasspath`, not only the artifact itself. A
+  library can declare dependencies it never uses (the Sharing Platform API declared a GitLab client together with a complete
+  Jersey stack), and exclude them at that dependency with a comment saying why.
+* Prefer a library that is already there. Jackson 3, Nimbus, Apache Commons and the HTTP clients listed in `build.gradle`
+  cover most needs.
+* Run `./gradlew verifyRuntimeClasspathHygiene -x webapp`. It fails when a removed artifact comes back or when two jars
+  contain the same class, which no compiler or version check reports. See the `Runtime classpath` section of the
+  [server architecture gates](https://github.com/ls1intum/Artemis/blob/develop/skills/server-arch-gates/reference/gates.md).
+
 ## Sending emails
 
 **Emails MUST always be sent asynchronously.** No user-facing request thread should be blocked waiting for SMTP. The Artemis SMTP server can be slow, unreachable, or under load — none of that should be visible to the user as a slow login, slow signup, or slow registration response.

@@ -18,6 +18,12 @@
     overflow: hidden;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .agent-chat-button {
+        transition: none;
+    }
+}
+
 /* Hover effects */
 .agent-chat-button:hover {
     transform: translateY(-2px);

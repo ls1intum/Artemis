@@ -7,7 +7,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { OnboardingEnrollmentComponent } from './onboarding-enrollment.component';
 import { Course } from 'app/course/shared/entities/course.model';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

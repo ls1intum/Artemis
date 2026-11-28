@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { Mock, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AlertService } from 'app/foundation/service/alert.service';
