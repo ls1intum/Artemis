@@ -462,7 +462,6 @@ dependencies {
     // Artemis implements the provider protocol. Keep the chat client used by advisors and tool callbacks.
     implementation "org.springframework.ai:spring-ai-client-chat"
     runtimeOnly "org.springframework.ai:spring-ai-autoconfigure-model-chat-observation"
-    implementation "com.squareup.okhttp3:okhttp-jvm:${okhttp_version}"
     implementation "org.springframework.boot:spring-boot-starter-restclient"
     // Spring Boot 4's OTLP tracing auto-configuration is not supplied by the exporter alone.
     // The starter also supplies the tracing bridge, so do not declare that bridge again below.

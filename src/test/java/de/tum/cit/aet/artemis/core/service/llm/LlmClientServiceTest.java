@@ -34,7 +34,6 @@ import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Api;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Endpoint;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.EndpointType;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Preset;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
@@ -97,6 +96,9 @@ class LlmClientServiceTest {
                 byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
                 exchange.getResponseHeaders().set("Content-Type", "application/json");
                 exchange.getResponseHeaders().set("Retry-After", retryAfter);
+                if (status == 307) {
+                    exchange.getResponseHeaders().set("Location", "/redirect-target");
+                }
                 exchange.sendResponseHeaders(status, trickleAnswer ? 0 : bytes.length);
                 if (trickleAnswer) {
                     // The stream stays active past the complete request deadline, without ever hitting the socket read timeout.
@@ -215,6 +217,19 @@ class LlmClientServiceTest {
     }
 
     @Test
+    void embeddingsSurfaceRedirectsAndTemporaryFailuresWithoutResendingThePost() {
+        var preset = new Preset("main", "embed", Api.EMBEDDINGS, null, null, null, null, null, null, null, null);
+        var service = service(Map.of("main", endpoint(EndpointType.OPENAI, "/v1", "secret")), Map.of("embed", preset));
+
+        for (int status : List.of(307, 503)) {
+            statusCodes.add(status);
+            assertThatThrownBy(() -> service.embed("embed", List.of("text"), Duration.ofSeconds(2))).isInstanceOfSatisfying(RestClientResponseException.class,
+                    ex -> assertThat(ex.getStatusCode().value()).isEqualTo(status));
+        }
+        assertThat(requests).extracting(Captured::path).containsExactly("/v1/embeddings", "/v1/embeddings");
+    }
+
+    @Test
     void longerProviderCooldownIsPropagatedWithoutAnEarlyRetry() {
         var preset = new Preset("main", "m", Api.RESPONSES, null, null, null, null, null, null, null, 2);
         var service = service(Map.of("main", endpoint(EndpointType.OPENAI, "/v1", null)), Map.of("chat", preset));
@@ -252,10 +267,10 @@ class LlmClientServiceTest {
         var endpoint = new Endpoint(EndpointType.MICROSOFT_FOUNDRY, baseUrl(""), "azure-key", Duration.ofSeconds(3), 0, null, "2025-03-01-preview", null, null);
         var preset = new Preset("main", "deployment", Api.RESPONSES, null, null, null, null, null, null, null, null);
         var service = service(Map.of("main", endpoint), Map.of("chat", preset));
-        service.chatModel("chat").call(new Prompt("Hello", LlmChatOptions.builder().model("override").build()));
+        service.chatModel("chat").call(new Prompt("Hello", LlmChatOptions.builder().model("team/model v2").build()));
 
         assertThat(requests).singleElement().satisfies(request -> {
-            assertThat(request.path()).isEqualTo("/openai/deployments/override/responses");
+            assertThat(request.path()).isEqualTo("/openai/deployments/team%2Fmodel%20v2/responses");
             assertThat(request.query()).isEqualTo("api-version=2025-03-01-preview");
         });
     }
@@ -282,7 +297,7 @@ class LlmClientServiceTest {
         service.isolatedChatModel("welcome", Duration.ofSeconds(3), 0).call(new Prompt("private student situation"));
         // the shared connection still records its HTTP request (method, URL, status), but no chat model observation carries the prompt or the answer
         assertThat(observed).noneMatch(entry -> entry.startsWith("gen_ai")).noneMatch(entry -> entry.contains("private student situation"));
-        assertThat(observed).anyMatch(entry -> entry.startsWith("okhttp.requests"));
+        assertThat(observed).anyMatch(entry -> entry.startsWith("http.client.requests"));
 
         service.chatModel("welcome").call(new Prompt("normal"));
         assertThat(observed).as("the shared model is observed as before").anyMatch(entry -> entry.startsWith("gen_ai"));
@@ -336,7 +351,7 @@ class LlmClientServiceTest {
     }
 
     private LlmClientService service(Map<String, Endpoint> endpoints, Map<String, Preset> presets, ObservationRegistry observations) {
-        factory = new LlmClientService(new LlmProperties(endpoints, presets, null), new JsonMapper(), observations, new SimpleMeterRegistry());
+        factory = new LlmClientService(new LlmProperties(endpoints, presets, null), new JsonMapper(), observations);
         return factory;
     }
 }

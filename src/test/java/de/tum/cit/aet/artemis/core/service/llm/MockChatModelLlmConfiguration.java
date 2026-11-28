@@ -12,7 +12,6 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.config.llm.LlmEnabled;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 
 /**
@@ -30,9 +29,9 @@ public class MockChatModelLlmConfiguration {
     @Primary
     @Lazy
     @Conditional(LlmEnabled.class)
-    public LlmClientService mockChatModelLlmClientService(LlmProperties properties, JsonMapper jsonMapper, ObservationRegistry observationRegistry, MeterRegistry meterRegistry,
+    public LlmClientService mockChatModelLlmClientService(LlmProperties properties, JsonMapper jsonMapper, ObservationRegistry observationRegistry,
             ObjectProvider<ChatModel> mockedChatModel) {
-        return new LlmClientService(properties, jsonMapper, observationRegistry, meterRegistry) {
+        return new LlmClientService(properties, jsonMapper, observationRegistry) {
 
             @Override
             public ChatModel chatModel(String presetName) {

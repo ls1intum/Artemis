@@ -1,18 +1,24 @@
 package de.tum.cit.aet.artemis.core.service.llm;
 
-import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.UriUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -21,11 +27,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Endpoint;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.EndpointType;
-import okhttp3.HttpUrl;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.RequestBody;
-import okio.BufferedSink;
+import io.micrometer.observation.ObservationRegistry;
 
 /** Synchronous JSON transport shared by the Responses and embeddings APIs. */
 final class LlmHttpClient {
@@ -40,19 +42,32 @@ final class LlmHttpClient {
 
     private static final long MAX_BACKOFF_MILLIS = 8000;
 
-    private static final Pattern TRAILING_SLASHES = Pattern.compile("/+$");
-
     private final Endpoint endpoint;
 
-    private final OkHttpClient client;
+    private final RestClient client;
 
     private final JsonMapper mapper;
 
     private final int maxRetries;
 
-    LlmHttpClient(Endpoint endpoint, OkHttpClient client, JsonMapper mapper, int maxRetries) {
+    LlmHttpClient(Endpoint endpoint, ClientHttpRequestFactory factory, JsonMapper mapper, ObservationRegistry observations, int maxRetries) {
         this.endpoint = endpoint;
-        this.client = client;
+        this.client = RestClient.builder().requestFactory(factory).observationRegistry(observations).defaultHeaders(headers -> {
+            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            if (endpoint.hasApiKey()) {
+                if (endpoint.type() == EndpointType.MICROSOFT_FOUNDRY) {
+                    headers.set("api-key", endpoint.apiKey());
+                }
+                else {
+                    headers.setBearerAuth(endpoint.apiKey());
+                }
+            }
+            if (StringUtils.hasText(endpoint.organizationId())) {
+                headers.set("OpenAI-Organization", endpoint.organizationId());
+            }
+            endpoint.customHeaders().forEach(headers::set);
+        }).configureMessageConverters(converters -> converters.disableDefaults().addCustomConverter(new ByteArrayHttpMessageConverter())).build();
         this.mapper = mapper;
         this.maxRetries = maxRetries;
     }
@@ -63,33 +78,23 @@ final class LlmHttpClient {
     }
 
     <T> T post(String path, Request request, Class<T> responseType) {
-        var builder = new okhttp3.Request.Builder().url(url(path, request.model())).post(new JsonBody(mapper.writeValueAsBytes(request))).header("Accept", "application/json");
-        if (endpoint.hasApiKey()) {
-            if (endpoint.type() == EndpointType.MICROSOFT_FOUNDRY) {
-                builder.header("api-key", endpoint.apiKey());
-            }
-            else {
-                builder.header(HttpHeaders.AUTHORIZATION, "Bearer " + endpoint.apiKey());
-            }
-        }
-        if (StringUtils.hasText(endpoint.organizationId())) {
-            builder.header("OpenAI-Organization", endpoint.organizationId());
-        }
-        endpoint.customHeaders().forEach(builder::header);
-        var httpRequest = builder.build();
+        URI uri = url(path, request.model());
+        byte[] body = mapper.writeValueAsBytes(request);
         for (int attempt = 0;; attempt++) {
             if (Thread.currentThread().isInterrupted()) {
                 throw new CancellationException("LLM request interrupted");
             }
             Duration delay;
-            try (var httpResponse = client.newCall(httpRequest).execute()) {
-                byte[] bytes = httpResponse.body().bytes();
-                if (!httpResponse.isSuccessful()) {
-                    var headers = new HttpHeaders();
-                    httpResponse.headers().toMultimap().forEach(headers::addAll);
-                    throw new RestClientResponseException("LLM provider returned HTTP " + httpResponse.code(), httpResponse.code(), httpResponse.message(), headers, bytes,
-                            StandardCharsets.UTF_8);
-                }
+            try {
+                byte[] bytes = client.post().uri(uri).body(body).exchange((sent, response) -> {
+                    var status = response.getStatusCode();
+                    byte[] content = response.getBody().readAllBytes();
+                    if (!status.is2xxSuccessful()) {
+                        throw new RestClientResponseException("LLM provider returned HTTP " + status.value(), status, response.getStatusText(), response.getHeaders(), content,
+                                StandardCharsets.UTF_8);
+                    }
+                    return content;
+                });
                 T response = bytes.length == 0 ? null : mapper.readValue(bytes, responseType);
                 if (response == null) {
                     throw new RestClientException("Empty " + path + " response");
@@ -106,9 +111,9 @@ final class LlmHttpClient {
                     throw ex;
                 }
             }
-            catch (IOException ex) {
+            catch (ResourceAccessException ex) {
                 if (attempt >= maxRetries || Thread.currentThread().isInterrupted()) {
-                    throw new ResourceAccessException("LLM request failed: " + ex.getMessage(), ex);
+                    throw ex;
                 }
                 delay = retryDelay(attempt, null);
             }
@@ -125,59 +130,26 @@ final class LlmHttpClient {
         }
     }
 
-    private HttpUrl url(String path, String model) {
-        String baseUrl = TRAILING_SLASHES.matcher(endpoint.baseUrl()).replaceFirst("");
-        var url = HttpUrl.get(baseUrl).newBuilder();
+    private URI url(String path, String model) {
+        URI base = URI.create(endpoint.baseUrl());
+        var url = UriComponentsBuilder.fromUri(base);
         if (endpoint.type() == EndpointType.MICROSOFT_FOUNDRY) {
             String version = endpoint.microsoftFoundryServiceVersion();
-            boolean legacy = !baseUrl.endsWith("/openai/v1");
+            boolean legacy = !StringUtils.trimTrailingCharacter(base.getPath(), '/').endsWith("/openai/v1");
             if (legacy) {
                 if (".".equals(model) || "..".equals(model)) {
                     throw new IllegalArgumentException("Invalid Microsoft Foundry deployment name");
                 }
-                url.addPathSegment("openai").addPathSegment("deployments").addPathSegment(model);
+                url.pathSegment("openai", "deployments", UriUtils.encode(model, StandardCharsets.UTF_8));
                 if (!StringUtils.hasText(version)) {
                     version = LEGACY_FOUNDRY_VERSION;
                 }
             }
             if (StringUtils.hasText(version)) {
-                url.addQueryParameter("api-version", version);
+                url.queryParam("api-version", UriUtils.encode(version, StandardCharsets.UTF_8));
             }
         }
-        return url.addPathSegment(path).build();
-    }
-
-    // Mark each attempt as single-use so OkHttp cannot resubmit a POST (even on 503 with Retry-After: 0).
-    // Only the preset's retry policy below may send it again.
-    private static final class JsonBody extends RequestBody {
-
-        private static final MediaType JSON = MediaType.get("application/json");
-
-        private final byte[] bytes;
-
-        private JsonBody(byte[] bytes) {
-            this.bytes = bytes;
-        }
-
-        @Override
-        public MediaType contentType() {
-            return JSON;
-        }
-
-        @Override
-        public long contentLength() {
-            return bytes.length;
-        }
-
-        @Override
-        public boolean isOneShot() {
-            return true;
-        }
-
-        @Override
-        public void writeTo(BufferedSink sink) throws IOException {
-            sink.write(bytes);
-        }
+        return url.pathSegment(path).build(true).toUri();
     }
 
     private static boolean isRetryable(RestClientResponseException ex) {

@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEmbeddingProperties;
 import de.tum.cit.aet.artemis.globalsearch.exception.EmbeddingFailedException;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 
 /**
@@ -74,7 +73,7 @@ class SearchableEntityEmbeddingClientTest {
         String baseUrl = "http://127.0.0.1:" + server.getAddress().getPort() + "/v1/";
         var properties = new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http", "", "text2vec-openai", "embedding", null, INSTRUCTION);
         var embeddingProperties = new WeaviateEmbeddingProperties(600, 30, maxInputs, queryTimeout, Duration.ofSeconds(10));
-        var llmClientService = new LlmClientService(LlmTestCatalog.embedding(MODEL, baseUrl, "secret-key"), new JsonMapper(), ObservationRegistry.NOOP, new SimpleMeterRegistry());
+        var llmClientService = new LlmClientService(LlmTestCatalog.embedding(MODEL, baseUrl, "secret-key"), new JsonMapper(), ObservationRegistry.NOOP);
         return new SearchableEntityEmbeddingClient(properties, embeddingProperties, llmClientService);
     }
 
@@ -208,8 +207,7 @@ class SearchableEntityEmbeddingClientTest {
     void embedFailsWithoutRequestWhenNoPresetIsAssigned() {
         var properties = new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http", "", "text2vec-openai", null, null, INSTRUCTION);
         var embeddingProperties = new WeaviateEmbeddingProperties(600, 30, 32, Duration.ofSeconds(3), Duration.ofSeconds(10));
-        var client = new SearchableEntityEmbeddingClient(properties, embeddingProperties,
-                new LlmClientService(LlmTestCatalog.empty(), new JsonMapper(), ObservationRegistry.NOOP, new SimpleMeterRegistry()));
+        var client = new SearchableEntityEmbeddingClient(properties, embeddingProperties, new LlmClientService(LlmTestCatalog.empty(), new JsonMapper(), ObservationRegistry.NOOP));
 
         assertThatThrownBy(() -> client.embedQuery("anything")).isInstanceOf(EmbeddingFailedException.class).hasMessageContaining("embedding-llm-preset");
     }

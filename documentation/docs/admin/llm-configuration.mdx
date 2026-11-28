@@ -83,8 +83,7 @@ artemis:
 
 ## Endpoints
 
-An endpoint is one provider address with its credentials. Several presets can share one endpoint; Artemis keeps one
-HTTP connection pool per endpoint. Use the final provider URL. Artemis returns HTTP redirects to the caller so credentials stay on the configured endpoint.
+An endpoint is one provider address with its credentials. Presets that use the same API and provider address share HTTP connections. Use the final provider URL. Artemis returns HTTP redirects to the caller so credentials stay on the configured endpoint.
 When a provider requests a retry delay longer than eight seconds, Artemis returns that failure with its retry header so the caller can schedule a later attempt.
 
 | Key                                 | Default  | Meaning                                                                                                                                       |
@@ -122,8 +121,9 @@ A preset is one model on one endpoint, plus the options that Artemis sends with 
 | `max-retries`           | Overrides the endpoint's `max-retries` for this preset.                                                                                    |
 
 An `embeddings` preset needs an endpoint of type `openai` and takes none of the model options, `timeout` or
-`max-retries`. Embedding calls also ignore the endpoint's `timeout` and `max-retries`: their time limits are set under
-`artemis.weaviate.embedding`, and failed index writes are retried by the index itself.
+`max-retries`. Global search sets its query and index-write timeouts under
+`artemis.weaviate.embedding`. Each timeout covers connection setup and reading the entire response. Connection setup
+can take at most five seconds. The index schedules retries for failed writes.
 
 Names of endpoints and presets use only lowercase letters and digits, and start with a letter, for example `large` or
 `gpt6terra`. Environment variables cannot carry dashes or dots inside a name.

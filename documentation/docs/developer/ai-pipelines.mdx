@@ -232,7 +232,7 @@ Every Artemis feature that calls a language model, for chat or for embeddings, u
 2. Register the key as an `LlmPresetAssignments` bean that exists only when the feature is enabled, with the usage the task needs (`CHAT` or `EMBEDDING`). The startup validation then fails when the key is missing or names an unknown preset or one with the wrong `api`, and logs the effective assignment.
 3. Get the client from `LlmClientService`: `chatClient` or `chatModel` for a normal task, `isolatedChatModel` for a task with its own time limit and retries or whose data must not reach tracing, and `embed` for embeddings. `embed` sends each request once, so the caller decides whether and when to try again. If the task needs a kind of call that `LlmClientService` does not offer yet, add it there; the module itself never builds a provider client.
 
-The provider adapter sends synchronous JSON requests to `/responses` and `/embeddings` using OkHttp.
+The provider adapter sends synchronous JSON requests to `/responses` and `/embeddings` using Spring’s `RestClient` and the JDK HTTP client.
 Spring AI supplies the chat client, tool callbacks, observations and Atlas session memory. Artemis handles the provider wire format in `core.service.llm`.
 
 `CourseHomeAiConfiguration` with `SpringAiCourseHomeClient` (one chat preset, own limits, no tracing) and `SearchableEntityEmbeddingClient` (embeddings) are small examples. `LlmClientArchitectureTest` fails when a class outside `core.service.llm` and `core.config.llm` builds a provider client or model, or reads an endpoint with its URL and key. It cannot see a module that reads its own URL and key and calls a model with a plain HTTP client, so reviews must reject that too.

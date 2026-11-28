@@ -106,8 +106,7 @@ class SpringAiCourseHomeClientTest {
         // the endpoint keeps its default of three transport retries; Home's own transport must not use them
         var endpoint = new LlmProperties.Endpoint(LlmProperties.EndpointType.OPENAI, "http://127.0.0.1:" + server.getAddress().getPort() + "/v1", "test-key",
                 Duration.ofSeconds(300), 3, null, null, null, List.of());
-        var llmClientService = new LlmClientService(new LlmProperties(Map.of("local", endpoint), Map.of("welcome", PRESET), null), new JsonMapper(), ObservationRegistry.NOOP,
-                new SimpleMeterRegistry());
+        var llmClientService = new LlmClientService(new LlmProperties(Map.of("local", endpoint), Map.of("welcome", PRESET), null), new JsonMapper(), ObservationRegistry.NOOP);
         try (var client = new SpringAiCourseHomeClient(new CourseHomeAiProperties(true, "LOCAL", "welcome"), llmClientService, new SimpleMeterRegistry())) {
             var result = client.generate(input);
             assertThat(received.await(10, TimeUnit.SECONDS)).isTrue();

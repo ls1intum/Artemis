@@ -2,7 +2,7 @@
 id: global-search-weaviate
 title: 'Global Search & Weaviate Setup'
 sidebar_label: Global Search (Weaviate)
-last_reviewed: 2026-11-20
+last_reviewed: 2026-11-28
 ---
 
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
@@ -124,7 +124,7 @@ the check counts as a failed request.
 | `vectorizer-module` | yes | `none` | `none` for keyword search, `text2vec-openai` for hybrid search |
 | `embedding-llm-preset` | hybrid | — | The embeddings preset. Its endpoint is the embedding API **as Artemis reaches it**; a change of its model rebuilds the index |
 | `open-ai-query-instruction` | no | empty | Text put in front of every search query before it is embedded. See below |
-| `embedding.query-timeout` | no | `3s` | Time limit for connecting and for the answer when a search query is embedded; after it, the search uses keywords. A search waits at most about twice this time |
+| `embedding.query-timeout` | no | `3s` | Time limit for the entire embedding request, including connection setup and reading the vector. When it expires, the search uses keywords |
 | `embedding.write-timeout` | no | `60s` | The same limit for embedding the pieces of an index write |
 | `embedding.max-inputs-per-request` | no | `32` | Pieces sent in one request (at most 256) |
 | `embedding.background-max-rows-per-minute` | no | `600` | Background index writes per minute (see [Load](#load-on-the-embedding-api)) |
