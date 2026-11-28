@@ -53,7 +53,7 @@ docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-c
 
 ## Verify automatic grading
 
-With the trial running, open a second terminal at the repository root and run the check with Node.js 26.
+The local trial supports password sign-in for the test administrator. With the trial running, open a second terminal at the repository root and run the check with Node.js 26. If your rehearsal requires an administrator passkey, use the browser procedure in the [production hardening checklist](/admin/production-setup/hardening-checklist#data).
 
 ```bash
 node supporting_scripts/trial/verify-grading.mjs
