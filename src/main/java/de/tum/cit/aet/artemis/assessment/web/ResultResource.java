@@ -81,6 +81,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing Result.
@@ -328,6 +331,8 @@ public class ResultResource {
      * @return the matching students sorted by name, with pagination headers
      */
     @FeatureUsage(UserFeature.EXERCISE_SCORES)
+    @ApiResponse(responseCode = "200", headers = {
+            @Header(name = "X-Total-Count", description = "The total number of elements over all pages", schema = @Schema(type = "integer", format = "int64")) })
     @GetMapping("exercises/{exerciseId}/external-submission-candidates")
     @EnforceAtLeastInstructorInExercise
     public ResponseEntity<List<ExternalSubmissionCandidateDTO>> searchExternalSubmissionCandidates(@PathVariable long exerciseId, @RequestParam String searchTerm,

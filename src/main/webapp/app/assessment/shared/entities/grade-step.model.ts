@@ -1,6 +1,5 @@
 import { BaseEntity } from 'app/foundation/model/base-entity';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
-import { GradeStepDTO } from 'app/assessment/manage/grading/grading-service';
 
 export interface GradeStep extends BaseEntity {
     id?: number;
@@ -16,12 +15,12 @@ export interface GradeStep extends BaseEntity {
 }
 
 export interface GradeStepsDTO {
-    title: string;
-    gradeType: GradeType;
-    gradeSteps: GradeStepDTO[];
+    title?: string;
+    gradeType?: GradeType;
+    gradeSteps: GradeStep[];
     maxPoints?: number;
-    plagiarismGrade: string;
-    noParticipationGrade: string;
+    plagiarismGrade?: string;
+    noParticipationGrade?: string;
     presentationsNumber?: number;
     presentationsWeight?: number;
 }

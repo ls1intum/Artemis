@@ -416,20 +416,6 @@ describe('Course Management Service', () => {
         req.flush(null);
     });
 
-    it('should find grade scores for the course', () => {
-        const gradeInformation = {
-            gradeScores: [],
-            students: [],
-        };
-        returnedFromService = gradeInformation;
-        courseManagementService
-            .findGradeScores(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res).toEqual(gradeInformation));
-        const req = httpMock.expectOne({ method: 'GET', url: `api/assessment/courses/${course.id}/grade-scores` });
-        req.flush(returnedFromService);
-    });
-
     it('should find results for the course', () => {
         courseManagementService.findAllResultsOfCourseForExerciseAndCurrentUser(course.id!).subscribe((res) => expect(res).toEqual(course));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/results` });

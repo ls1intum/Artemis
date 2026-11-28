@@ -38,8 +38,8 @@ import {
     faTrash,
 } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
-import { GradingService } from 'app/assessment/manage/grading/grading-service';
-import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
+import { GradeStepApi } from 'app/openapi/api/grade-step-api';
+import type { GradeSteps } from 'app/openapi/model/grade-steps';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/instructor-submission-state/programming-exercise-instructor-submission-state.component';
@@ -152,7 +152,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private readonly programmingSubmissionService = inject(ProgrammingSubmissionService);
     private readonly accountService = inject(AccountService);
     private readonly profileService = inject(ProfileService);
-    private readonly gradingService = inject(GradingService);
+    private readonly gradeStepApi = inject(GradeStepApi);
     private readonly websocketService = inject(WebsocketService);
 
     protected readonly faComment = faComment;
@@ -206,7 +206,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly hasLoadedPendingSubmissions = signal(false);
     readonly isAdmin = signal(false);
     readonly isLocalCIEnabled = signal(true);
-    readonly gradeStepsDTO = signal<GradeStepsDTO | undefined>(undefined);
+    readonly gradeSteps = signal<GradeSteps | undefined>(undefined);
 
     readonly basicPresentationEnabled = computed(() => {
         const ex = this.exercise();
@@ -215,7 +215,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     readonly gradedPresentationEnabled = computed(() => {
         const ex = this.exercise();
-        return !!(ex?.course && ex?.isAtLeastTutor && (this.gradeStepsDTO()?.presentationsNumber ?? 0) > 0 && ex?.presentationScoreEnabled === true);
+        return !!(ex?.course && ex?.isAtLeastTutor && (this.gradeSteps()?.presentationsNumber ?? 0) > 0 && ex?.presentationScoreEnabled === true);
     });
 
     readonly filterGroups = computed<FilterGroup[]>(() => {
@@ -250,7 +250,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private currentLoadRequestId = 0;
     // private exerciseSubmissionState: ExerciseSubmissionState = {};
     private paramSub?: Subscription;
-    private gradeStepsDTOSub?: Subscription;
+    private gradeStepsSub?: Subscription;
     private websocketSubscriptions: Subscription[] = [];
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -437,7 +437,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         }
         this.dialogErrorSource.unsubscribe();
         this.paramSub?.unsubscribe();
-        this.gradeStepsDTOSub?.unsubscribe();
+        this.gradeStepsSub?.unsubscribe();
         this.websocketSubscriptions.forEach((sub) => sub.unsubscribe());
     }
 
@@ -458,9 +458,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     private loadGradingScale(courseId?: number) {
         if (courseId) {
-            this.gradeStepsDTOSub = this.gradingService.findGradeStepsForCourse(courseId).subscribe((gradeStepsDTO) => {
-                if (gradeStepsDTO.body) {
-                    this.gradeStepsDTO.set(gradeStepsDTO.body);
+            this.gradeStepsSub = this.gradeStepApi.getAllGradeStepsForCourse(courseId).subscribe((gradeSteps) => {
+                if (gradeSteps) {
+                    this.gradeSteps.set(gradeSteps);
                 }
             });
         }

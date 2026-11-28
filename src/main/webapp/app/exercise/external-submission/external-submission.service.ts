@@ -10,7 +10,7 @@ import { PageableResult, toPageableResult } from 'app/foundation/pagination/page
 import { ExternalSubmissionCandidate } from 'app/exercise/external-submission/external-submission-candidate.model';
 
 /**
- * Keeps the candidate search on HttpClient: it reads the X-Total-Count header and skips the global error alert, neither of which the generated client exposes.
+ * Keeps the candidate search on HttpClient: it skips the global error alert, and the generated method takes no HttpContext.
  */
 @Service()
 export class ExternalSubmissionService {

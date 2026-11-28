@@ -21,6 +21,9 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 import { HttpTestingController } from '@angular/common/http/testing';
 import { GradingScaleApi } from 'app/openapi/api/grading-scale-api';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
+import type { GradingScale as GradingScaleResponse } from 'app/openapi/model/grading-scale';
+import { toGradingScaleResponse } from 'test/helpers/sample/grading-scale-response';
+import { toGradingScaleUpdate } from 'app/assessment/shared/util/grading-scale-response.util';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -31,7 +34,6 @@ import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-cou
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { downloadCsv } from 'app/foundation/util/csv-download.util';
 import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
-import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';
 
@@ -45,6 +47,7 @@ describe('GradingComponent', () => {
     let fixture: ComponentFixture<GradingComponent>;
     let comp: GradingComponent;
     let gradingService: GradingService;
+    let gradingScaleApi: GradingScaleApi;
     let translateService: TranslateService;
     let translateStub: MockInstance;
     let examService: ExamManagementService;
@@ -134,15 +137,16 @@ describe('GradingComponent', () => {
             .compileComponents()
             .then(() => {
                 gradingService = TestBed.inject(GradingService);
+                gradingScaleApi = TestBed.inject(GradingScaleApi);
                 examService = TestBed.inject(ExamManagementService);
                 translateService = TestBed.inject(TranslateService);
 
                 vi.spyOn(examService, 'find').mockReturnValue(of(new HttpResponse<Exam>({ body: exam })));
 
                 if (isExam) {
-                    vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScaleToUse) })));
+                    vi.spyOn(gradingScaleApi, 'getGradingScaleForExam').mockReturnValue(of(toGradingScaleResponse(gradingScaleToUse)));
                 } else {
-                    vi.spyOn(gradingService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScaleToUse) })));
+                    vi.spyOn(gradingScaleApi, 'getGradingScaleForCourse').mockReturnValue(of(toGradingScaleResponse(gradingScaleToUse)));
                 }
 
                 fixture = TestBed.createComponent(GradingComponent);
@@ -171,10 +175,10 @@ describe('GradingComponent', () => {
                     {
                         provide: GradingService,
                         useValue: {
-                            findGradingScaleForCourse: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockGradingScale }))),
                             sortGradeSteps: vi.fn().mockReturnValue([]),
                         },
                     },
+                    { provide: GradingScaleApi, useValue: { getGradingScaleForCourse: vi.fn().mockReturnValue(of(toGradingScaleResponse(mockGradingScale))) } },
                     {
                         provide: CourseManagementService,
                         useValue: {
@@ -465,10 +469,10 @@ describe('GradingComponent', () => {
                     {
                         provide: GradingService,
                         useValue: {
-                            findGradingScaleForExam: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockGradingScale }))),
                             sortGradeSteps: vi.fn().mockReturnValue([]),
                         },
                     },
+                    { provide: GradingScaleApi, useValue: { getGradingScaleForExam: vi.fn().mockReturnValue(of(toGradingScaleResponse(mockGradingScale))) } },
                     {
                         provide: CourseManagementService,
                         useValue: {
@@ -540,9 +544,7 @@ describe('GradingComponent', () => {
         });
 
         it('should handle find response for exam', () => {
-            const findGradingScaleForExamStub = vi
-                .spyOn(gradingService, 'findGradingScaleForExam')
-                .mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(comp.gradingScale) })));
+            const findGradingScaleForExamStub = vi.spyOn(gradingScaleApi, 'getGradingScaleForExam').mockReturnValue(of(toGradingScaleResponse(comp.gradingScale)));
             const findExamStub = vi.spyOn(examService, 'find').mockReturnValue(of(new HttpResponse<Exam>({ body: exam })));
 
             fixture.changeDetectorRef.detectChanges();
@@ -556,9 +558,7 @@ describe('GradingComponent', () => {
         });
 
         it('should handle find response for exam and not find a grading scale', () => {
-            const findGradingScaleForExamAndReturnNotFoundStub = vi
-                .spyOn(gradingService, 'findGradingScaleForExam')
-                .mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ status: 404 })));
+            const findGradingScaleForExamAndReturnNotFoundStub = vi.spyOn(gradingScaleApi, 'getGradingScaleForExam').mockReturnValue(of(null as unknown as GradingScaleResponse));
 
             fixture.changeDetectorRef.detectChanges();
 
@@ -714,13 +714,11 @@ describe('GradingComponent', () => {
             comp.isExam.set(false);
             comp.course.set(course);
             comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.BONUS }));
-            const gradingSystemCreateForCourseMock = vi
-                .spyOn(gradingService, 'createGradingScaleForCourse')
-                .mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(comp.gradingScale) })));
+            const gradingSystemCreateForCourseMock = vi.spyOn(gradingScaleApi, 'createGradingScaleForCourse').mockReturnValue(of(toGradingScaleResponse(comp.gradingScale)));
 
             comp.save();
 
-            expect(gradingSystemCreateForCourseMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
+            expect(gradingSystemCreateForCourseMock).toHaveBeenNthCalledWith(1, comp.courseId, toGradingScaleUpdate(comp.gradingScale));
             expect(gradingSystemCreateForCourseMock).toHaveBeenCalledTimes(1);
             expect(comp.existingGradingScale()).toBe(true);
         });
@@ -730,7 +728,7 @@ describe('GradingComponent', () => {
             comp.isExam.set(false);
             comp.course.set(course);
             comp.maxPoints.set(10000);
-            const createSpy = vi.spyOn(gradingService, 'createGradingScaleForCourse');
+            const createSpy = vi.spyOn(gradingScaleApi, 'createGradingScaleForCourse');
 
             comp.save();
 
@@ -744,9 +742,7 @@ describe('GradingComponent', () => {
             comp.course.set(course);
             comp.maxPoints.set(9999);
             comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.BONUS }));
-            const createSpy = vi
-                .spyOn(gradingService, 'createGradingScaleForCourse')
-                .mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(comp.gradingScale) })));
+            const createSpy = vi.spyOn(gradingScaleApi, 'createGradingScaleForCourse').mockReturnValue(of(toGradingScaleResponse(comp.gradingScale)));
 
             comp.save();
 
@@ -796,13 +792,11 @@ describe('GradingComponent', () => {
             comp.isExam.set(true);
             comp.exam.set(exam);
             comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.BONUS }));
-            const gradingSystemCreateForExamMock = vi
-                .spyOn(gradingService, 'createGradingScaleForExam')
-                .mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(comp.gradingScale) })));
+            const gradingSystemCreateForExamMock = vi.spyOn(gradingScaleApi, 'createGradingScaleForExam').mockReturnValue(of(toGradingScaleResponse(comp.gradingScale)));
 
             comp.save();
 
-            expect(gradingSystemCreateForExamMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, comp.gradingScale);
+            expect(gradingSystemCreateForExamMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, toGradingScaleUpdate(comp.gradingScale));
             expect(gradingSystemCreateForExamMock).toHaveBeenCalledTimes(1);
             expect(comp.existingGradingScale()).toBe(true);
         });
@@ -812,13 +806,11 @@ describe('GradingComponent', () => {
             comp.isExam.set(false);
             comp.course.set(course);
             comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.BONUS }));
-            const gradingSystemUpdateForCourseMock = vi
-                .spyOn(gradingService, 'updateGradingScaleForCourse')
-                .mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(comp.gradingScale) })));
+            const gradingSystemUpdateForCourseMock = vi.spyOn(gradingScaleApi, 'updateGradingScaleForCourse').mockReturnValue(of(toGradingScaleResponse(comp.gradingScale)));
 
             comp.save();
 
-            expect(gradingSystemUpdateForCourseMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.gradingScale);
+            expect(gradingSystemUpdateForCourseMock).toHaveBeenNthCalledWith(1, comp.courseId, toGradingScaleUpdate(comp.gradingScale));
             expect(gradingSystemUpdateForCourseMock).toHaveBeenCalledTimes(1);
             expect(comp.existingGradingScale()).toBe(true);
         });
@@ -828,19 +820,17 @@ describe('GradingComponent', () => {
             comp.isExam.set(true);
             comp.exam.set(exam);
             comp.gradeStepsModel.update((model) => ({ ...model, gradeType: GradeType.BONUS }));
-            const gradingSystemUpdateForExamMock = vi
-                .spyOn(gradingService, 'updateGradingScaleForExam')
-                .mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(comp.gradingScale) })));
+            const gradingSystemUpdateForExamMock = vi.spyOn(gradingScaleApi, 'updateGradingScaleForExam').mockReturnValue(of(toGradingScaleResponse(comp.gradingScale)));
 
             comp.save();
 
-            expect(gradingSystemUpdateForExamMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, comp.gradingScale);
+            expect(gradingSystemUpdateForExamMock).toHaveBeenNthCalledWith(1, comp.courseId, comp.examId, toGradingScaleUpdate(comp.gradingScale));
             expect(gradingSystemUpdateForExamMock).toHaveBeenCalledTimes(1);
             expect(comp.existingGradingScale()).toBe(true);
         });
 
         it('should handle find response correctly', () => {
-            comp.handleFindResponse(toGradingScaleDTO(comp.gradingScale));
+            comp.handleFindResponse(toGradingScaleResponse(comp.gradingScale));
 
             expect(comp.firstPassingGrade()).toBe('Pass');
             expect(comp.lowerBoundInclusivity).toBe(true);

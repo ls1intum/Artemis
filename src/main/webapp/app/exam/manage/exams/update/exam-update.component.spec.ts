@@ -17,8 +17,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { GradingService } from 'app/assessment/manage/grading/grading-service';
-import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -38,7 +36,6 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { By } from '@angular/platform-browser';
-import { toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 import { ExamTimelineComponent } from 'app/exam/manage/exams/update/exam-timeline.component';
@@ -112,16 +109,6 @@ describe('ExamUpdateComponent', () => {
                         },
                     },
                     MockProvider(AlertService),
-                    MockProvider(GradingService, {
-                        findGradingScaleForExam: () => {
-                            return of(
-                                new HttpResponse({
-                                    body: toGradingScaleDTO(new GradingScale()),
-                                    status: 200,
-                                }),
-                            );
-                        },
-                    }),
                     MockProvider(ExamManagementService, {
                         create: () => {
                             return of(
@@ -1285,16 +1272,6 @@ describe('ExamUpdateComponent', () => {
                         },
                     },
                     MockProvider(AlertService),
-                    MockProvider(GradingService, {
-                        findGradingScaleForExam: () => {
-                            return of(
-                                new HttpResponse({
-                                    body: toGradingScaleDTO(new GradingScale()),
-                                    status: 200,
-                                }),
-                            );
-                        },
-                    }),
                     MockDirective(NgForm),
                     { provide: TranslateService, useClass: MockTranslateService },
                     { provide: ProfileService, useClass: MockProfileService },

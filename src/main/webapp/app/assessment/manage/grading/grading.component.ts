@@ -12,11 +12,10 @@ import { DocumentationButtonComponent, DocumentationType } from 'app/shared-ui/c
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { ActivatedRoute } from '@angular/router';
-import { EntityResponseType, GradingService } from 'app/assessment/manage/grading/grading-service';
+import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradingScaleApi } from 'app/openapi/api/grading-scale-api';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { Observable, Subject, of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
 import { catchError, finalize } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -37,7 +36,8 @@ import { parse } from 'papaparse';
 import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/foundation/pipes/grade-step-bounds.pipe';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { GradingScaleDTO, toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
+import { toGradingScale, toGradingScaleUpdate } from 'app/assessment/shared/util/grading-scale-response.util';
+import type { GradingScale as GradingScaleResponse } from 'app/openapi/model/grading-scale';
 import { MAX_GRADING_POINTS, MAX_PRESENTATION_COUNT, MAX_PRESENTATION_SCORE } from 'app/foundation/constants/input.constants';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
@@ -322,9 +322,9 @@ export class GradingComponent implements OnInit {
                 this.isExam.set(true);
             }
             if (this.isExam()) {
-                this.handleFindObservable(this.gradingService.findGradingScaleForExam(this.courseId, this.examId!));
+                this.handleFindObservable(this.gradingScaleApi.getGradingScaleForExam(this.courseId, this.examId!));
             } else {
-                this.handleFindObservable(this.gradingService.findGradingScaleForCourse(this.courseId));
+                this.handleFindObservable(this.gradingScaleApi.getGradingScaleForCourse(this.courseId));
             }
         });
     }
@@ -357,16 +357,16 @@ export class GradingComponent implements OnInit {
     // Data Loading
     // =========================================================================
 
-    private handleFindObservable(findObservable: Observable<EntityResponseType>) {
+    private handleFindObservable(findObservable: Observable<GradingScaleResponse>) {
         findObservable
             .pipe(
                 finalize(() => {
                     this.isLoading.set(false);
                 }),
             )
-            .subscribe((gradingSystemResponse) => {
-                if (gradingSystemResponse.body) {
-                    this.handleFindResponse(gradingSystemResponse.body);
+            .subscribe((gradingScaleResponse) => {
+                if (gradingScaleResponse) {
+                    this.handleFindResponse(gradingScaleResponse);
                 }
                 if (this.isExam()) {
                     this.examService.find(this.courseId!, this.examId!).subscribe((examResponse) => {
@@ -389,10 +389,11 @@ export class GradingComponent implements OnInit {
      * If the grading scale exists, sorts its grade steps
      * and sets the inclusivity and first passing grade properties
      */
-    handleFindResponse(gradingScaleDTO?: GradingScaleDTO): void {
-        if (gradingScaleDTO) {
-            gradingScaleDTO.gradeSteps.gradeSteps = this.gradingService.sortGradeSteps(gradingScaleDTO.gradeSteps.gradeSteps);
-            this.gradingScale = toEntity(gradingScaleDTO, this.course(), this.exam());
+    handleFindResponse(gradingScaleResponse?: GradingScaleResponse): void {
+        if (gradingScaleResponse) {
+            const gradingScale = toGradingScale(gradingScaleResponse, this.course(), this.exam());
+            gradingScale.gradeSteps = this.gradingService.sortGradeSteps(gradingScale.gradeSteps);
+            this.gradingScale = gradingScale;
             this.existingGradingScale.set(true);
             this.setBoundInclusivity();
             this.determineFirstPassingGrade();
@@ -434,37 +435,32 @@ export class GradingComponent implements OnInit {
         this.gradingScale = gradingScale;
         if (this.existingGradingScale()) {
             if (this.isExam()) {
-                this.handleSaveObservable(this.gradingService.updateGradingScaleForExam(this.courseId!, this.examId!, gradingScale));
+                this.handleSaveObservable(this.gradingScaleApi.updateGradingScaleForExam(this.courseId!, this.examId!, toGradingScaleUpdate(gradingScale)));
             } else {
-                this.handleSaveObservable(this.gradingService.updateGradingScaleForCourse(this.courseId!, gradingScale));
+                this.handleSaveObservable(this.gradingScaleApi.updateGradingScaleForCourse(this.courseId!, toGradingScaleUpdate(gradingScale)));
             }
         } else {
             if (this.isExam()) {
-                this.handleSaveObservable(this.gradingService.createGradingScaleForExam(this.courseId!, this.examId!, gradingScale));
+                this.handleSaveObservable(this.gradingScaleApi.createGradingScaleForExam(this.courseId!, this.examId!, toGradingScaleUpdate(gradingScale)));
             } else {
-                this.handleSaveObservable(this.gradingService.createGradingScaleForCourse(this.courseId!, gradingScale));
+                this.handleSaveObservable(this.gradingScaleApi.createGradingScaleForCourse(this.courseId!, toGradingScaleUpdate(gradingScale)));
             }
         }
     }
 
-    private handleSaveObservable(saveObservable: Observable<EntityResponseType>) {
+    private handleSaveObservable(saveObservable: Observable<GradingScaleResponse>) {
         saveObservable
             .pipe(
                 finalize(() => {
                     this.isLoading.set(false);
                 }),
-                catchError(() => of(new HttpResponse<GradingScaleDTO>({ status: 400 }))),
+                catchError(() => of(undefined)),
             )
-            .subscribe((gradingSystemResponse) => {
-                this.handleSaveResponse(gradingSystemResponse.body!);
+            .subscribe((savedGradingScale) => {
+                if (savedGradingScale) {
+                    this.existingGradingScale.set(true);
+                }
             });
-    }
-
-    private handleSaveResponse(newGradingScaleDTO?: GradingScaleDTO): void {
-        if (newGradingScaleDTO) {
-            newGradingScaleDTO.gradeSteps.gradeSteps = this.gradingService.sortGradeSteps(newGradingScaleDTO.gradeSteps.gradeSteps);
-            this.existingGradingScale.set(true);
-        }
     }
 
     // =========================================================================

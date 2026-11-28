@@ -8,10 +8,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { Subject, of } from 'rxjs';
 import { GradingComponent } from './grading.component';
-import { GradingService } from './grading-service';
+import { GradingScaleApi } from 'app/openapi/api/grading-scale-api';
+import type { GradingScaleUpdate } from 'app/openapi/model/grading-scale-update';
 import { GradingPresentationsComponent, PresentationType } from './grading-presentations/grading-presentations.component';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
-import { toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
+import { toGradingScaleResponse } from 'test/helpers/sample/grading-scale-response';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -21,7 +22,6 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 describe('Grading presentation controls with the course grading editor', () => {
     beforeEach(() => {
@@ -61,17 +61,24 @@ describe('Grading presentation controls with the course grading editor', () => {
         vi.restoreAllMocks();
     });
 
+    function scaleOf(update: GradingScaleUpdate): GradingScale {
+        const scale = new GradingScale();
+        scale.presentationsNumber = update.presentationsNumber;
+        scale.presentationsWeight = update.presentationsWeight;
+        return scale;
+    }
+
     async function setup(scale = new GradingScale(), presentationScore?: number) {
         const courseResponse = new Subject<HttpResponse<Course>>();
         vi.spyOn(TestBed.inject(CourseManagementService), 'findForInstructor').mockReturnValue(courseResponse);
-        const service = TestBed.inject(GradingService);
+        const api = TestBed.inject(GradingScaleApi);
         scale.id = 1;
         scale.gradeSteps = [
             { gradeName: 'Fail', lowerBoundPercentage: 0, upperBoundPercentage: 50, lowerBoundInclusive: true, upperBoundInclusive: false, isPassingGrade: false },
             { gradeName: 'Pass', lowerBoundPercentage: 50, upperBoundPercentage: 100, lowerBoundInclusive: true, upperBoundInclusive: true, isPassingGrade: true },
         ];
-        vi.spyOn(service, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse({ body: toGradingScaleDTO(scale) })));
-        const save = vi.spyOn(service, 'updateGradingScaleForCourse').mockImplementation((_courseId, saved) => of(new HttpResponse({ body: toGradingScaleDTO(saved) })));
+        vi.spyOn(api, 'getGradingScaleForCourse').mockReturnValue(of(toGradingScaleResponse(scale)));
+        const save = vi.spyOn(api, 'updateGradingScaleForCourse').mockImplementation((_courseId, update) => of(toGradingScaleResponse(scaleOf(update))));
         const fixture = TestBed.createComponent(GradingComponent);
         const component = fixture.componentInstance;
         fixture.detectChanges();
@@ -107,10 +114,10 @@ describe('Grading presentation controls with the course grading editor', () => {
         expect(component.presentationsConfig().presentationScore).toBe(3);
         component.save();
         await settle();
-        const saved = deepClone(save.mock.calls[0][1]);
-        expect(saved.course?.presentationScore).toBe(3);
+        const saved = save.mock.calls[0][1];
+        expect(saved.coursePresentationScore).toBe(3);
         fixture.destroy();
-        const restored = await setup(saved, saved.course?.presentationScore);
+        const restored = await setup(scaleOf(saved), saved.coursePresentationScore);
         expect(restored.modeButton('basic').getAttribute('aria-pressed')).toBe('true');
         expect(restored.component.presentationsConfig().presentationScore).toBe(3);
     });
@@ -129,12 +136,12 @@ describe('Grading presentation controls with the course grading editor', () => {
         await enter('field_weightPresentations', '35');
         component.save();
         await settle();
-        const saved = deepClone(save.mock.calls[0][1]);
+        const saved = save.mock.calls[0][1];
         expect(saved.presentationsNumber).toBe(5);
         expect(saved.presentationsWeight).toBe(35);
-        expect(saved.course?.presentationScore).toBeUndefined();
+        expect(saved.coursePresentationScore).toBe(0);
         fixture.destroy();
-        const restored = await setup(saved);
+        const restored = await setup(scaleOf(saved));
         expect(restored.modeButton('graded').getAttribute('aria-pressed')).toBe('true');
         expect(restored.fixture.nativeElement.querySelector('#field_numberPresentations').value).toBe('5');
         expect(restored.fixture.nativeElement.querySelector('#field_weightPresentations').value).toBe('35');

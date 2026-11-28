@@ -593,11 +593,11 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         this.isLoading.set(true);
         this.complaintService.findBySubmissionIdForAssessment(this.submission.id!).subscribe({
-            next: (res) => {
-                if (!res.body) {
+            next: (complaint) => {
+                if (!complaint) {
                     return;
                 }
-                this.complaint.set(this.complaintService.convertComplaintFromServer(res.body, this.result()));
+                this.complaint.set(this.complaintService.convertComplaintFromServer(complaint, this.result()));
                 this.isLoading.set(false);
             },
             error: (err: HttpErrorResponse) => {

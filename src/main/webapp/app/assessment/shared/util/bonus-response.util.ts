@@ -1,13 +1,12 @@
 import { Bonus, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
-import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
-import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
+import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { gradeTypeByResponse, toGradeStep } from 'app/assessment/shared/util/grading-scale-response.util';
 import type { BonusRequest } from 'app/openapi/model/bonus-request';
 import type { BonusResponse } from 'app/openapi/model/bonus-response';
 import type { CourseForBonus } from 'app/openapi/model/course-for-bonus';
-import type { GradeStep as GradeStepResponse } from 'app/openapi/model/grade-step';
 import type { GradingScaleForBonus } from 'app/openapi/model/grading-scale-for-bonus';
 
 const bonusStrategyByResponse: Record<NonNullable<BonusResponse['bonusStrategy']>, BonusStrategy> = {
@@ -15,24 +14,6 @@ const bonusStrategyByResponse: Record<NonNullable<BonusResponse['bonusStrategy']
     GRADES_DISCRETE: BonusStrategy.GRADES_DISCRETE,
     POINTS: BonusStrategy.POINTS,
 };
-
-const gradeTypeByResponse: Record<NonNullable<GradingScaleForBonus['gradeType']>, GradeType> = {
-    NONE: GradeType.NONE,
-    GRADE: GradeType.GRADE,
-    BONUS: GradeType.BONUS,
-};
-
-// The server serializes the bounds and the passing flag of every grade step, so the optional fields of the schema are always present.
-function toGradeStep(step: GradeStepResponse): GradeStep {
-    return {
-        gradeName: step.gradeName,
-        lowerBoundPercentage: step.lowerBoundPercentage ?? 0,
-        lowerBoundInclusive: step.lowerBoundInclusive ?? false,
-        upperBoundPercentage: step.upperBoundPercentage ?? 0,
-        upperBoundInclusive: step.upperBoundInclusive ?? false,
-        isPassingGrade: step.isPassingGrade ?? false,
-    };
-}
 
 function toCourse(course: CourseForBonus): Course {
     return { id: course.id, title: course.title, maxPoints: course.maxPoints, accuracyOfScores: course.accuracyOfScores };

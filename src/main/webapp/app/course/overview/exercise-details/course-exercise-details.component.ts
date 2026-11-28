@@ -806,11 +806,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             return;
         }
         this.complaintService.findBySubmissionId(graded.submissions[0].id!).subscribe({
-            next: (res) => {
-                if (!res.body) {
+            next: (complaint) => {
+                if (!complaint) {
                     return;
                 }
-                this._complaint.set(this.complaintService.convertComplaintFromServer(res.body, this.resultWithComplaint()));
+                this._complaint.set(this.complaintService.convertComplaintFromServer(complaint, this.resultWithComplaint()));
             },
             error: (err: HttpErrorResponse) => {
                 this.onError(err.message);

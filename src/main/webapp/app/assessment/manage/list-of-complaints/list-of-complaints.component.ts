@@ -11,7 +11,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Observable, Subscription, combineLatestWith } from 'rxjs';
@@ -28,7 +28,6 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
-import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 
 @Component({
     selector: 'jhi-complaint-list',
@@ -189,32 +188,32 @@ export class ListOfComplaintsComponent implements OnInit {
     };
 
     loadComplaints() {
-        let complaintResponse: Observable<HttpResponse<ComplaintDTO[]>>;
+        let complaints: Observable<Complaint[]>;
 
         if (!this.accountService.isAtLeastInstructorInCourseWithId(this.courseId)) {
-            complaintResponse = this.exerciseId
-                ? this.complaintService.findForTutorByExerciseId(this.exerciseId, this.complaintType())
-                : this.complaintService.findForTutorByCourseId(this.courseId, this.complaintType());
+            complaints = this.exerciseId
+                ? this.complaintService.findAllForTutor({ exerciseId: this.exerciseId, complaintType: this.complaintType() })
+                : this.complaintService.findAllForTutor({ courseId: this.courseId, complaintType: this.complaintType() });
         } else if (this.tutorId) {
             if (this.exerciseId) {
-                complaintResponse = this.complaintService.findAllByTutorIdForExerciseId(this.tutorId, this.exerciseId, this.complaintType());
+                complaints = this.complaintService.findAll({ exerciseId: this.exerciseId, complaintType: this.complaintType(), tutorId: this.tutorId });
             } else if (this.examId) {
                 // TODO make exam complaints visible for tutors too
-                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType());
+                complaints = this.complaintService.findAll({ courseId: this.courseId, complaintType: this.complaintType(), tutorId: this.tutorId });
             } else {
-                complaintResponse = this.complaintService.findAllByTutorIdForCourseId(this.tutorId, this.courseId, this.complaintType());
+                complaints = this.complaintService.findAll({ courseId: this.courseId, complaintType: this.complaintType(), tutorId: this.tutorId });
             }
         } else {
             if (this.exerciseId) {
-                complaintResponse = this.complaintService.findAllByExerciseId(this.exerciseId, this.complaintType());
+                complaints = this.complaintService.findAll({ exerciseId: this.exerciseId, complaintType: this.complaintType() });
             } else if (this.examId) {
-                complaintResponse = this.complaintService.findAllByCourseIdAndExamId(this.courseId, this.examId);
+                complaints = this.complaintService.findAll({ courseId: this.courseId, examId: this.examId });
             } else {
-                complaintResponse = this.complaintService.findAllByCourseId(this.courseId, this.complaintType());
+                complaints = this.complaintService.findAll({ courseId: this.courseId, complaintType: this.complaintType() });
             }
         }
         this.mineScopeSubscription?.unsubscribe();
-        this.mineScopeSubscription = this.subscribeToComplaintResponse(complaintResponse, 'mine');
+        this.mineScopeSubscription = this.subscribeToComplaintResponse(complaints, 'mine');
         this.courseManagementService.findForManagement(this.courseId).subscribe((response) => {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             this.course.set(response?.body!);
@@ -225,11 +224,10 @@ export class ListOfComplaintsComponent implements OnInit {
      * Always updates the Mine/All cache for {@link scope}. Only writes the displayed list when that scope
      * is still selected and {@link routeIdentity} still matches the request's identity.
      */
-    subscribeToComplaintResponse(complaintResponse: Observable<HttpResponse<ComplaintDTO[]>>, scope: 'mine' | 'all'): Subscription {
+    subscribeToComplaintResponse(complaintsRequest: Observable<Complaint[]>, scope: 'mine' | 'all'): Subscription {
         const identity = this.routeIdentity;
-        return complaintResponse.subscribe({
-            next: (res) => {
-                const complaints = res.body?.map((complaintDTO) => this.complaintService.convertComplaintFromServerInList(complaintDTO)) ?? [];
+        return complaintsRequest.subscribe({
+            next: (complaints) => {
                 if (scope === 'mine') {
                     this.ownComplaints = complaints;
                 } else {
@@ -398,8 +396,8 @@ export class ListOfComplaintsComponent implements OnInit {
         this.allScopeSubscription?.unsubscribe();
         // Must match the scope the Mine list was loaded with, otherwise "All" shows complaints of other exercises.
         const allComplaintsResponse = this.exerciseId
-            ? this.complaintService.findAllWithoutStudentInformationForExerciseId(this.exerciseId, this.complaintType())
-            : this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType());
+            ? this.complaintService.findAllForTutor({ exerciseId: this.exerciseId, complaintType: this.complaintType(), allComplaintsForTutor: true })
+            : this.complaintService.findAllForTutor({ courseId: this.courseId, complaintType: this.complaintType(), allComplaintsForTutor: true });
         this.allScopeSubscription = this.subscribeToComplaintResponse(allComplaintsResponse, 'all');
     }
 

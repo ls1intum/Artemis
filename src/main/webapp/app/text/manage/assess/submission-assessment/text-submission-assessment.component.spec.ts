@@ -219,7 +219,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
     it('loads complaint detail through the assessment audience', () => {
         const httpMock = TestBed.inject(HttpTestingController);
-        const req = httpMock.expectOne(`api/assessment/complaints/for-assessment?submissionId=${submission.id}`);
+        const req = httpMock.expectOne(`/api/assessment/complaints/for-assessment?submissionId=${submission.id}`);
         expect(req.request.method).toBe('GET');
         req.flush(null);
     });

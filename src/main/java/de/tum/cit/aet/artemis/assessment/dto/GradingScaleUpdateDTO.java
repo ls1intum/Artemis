@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO for updating a grading scale.
@@ -59,6 +60,7 @@ public record GradingScaleUpdateDTO(@NotNull GradeType gradeType, @Nullable Bonu
     /**
      * DTO for a grade step within a grading scale.
      */
+    @Schema(name = "GradingScaleUpdateGradeStepDTO")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record GradeStepDTO(double lowerBoundPercentage, boolean lowerBoundInclusive, double upperBoundPercentage, boolean upperBoundInclusive, @NotNull String gradeName,
             boolean isPassingGrade) {

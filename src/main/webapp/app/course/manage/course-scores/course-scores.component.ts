@@ -16,6 +16,7 @@ import { SortService } from 'app/foundation/service/sort.service';
 import { LocaleConversionService } from 'app/foundation/service/locale-conversion.service';
 import { average, round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
+import { GradingScaleApi } from 'app/openapi/api/grading-scale-api';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
@@ -56,11 +57,15 @@ import { ExportButtonComponent } from 'app/shared-ui/export/button/export-button
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseScoresStudentStatistics } from 'app/course/manage/course-scores/course-scores-student-statistics';
 import { ExerciseTypeStatisticsMap } from 'app/course/manage/course-scores/exercise-type-statistics-map';
-import { CourseManagementService, GradeScoreDTO, StudentGradeDTO } from 'app/course/manage/services/course-management.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { ParticipantScoreApi } from 'app/openapi/api/participant-score-api';
+import type { CourseGradeInformationStudent } from 'app/openapi/model/course-grade-information-student';
+import type { CourseGradeScore } from 'app/openapi/model/course-grade-score';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { GradingScaleDTO, toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
+import { toGradingScale } from 'app/assessment/shared/util/grading-scale-response.util';
+import type { GradingScale as GradingScaleResponse } from 'app/openapi/model/grading-scale';
 
 export enum HighlightType {
     AVERAGE = 'average',
@@ -100,6 +105,8 @@ export class CourseScoresComponent implements OnInit {
     private readonly sortService = inject(SortService);
     private readonly localeConversionService = inject(LocaleConversionService);
     private readonly gradingService = inject(GradingService);
+    private readonly gradingScaleApi = inject(GradingScaleApi);
+    private readonly participantScoreApi = inject(ParticipantScoreApi);
     private readonly plagiarismCasesService = inject(PlagiarismCasesService);
     private readonly profileService = inject(ProfileService);
     private readonly destroyRef = inject(DestroyRef);
@@ -107,8 +114,8 @@ export class CourseScoresComponent implements OnInit {
     // State signals
     readonly plagiarismEnabled = signal(false);
     readonly course = signal<Course | undefined>(undefined);
-    readonly gradeScores = signal<GradeScoreDTO[]>([]);
-    readonly students = signal<StudentGradeDTO[]>([]);
+    readonly gradeScores = signal<CourseGradeScore[]>([]);
+    readonly students = signal<CourseGradeInformationStudent[]>([]);
     readonly includedExercises = signal<Exercise[]>([]);
     readonly studentStatistics = signal<CourseScoresStudentStatistics[]>([]);
     readonly exportReady = signal(false);
@@ -283,10 +290,10 @@ export class CourseScoresComponent implements OnInit {
      * @param courseId Id of the course
      */
     private async calculateCourseStatistics(courseId: number) {
-        const findGradeScoresObservable = this.courseManagementService.findGradeScores(courseId);
+        const findGradeScoresObservable = this.participantScoreApi.getGradeScoresForCourse(courseId);
         // alternative course scores calculation using participant scores table
         // find grading scale if it exists for course
-        const gradingScaleObservable = this.gradingService.findGradingScaleForCourse(courseId).pipe(catchError(() => of(new HttpResponse<GradingScaleDTO>())));
+        const gradingScaleObservable = this.gradingScaleApi.getGradingScaleForCourse(courseId).pipe(catchError(() => of(undefined)));
 
         const plagiarismCasesObservable = this.plagiarismEnabled()
             ? this.plagiarismCasesService.getCoursePlagiarismCasesForScores(courseId)
@@ -295,8 +302,8 @@ export class CourseScoresComponent implements OnInit {
         forkJoin([findGradeScoresObservable, gradingScaleObservable, plagiarismCasesObservable]).subscribe(([courseGradeInformation, gradingScaleResponse, plagiarismCases]) => {
             this.gradeScores.set(courseGradeInformation.gradeScores ?? []);
             this.students.set(courseGradeInformation.students ?? []);
-            if (gradingScaleResponse.body) {
-                this.setUpGradingScale(gradingScaleResponse.body);
+            if (gradingScaleResponse) {
+                this.setUpGradingScale(gradingScaleResponse);
             }
 
             this.calculateExerciseLevelStatistics();
@@ -601,12 +608,13 @@ export class CourseScoresComponent implements OnInit {
      * Sets the grading scale
      * @param gradingScaleDTO
      */
-    setUpGradingScale(gradingScaleDTO: GradingScaleDTO) {
+    setUpGradingScale(gradingScaleResponse: GradingScaleResponse) {
         this.gradingScaleExists.set(true);
-        gradingScaleDTO.gradeSteps.gradeSteps = this.gradingService.sortGradeSteps(gradingScaleDTO.gradeSteps.gradeSteps);
-        this.gradingScale.set(toEntity(gradingScaleDTO, this.course()));
-        this.isBonus.set(gradingScaleDTO.gradeSteps.gradeType === GradeType.BONUS);
-        this.maxGrade.set(this.gradingService.maxGrade(gradingScaleDTO.gradeSteps.gradeSteps));
+        const gradingScale = toGradingScale(gradingScaleResponse, this.course());
+        gradingScale.gradeSteps = this.gradingService.sortGradeSteps(gradingScale.gradeSteps);
+        this.gradingScale.set(gradingScale);
+        this.isBonus.set(gradingScale.gradeType === GradeType.BONUS);
+        this.maxGrade.set(this.gradingService.maxGrade(gradingScale.gradeSteps));
     }
 
     /**

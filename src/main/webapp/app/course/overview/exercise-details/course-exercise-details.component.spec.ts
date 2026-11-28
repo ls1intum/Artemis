@@ -45,7 +45,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
+import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExtensionPointDirective } from 'app/foundation/extension-point/extension-point.directive';
@@ -444,7 +444,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
         // return initial participation for websocketService
         vi.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([studentParticipation]);
-        vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({} as EntityResponseType));
+        vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of(undefined));
 
         // mock participationService methods
         mergeStudentParticipationMock.mockReturnValue([studentParticipation]);
@@ -1602,7 +1602,7 @@ describe('CourseExerciseDetailsComponent', () => {
         it('should load the complaint and the latest rated result of a programming exercise', () => {
             comp.exercise = { ...exercise, type: ExerciseType.PROGRAMMING } as unknown as Exercise;
             const complaint = { id: 9 } as Complaint;
-            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: { id: 9 } } as EntityResponseType));
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ id: 9 }));
             vi.spyOn(complaintService, 'convertComplaintFromServer').mockReturnValue(complaint);
 
             comp.loadComplaintAndLatestRatedResult();
@@ -1613,7 +1613,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
         it('should not set a complaint when the submission has none', () => {
             comp.exercise = { ...exercise, type: ExerciseType.PROGRAMMING } as unknown as Exercise;
-            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: null } as unknown as EntityResponseType));
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of(undefined));
             const convertSpy = vi.spyOn(complaintService, 'convertComplaintFromServer');
 
             comp.loadComplaintAndLatestRatedResult();
@@ -1624,7 +1624,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
         it('should not look for the latest rated result of a text exercise', () => {
             comp.exercise = { ...exercise, type: ExerciseType.TEXT } as unknown as Exercise;
-            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: null } as unknown as EntityResponseType));
+            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of(undefined));
 
             comp.loadComplaintAndLatestRatedResult();
 

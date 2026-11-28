@@ -147,9 +147,9 @@ describe('GradingKeyOverviewComponent actual route purpose requests', () => {
     });
 
     it.each([
-        { name: 'student exam view', config: student, examId: '123', expected: 'api/assessment/courses/345/exams/123/grading-scale/grade-steps' },
-        { name: 'instructor management view', config: management, examId: '123', expected: 'api/assessment/courses/345/exams/123/grading-scale' },
-        { name: 'student course statistics view', config: course, examId: undefined, expected: 'api/assessment/courses/345/grading-scale/grade-steps' },
+        { name: 'student exam view', config: student, examId: '123', expected: '/api/assessment/courses/345/exams/123/grading-scale/grade-steps' },
+        { name: 'instructor management view', config: management, examId: '123', expected: '/api/assessment/courses/345/exams/123/grading-scale' },
+        { name: 'student course statistics view', config: course, examId: undefined, expected: '/api/assessment/courses/345/grading-scale/grade-steps' },
     ])('requests the fixed API from the real overview and table in $name', async ({ config, examId, expected }) => {
         const parent = new ActivatedRoute();
         parent.snapshot = new ActivatedRouteSnapshot();

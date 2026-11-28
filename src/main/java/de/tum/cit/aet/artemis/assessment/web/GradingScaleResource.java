@@ -47,6 +47,9 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * REST controller for managing grading scale
@@ -123,6 +126,7 @@ public class GradingScaleResource {
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("grading-scales")
+    @Parameter(name = "sortedColumn", in = ParameterIn.QUERY, required = true, description = "The column to sort by", schema = @Schema(type = "string"))
     @EnforceAtLeastStudent
     @ManualConfig // the search only returns the grading scales of courses in which the user is an instructor (admins see all)
     public ResponseEntity<SearchResultPageDTO<GradingScaleDTO>> getAllGradingScalesInInstructorGroupOnPage(@ParameterObject SearchTermPageableSearchDTO<String> search) {
