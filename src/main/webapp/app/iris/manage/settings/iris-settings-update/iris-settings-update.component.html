@@ -155,7 +155,7 @@
                                         id="customInstructions"
                                         data-testid="iris-settings-custom-instructions"
                                         tumAetUiInput
-                                        class="mt-2 max-h-56 w-full overflow-y-auto rounded-lg"
+                                        class="mt-2 max-h-56 w-full overflow-y-auto"
                                         rows="4"
                                         [ngModel]="settingsValue.customInstructions"
                                         (ngModelChange)="updateCustomInstructions($event)"
@@ -272,7 +272,7 @@
                                 <tumaet-ui-select
                                     inputId="variant"
                                     data-testid="iris-settings-variant"
-                                    class="block w-full"
+                                    class="w-full"
                                     [options]="pipelineVariantOptions"
                                     [ngModel]="settingsValue.variant"
                                     (ngModelChange)="updateVariant($event)"

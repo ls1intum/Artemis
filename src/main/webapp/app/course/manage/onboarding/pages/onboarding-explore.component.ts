@@ -10,7 +10,7 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODU
 @Component({
     selector: 'jhi-onboarding-explore',
     templateUrl: './onboarding-explore.component.html',
-    styleUrls: ['./_onboarding-pages.scss'],
+    styleUrls: ['./onboarding-pages.css'],
     styles: [
         `
             :host {
@@ -40,58 +40,63 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODU
                 color: inherit;
                 cursor: pointer;
                 background: var(--overview-card-nested-bg);
+            }
 
-                &::before {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    height: 3px;
-                    background: var(--card-accent, var(--primary));
-                    opacity: 0;
-                    transition: opacity 0.25s ease;
-                }
+            .explore-card::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: var(--card-accent, var(--primary));
+                opacity: 0;
+                transition: opacity 0.25s ease;
+            }
 
-                &:hover {
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-                    transform: translateY(-1px);
-                    border-color: transparent;
+            .explore-card:hover {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+                transform: translateY(-1px);
+                border-color: transparent;
+            }
 
-                    &::before {
-                        opacity: 1;
-                    }
-                }
+            .explore-card:hover::before {
+                opacity: 1;
+            }
 
-                h5 {
-                    margin-bottom: 0.5rem;
-                    font-weight: 600;
-                }
+            .explore-card h5 {
+                margin-bottom: 0.5rem;
+                font-weight: 600;
+            }
 
-                p {
-                    color: var(--body-secondary-color);
-                    font-size: 0.88rem;
-                    margin-bottom: 1rem;
-                    line-height: 1.45;
-                    flex: 1;
-                }
+            .explore-card p {
+                color: var(--body-secondary-color);
+                font-size: 0.88rem;
+                margin-bottom: 1rem;
+                line-height: 1.45;
+                flex: 1;
             }
 
             .explore-card--exercises {
                 --card-accent: #6366f1;
             }
+
             .explore-card--lectures {
                 --card-accent: #0ea5e9;
             }
+
             .explore-card--tutorial {
                 --card-accent: #8b5cf6;
             }
+
             .explore-card--exams {
                 --card-accent: #f59e0b;
             }
+
             .explore-card--competencies {
                 --card-accent: #10b981;
             }
+
             .explore-card--faqs {
                 --card-accent: #ec4899;
             }
@@ -119,10 +124,10 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODU
                 gap: 0.35rem;
                 color: var(--card-accent, var(--primary));
                 transition: gap 0.2s ease;
+            }
 
-                &:hover {
-                    gap: 0.6rem;
-                }
+            .explore-link:hover {
+                gap: 0.6rem;
             }
         `,
     ],

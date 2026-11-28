@@ -49,7 +49,7 @@
                     />
                     @for (error of shortName.errors! | keyvalue | removekeys: ['required']; track error.key) {
                         @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
-                            <tumaet-ui-message severity="error" class="mt-1 block">
+                            <tumaet-ui-message severity="error" class="mt-1">
                                 <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>
                             </tumaet-ui-message>
                         }
@@ -118,7 +118,7 @@
                         />
                     }
                     @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateNames || programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateDirectories) {
-                        <tumaet-ui-message severity="error" class="mt-1 block">
+                        <tumaet-ui-message severity="error" class="mt-1">
                             @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateNames) {
                                 <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.duplicateRepositoryNames"></span>
                             }
@@ -128,7 +128,7 @@
                         </tumaet-ui-message>
                     }
                     @if (programmingExerciseCreationConfig() && !isLocalCIEnabled()) {
-                        <tumaet-ui-message severity="info" class="mt-1 block">
+                        <tumaet-ui-message severity="info" class="mt-1">
                             <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"></span>
                         </tumaet-ui-message>
                     }
@@ -198,7 +198,7 @@
 <ng-template #auxDescriptionTemplate let-cell>
     <textarea
         tumAetUiTextarea
-        class="w-full table-editable-field__input me-2!"
+        class="w-full table-editable-field__input me-2"
         [id]="cell.data.id + '-description'"
         [tumAetUiInputId]="cell.data.id + '-description'"
         [attr.aria-label]="'artemisApp.programmingExercise.auxiliaryRepository.description' | artemisTranslate"

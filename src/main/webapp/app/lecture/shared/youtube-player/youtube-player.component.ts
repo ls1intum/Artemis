@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { resizeVideoColumn, syncVideoTranscriptHeight } from '../video-transcript-layout.util';
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, ViewEncapsulation, computed, effect, input, output, signal, viewChild } from '@angular/core';
 import { YouTubePlayer } from '@angular/youtube-player';
@@ -34,7 +34,7 @@ const MIN_TRANSCRIPT_WIDTH = 250;
     standalone: true,
     imports: [TumAetUiButtonDirective, YouTubePlayer, TranscriptViewerComponent, ArtemisTranslatePipe, ResizableDirective],
     templateUrl: './youtube-player.component.html',
-    styleUrls: ['./youtube-player.component.scss'],
+    styleUrls: ['./youtube-player.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
     host: { class: 'youtube-player-host' },

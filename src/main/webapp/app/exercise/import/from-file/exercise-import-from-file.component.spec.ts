@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -280,6 +280,21 @@ describe('ExerciseImportFromFileComponent', () => {
 
         expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.importFromFile.exerciseTypeDoesntMatch');
+    });
+
+    it('should name the questions export of a quiz as the problem if the file holds a list of questions', async () => {
+        alertServiceSpy = vi.spyOn(alertService, 'error');
+        const openImportSpy = vi.spyOn(component, 'openImport');
+        fixture.componentRef.setInput('exerciseType', ExerciseType.QUIZ);
+        const zip = new ZipBuilder();
+        zip.file('Quiz.json', JSON.stringify([{ type: 'multiple-choice', title: 'Question' }]));
+        zip.file('q0_background.png', 'image');
+        component.fileForImport.set((await zip.generateBlob()) as File);
+
+        await component.uploadExercise();
+
+        expect(alertServiceSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.exercise.importFromFile.questionsExport');
+        expect(openImportSpy).not.toHaveBeenCalled();
     });
 
     it('should set exercise attributes and open import dialog', async () => {

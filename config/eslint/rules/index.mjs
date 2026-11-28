@@ -16,9 +16,11 @@ import noComponentRefSetInput from './no-component-ref-set-input.mjs';
 import preferDeepClone from './prefer-deep-clone.mjs';
 import noBindInTemplateBinding from './no-bind-in-template-binding.mjs';
 import enforceButtonIntent from './enforce-button-intent.mjs';
+import sharingModuleBoundary from './sharing-module-boundary.mjs';
 
 export default {
     rules: {
+        'sharing-module-boundary': sharingModuleBoundary,
         'require-signal-reference-ngb-modal-input': requireSignalReferenceNgbModalInput,
         'enforce-signal-apis': enforceSignalApis,
         'enforce-cleanup-on-destroy': enforceCleanupOnDestroy,

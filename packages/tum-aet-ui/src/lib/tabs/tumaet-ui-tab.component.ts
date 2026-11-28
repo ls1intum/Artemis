@@ -11,7 +11,7 @@ import { TumAetUiTabsService, tabKey } from './tumaet-ui-tabs.service';
 @Component({
     selector: 'tumaet-ui-tab',
     template: '<ng-content />',
-    styleUrl: './tumaet-ui-tab.component.scss',
+    styleUrl: './tumaet-ui-tab.component.css',
     host: {
         // Lets the Angular Aria test harnesses (`@angular/aria/tabs/testing`) find the tab.
         ngTab: '',

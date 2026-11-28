@@ -38,7 +38,8 @@ import { TestCaseAction } from 'app/editor/monaco-editor/model/actions/test-case
 import { TextEditorDomainAction } from 'app/editor/monaco-editor/model/actions/text-editor-domain-action.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ProgrammingExerciseInstructionAnalysisComponent } from './analysis/programming-exercise-instruction-analysis.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
@@ -68,7 +69,7 @@ import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 @Component({
     selector: 'jhi-programming-exercise-editable-instructions',
     templateUrl: './programming-exercise-editable-instruction.component.html',
-    styleUrls: ['./programming-exercise-editable-instruction.scss'],
+    styleUrls: ['./programming-exercise-editable-instruction.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         MarkdownEditorMonacoComponent,

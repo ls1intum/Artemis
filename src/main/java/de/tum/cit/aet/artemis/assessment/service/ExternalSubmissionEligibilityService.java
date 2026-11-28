@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.assessment.domain.ExternalSubmissionIneligibility;
 import de.tum.cit.aet.artemis.assessment.dto.ExternalSubmissionCandidateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ExternalSubmissionResultRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
-import de.tum.cit.aet.artemis.core.dto.CourseRoleMembersSearchDTO;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -120,7 +120,7 @@ public class ExternalSubmissionEligibilityService {
      */
     public Page<ExternalSubmissionCandidateDTO> searchCandidates(Exercise exercise, String searchTerm, int page, int pageSize) {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
-        var search = new CourseRoleMembersSearchDTO(page, pageSize, SortingOrder.ASCENDING, "name", searchTerm);
+        var search = new PagedSearchDTO(page, pageSize, SortingOrder.ASCENDING, "name", searchTerm, null);
         Page<User> students = userRepository.searchUsersInCourseRole(PageRequest.of(page, pageSize), search, course.getId(), CourseRole.STUDENT);
         List<Long> studentIds = students.getContent().stream().map(User::getId).toList();
         Map<Long, ExternalSubmissionIneligibility> ineligibilities = studentIds.isEmpty() ? Map.of() : findIneligibilities(exercise, studentIds);

@@ -30,6 +30,21 @@
         <fa-icon [icon]="faRotate" class="me-1" />
         <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.refresh"></span>
     </button>
+    @if (canReview()) {
+        <button
+            tumAetUiButton
+            type="button"
+            size="small"
+            severity="primary"
+            variant="outlined"
+            data-testid="pool-create-quiz-button"
+            [disabled]="isLoadingCandidates() || !lectureUnits().length"
+            (click)="openCreateQuizDialog()"
+        >
+            <fa-icon [icon]="faListCheck" class="me-1" />
+            <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.createQuiz.button"></span>
+        </button>
+    }
     @if (isInstructor() && settings()) {
         <button tumAetUiButton type="button" size="small" severity="secondary" variant="outlined" data-testid="pool-settings-button" (click)="openSettingsDialog()">
             <fa-icon [icon]="faGear" class="me-1" />
@@ -201,6 +216,19 @@
         <jhi-quiz-question-pool-settings-dialog [(visible)]="settingsDialogVisible" [settings]="settingsValue" [saving]="isSavingSettings()" (save)="saveSettings($event)" />
     }
 
+    @if (canReview()) {
+        <jhi-quiz-question-pool-create-quiz-dialog
+            [visible]="createQuizDialogVisible()"
+            (visibleChange)="setCreateQuizDialogVisible($event)"
+            [competencies]="quizCompetencies()"
+            [lectureUnits]="lectureUnits()"
+            [candidates]="selectionCandidates()"
+            [initialCompetencyId]="selectedCompetencyId()"
+            [busy]="isCreatingQuiz()"
+            (create)="createQuiz($event)"
+        />
+    }
+
     @if (lectureUnits().length > 0) {
         <tumaet-ui-panel
             class="[&_.tumaet-ui-panel-header]:cursor-pointer"
@@ -210,7 +238,7 @@
             [toggleAriaLabel]="'artemisApp.hyperion.quizQuestionPool.units.toggle' | artemisTranslate"
             data-testid="pool-lecture-units"
         >
-            <div tumAetUiPanelHeader class="flex flex-wrap! items-center gap-2!">
+            <div tumAetUiPanelHeader class="flex flex-wrap items-center gap-2">
                 <span class="font-semibold" jhiTranslate="artemisApp.hyperion.quizQuestionPool.units.title" [translateValues]="{ count: lectureUnits().length }"></span>
                 @if (excludedUnitCount() > 0) {
                     <tumaet-ui-tag severity="contrast" size="sm" data-testid="pool-units-excluded-count">
@@ -274,7 +302,7 @@
                                 }
                                 @if (isInstructor()) {
                                     <span
-                                        class="ms-auto! inline-flex"
+                                        class="ms-auto inline-flex"
                                         [tumAetUiTooltip]="isRunning() && !unit.excluded ? ('artemisApp.hyperion.quizQuestionPool.units.excludeBlocked' | artemisTranslate) : ''"
                                         tumAetUiTooltipPlacement="top"
                                     >
@@ -313,7 +341,7 @@
             [toggleAriaLabel]="'artemisApp.hyperion.quizQuestionPool.list.needsReviewToggle' | artemisTranslate"
             data-testid="pool-needs-review-queue"
         >
-            <div tumAetUiPanelHeader class="flex items-center gap-2!">
+            <div tumAetUiPanelHeader class="flex items-center gap-2">
                 @if (allFlaggedReviewed()) {
                     <fa-icon [icon]="faCircleCheck" class="text-state-success" />
                     <span class="font-semibold" data-testid="pool-needs-review-done" jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.allReviewed"></span>

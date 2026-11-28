@@ -15,7 +15,9 @@ import { CourseSidebarService } from 'app/course/overview/services/course-sideba
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { InfiniteScrollDirective } from 'app/shared-ui/infinite-scroll/infinite-scroll.directive';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -25,7 +27,7 @@ import { UserPublicInfoDTO } from 'app/account/user/user.model';
 @Component({
     selector: 'jhi-course-wide-search',
     templateUrl: './course-wide-search.component.html',
-    styleUrls: ['./course-wide-search.component.scss'],
+    styleUrls: ['./course-wide-search.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         NgClass,

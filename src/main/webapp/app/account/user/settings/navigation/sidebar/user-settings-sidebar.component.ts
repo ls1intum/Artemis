@@ -2,7 +2,7 @@ import { Component, computed, inject, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition, faBookOpen, faChevronRight, faCode, faKey, faUser, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LayoutService } from 'app/foundation/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/foundation/breakpoints/breakpoints.service';

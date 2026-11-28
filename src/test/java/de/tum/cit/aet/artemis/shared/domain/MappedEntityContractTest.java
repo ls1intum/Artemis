@@ -94,7 +94,7 @@ class MappedEntityContractTest extends AbstractSpringIntegrationIndependentTest 
                 assertThat(mapping.getPropertyColumnNames(column.getKey())).containsExactly(column.getValue());
                 int index = Arrays.asList(mapping.getPropertyNames()).indexOf(column.getKey());
                 assertThat(mapping.getPropertyNullability()[index]).isTrue();
-                assertThat(mapping.getPropertyType(column.getKey()).getReturnedClass()).isEqualTo(ZonedDateTime.class);
+                assertThat(mapping.findAttributeMapping(column.getKey()).getJavaType().getJavaTypeClass()).isEqualTo(ZonedDateTime.class);
             }
             if (type != ExerciseVariantGroup.class) {
                 assertThat(mapping.getDiscriminatorColumnName()).isEqualTo("discriminator");
@@ -111,7 +111,7 @@ class MappedEntityContractTest extends AbstractSpringIntegrationIndependentTest 
             assertThat(mapping.getTableNameForColumn("example_solution")).isEqualTo("exercise");
             int index = Arrays.asList(mapping.getPropertyNames()).indexOf(ExerciseWithExampleSolution_.EXAMPLE_SOLUTION);
             assertThat(mapping.getPropertyNullability()[index]).isTrue();
-            assertThat(mapping.getPropertyType(ExerciseWithExampleSolution_.EXAMPLE_SOLUTION).getReturnedClass()).isEqualTo(String.class);
+            assertThat(mapping.findAttributeMapping(ExerciseWithExampleSolution_.EXAMPLE_SOLUTION).getJavaType().getJavaTypeClass()).isEqualTo(String.class);
         }
         assertThat(mapping(TextExercise.class).getTableNames()).contains("exercise", "text_exercise_details");
     }

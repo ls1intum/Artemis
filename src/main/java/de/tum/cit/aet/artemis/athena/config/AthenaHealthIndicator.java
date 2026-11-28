@@ -85,7 +85,7 @@ public class AthenaHealthIndicator implements HealthIndicator {
             health = new ConnectorHealth(false, additionalInfo, ex);
         }
 
-        return health.asActuatorHealth();
+        return health.asOptionalActuatorHealth();
     }
 
     /**

@@ -21,7 +21,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { UserRegistrationModalComponent } from 'app/shared-ui/user-registration-modal/user-registration-modal.component';
 import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faDownload, faFileImport, faUserMinus, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { CourseRoleMember } from 'app/course/shared/course-group/course-role-member.model';
@@ -29,7 +29,7 @@ import { CourseRoleMember } from 'app/course/shared/course-group/course-role-mem
 @Component({
     selector: 'jhi-course-group',
     templateUrl: './course-group.component.html',
-    styleUrls: ['./course-group.component.scss'],
+    styleUrls: ['./course-group.component.css'],
     imports: [
         UsersImportDialogComponent,
         TranslateDirective,
@@ -200,16 +200,16 @@ export class CourseGroupComponent {
     }
 
     /**
-     * Remove user from course group.
+     * Remove the shown course role from a user.
      *
-     * @param member Member that should be removed from the currently viewed course group
+     * @param member Member who loses the currently viewed course role
      */
     removeFromGroup(member: CourseRoleMember): void {
         if (member.login) {
             this.removeUserFromGroup()(member.login).subscribe({
                 next: () => {
                     this.dialogErrorSource.next('');
-                    this.tableViewRef()?.reloadAfterRemoval();
+                    this.tableViewRef()?.reload({ rowsRemoved: 1 });
                 },
                 error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
             });

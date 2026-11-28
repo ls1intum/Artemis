@@ -18,7 +18,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
             <li class="point"></li>
         </ul>
     </div>`,
-    styleUrls: ['password-strength-bar.scss'],
+    styleUrls: ['password-strength-bar.css'],
     imports: [TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

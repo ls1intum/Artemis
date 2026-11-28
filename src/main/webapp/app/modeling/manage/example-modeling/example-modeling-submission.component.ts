@@ -39,7 +39,9 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ModelingEditorTopLeftDirective } from 'app/modeling/shared/modeling-editor/modeling-editor-top-left.directive';
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-workspace/assessment-workspace.component';
-import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -56,7 +58,7 @@ interface AssessmentSave {
 @Component({
     selector: 'jhi-example-modeling-submission',
     templateUrl: './example-modeling-submission.component.html',
-    styleUrls: ['./example-modeling-submission.component.scss'],
+    styleUrls: ['./example-modeling-submission.component.css'],
     imports: [
         TranslateDirective,
         FormsModule,
@@ -383,6 +385,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         }
         if (!this.hasValidFeedbackScores(assessment.feedbacks)) {
             this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
+            return EMPTY;
+        }
+        if (!this.modelingAssessmentService.isFeedbackTextValid(assessment.feedbacks)) {
+            this.alertService.error('artemisApp.modelingAssessmentEditor.messages.feedbackTextTooLong');
             return EMPTY;
         }
         const current = this.exampleSubmission();
