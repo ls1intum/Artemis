@@ -21,28 +21,27 @@
         <!-- Only this box scrolls, so the close button stays in the corner. The dialog panel is at most 90dvh tall
              including its 1px border; staying within that keeps the panel's own content area from scrolling as well. -->
         <div class="max-h-[min(40rem,calc(90dvh-2px))] overflow-y-auto p-10 [scrollbar-gutter:stable]">
-            <div class="mb-4! flex items-start gap-4!">
+            <div class="mb-4 flex items-start gap-4">
                 <!-- The top padding aligns the logo vertically with the header text. -->
                 <div class="pt-1.5">
                     <jhi-athena-logo [size]="40" />
                 </div>
                 <div class="flex-1">
-                    <!-- Bootstrap's heading styles are unlayered and beat Tailwind's, so size and weight need the important modifier. -->
-                    <h2 class="m-0 mb-1 text-2xl! font-semibold! text-(--body-color)" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.meetAthena"></h2>
+                    <h2 class="m-0 mb-1 text-2xl font-semibold" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.meetAthena"></h2>
                     <p class="m-0 mb-2 text-base text-(--body-color)" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.subtitle"></p>
                     <p class="m-0 text-sm text-(--text-body-secondary)" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.description"></p>
                 </div>
             </div>
 
             <!-- Like Iris, this keeps the 1px top border Bootstrap gives every hr and only sets its colour and spacing. -->
-            <hr class="my-8! border-(--border-color)! opacity-100" />
+            <hr class="my-8 border-(--border-color) opacity-100" />
 
             <!-- Section: What Athena can do -->
             <section>
-                <h3 class="m-0 mb-3! text-lg! font-semibold! text-(--body-color)" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.whatAthenaCanDo"></h3>
-                <div class="flex flex-col gap-5!">
+                <h3 class="m-0 mb-3! text-lg font-semibold" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.whatAthenaCanDo"></h3>
+                <div class="flex flex-col gap-5">
                     @for (card of whatAthenaCanDo; track card.titleKey) {
-                        <div class="flex items-start gap-4!">
+                        <div class="flex items-start gap-4">
                             <div class="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-(--primary)/10 text-(--primary)" aria-hidden="true">
                                 <fa-icon [icon]="card.icon" />
                             </div>
@@ -55,14 +54,14 @@
                 </div>
             </section>
 
-            <hr class="my-8! border-(--border-color)! opacity-100" />
+            <hr class="my-8 border-(--border-color) opacity-100" />
 
             <!-- Section: What to expect -->
             <section>
-                <h3 class="m-0 mb-3! text-lg! font-semibold! text-(--body-color)" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.whatToExpect"></h3>
-                <div class="flex flex-col gap-5!">
+                <h3 class="m-0 mb-3! text-lg font-semibold" jhiTranslate="artemisApp.course.athenaConfig.aboutAthenaModal.whatToExpect"></h3>
+                <div class="flex flex-col gap-5">
                     @for (card of whatToExpect; track card.titleKey) {
-                        <div class="flex items-start gap-4!">
+                        <div class="flex items-start gap-4">
                             <div
                                 class="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-(--hover-slightly-darker-body-bg) text-(--text-body-secondary)"
                                 aria-hidden="true"

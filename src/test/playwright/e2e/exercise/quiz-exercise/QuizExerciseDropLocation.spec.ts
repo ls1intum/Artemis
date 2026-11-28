@@ -15,6 +15,26 @@ test.describe('Quiz Exercise Drop Location Spec', { tag: '@slow' }, () => {
             await quizExerciseDragAndDropQuiz.createDnDQuiz('DnD Quiz Test');
         });
 
+        test('Edits a class through its edit popover inside the diagram dialog', async ({ quizExerciseDragAndDropQuiz }) => {
+            await quizExerciseDragAndDropQuiz.addClassFromPalette();
+            const nameField = await quizExerciseDragAndDropQuiz.openEditPopoverOfSelectedElement();
+
+            // click() only succeeds on the element that receives the pointer, so a popover painted
+            // behind the dialog fails here instead of passing a visibility check.
+            await nameField.click();
+            await expect(nameField).toBeFocused();
+            await nameField.fill('ShapeFactory');
+            await expect(nameField).toBeFocused();
+
+            await expect(quizExerciseDragAndDropQuiz.apollonEditor.getByText('ShapeFactory', { exact: true })).toBeVisible();
+
+            // The method row is the lowest field of the popover and the first to reach past the canvas
+            // towards the dialog footer, whose buttons must not take its clicks.
+            const methodName = quizExerciseDragAndDropQuiz.apollonEditor.getByRole('textbox', { name: 'Name', exact: true }).last();
+            await methodName.click();
+            await expect(methodName).toBeFocused();
+        });
+
         test('Checks drop locations', async ({ page, quizExerciseDragAndDropQuiz }) => {
             await quizExerciseDragAndDropQuiz.dragUsingCoordinates(0, 100);
             await quizExerciseDragAndDropQuiz.dragUsingCoordinates(410, 240);

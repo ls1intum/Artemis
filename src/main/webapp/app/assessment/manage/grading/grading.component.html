@@ -157,7 +157,7 @@
         (presentationsConfigChange)="onPresentationsConfigChange($event)"
     />
 </div>
-<div class="mt-6 mb-4 flex flex-wrap items-end justify-between gap-4">
+<div class="mt-6 mb-6 flex flex-wrap items-end justify-between gap-6">
     <tumaet-ui-select-button
         id="tab-bar"
         data-testid="grading-view-mode"
@@ -371,7 +371,7 @@
             />
         </td>
     }
-    <td class="text-end">
+    <td class="text-right">
         <button (click)="deleteGradeStep(i)" type="button" tumAetUiButton severity="danger" size="small">
             <fa-icon [icon]="faTimes" />
             <span jhiTranslate="artemisApp.gradingSystem.delete"></span>
@@ -435,13 +435,13 @@
     </div>
     <div>
         @if (shouldShowGradingStepsAboveMaxPointsWarning()) {
-            <tumaet-ui-message class="mb-4!" severity="info">
+            <tumaet-ui-message class="mb-4" severity="info">
                 <fa-icon [icon]="faInfo" />
                 <span jhiTranslate="artemisApp.gradingSystem.gradingStepsAboveMaxPointsWarning"></span>
             </tumaet-ui-message>
         }
         @if (maxPointsErrorMessage() || invalidGradeStepsMessage() || presentationsConfigErrorMessage()) {
-            <tumaet-ui-message class="mb-4!" severity="warn">
+            <tumaet-ui-message class="mb-4" severity="warn">
                 <fa-icon [icon]="faExclamationTriangle" />
                 <span>
                     {{ maxPointsErrorMessage() || invalidGradeStepsMessage() || presentationsConfigErrorMessage() }}

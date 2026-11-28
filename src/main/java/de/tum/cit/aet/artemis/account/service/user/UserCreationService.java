@@ -164,7 +164,6 @@ public class UserCreationService {
 
     /**
      * Create user based on UserDTO. If the user management is done internally by Artemis, also create the user in the (optional) version control system
-     * In case user management is done externally, the users groups are configured in the external user management as well.
      *
      * @param userDTO user data transfer object
      * @return newly created user
@@ -227,23 +226,29 @@ public class UserCreationService {
 
     /**
      * Update basic information (first name, last name, email, language) for the current user.
-     * This method is typically invoked by the user
+     * This method is typically invoked by the user. The profile picture is not part of it: it is owned by the server and only changes through the upload and removal of the
+     * picture, so a value sent with the account information is not taken over.
      *
      * @param firstName first name of user
      * @param lastName  last name of user
-     * @param email     email id of user
+     * @param email     email id of user, or null to leave the address of the account as it is. An account whose address is changed by confirmation must not
+     *                      pass one: it would be compared with the address the account has now, and an address that was confirmed after the caller read the
+     *                      account would be written back as the old one.
      * @param langKey   language key
-     * @param imageUrl  image URL of user
      */
-    public void updateBasicInformationOfCurrentUser(String firstName, String lastName, String email, String langKey, String imageUrl) {
+    public void updateBasicInformationOfCurrentUser(String firstName, String lastName, @Nullable String email, String langKey) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
+            if (email == null) {
+                // The address is not part of this save: only the columns of the form are written, so nothing else is written back as it was read, in particular not an address
+                // that a confirmation applied after the account was read.
+                userRepository.updateBasicInformation(user.getId(), firstName, lastName, langKey, user.getLogin(), Instant.now());
+                log.info("Changed Information for User: {}", user.getLogin());
+                return;
+            }
             updateEmailIfChanged(user, email);
             user.setFirstName(firstName);
             user.setLastName(lastName);
             user.setLangKey(langKey);
-            if (imageUrl != null) {
-                user.setImageUrl(imageUrl);
-            }
             saveUser(user);
             log.info("Changed Information for User: {}", user);
         });
@@ -265,7 +270,7 @@ public class UserCreationService {
      */
     @NonNull
     public User updateUser(@NonNull User user, ManagedUserVM updatedUserDTO) {
-        updateEmailIfChanged(user, updatedUserDTO.getEmail());
+        boolean emailChangedByAdministrator = updateEmailIfChanged(user, updatedUserDTO.getEmail());
         user.setLogin(updatedUserDTO.getLogin().toLowerCase(Locale.ENGLISH));
         user.setFirstName(updatedUserDTO.getFirstName());
         user.setLastName(updatedUserDTO.getLastName());
@@ -319,6 +324,11 @@ public class UserCreationService {
         log.debug("Changed Information for User: {}", user);
 
         User savedUser = saveUser(user);
+        if (emailChangedByAdministrator || isPasswordBeingChanged) {
+            // The administrator has decided about the address or taken over the password, so a request the account made earlier no
+            // longer describes what it should become, and must not be confirmable afterwards.
+            userRecoveryKeyService.clearPendingEmailChange(savedUser.getId());
+        }
         if (credentialsChanged) {
             // Stops sessions established before this change from being extended any further. Stamped after the save so it
             // is keyed on a persisted id, and outside the entity so the timestamp is not carried on every user load.

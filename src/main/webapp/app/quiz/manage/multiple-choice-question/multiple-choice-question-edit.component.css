@@ -1,0 +1,17 @@
+.edit-mc-question .question-card-header {
+    width: 100%;
+    padding: 15px 5px 5px;
+}
+
+.edit-mc-question .question-card-header .question-collapse {
+    width: 3.25rem;
+}
+
+.edit-mc-question .question-card-header-reevaluation {
+    width: 100%;
+    padding: 0.6rem 0.85rem;
+}
+
+.edit-mc-question .question-card-header-reevaluation .question-collapse {
+    width: 3.25rem;
+}

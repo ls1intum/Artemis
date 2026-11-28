@@ -3,7 +3,7 @@ import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/ex
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExerciseHeadersInformationComponent, QuizLiveHeaderInfo } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { ExerciseHeaderActionsComponent } from 'app/exercise/exercise-headers/exercise-header-actions/exercise-header-actions.component';
@@ -59,7 +59,6 @@ export function pillsFitInTitleBar(barWidth: number, fixedContentWidth: number, 
         ExerciseHeadersInformationComponent,
         ProgrammingBuildNotificationsComponent,
     ],
-    styleUrl: './exercise-header.component.scss',
 })
 export class ExerciseHeaderComponent {
     private readonly changeDetectorRef = inject(ChangeDetectorRef);

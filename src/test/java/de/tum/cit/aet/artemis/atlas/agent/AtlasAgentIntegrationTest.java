@@ -1,34 +1,23 @@
 package de.tum.cit.aet.artemis.atlas.agent;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import javax.sql.DataSource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
-import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepositoryDialect;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.session.CreateSessionRequest;
+import org.springframework.ai.session.SessionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -57,30 +46,21 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private Course course;
 
-    private Map<String, List<Message>> chatMemoryStorage;
+    @Autowired
+    private SessionService sessionService;
 
     @BeforeEach
     void setupTestScenario() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+    }
 
-        // Set up chatClient.mutate() to return a real builder backed by the mock ChatModel
-        when(chatClient.mutate()).thenAnswer(inv -> ChatClient.builder(chatModel));
-
-        // Set up stateful mock for ChatMemory to actually store and retrieve messages
-        chatMemoryStorage = new HashMap<>();
-
-        doAnswer(invocation -> {
-            String sessionId = invocation.getArgument(0);
-            Message message = invocation.getArgument(1);
-            chatMemoryStorage.computeIfAbsent(sessionId, key -> new ArrayList<>()).add(message);
-            return null;
-        }).when(chatMemory).add(anyString(), any(Message.class));
-
-        when(chatMemory.get(anyString())).thenAnswer(invocation -> {
-            String sessionId = invocation.getArgument(0);
-            return chatMemoryStorage.getOrDefault(sessionId, new ArrayList<>());
-        });
+    /** Puts the messages into the session of the chat agent, as if they had been exchanged with it. */
+    private void addToConversation(String sessionId, Message... messages) {
+        sessionService.findOrCreate(CreateSessionRequest.builder().id(sessionId).build());
+        for (Message message : messages) {
+            sessionService.appendMessage(sessionId, message);
+        }
     }
 
     @Test
@@ -247,9 +227,9 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
             var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
             String sessionId = "course_%d_user_%d".formatted(course.getId(), instructor.getId());
 
-            // Manually populate chat memory to test history retrieval
-            chatMemory.add(sessionId, new UserMessage("First user message"));
-            chatMemory.add(sessionId, new AssistantMessage("First assistant response"));
+            // Manually populate the session memory to test history retrieval
+            addToConversation(sessionId, new UserMessage("First user message"));
+            addToConversation(sessionId, new AssistantMessage("First assistant response"));
 
             request.performMvcRequest(get("/api/atlas/agent/courses/{courseId}/chat/history", course.getId())).andExpect(status().isOk()).andExpect(jsonPath("$").isArray())
                     .andExpect(jsonPath("$.length()").value(2)).andExpect(jsonPath("$[0].isUser").value(true)).andExpect(jsonPath("$[0].content").value("First user message"))
@@ -262,11 +242,11 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
             var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
             String sessionId = "course_%d_user_%d".formatted(course.getId(), instructor.getId());
 
-            // Manually populate chat memory with multiple conversation turns
-            chatMemory.add(sessionId, new UserMessage("Tell me about competencies"));
-            chatMemory.add(sessionId, new AssistantMessage("Competencies are learning objectives"));
-            chatMemory.add(sessionId, new UserMessage("How do I create them?"));
-            chatMemory.add(sessionId, new AssistantMessage("You can create them via the UI"));
+            // Manually populate the session memory with multiple conversation turns
+            addToConversation(sessionId, new UserMessage("Tell me about competencies"));
+            addToConversation(sessionId, new AssistantMessage("Competencies are learning objectives"));
+            addToConversation(sessionId, new UserMessage("How do I create them?"));
+            addToConversation(sessionId, new AssistantMessage("You can create them via the UI"));
 
             request.performMvcRequest(get("/api/atlas/agent/courses/{courseId}/chat/history", course.getId())).andExpect(status().isOk()).andExpect(jsonPath("$").isArray())
                     .andExpect(jsonPath("$.length()").value(4)).andExpect(jsonPath("$[0].isUser").value(true)).andExpect(jsonPath("$[1].isUser").value(false))
@@ -279,9 +259,9 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
             var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
             String sessionId = "course_%d_user_%d".formatted(course.getId(), instructor.getId());
 
-            // Add clean messages to chat memory (no markers)
-            chatMemory.add(sessionId, new UserMessage("Create a competency"));
-            chatMemory.add(sessionId, new AssistantMessage("Here are the competencies"));
+            // Add clean messages to the session memory (no markers)
+            addToConversation(sessionId, new UserMessage("Create a competency"));
+            addToConversation(sessionId, new AssistantMessage("Here are the competencies"));
 
             // Store preview data in cache for the first assistant message (index 0)
             var competencyPreviews = List.of(new CompetencyPreviewDTO("Test Competency", "Test Description", "APPLY", null, false));
@@ -301,8 +281,8 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
             String sessionId = "course_%d_user_%d".formatted(course.getId(), instructor.getId());
 
             // Test message without preview data (no cache entry)
-            chatMemory.add(sessionId, new UserMessage("Simple question"));
-            chatMemory.add(sessionId, new AssistantMessage("Simple response without any preview data"));
+            addToConversation(sessionId, new UserMessage("Simple question"));
+            addToConversation(sessionId, new AssistantMessage("Simple response without any preview data"));
 
             request.performMvcRequest(get("/api/atlas/agent/courses/{courseId}/chat/history", course.getId())).andExpect(status().isOk()).andExpect(jsonPath("$").isArray())
                     .andExpect(jsonPath("$.length()").value(2)).andExpect(jsonPath("$[1].content").value("Simple response without any preview data"))
@@ -398,39 +378,35 @@ class AtlasAgentIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Nested
-    class JdbcChatMemorySchema {
-
-        @Autowired
-        private DataSource dataSource;
+    class SessionMemorySchema {
 
         @Autowired
         private PlatformTransactionManager transactionManager;
 
         /**
-         * Round-trip through the real {@link JdbcChatMemoryRepository} (the bean is mocked in integration tests)
-         * to verify that the Liquibase schema of {@code spring_ai_chat_memory} matches the SQL issued by the
-         * Spring AI JDBC dialect — e.g. the {@code sequence_id} column introduced with Spring AI 2.0.0-RC1.
+         * Round-trip through the real {@link SessionService} on the Liquibase schema of {@code AI_SESSION} and {@code AI_SESSION_EVENT}, to verify that the tables match the SQL
+         * of the Spring AI session repository: the order of the events, a message without a user and the cascade of the delete.
          * <p>
-         * Note: the delete runs inside a managed transaction because the Hikari pool is configured with
-         * {@code auto-commit: false} — saveAll commits via the repository's internal transaction template,
-         * but deleteByConversationId issues a plain statement that would otherwise be rolled back on
-         * connection return.
+         * Note: the delete runs inside a managed transaction because the Hikari pool is configured with {@code auto-commit: false}. The repository commits its
+         * appends with its own transaction template, but {@code delete} issues a plain statement that would otherwise be rolled back on connection return.
          */
         @Test
         void shouldSaveAndReadConversationWithRealJdbcRepository() {
-            var repository = JdbcChatMemoryRepository.builder().jdbcTemplate(new JdbcTemplate(dataSource)).dialect(JdbcChatMemoryRepositoryDialect.from(dataSource)).build();
-            var conversationId = "course_1_user_1_schema_test_" + java.util.UUID.randomUUID();
+            var sessionId = "course_1_user_1_schema_test_" + java.util.UUID.randomUUID();
 
-            repository.saveAll(conversationId, List.of(new UserMessage("What is a competency?"), new AssistantMessage("A competency is a learning objective.")));
-            List<Message> messages = repository.findByConversationId(conversationId);
+            addToConversation(sessionId, new UserMessage("What is a competency?"), new AssistantMessage("A competency is a learning objective."));
+            List<Message> messages = sessionService.getMessages(sessionId);
 
             assertThat(messages).hasSize(2);
             assertThat(messages.getFirst()).isInstanceOf(UserMessage.class);
             assertThat(messages.getFirst().getText()).isEqualTo("What is a competency?");
             assertThat(messages.getLast()).isInstanceOf(AssistantMessage.class);
+            assertThat(messages.getLast().getText()).isEqualTo("A competency is a learning objective.");
+            assertThat(sessionService.getEventVersion(sessionId)).isEqualTo(2);
 
-            new TransactionTemplate(transactionManager).executeWithoutResult(status -> repository.deleteByConversationId(conversationId));
-            assertThat(repository.findByConversationId(conversationId)).isEmpty();
+            new TransactionTemplate(transactionManager).executeWithoutResult(status -> sessionService.delete(sessionId));
+            assertThat(sessionService.findById(sessionId)).isNull();
+            assertThat(sessionService.getEvents(sessionId)).isEmpty();
         }
     }
 }

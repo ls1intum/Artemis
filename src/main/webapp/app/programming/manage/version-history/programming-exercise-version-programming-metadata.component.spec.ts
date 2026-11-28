@@ -5,6 +5,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ActivatedRoute } from '@angular/router';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { vi } from 'vitest';
+import dayjs from 'dayjs/esm';
 
 describe('ProgrammingExerciseVersionProgrammingMetadataComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseVersionProgrammingMetadataComponent>;
@@ -116,6 +117,29 @@ describe('ProgrammingExerciseVersionProgrammingMetadataComponent', () => {
     it('should use fallback label when translation key is not found', () => {
         const branchField = component.buildConfigurationFields().find((f) => f.translatedLabel === 'Branch');
         expect(branchField).toBeDefined();
+    });
+
+    it('should show the build time window of the snapshot', () => {
+        fixture.componentRef.setInput('programmingData', {
+            programmingLanguage: 'JAVA',
+            buildConfig: { advancedSettings: { buildTimeWindow: { start: '2026-10-01T10:00:00Z', end: '2026-10-01T12:00:00Z' } } },
+        });
+        fixture.detectChanges();
+
+        const fields = component.buildConfigurationFields();
+        const startField = fields.find((f) => f.translatedLabel.includes('buildTimeWindow.start'));
+        const endField = fields.find((f) => f.translatedLabel.includes('buildTimeWindow.end'));
+        expect(startField?.isEmpty).toBe(false);
+        expect(startField?.displayValue).toBe(dayjs('2026-10-01T10:00:00Z').format('MMM D, YYYY HH:mm'));
+        expect(endField?.displayValue).toBe(dayjs('2026-10-01T12:00:00Z').format('MMM D, YYYY HH:mm'));
+    });
+
+    it('should show dash placeholders when the snapshot has no build time window', () => {
+        const fields = component.buildConfigurationFields();
+
+        const windowFields = fields.filter((f) => f.translatedLabel.includes('buildTimeWindow'));
+        expect(windowFields).toHaveLength(2);
+        expect(windowFields.every((f) => f.isEmpty && f.displayValue === '-')).toBe(true);
     });
 
     it('should show dash placeholder for missing values', () => {

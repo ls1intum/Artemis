@@ -21,10 +21,12 @@ import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model';
-import { TumAetUiConfirmationService, TumAetUiTableQueryEvent } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiTableQueryEvent } from '@tumaet/ui-angular/table';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
 import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('ExamStudentsComponent', () => {
     const course = { id: 1 } as Course;
@@ -177,9 +179,9 @@ describe('ExamStudentsComponent', () => {
             expect(component.isTestExam()).toBe(false);
         });
 
-        it('isTestExam should be true when exam.testExam is set', () => {
+        it('isTestExam should be true when examMode is TEST', () => {
             fixture.detectChanges();
-            component.exam.set({ ...examWithCourse, testExam: true });
+            component.exam.set({ ...examWithCourse, examMode: ExamMode.TEST });
             expect(component.isTestExam()).toBe(true);
         });
 

@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TumAetUiButtonSeverity } from '@tumaet/ui-angular';
+import { TumAetUiButtonSeverity } from '@tumaet/ui-angular/button';
 import { ExerciseActionButtonComponent } from './exercise-action-button.component';
 
 // The component's attribute selector must be composed on a real native button to exercise disabled clicks.

@@ -1,46 +1,23 @@
+import { LectureUnitApi } from 'app/openapi/api/lecture-unit-api';
+import type { LectureUnitCombinedStatus } from 'app/openapi/model/lecture-unit-combined-status';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { LectureUnit, LectureUnitForLearningPathNodeDetailsDTO, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
+import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { onError } from 'app/foundation/util/global.utils';
-import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { Service, inject } from '@angular/core';
 import { AttachmentVideoUnit, TranscriptionStatus } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
-import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { convertDateFromClient, convertDateFromServer } from 'app/foundation/util/date.utils';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
-
-type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
 
 @Service()
 export class LectureUnitService {
-    private httpClient = inject(HttpClient);
-    private attachmentService = inject(AttachmentService);
+    private lectureUnitApi = inject(LectureUnitApi);
     private alertService = inject(AlertService);
-
-    private resourceURL = 'api/lecture';
-
-    updateOrder(lectureId: number, lectureUnits: LectureUnit[]): Observable<HttpResponse<LectureUnit[]>> {
-        // Send an ordered list of ids of the lecture units
-        // This also overcomes circular structure issues with participations and categories in exercise units
-        const lectureUnitIds = lectureUnits.map((lectureUnit) => lectureUnit.id);
-        return this.httpClient
-            .put<LectureUnit[]>(`${this.resourceURL}/lectures/${lectureId}/lecture-units-order`, lectureUnitIds, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertLectureUnitResponseArrayDatesFromServer(res)));
-    }
-
-    delete(lectureUnitId: number, lectureId: number, deleteTumLiveRecordings = false) {
-        const params = deleteTumLiveRecordings ? new HttpParams().set('deleteTumLiveRecordings', 'true') : undefined;
-        return this.httpClient.delete(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}`, { params, observe: 'response' });
-    }
 
     completeLectureUnit(lecture: Lecture, event: LectureUnitCompletionEvent, onSuccess?: () => void): void {
         if (event.lectureUnit.visibleToStudents && event.lectureUnit.completed !== event.completed) {
-            this.setCompletion(event.lectureUnit.id!, lecture.id!, event.completed).subscribe({
+            this.lectureUnitApi.completeLectureUnit(event.lectureUnit.id!, lecture.id!, event.completed).subscribe({
                 next: () => {
                     event.lectureUnit.completed = event.completed;
                     // Callers hold the unit in a signal; the callback lets them publish a new reference so the UI updates (zoneless change detection).
@@ -49,84 +26,6 @@ export class LectureUnitService {
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
         }
-    }
-
-    setCompletion(lectureUnitId: number, lectureId: number, completed: boolean): Observable<HttpResponse<void>> {
-        const params = new HttpParams().set('completed', completed.toString());
-        return this.httpClient.post<void>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/completion`, null, {
-            params,
-            observe: 'response',
-        });
-    }
-
-    convertLectureUnitDatesFromClient<T extends LectureUnit>(lectureUnit: T): T {
-        if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-            if ((lectureUnit as AttachmentVideoUnit).attachment) {
-                (lectureUnit as AttachmentVideoUnit).attachment = this.attachmentService.convertAttachmentDatesFromClient((lectureUnit as AttachmentVideoUnit).attachment!);
-                return lectureUnit;
-            }
-        } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
-            if ((lectureUnit as ExerciseUnit).exercise) {
-                (lectureUnit as ExerciseUnit).exercise = ExerciseService.convertExerciseDatesFromClient((lectureUnit as ExerciseUnit).exercise!);
-                ExerciseService.stringifyExerciseCategories((lectureUnit as ExerciseUnit).exercise!);
-                return lectureUnit;
-            }
-        }
-        return cloneWith(lectureUnit, {
-            releaseDate: convertDateFromClient(lectureUnit.releaseDate),
-        });
-    }
-
-    convertLectureUnitResponseDatesFromServer<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
-        if (res.body) {
-            // Convert the unit's own release date for every type so the raw ISO string from the server never reaches the date picker (e.g. when editing an attachment/video unit).
-            res.body.releaseDate = convertDateFromServer(res.body.releaseDate);
-            if (res.body.type === LectureUnitType.ATTACHMENT_VIDEO) {
-                if ((res.body as AttachmentVideoUnit).attachment) {
-                    (res.body as AttachmentVideoUnit).attachment = this.attachmentService.convertAttachmentFromServer((res.body as AttachmentVideoUnit).attachment);
-                }
-            } else if (res.body.type === LectureUnitType.EXERCISE) {
-                if ((res.body as ExerciseUnit).exercise) {
-                    (res.body as ExerciseUnit).exercise = ExerciseService.convertExerciseDatesFromServer((res.body as ExerciseUnit).exercise);
-                    ExerciseService.parseExerciseCategories((res.body as ExerciseUnit).exercise);
-                }
-            }
-        }
-        return res;
-    }
-
-    convertLectureUnitDateFromServer<T extends LectureUnit>(lectureUnit: T): T {
-        // Convert the unit's own release date for every type so the raw ISO string from the server never reaches the date picker (e.g. when editing an attachment/video unit).
-        lectureUnit.releaseDate = convertDateFromServer(lectureUnit.releaseDate);
-        if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
-            if ((lectureUnit as AttachmentVideoUnit).attachment) {
-                (lectureUnit as AttachmentVideoUnit).attachment = this.attachmentService.convertAttachmentFromServer((lectureUnit as AttachmentVideoUnit).attachment);
-            }
-        } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
-            if ((lectureUnit as ExerciseUnit).exercise) {
-                (lectureUnit as ExerciseUnit).exercise = ExerciseService.convertExerciseDatesFromServer((lectureUnit as ExerciseUnit).exercise);
-                ExerciseService.parseExerciseCategories((lectureUnit as ExerciseUnit).exercise);
-            }
-        }
-        return lectureUnit;
-    }
-
-    convertLectureUnitResponseArrayDatesFromServer<T extends LectureUnit>(res: HttpResponse<T[]>): HttpResponse<T[]> {
-        if (res.body) {
-            res.body.forEach((lectureUnit: LectureUnit) => {
-                this.convertLectureUnitDateFromServer(lectureUnit);
-            });
-        }
-        return res;
-    }
-
-    convertLectureUnitArrayDatesFromServer<T extends LectureUnit>(res: T[]): T[] {
-        if (res) {
-            res.forEach((lectureUnit: LectureUnit) => {
-                this.convertLectureUnitDateFromServer(lectureUnit);
-            });
-        }
-        return res;
     }
 
     getLectureUnitName(lectureUnit: LectureUnit) {
@@ -148,36 +47,6 @@ export class LectureUnitService {
             return lectureUnit.releaseDate;
         }
     }
-
-    getLectureUnitForLearningPathNodeDetails(lectureUnitId: number) {
-        return this.httpClient.get<LectureUnitForLearningPathNodeDetailsDTO>(`${this.resourceURL}/lecture-units/${lectureUnitId}/for-learning-path-node-details`, {
-            observe: 'response',
-        });
-    }
-
-    getLectureUnitById(lectureUnitId: number): Observable<LectureUnit> {
-        return this.httpClient.get<LectureUnit>(`${this.resourceURL}/lecture-units/${lectureUnitId}`);
-    }
-
-    /**
-     * Retry processing for a failed lecture unit.
-     * @param lectureId the ID of the lecture
-     * @param lectureUnitId the ID of the lecture unit
-     * @returns Observable with the updated combined status
-     */
-    retryProcessing(lectureId: number, lectureUnitId: number): Observable<LectureUnitCombinedStatus> {
-        return this.httpClient.post<LectureUnitCombinedStatus>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/${lectureUnitId}/retry-processing`, null);
-    }
-
-    /**
-     * Get the combined processing and transcription status for all attachment video units in a lecture.
-     * This bulk endpoint reduces the number of HTTP requests from 2N to 1 when loading the lecture unit management view.
-     * @param lectureId the ID of the lecture
-     * @returns Observable with the list of combined statuses
-     */
-    getUnitStatuses(lectureId: number): Observable<LectureUnitCombinedStatus[]> {
-        return this.httpClient.get<LectureUnitCombinedStatus[]>(`${this.resourceURL}/lectures/${lectureId}/lecture-units/statuses`);
-    }
 }
 
 /**
@@ -187,8 +56,8 @@ export class LectureUnitService {
  */
 export interface LectureUnitProcessingStatus {
     lectureUnitId: number;
-    phase: ProcessingPhase;
-    retryCount: number;
+    phase?: ProcessingPhase;
+    retryCount?: number;
     startedAt?: string;
     errorKey?: string;
     stageName?: string;
@@ -218,30 +87,19 @@ export enum ProcessingPhase {
 }
 
 /**
- * DTO representing the combined processing and transcription status of a lecture unit.
- * Used by the bulk status endpoint to reduce HTTP requests.
- */
-export interface LectureUnitCombinedStatus {
-    lectureUnitId: number;
-    processingPhase: ProcessingPhase;
-    retryCount: number;
-    startedAt?: string;
-    processingErrorKey?: string;
-    transcriptionStatus?: TranscriptionStatus;
-    stageName?: string;
-    stageProgress?: number;
-    stageTotal?: number;
-    lastHeartbeatAt?: string;
-}
-
-/**
  * Map a combined status (REST or websocket payload) to the processing status the UI keeps per unit.
  * The single place new observability fields have to be threaded through when the wire format grows.
+ *
+ * @param status the generated combined status
+ * @returns the processing status, or undefined for a payload that names no lecture unit
  */
-export function toProcessingStatus(status: LectureUnitCombinedStatus): LectureUnitProcessingStatus {
+export function toProcessingStatus(status: LectureUnitCombinedStatus): LectureUnitProcessingStatus | undefined {
+    if (status.lectureUnitId === undefined) {
+        return undefined;
+    }
     return {
         lectureUnitId: status.lectureUnitId,
-        phase: status.processingPhase,
+        phase: status.processingPhase && ProcessingPhase[status.processingPhase],
         retryCount: status.retryCount,
         startedAt: status.startedAt,
         errorKey: status.processingErrorKey,
@@ -251,4 +109,14 @@ export function toProcessingStatus(status: LectureUnitCombinedStatus): LectureUn
         lastHeartbeatAt: status.lastHeartbeatAt,
         receivedAt: Date.now(),
     };
+}
+
+/**
+ * Map the transcription status of a combined status to the client enum.
+ *
+ * @param status the generated combined status
+ * @returns the transcription status, or undefined when the unit has no transcription
+ */
+export function toTranscriptionStatus(status: LectureUnitCombinedStatus): TranscriptionStatus | undefined {
+    return status.transcriptionStatus && TranscriptionStatus[status.transcriptionStatus];
 }

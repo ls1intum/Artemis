@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { LectureResolve } from 'app/lecture/manage/services/lecture-resolve.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
@@ -24,7 +23,7 @@ describe('Resolvers', () => {
 
         it('should return lecture when lectureId param is present', () => {
             const mockLecture = new Lecture();
-            vi.spyOn(service, 'find').mockReturnValue(of(new HttpResponse({ body: mockLecture, status: 200 })));
+            vi.spyOn(service, 'find').mockReturnValue(of(mockLecture));
 
             route.params = { lectureId: 42 };
             let result: Lecture | undefined;

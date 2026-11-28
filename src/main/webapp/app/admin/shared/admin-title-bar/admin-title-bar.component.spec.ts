@@ -48,7 +48,7 @@ describe('AdminTitleBarComponent', () => {
         const titleBar = fixture.debugElement.query(By.css('#admin-title-bar'));
         expect(titleBar).toBeTruthy();
         // Assert the semantic brand class only; layout is Tailwind and must not be asserted on (brittle).
-        expect(titleBar.classes['module-bg']).toBeTruthy();
+        expect(titleBar.classes['bg-(--module-bg)']).toBeTruthy();
     });
 
     it('should display default title when no custom title template is provided', () => {

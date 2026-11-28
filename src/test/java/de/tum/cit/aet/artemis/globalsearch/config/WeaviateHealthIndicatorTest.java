@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.Status;
 
+import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import io.weaviate.client6.v1.api.WeaviateClient;
 
 /**
@@ -28,7 +29,7 @@ class WeaviateHealthIndicatorTest {
 
     @BeforeEach
     void setUp() {
-        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http", "Artemis_", "none", null, null, null, null, null);
+        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http", "Artemis_", "none", null, null, null);
         healthIndicator = new WeaviateHealthIndicator(client, properties);
     }
 
@@ -43,23 +44,23 @@ class WeaviateHealthIndicatorTest {
     }
 
     @Test
-    void healthDown_whenWeaviateReportsNotReady() throws Exception {
+    void healthDegraded_whenWeaviateReportsNotReady() throws Exception {
         when(client.isReady()).thenReturn(false);
 
         Health health = healthIndicator.health();
 
-        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(health.getStatus()).isEqualTo(ConnectorHealth.DEGRADED);
         assertThat(health.getDetails()).containsEntry("Address", EXPECTED_ADDRESS);
         assertThat(health.getDetails()).containsEntry("ready", false);
     }
 
     @Test
-    void healthDown_whenIsReadyThrows() throws Exception {
+    void healthDegraded_whenIsReadyThrows() throws Exception {
         when(client.isReady()).thenThrow(new RuntimeException("Connection refused"));
 
         Health health = healthIndicator.health();
 
-        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(health.getStatus()).isEqualTo(ConnectorHealth.DEGRADED);
         assertThat(health.getDetails()).containsEntry("Address", EXPECTED_ADDRESS);
         assertThat(health.getDetails()).containsKey("error");
     }

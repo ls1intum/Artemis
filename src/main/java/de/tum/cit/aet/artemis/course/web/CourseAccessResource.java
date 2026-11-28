@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.CourseRoleMemberDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseRoleMembersSearchDTO;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
@@ -211,7 +211,7 @@ public class CourseAccessResource {
     }
 
     /**
-     * GET /courses/:courseId/students : Returns all users that belong to the student group of the course
+     * GET /courses/:courseId/students : Returns all users with the student role in the course
      *
      * @param courseId the id of the course
      * @return list of users with status 200 (OK)
@@ -226,7 +226,7 @@ public class CourseAccessResource {
     }
 
     /**
-     * GET /courses/:courseId/students/search : Search all users by login or name that belong to the student group of the course
+     * GET /courses/:courseId/students/search : Search all users with the student role in the course by login or name
      *
      * @param courseId    the id of the course
      * @param loginOrName the login or name by which to search users
@@ -254,7 +254,7 @@ public class CourseAccessResource {
     }
 
     /**
-     * GET /courses/:courseId/users/search : Search all users by login or name that belong to the specified groups of the course
+     * GET /courses/:courseId/users/search : Search all users with one of the specified roles in the course by login or name. A search for tutors also returns editors.
      *
      * @param courseId    the id of the course
      * @param loginOrName the login or name by which to search users (at least three characters when searching for students)
@@ -313,7 +313,7 @@ public class CourseAccessResource {
     }
 
     /**
-     * GET /courses/:courseId/tutors : Returns all users that belong to the tutor group of the course
+     * GET /courses/:courseId/tutors : Returns all users with the tutor role in the course
      *
      * @param courseId the id of the course
      * @return list of users with status 200 (OK)
@@ -328,7 +328,7 @@ public class CourseAccessResource {
     }
 
     /**
-     * GET /courses/:courseId/editors : Returns all users that belong to the editor group of the course
+     * GET /courses/:courseId/editors : Returns all users with the editor role in the course
      *
      * @param courseId the id of the course
      * @return list of users with status 200 (OK)
@@ -343,7 +343,7 @@ public class CourseAccessResource {
     }
 
     /**
-     * GET /courses/:courseId/instructors : Returns all users that belong to the instructor group of the course
+     * GET /courses/:courseId/instructors : Returns all users with the instructor role in the course
      *
      * @param courseId the id of the course
      * @return list of users with status 200 (OK)
@@ -585,7 +585,7 @@ public class CourseAccessResource {
             @Header(name = HttpHeaders.LINK, description = "Pagination links", schema = @Schema(type = "string")) })
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<CourseRoleMemberDTO>> getPagedUsersInCourseRole(@PathVariable Long courseId,
-            @Parameter(description = COURSE_ROLE_SLUG) @PathVariable String courseRoleSlug, @ParameterObject @Valid CourseRoleMembersSearchDTO search) {
+            @Parameter(description = COURSE_ROLE_SLUG) @PathVariable String courseRoleSlug, @ParameterObject @Valid PagedSearchDTO search) {
         log.debug("REST request to get paged users in course role for course: {}, role: {}", courseId, courseRoleSlug);
         courseRepository.findByIdElseThrow(courseId);
         CourseRole role = resolveCourseRole(courseRoleSlug);

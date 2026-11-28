@@ -1,24 +1,22 @@
 @if (isLoading()) {
-    <div class="row justify-content-center p-2">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden" jhiTranslate="loading"></span>
-        </div>
+    <div class="flex justify-center p-2">
+        <tumaet-ui-progress-spinner data-testid="loading-spinner" [ariaLabel]="'loading' | artemisTranslate" />
     </div>
 } @else if (learningPathsEnabled()) {
-    <div class="col">
-        <div class="row w-100 p-0 m-0 gap-3">
+    <div>
+        <div class="flex w-full flex-wrap gap-4">
             <!-- TODO: The following section has been commented out as the functional implementation has not been decided yet. -->
-            <!-- <div class="col p-2 learning-paths-container">-->
+            <!-- <div class="grow basis-0 bg-surface-raised p-2">-->
             <!--     <jhi-learning-paths-configuration [courseId]="courseId()" />-->
             <!-- </div>-->
-            <div class="col p-2 learning-paths-container">
+            <div class="grow basis-0 bg-surface-raised p-2">
                 <jhi-learning-paths-state [courseId]="courseId()" />
             </div>
-            <div class="col-6 p-2 learning-paths-container">
+            <div class="w-1/2 shrink-0 bg-surface-raised p-2">
                 <jhi-learning-paths-table [courseId]="courseId()" />
             </div>
         </div>
-        <div class="row w-100 p-0 m-0 g-3 learning-paths-container">
+        <div class="w-full bg-surface-raised px-2 pt-4">
             <jhi-learning-paths-analytics [courseId]="courseId()" />
         </div>
     </div>

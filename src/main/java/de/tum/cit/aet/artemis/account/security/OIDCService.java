@@ -101,8 +101,12 @@ public class OIDCService extends OidcUserService {
             }
         }
         else {
-            // Update user information and store changes if necessary
             actualUser = localUser.get();
+        }
+        // Both paths end here, so an account that was re-read after a concurrent creation is checked as well. This happens before any claim is applied to it.
+        rejectInternalAccount(actualUser, username);
+        if (localUser.isPresent()) {
+            // Update user information and store changes if necessary
             boolean isUpdated = applyProfileClaims(actualUser, oidcUser);
             boolean isMatriculationNumberUpdated = updateMatriculationNumberIfChanged(actualUser, oidcUser.getAttribute(matriculationClaimKey));
             if (isUpdated || isMatriculationNumberUpdated) {
@@ -115,6 +119,21 @@ public class OIDCService extends OidcUserService {
             throw new OAuth2AuthenticationException(new OAuth2Error("user_deactivated"), "User account is deactivated.");
         }
         return oidcUser;
+    }
+
+    /**
+     * Refuses the sign-in to an internal account. An internal account has a password of its own in Artemis and is not linked to the identity provider, so the provider does not
+     * sign in to it.
+     *
+     * @param user     the account that the asserted login belongs to
+     * @param username the asserted login, used for the log entry
+     * @throws OAuth2AuthenticationException if the account is internal
+     */
+    private void rejectInternalAccount(User user, String username) {
+        if (user.isInternal()) {
+            log.warn("OIDC login refused: the account '{}' is an internal account with its own password and cannot be used with an external login.", username);
+            throw new OAuth2AuthenticationException(new OAuth2Error("internal_account"), "The account is not managed by the identity provider.");
+        }
     }
 
     /**
@@ -169,6 +188,8 @@ public class OIDCService extends OidcUserService {
             log.warn("OIDC matriculation number of user '{}' was not synchronized because another account claimed it in the meantime.", user.getLogin());
             User reloadedUser = userRepository.findOneWithAuthoritiesByLogin(user.getLogin())
                     .orElseThrow(() -> new OAuth2AuthenticationException("Failed to reload the account after a matriculation number conflict"));
+            // The account can have become an internal one since it was checked, and no claim may be applied to it then
+            rejectInternalAccount(reloadedUser, user.getLogin());
             return applyProfileClaims(reloadedUser, oidcUser) ? userRepository.save(reloadedUser) : reloadedUser;
         }
     }

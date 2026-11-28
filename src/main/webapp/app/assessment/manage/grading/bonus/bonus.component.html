@@ -1,11 +1,11 @@
 <ng-template #helpTextTemplate let-translationKey="translationKey">
     <ng-template #tipContent><span [innerHTML]="translationKey | artemisTranslate | safeHtml"></span></ng-template>
     @if (bonus.id) {
-        <fa-icon [icon]="faQuestionCircle" class="text-(--tumaet-ui-muted-color)" tumAetUiTooltipPlacement="right" [tumAetUiTooltip]="tipContent" />
+        <fa-icon [icon]="faQuestionCircle" class="text-muted-color" tumAetUiTooltipPlacement="right" [tumAetUiTooltip]="tipContent" />
     }
     @if (!bonus.id) {
         <div class="flex items-baseline">
-            <fa-icon [icon]="faQuestionCircle" class="text-(--tumaet-ui-muted-color)" />
+            <fa-icon [icon]="faQuestionCircle" class="text-muted-color" />
             <label [innerHTML]="translationKey | artemisTranslate | safeHtml" class="ps-1 pb-1"></label>
         </div>
     }
@@ -14,18 +14,18 @@
     <div *titleBarTitle class="flex items-center">
         <h5 class="mb-0" jhiTranslate="artemisApp.bonus.title"></h5>
     </div>
-    <div class="flex flex-wrap gap-y-2 mt-6!">
+    <div class="flex flex-wrap gap-y-2 mt-6">
         <div class="bonus-form-step w-1/12"></div>
-        <div class="field-group mb-4! min-w-0 grow basis-0">
+        <div class="field-group mb-4 min-w-0 grow basis-0">
             <label class="shrink-0 text-lg font-medium" jhiTranslate="artemisApp.bonus.bonusStrategy.title"></label>
             <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.bonusStrategy.helpText' }" />
             <jhi-mode-picker class="block mt-1" [options]="bonusStrategyOptions" [(value)]="currentBonusStrategyOption" (valueChange)="onBonusStrategyInputChange()" />
         </div>
     </div>
     @if (bonus.id || currentBonusStrategyOption !== undefined) {
-        <div class="flex flex-wrap gap-y-2 mt-6!">
+        <div class="flex flex-wrap gap-y-2 mt-6">
             <div class="bonus-form-step w-1/12"></div>
-            <div class="field-group mb-4! min-w-0 grow basis-0">
+            <div class="field-group mb-4 min-w-0 grow basis-0">
                 <label class="shrink-0 text-lg font-medium" jhiTranslate="artemisApp.bonus.calculation.title"></label>
                 <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.calculation.helpText' }" />
                 <jhi-mode-picker class="block mt-1" [options]="calculationSigns" [(value)]="bonus.weight" (valueChange)="onWeightChange()" />
@@ -33,9 +33,9 @@
         </div>
     }
     @if (bonus.id || bonus.weight !== undefined) {
-        <div class="flex flex-wrap gap-y-2 mt-6!">
+        <div class="flex flex-wrap gap-y-2 mt-6">
             <div class="bonus-form-step w-1/12"></div>
-            <div class="field-group mb-4! min-w-0 grow basis-0">
+            <div class="field-group mb-4 min-w-0 grow basis-0">
                 <label for="bonus-source-grading-scale" class="shrink-0 text-lg font-medium" jhiTranslate="artemisApp.bonus.bonusSource.title"></label>
                 <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.bonusSource.helpText' }" />
                 <tumaet-ui-select
@@ -60,7 +60,7 @@
                     <jhi-help-icon text="artemisApp.bonus.bonusSource.maxPointsCourseHelpText" />
                 }
             </div>
-            <div class="mb-6! text-base">
+            <div class="mb-6 text-base">
                 <table class="w-full text-left" tumAetUiTable [striped]="true">
                     <thead>
                         <tr>
@@ -92,7 +92,7 @@
         @if (bonus.bonusStrategy && bonus.sourceGradingScale && bonus.weight) {
             <h5 class="mb-0" jhiTranslate="artemisApp.bonus.formula.title"></h5>
             @if (bonus.bonusStrategy && bonus.weight && bonusToGradeStepsDTO()) {
-                <div class="text-2xl mb-6!">
+                <div class="text-2xl mb-6">
                     <div class="flex pb-2 items-center">
                         <div class="pe-2">
                             <strong

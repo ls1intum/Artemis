@@ -83,7 +83,8 @@
                     "emptyDescription": "Fülle links die Konfiguration aus und klicke auf Generieren, um KI-generierte Quizfragen zu sehen.",
                     "correct": "KORREKT",
                     "oneResultGenerated": "1 Ergebnis generiert",
-                    "multipleResultsGenerated": "{{ count }} Ergebnisse generiert"
+                    "multipleResultsGenerated": "{{ count }} Ergebnisse generiert",
+                    "explanation": "Erklärung"
                 }
             },
             "detail": {
@@ -126,6 +127,7 @@
             "saveError": "Beim Speichern ist ein Fehler ist aufgetreten. Bitte überprüfe deine Eingabe und versuche es später noch einmal.",
             "export": {
                 "export": "Export",
+                "exportQuestions": "Fragen exportieren",
                 "questionTitle": "Kurzer Fragetitel",
                 "quizExerciseTitle": "Quiz Übungstitel"
             },

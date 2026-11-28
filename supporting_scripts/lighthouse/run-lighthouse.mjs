@@ -9,6 +9,10 @@
  *
  * The script boots a tiny SPA-aware static server over the built assets, waits for it
  * to respond, runs Lighthouse, and kills the server regardless of success/failure.
+ *
+ * Lighthouse is not a dependency of the project: it is fetched on demand with `pnpm dlx` at the
+ * pinned version below, so its ~160 transitive packages stay out of the lockfile. Bump the pin by
+ * hand when a newer Lighthouse is wanted.
  */
 
 import { createServer } from 'node:http';
@@ -21,6 +25,7 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const repoRoot = resolve(__dirname, '..', '..');
 const staticRoot = join(repoRoot, 'build', 'resources', 'main', 'static');
 const reportsDir = join(repoRoot, 'build', 'reports', 'lighthouse');
+const LIGHTHOUSE_VERSION = '13.6.0';
 
 const args = new Set(process.argv.slice(2));
 const desktop = args.has('--desktop');
@@ -254,11 +259,6 @@ async function main() {
     try {
         await waitForServer(targetUrl);
 
-        const lighthouseBin = join(repoRoot, 'node_modules', '.bin', 'lighthouse');
-        if (!existsSync(lighthouseBin)) {
-            throw new Error(`lighthouse is not installed. Run: pnpm add --save-dev lighthouse`);
-        }
-
         const lighthouseArgs = [
             targetUrl,
             `--chrome-flags=--headless=new --no-sandbox --disable-gpu`,
@@ -278,7 +278,7 @@ async function main() {
         }
 
         console.log(`> Running Lighthouse (${desktop ? 'desktop' : 'mobile'}) against ${targetUrl}`);
-        await runCommand(lighthouseBin, lighthouseArgs);
+        await runCommand('pnpm', ['dlx', `lighthouse@${LIGHTHOUSE_VERSION}`, ...lighthouseArgs]);
 
         console.log(`> Report written to ${join(reportsDir, 'landing.report.html')}`);
     } finally {

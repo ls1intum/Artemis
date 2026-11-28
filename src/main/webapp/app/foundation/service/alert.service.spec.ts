@@ -195,6 +195,35 @@ describe('Alert Service Test', () => {
         );
     });
 
+    it('should report an unknown translation key', () => {
+        vi.mocked(captureException).mockClear();
+
+        service.addAlert({ type: AlertType.INFO, translationKey: 'hello.jhipster' });
+
+        expect(captureException).toHaveBeenCalledOnce();
+    });
+
+    it('should not report a text with whitespace as an unknown translation key, but show it', () => {
+        vi.mocked(captureException).mockClear();
+
+        const alert = service.addAlert({ type: AlertType.DANGER, message: 'Http failure response for /api/exercise/exercises/1/teams/undefined: 404 Not Found' });
+
+        expect(alert.message).toBe('Http failure response for /api/exercise/exercises/1/teams/undefined: 404 Not Found');
+        expect(captureException).not.toHaveBeenCalled();
+    });
+
+    it('should show a message that is not a string without translating it', () => {
+        vi.mocked(captureException).mockClear();
+        const translateService = TestBed.inject(TranslateService);
+        const instant = vi.spyOn(translateService, 'instant');
+
+        const alert = service.addAlert({ type: AlertType.DANGER, message: { detail: 'unexpected' } as unknown as string });
+
+        expect(alert.message).toBe('[object Object]');
+        expect(instant).not.toHaveBeenCalled();
+        expect(captureException).not.toHaveBeenCalled();
+    });
+
     it('should display an alert on status 0', () => {
         // GIVEN
         eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 0 } });
@@ -225,6 +254,26 @@ describe('Alert Service Test', () => {
         eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 404 } });
         // THEN
         expect(service.get()).toHaveLength(0);
+    });
+
+    it('should tell the user how long to wait on status 429 with a Retry-After header', () => {
+        const addAlert = vi.spyOn(service, 'addAlert');
+
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: new HttpErrorResponse({ status: 429, headers: new HttpHeaders({ 'Retry-After': '12' }) }) });
+
+        expect(addAlert).toHaveBeenCalledWith(expect.objectContaining({ translationKey: 'error.http.429Wait', translationParams: { seconds: 12 } }));
+        expect(service.get()).toHaveLength(1);
+    });
+
+    it('should show a general message on status 429 without a usable Retry-After header', () => {
+        const addAlert = vi.spyOn(service, 'addAlert');
+
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: new HttpErrorResponse({ status: 429, headers: new HttpHeaders({ 'Retry-After': 'soon' }) }) });
+        eventManager.broadcast({ name: 'artemisApp.httpError', content: new HttpErrorResponse({ status: 429 }) });
+
+        expect(addAlert).toHaveBeenCalledTimes(2);
+        expect(addAlert).toHaveBeenNthCalledWith(1, expect.objectContaining({ translationKey: 'error.http.429' }));
+        expect(addAlert).toHaveBeenNthCalledWith(2, expect.objectContaining({ translationKey: 'error.http.429' }));
     });
 
     describe('showsHttpErrorAlert', () => {
@@ -449,6 +498,30 @@ describe('Alert Service Test', () => {
 
         expect(service.get()).toHaveLength(1);
         expect(service.get()[0].message).toBe(expected);
+    });
+
+    it.each([
+        { language: 'en', errors: englishErrors },
+        { language: 'de', errors: germanErrors },
+    ])('should translate branch-pattern errors in $language', ({ language, errors }) => {
+        const translateService = TestBed.inject(TranslateService);
+        translateService.setTranslation(language, errors, true);
+        translateService.use(language);
+
+        eventManager.broadcast({
+            name: 'artemisApp.httpError',
+            content: new HttpErrorResponse({
+                status: 400,
+                headers: new HttpHeaders({ 'X-artemisApp-error': 'error.branchRegexNotSupported' }),
+                error: { errorKey: 'branchRegexNotSupported', message: 'error.branchRegexNotSupported', title: 'English server fallback' },
+            }),
+        });
+
+        expect(service.get()).toHaveLength(1);
+        const renderedMessage = document.createElement('div');
+        renderedMessage.innerHTML = service.get()[0].message ?? '';
+        expect(renderedMessage.textContent).toBe(errors.error.branchRegexNotSupported);
+        expect(renderedMessage.textContent).not.toBe('English server fallback');
     });
 
     it('should display an alert on status 400 for error headers', () => {

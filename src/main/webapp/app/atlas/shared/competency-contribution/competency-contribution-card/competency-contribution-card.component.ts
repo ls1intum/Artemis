@@ -6,7 +6,9 @@ import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { HIGH_COMPETENCY_LINK_WEIGHT, MEDIUM_COMPETENCY_LINK_WEIGHT } from 'app/atlas/shared/entities/competency.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiCardComponent, TumAetUiProgressBarComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
+import { TumAetUiProgressBarComponent } from '@tumaet/ui-angular/progress-bar';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 @Component({
     selector: 'jhi-competency-contribution-card',

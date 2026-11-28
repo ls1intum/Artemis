@@ -3,7 +3,7 @@ import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-
 import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
+import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { map } from 'rxjs/operators';
 import { SearchResult, SearchTermPageableSearch } from 'app/foundation/pagination/pageable-table';
 import { captureException } from 'app/core/error-reporting/capture-exception';
@@ -81,15 +81,6 @@ export class GradingService {
     }
 
     /**
-     * Deletes the grading scale for course
-     *
-     * @param courseId the course for which the grading scale will be deleted
-     */
-    deleteGradingScaleForCourse(courseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/grading-scale`, { observe: 'response' });
-    }
-
-    /**
      * Store a new grading scale for exam on the server
      *
      * @param courseId the course to which the exam belongs
@@ -121,16 +112,6 @@ export class GradingService {
      */
     findGradingScaleForExam(courseId: number, examId: number): Observable<EntityResponseType> {
         return this.http.get<GradingScaleDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, { observe: 'response' });
-    }
-
-    /**
-     * Deletes the grading scale for exam
-     *
-     * @param courseId the course to which the exam belongs
-     * @param examId the exam for which the grading scale will be deleted
-     */
-    deleteGradingScaleForExam(courseId: number, examId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/grading-scale`, { observe: 'response' });
     }
 
     /**
@@ -189,33 +170,6 @@ export class GradingService {
             params,
             observe: 'response',
         });
-    }
-
-    /**
-     * Finds a grade step for the course that matches the given percentage
-     *
-     * @param courseId the course to which the exam belongs
-     * @param percentage the percentage which will be matched
-     */
-    public matchPercentageToGradeStepForCourse(courseId: number, percentage: number): Observable<HttpResponse<GradeDTO>> {
-        return this.http.get<GradeDTO>(`${this.resourceUrl}/${courseId}/grading-scale/match-grade-step?gradePercentage=${percentage}`, { observe: 'response' });
-    }
-
-    /**
-     * Finds a grade step for a course that matches the given percentage
-     *
-     * @param percentage the percentage which will be matched
-     * @param courseId the course for which the matching is done
-     */
-    public matchPercentageToGradeStep(percentage: number, courseId: number): Observable<GradeDTO | undefined> {
-        return this.matchPercentageToGradeStepForCourse(courseId, percentage).pipe(
-            map((response) => {
-                if (response && response.body) {
-                    return response.body;
-                }
-                return undefined;
-            }),
-        );
     }
 
     /**

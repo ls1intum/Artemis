@@ -7,6 +7,8 @@ import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { By } from '@angular/platform-browser';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -139,6 +141,35 @@ describe('PostingSummaryComponent', () => {
             fixture.detectChanges();
 
             expect(component['postingIsOfToday']()).toBeFalsy();
+        });
+    });
+
+    describe('Tooltips', () => {
+        it('should not add a tooltip to the time of a post from today', () => {
+            fixture.componentRef.setInput('post', { ...mockPost, creationDate: dayjs() });
+            fixture.detectChanges();
+
+            const tooltip = fixture.debugElement.query(By.directive(TumAetUiTooltipDirective)).injector.get(TumAetUiTooltipDirective);
+            expect(tooltip.content()).toBe('');
+        });
+
+        it('should show the time as tooltip of the date of an older post', () => {
+            fixture.componentRef.setInput('post', { ...mockPost, creationDate: dayjs().subtract(1, 'day') });
+            fixture.detectChanges();
+
+            const tooltip = fixture.debugElement.query(By.directive(TumAetUiTooltipDirective)).injector.get(TumAetUiTooltipDirective);
+            expect(tooltip.content()).toMatch(/\d{1,2}:\d{2}/);
+        });
+
+        it('should give each saved post action a tooltip and disable the action of the current status', () => {
+            fixture.componentRef.setInput('post', { ...mockPost, savedPostStatus: SavedPostStatus.IN_PROGRESS });
+            fixture.componentRef.setInput('isShowSavedPostOptions', true);
+            fixture.detectChanges();
+
+            const actions = fixture.debugElement.queryAll(By.css('[role="group"] button'));
+            expect(actions).toHaveLength(4);
+            expect(actions.map((action) => (action.nativeElement as HTMLButtonElement).disabled)).toEqual([false, true, false, false]);
+            expect(actions.every((action) => action.injector.get(TumAetUiTooltipDirective, undefined) !== undefined)).toBe(true);
         });
     });
 

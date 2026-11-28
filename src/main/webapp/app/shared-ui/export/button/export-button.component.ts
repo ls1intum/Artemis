@@ -1,12 +1,14 @@
 import { Component, computed, inject, input, output } from '@angular/core';
-import { DialogService } from 'primeng/dynamicdialog';
+
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { CsvExportOptions, ExportDialogCloseResult, ExportModalComponent, isExportDialogCancelledResult } from 'app/shared-ui/export/modal/export-modal.component';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiButtonDirective, TumAetUiButtonSize } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiButtonSize } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
@@ -31,7 +33,8 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     imports: [TumAetUiButtonDirective, FontAwesomeModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ExportButtonComponent {
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
+    private translateService = inject(TranslateService);
 
     title = input<string>('');
     /**
@@ -62,14 +65,16 @@ export class ExportButtonComponent {
      */
     openExportModal(event: MouseEvent) {
         event.stopPropagation();
-        const dialogRef = this.dialogService.open(ExportModalComponent, {
-            width: '50rem',
-            modal: true,
+        // Closing without a choice would read as an Excel export, so the dialog is only left through its own buttons.
+        const dialogRef = this.dialogService.open<ExportModalComponent, ExportDialogCloseResult>(ExportModalComponent, {
+            size: 'medium',
+            showHeader: false,
+            ariaLabel: this.translateService.instant('export.dialogTitle'),
             closable: false,
             closeOnEscape: false,
             dismissableMask: false,
         });
-        dialogRef?.onClose.subscribe((result: ExportDialogCloseResult) => {
+        dialogRef.onClose.subscribe((result) => {
             if (!isExportDialogCancelledResult(result)) {
                 this.onExport.emit(result);
             }

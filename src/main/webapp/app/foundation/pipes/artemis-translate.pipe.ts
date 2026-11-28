@@ -18,8 +18,13 @@ export class ArtemisTranslatePipe implements PipeTransform {
     private languageChange = toSignal(this.translateService.onLangChange ?? EMPTY);
 
     transform(query: string | undefined | null, args?: object): string {
-        if (!query || query.length === 0) {
-            return query ?? '';
+        // The value is bound in a template and typed `string`, but it can still be something else at runtime, e.g. a server field typed `any`.
+        // ngx-translate throws on a key that is not a string, which would break the rendering of the whole view.
+        if (typeof query !== 'string') {
+            return '';
+        }
+        if (query.length === 0) {
+            return query;
         }
         this.languageChange();
         const translation = this.translateService.instant(query, args);

@@ -1,4 +1,8 @@
-import { TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTableLayoutComponent, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, of } from 'rxjs';
@@ -47,7 +51,6 @@ import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerd
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ParticipantScoresDistributionComponent } from 'app/course/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { ExportButtonComponent } from 'app/shared-ui/export/button/export-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -71,7 +74,7 @@ const POINTS_PER_TYPE_PREFIX = 'sumPointsPerExerciseType.';
 @Component({
     selector: 'jhi-course-scores',
     templateUrl: './course-scores.component.html',
-    styleUrls: ['./course-scores.component.scss'],
+    styleUrls: ['./course-scores.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TumAetUiButtonDirective,
@@ -79,7 +82,8 @@ const POINTS_PER_TYPE_PREFIX = 'sumPointsPerExerciseType.';
         RouterLink,
         FaIconComponent,
         ParticipantScoresDistributionComponent,
-        NgbTooltip,
+        TumAetUiCheckboxComponent,
+        TumAetUiTooltipDirective,
         NgClass,
         ExportButtonComponent,
         TumAetUiTableDirective,

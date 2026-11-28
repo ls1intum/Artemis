@@ -1,4 +1,4 @@
-<div class="mx-auto w-full max-w-7xl -mt-2 px-0!">
+<div class="mx-auto w-full max-w-7xl -mt-2 px-0">
     <div class="min-w-0">
         @if (textExercise()) {
             <div>
@@ -7,7 +7,7 @@
                     <jhi-non-programming-exercise-detail-common-actions [isExamExercise]="isExamExercise()" [course]="courseValue" [exercise]="textExercise()" />
                 }
                 @if (!textExercise().releaseDate || dayjs(textExercise().releaseDate).isBefore(dayjs())) {
-                    <div class="mt-6!">
+                    <div class="mt-6">
                         <jhi-exercise-detail-statistics
                             [exercise]="textExercise()"
                             [doughnutStats]="doughnutStats()"

@@ -450,9 +450,9 @@ export class ExerciseService {
 
     /**
      * Parses the exercise categories JSON string into {@link ExerciseCategory} objects.
-     * @param exercise - the exercise
+     * @param exercise - the exercise, or any other server entity that carries categories (for example a course statistics entry)
      */
-    static parseExerciseCategories(exercise?: Exercise) {
+    static parseExerciseCategories(exercise?: { categories?: (ExerciseCategory | string)[] }) {
         if (exercise?.categories) {
             exercise.categories = exercise.categories
                 .map((category) => {
@@ -487,23 +487,6 @@ export class ExerciseService {
                 }
             })
             .filter((category): category is ExerciseCategory => category !== undefined);
-    }
-
-    /**
-     * Prepare client-exercise to be uploaded to the server
-     * @param exercise - Exercise that will be modified
-     */
-    static convertExerciseFromClient<E extends Exercise>(exercise: E): Exercise {
-        // convertExerciseDatesFromClient already returns a detached copy, so no separate copy step is needed
-        // (the previous `Object.assign(exercise, {})` was a no-op that returned the argument itself).
-        const copy = ExerciseService.convertExerciseDatesFromClient(exercise);
-        ExerciseService.stringifyExerciseCategories(copy);
-        if (copy.course) {
-            copy.course.exercises = [];
-            copy.course.lectures = [];
-        }
-        copy.studentParticipations = [];
-        return copy;
     }
 
     /**
