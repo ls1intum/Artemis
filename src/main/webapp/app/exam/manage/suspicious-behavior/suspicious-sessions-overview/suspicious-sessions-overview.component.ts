@@ -1,5 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import type { SuspiciousExamSessions } from 'app/openapi/model/suspicious-exam-sessions';
 import { SuspiciousSessionReason } from 'app/openapi/model/suspicious-session-reason';
 import { SuspiciousSessionsComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions/suspicious-sessions.component';

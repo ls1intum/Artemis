@@ -33,16 +33,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProblemStatementAiOperationsHelper } from 'app/hyperion/problem-statement/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiConfirmDialogComponent,
-    TumAetUiConfirmationService,
-    TumAetUiDialogComponent,
-    TumAetUiMenuComponent,
-    TumAetUiMenuItemDirective,
-    TumAetUiMenuTriggerDirective,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyIssueCategory } from 'app/openapi/model/consistency-issue-category';

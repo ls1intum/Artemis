@@ -3,7 +3,10 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { Component, InputSignal, ModelSignal, OnInit, OutputEmitterRef, Signal, WritableSignal, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { TumAetUiAutoCompleteComponent, TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent } from '@tumaet/ui-angular/autocomplete';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import type { SeatsOfExamRoom } from 'app/openapi/model/seats-of-exam-room';
 import { ExamRoomDistributionApi } from 'app/openapi/api/exam-room-distribution-api';

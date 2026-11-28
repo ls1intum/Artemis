@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig } from '@tumaet/ui-angular/chart';
 import { TumAetUiChartData } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

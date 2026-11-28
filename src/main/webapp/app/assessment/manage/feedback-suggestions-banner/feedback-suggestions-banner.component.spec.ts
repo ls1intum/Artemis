@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeedbackSuggestionsBannerComponent, feedbackSuggestionsNotice } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
-import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 

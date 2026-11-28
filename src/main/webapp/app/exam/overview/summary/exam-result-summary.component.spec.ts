@@ -43,7 +43,10 @@ import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerd
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { RouterLink } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';

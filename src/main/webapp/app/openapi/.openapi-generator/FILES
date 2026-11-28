@@ -332,6 +332,7 @@ model/indexed-entity-record.ts
 model/indexed-entity.ts
 model/inferred-competency.ts
 model/ingestion-type-count.ts
+model/initial-commit-author-mode.ts
 model/initialization-state.ts
 model/ip-version.ts
 model/kind.ts
@@ -482,6 +483,9 @@ model/quiz-question-pool-page.ts
 model/quiz-question-pool-plan.ts
 model/quiz-question-pool-progress.ts
 model/quiz-question-pool-review.ts
+model/quiz-question-pool-selection-candidate.ts
+model/quiz-question-pool-selection-request.ts
+model/quiz-question-pool-selection.ts
 model/quiz-question-re-evaluate.ts
 model/quiz-question-refinement-failure.ts
 model/quiz-question-refinement-request.ts

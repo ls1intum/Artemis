@@ -3,7 +3,7 @@ import { Component, DestroyRef, computed, effect, inject, input, signal, untrack
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription, filter, skip } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { faRobot, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';

@@ -16,15 +16,11 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiProgressSpinnerComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-    TumAetUiTagComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({

@@ -1,4 +1,4 @@
-import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { Location, NgClass, NgTemplateOutlet } from '@angular/common';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';

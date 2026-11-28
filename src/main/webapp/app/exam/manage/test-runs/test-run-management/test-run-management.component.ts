@@ -25,15 +25,11 @@ import { StudentExamApi } from 'app/openapi/api/student-exam-api';
 import type { StudentExam } from 'app/openapi/model/student-exam';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiMessageComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 @Component({
     selector: 'jhi-test-run-management',

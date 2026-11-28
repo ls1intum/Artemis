@@ -30,7 +30,7 @@ import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { downloadCsv } from 'app/foundation/util/csv-download.util';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { GradingScaleDTO, toGradingScaleDTO } from 'app/assessment/shared/entities/grading-scale-dto.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { typeIntoInputNumber } from 'src/test/javascript/spec/helpers/input-number-test-helpers';

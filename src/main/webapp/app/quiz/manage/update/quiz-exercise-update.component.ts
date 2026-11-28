@@ -1,16 +1,13 @@
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiConfirmDialogComponent,
-    TumAetUiConfirmationService,
-    TumAetUiDatePickerComponent,
-    TumAetUiFormFieldComponent,
-    TumAetUiInputDirective,
-    TumAetUiInputNumberComponent,
-    TumAetUiMessageComponent,
-    TumAetUiSelectComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiInputNumberComponent } from '@tumaet/ui-angular/input-number';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, ViewEncapsulation, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
@@ -80,6 +77,7 @@ import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/
 import { QuizAiGenerationService } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.service';
 import { QuizAiGenerationModalComponent } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
 import { GeneratedQuestion, GeneratedQuestionType } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { QuizQuestionHandoffService } from 'app/quiz/manage/update/quiz-question-handoff.service';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
@@ -138,6 +136,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private location = inject(Location);
     private profileService = inject(ProfileService);
     private quizAiGenerationService = inject(QuizAiGenerationService);
+    private quizQuestionHandoffService = inject(QuizQuestionHandoffService);
     private destroyRef = inject(DestroyRef);
 
     readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
@@ -428,6 +427,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.watchSavedQuizStart();
 
         this.cacheValidation();
+
+        if (!this.quizExercise().id && !this.isImport()) {
+            this.appendAiGeneratedQuestions(this.quizQuestionHandoffService.take(this.courseId()));
+        }
     }
 
     openAiGenerationModal(): void {

@@ -12,7 +12,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgOptimizedImage } from '@angular/common';
-import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({

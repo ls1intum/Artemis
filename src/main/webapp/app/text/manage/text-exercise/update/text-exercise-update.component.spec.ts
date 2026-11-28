@@ -37,7 +37,7 @@ import { ActivatedRoute, Data, Params, UrlSegment, provideRouter } from '@angula
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import dayjs from 'dayjs/esm';
 import { Component, forwardRef, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';

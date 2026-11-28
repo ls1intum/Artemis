@@ -92,7 +92,7 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify student groups about an attachment change.
+     * Notify students about an attachment change.
      * <p>
      * An attachment belongs to an attachment video unit, and the unit is what knows the lecture, so the caller passes
      * the lecture in rather than the attachment carrying a reference to one. The exercise id of the payload stays
@@ -119,7 +119,7 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify students groups about an exercise opened for practice.
+     * Notify students about an exercise opened for practice.
      *
      * @param exercise that has been opened for practice
      */
@@ -139,7 +139,7 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify student groups about a started quiz exercise, asynchronously on the shared {@code taskExecutor}.
+     * Notify students about a started quiz exercise, asynchronously on the shared {@code taskExecutor}.
      *
      * <p>
      * The caller must supply pre-resolved primitives rather than the {@link QuizExercise} entity itself so this
@@ -225,7 +225,7 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify editor and instructor groups about an exercise update.
+     * Notify editors and instructors about an exercise update.
      *
      * @param exercise that has been updated
      */
@@ -242,7 +242,7 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify editor and instructor groups about changed test cases for a programming exercise.
+     * Notify editors and instructors about changed test cases for a programming exercise.
      *
      * @param exercise that has been updated
      */
@@ -258,7 +258,7 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify editor and instructor groups about started or completed build runs for all participants of an exercise.
+     * Notify editors and instructors about started or completed build runs for all participants of an exercise.
      *
      * @param exercise the exercise where the builds status changed
      */
@@ -274,7 +274,7 @@ public class GroupNotificationService {
     }
 
     /**
-     * Notify editor and instructor groups about duplicate test cases.
+     * Notify editors and instructors about duplicate test cases.
      *
      * @param exercise that has been updated
      */

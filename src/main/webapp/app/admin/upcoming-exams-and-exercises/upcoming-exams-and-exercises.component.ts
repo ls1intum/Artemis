@@ -7,7 +7,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { RouterLink } from '@angular/router';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { ExamModeBadgeComponent } from 'app/exam/shared/exam-mode-badge/exam-mode-badge.component';

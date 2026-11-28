@@ -37,22 +37,15 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { UsersImportDialogComponent } from 'app/shared-ui/user-import/dialog/users-import-dialog.component';
 import { StudentsUploadImagesDialogComponent } from './upload-images/students-upload-images-dialog.component';
-import {
-    CellTemplateRef,
-    ColumnDef,
-    TumAetUiButtonDirective,
-    TumAetUiConfirmDialogComponent,
-    TumAetUiConfirmationService,
-    TumAetUiPopoverComponent,
-    TumAetUiPopoverTriggerDirective,
-    TumAetUiProgressBarComponent,
-    TumAetUiSearchFieldComponent,
-    TumAetUiSelectComponent,
-    TumAetUiTableComponent,
-    TumAetUiTableQueryEvent,
-    TumAetUiTagComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
+import { TumAetUiProgressBarComponent } from '@tumaet/ui-angular/progress-bar';
+import { TumAetUiSearchFieldComponent } from '@tumaet/ui-angular/search-field';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { CellTemplateRef, ColumnDef, TumAetUiTableComponent, TumAetUiTableQueryEvent } from '@tumaet/ui-angular/table';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamDeleteDialogComponent } from 'app/exam/shared/delete-dialog/exam-delete-dialog.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

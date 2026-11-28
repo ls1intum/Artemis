@@ -1,16 +1,13 @@
 import { HyperionRunInspectorComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-inspector.component';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiConfirmDialogComponent,
-    TumAetUiConfirmationService,
-    TumAetUiDatePickerComponent,
-    TumAetUiDialogComponent,
-    TumAetUiInputDirective,
-    TumAetUiMessageComponent,
-    TumAetUiRadioButtonComponent,
-    TumAetUiTagComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiRadioButtonComponent } from '@tumaet/ui-angular/radio-button';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, DestroyRef, Injector, OnDestroy, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AccountService } from 'app/core/auth/account.service';

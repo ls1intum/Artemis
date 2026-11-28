@@ -1,12 +1,10 @@
-import {
-    TumAetUiButtonDirective,
-    TumAetUiInputDirective,
-    TumAetUiMessageComponent,
-    TumAetUiSelectButtonComponent,
-    TumAetUiSelectComponent,
-    TumAetUiTableDirective,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormField, applyEach, form, required, validate, validateTree } from '@angular/forms/signals';

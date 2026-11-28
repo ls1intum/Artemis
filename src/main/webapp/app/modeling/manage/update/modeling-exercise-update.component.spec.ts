@@ -46,8 +46,10 @@ import { CategorySelectorComponent } from 'app/exercise/category-selector/catego
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationRequest, TumAetUiConfirmationService, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationRequest, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';

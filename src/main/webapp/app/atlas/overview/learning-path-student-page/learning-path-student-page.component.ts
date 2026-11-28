@@ -1,4 +1,5 @@
-import { TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LearningObjectType, LearningPathDTO } from 'app/atlas/shared/entities/learning-path.model';

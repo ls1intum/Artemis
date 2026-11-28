@@ -1,6 +1,7 @@
 import { ExamConductionCountsState } from './exam-conduction-counts-state';
 import { Component, OnDestroy, OnInit, effect, inject, input, signal } from '@angular/core';
-import { TumAetUiButtonDirective, TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isActingAsTestExam, isRealExam } from 'app/exam/overview/exam.utils';
 import type { ExamChecklist } from 'app/openapi/model/exam-checklist';
