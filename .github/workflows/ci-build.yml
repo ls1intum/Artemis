@@ -571,6 +571,39 @@ jobs:
         type=ref,event=branch
         sha-${{ inputs.commit_sha }}
 
+  trial-grading:
+    name: Verify release trial grading
+    needs: docker-release
+    if: ${{ inputs.is_release }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    env:
+      COMPOSE_FILE: deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml
+      ARTEMIS_TRIAL_IMAGE: ghcr.io/ls1intum/artemis:${{ inputs.release_tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '${{ env.node }}'
+      - name: Start the published image with the trial Compose configuration
+        run: |
+          ARTEMIS_DOCKER_GROUP_ID="$(stat -c %g /var/run/docker.sock)"
+          ARTEMIS_TRIAL_ARCH="$(docker version --format '{{.Server.Arch}}')"
+          export ARTEMIS_DOCKER_GROUP_ID ARTEMIS_TRIAL_ARCH
+          docker compose --env-file .env pull
+          docker compose --env-file .env up --no-build --detach --wait --wait-timeout 600
+      - name: Import, submit and verify a grade
+        run: node supporting_scripts/trial/verify-grading.mjs
+      - name: Show trial service diagnostics
+        if: failure()
+        run: |
+          docker compose --env-file .env ps -a
+          docker compose --env-file .env logs --no-color --tail=200
+
   # Mirrors the `docker-tag` artifact upload from `docker-pr` for the release path so that
   # .github/actions/e2e-setup can consume it uniformly regardless of which docker job produced
   # the image.

@@ -357,6 +357,8 @@ jobs:
               - 'supporting_scripts/get_changed_modules.sh'
               - 'supporting_scripts/select_server_test_modules.py'
               - 'supporting_scripts/tests/**'
+              - 'supporting_scripts/trial/**'
+              - 'supporting_scripts/course-scripts/setup-course/lib/http-client*.mjs'
               - 'supporting_scripts/client/run-affected-tests*'
               - 'supporting_scripts/ci/E2E-tests/**'
               - 'supporting_scripts/ci/pull-through-registry-proxy.sh'

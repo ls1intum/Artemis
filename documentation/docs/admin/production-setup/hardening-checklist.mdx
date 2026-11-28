@@ -2,7 +2,7 @@
 id: hardening-checklist
 title: Hardening Checklist
 sidebar_label: Hardening Checklist
-last_reviewed: 2026-11-19
+last_reviewed: 2026-11-28
 ---
 
 This page collects what an operator has to check before an Artemis installation goes into production and when it is upgraded. Every item links to the page that explains it. The list does not replace
@@ -53,7 +53,7 @@ The remaining items depend on how and where you run Artemis, so only you can ver
 ## Data
 
 - [ ] The upload, export and repository directories have restricted permissions and are included in the backup.
-- [ ] The database is backed up and a restore has been tried.
+- [ ] A [restore rehearsal](https://github.com/ls1intum/artemis-ansible-collection/blob/bd35f3743c76716d83fb94578251ff78dc386c68/roles/db_backup/restore-rehearsal.md) recovered a course and its repositories from matching database and storage backups. A new submission received a grade on the recovered instance. For installations requiring administrator passkeys, use the browser procedure in the rehearsal guide with an approved rehearsal passkey.
 - [ ] Logs are collected, and failed sign-ins and rate limit responses are watched.
 
 ## Updates

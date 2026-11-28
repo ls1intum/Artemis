@@ -19,6 +19,11 @@ services:
         extends:
             file: ./artemis.yml
             service: artemis-app
+        image: ${ARTEMIS_TRIAL_IMAGE:-ghcr.io/ls1intum/artemis}
+        environment:
+            # The embedded build agent clones from the HTTP listener inside this container.
+            ARTEMIS_VERSIONCONTROL_URL: http://localhost:8080
+            ARTEMIS_CONTINUOUSINTEGRATION_IMAGEARCHITECTURE: ${ARTEMIS_TRIAL_ARCH:-amd64}
         # just add this linux workaround for docker compose in a development version of artemis as developers
         # might want to access external services on the docker host
         extra_hosts:

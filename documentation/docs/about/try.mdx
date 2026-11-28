@@ -3,7 +3,7 @@ id: try
 title: Try Artemis
 sidebar_label: Try Artemis
 description: Run a local Artemis instance with programming exercises using one command, or ask for a hosted trial.
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -23,17 +23,20 @@ both `amd64` and `arm64`, so Apple Silicon pulls a prebuilt image rather than bu
 ```bash
 git clone https://github.com/ls1intum/Artemis.git
 cd Artemis
-# Linux with a native Docker daemon only: the build agent needs your host's docker group to reach the
-# Docker socket. Compose resolves this when it creates the container, so it has to be set beforehand.
-export ARTEMIS_DOCKER_GROUP_ID=$(getent group docker | cut -d: -f3)
+# Select the native exercise build images for the Docker engine.
+export ARTEMIS_TRIAL_ARCH=$(docker version --format '{{.Server.Arch}}')
+# Native Linux only: give the build agent access to the host's Docker socket.
+export ARTEMIS_DOCKER_GROUP_ID=$(stat -c %g /var/run/docker.sock)
 docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml pull
 docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml up
 ```
 
 Then open **http://localhost:8080** and sign in as `artemis_admin` / `artemis_admin`.
 
-Docker Desktop on macOS and Windows needs no docker group, so the `export` line is harmless there and
-can be skipped.
+The architecture setting selects the build agent’s exercise images and is required for native
+ARM64 builds, including Apple Silicon. On Docker Desktop, skip the `ARTEMIS_DOCKER_GROUP_ID` line.
+In PowerShell, set `$env:ARTEMIS_TRIAL_ARCH = docker version --format '{{.Server.Arch}}'` before
+running Compose.
 
 <Callout variant={CalloutVariant.warning}>
     Run Compose **from the repository root** and keep `--env-file .env`. The Compose files read image
@@ -47,6 +50,37 @@ To stop, press `Ctrl+C`. To remove the containers and the database volume as wel
 ```bash
 docker compose --env-file .env -f deployment/docker/artemis-dev-local-vc-local-ci-postgres.yml down -v
 ```
+
+## Verify automatic grading
+
+The local trial supports password sign-in for the test administrator. With the trial running, open a second terminal at the repository root and run the check with Node.js 26. If your rehearsal requires an administrator passkey, use the browser procedure in the [production hardening checklist](/admin/production-setup/hardening-checklist#data).
+
+```bash
+node supporting_scripts/trial/verify-grading.mjs
+```
+
+The check creates a test course, imports the small C exercise bundled with Artemis, and opens a
+student participation. It commits the supplied solution through the online editor API. A successful
+run prints `PASS` with the exercise, participation, Git commit and result IDs, a score of 100%, and
+the count of passing tests. Each build has up to ten minutes to report its result. If the check
+stops at a build stage, open **Server Administration → Build Agents** and the build queue to
+inspect the job and the image pull.
+
+The course and its Git repositories stay available for inspection. To check a disposable restored
+copy, use the same account and the exercise ID printed by the first run.
+
+```bash
+node supporting_scripts/trial/verify-grading.mjs --exercise-id 123
+```
+
+Replace `123` with your ID. The check confirms that the previous grade’s commit exists in the restored
+repository, submits a new commit to that participation, and waits for its grade. Both commands
+use the local listener on port 8080. Set `ARTEMIS_TRIAL_PORT` for another local port. Set `ARTEMIS_TRIAL_USERNAME` and `ARTEMIS_TRIAL_PASSWORD` if the copy uses
+different local administrator credentials.
+
+Release CI runs the same check on a fresh trial Compose stack with the published release tag. To
+check a specific published image locally, set `ARTEMIS_TRIAL_IMAGE` to its full image reference
+before running the Compose commands above.
 
 ## What you can do with it
 
