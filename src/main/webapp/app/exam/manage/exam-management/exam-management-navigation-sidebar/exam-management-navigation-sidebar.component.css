@@ -27,7 +27,7 @@
 }
 
 :host ::ng-deep .tumaet-ui-panel-title {
-    line-height: 1.5 !important;
+    line-height: 1.5;
     display: flex;
     align-items: center;
 }

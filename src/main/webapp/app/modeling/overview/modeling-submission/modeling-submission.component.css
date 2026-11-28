@@ -22,6 +22,8 @@
 
 .submission-container {
     container-type: inline-size;
+    min-height: 0;
+    flex: 1 1 auto;
 }
 
 jhi-resizeable-container {
@@ -67,11 +69,6 @@ jhi-modeling-assessment {
     height: 100%;
     min-height: 0;
     flex-direction: column;
-}
-
-.submission-container {
-    min-height: 0;
-    flex: 1 1 auto;
 }
 
 .modeling-submission-complaint {

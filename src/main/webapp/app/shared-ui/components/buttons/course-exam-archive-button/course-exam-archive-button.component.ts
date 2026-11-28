@@ -26,7 +26,8 @@ import {
     CourseExamArchiveWarningDialogComponent,
 } from 'app/shared-ui/components/buttons/course-exam-archive-button/course-exam-archive-dialog.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { TumAetUiButtonDirective, TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export type CourseExamArchiveState = {

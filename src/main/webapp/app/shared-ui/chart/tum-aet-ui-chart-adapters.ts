@@ -1,4 +1,4 @@
-import { TumAetUiChartSeries } from '@tumaet/ui-angular';
+import { TumAetUiChartSeries } from '@tumaet/ui-angular/chart';
 import { ChartMultiSeriesEntry, ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 
 /** Categories and series in the shape the tumaet-ui chart components consume. */

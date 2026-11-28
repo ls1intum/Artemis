@@ -7,8 +7,8 @@ export class SharingInfo {
     public returnURL = '';
     /** Base URL for the sharing platform API */
     public apiBaseURL = '';
-    /** ID of the currently selected exercise */
-    public selectedExercise = 0;
+    /** Zero-based position of the selected exercise in the basket */
+    public exercisePosition = 0;
     /** checksum for apiBaseURL and returnURL */
     public checksum = '';
 
@@ -24,7 +24,7 @@ export class SharingInfo {
      */
     public clear(): void {
         this.basketToken = '';
-        this.selectedExercise = 0;
+        this.exercisePosition = 0;
         this.returnURL = '';
         this.apiBaseURL = '';
     }

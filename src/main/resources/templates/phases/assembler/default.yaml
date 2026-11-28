@@ -18,7 +18,7 @@
     fi
 - name: prepare_makefile
   script: |-
-    rm -f ${studentParentWorkingDirectoryName}/{GNUmakefile, Makefile, makefile}
+    rm -f ${studentParentWorkingDirectoryName}/{GNUmakefile,Makefile,makefile}
     rm -f ${studentParentWorkingDirectoryName}/io.inc
     cp -f ${testWorkingDirectory}/Makefile ${studentParentWorkingDirectoryName}/Makefile || exit 2
     cp -f ${testWorkingDirectory}/io.inc ${studentParentWorkingDirectoryName}/io.inc || exit 2

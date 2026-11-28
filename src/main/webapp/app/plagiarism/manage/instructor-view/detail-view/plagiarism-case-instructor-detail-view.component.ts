@@ -22,21 +22,12 @@ import { User } from 'app/account/user/user.model';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiButtonGroupComponent,
-    TumAetUiInputDirective,
-    TumAetUiInputGroupAddonComponent,
-    TumAetUiInputGroupComponent,
-    TumAetUiMenuComponent,
-    TumAetUiMenuItemDirective,
-    TumAetUiMenuTriggerDirective,
-    TumAetUiTabComponent,
-    TumAetUiTabListComponent,
-    TumAetUiTabPanelComponent,
-    TumAetUiTabPanelsComponent,
-    TumAetUiTabsComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiButtonGroupComponent } from '@tumaet/ui-angular/button-group';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiInputGroupAddonComponent, TumAetUiInputGroupComponent } from '@tumaet/ui-angular/input-group';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabPanelComponent, TumAetUiTabPanelsComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular/tabs';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { ConfirmAutofocusButtonComponent } from 'app/shared-ui/components/buttons/confirm-autofocus-button/confirm-autofocus-button.component';
 import { FormsModule } from '@angular/forms';

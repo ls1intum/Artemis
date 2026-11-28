@@ -14,7 +14,7 @@ import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { SubmissionResultStatusComponent } from '../../submission-result-status/submission-result-status.component';
 import { ExerciseDetailsStudentActionsComponent } from '../../exercise-details/student-actions/exercise-details-student-actions.component';
 import { NgClass } from '@angular/common';
