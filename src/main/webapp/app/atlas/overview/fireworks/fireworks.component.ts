@@ -8,7 +8,7 @@ import { Component, input } from '@angular/core';
             <div class="after"></div>
         </div>
     }`,
-    styleUrls: ['./fireworks.component.scss'],
+    styleUrls: ['./fireworks.component.css'],
 })
 export class FireworksComponent {
     active = input(false);

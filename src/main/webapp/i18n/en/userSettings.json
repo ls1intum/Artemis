@@ -13,7 +13,7 @@
                 "collapse": "Collapse settings menu",
                 "expand": "Expand settings menu"
             },
-            "vcsAccessTokenSettings": "VCS Token",
+            "vcsAccessTokenSettings": "Personal VCS Token (deprecated)",
             "vcsAccessTokensOverview": {
                 "title": "Access Tokens",
                 "description": "An overview of the VCS access tokens you can use to clone repositories over HTTPS. Each token is limited to a single repository. Revoking a token disables it immediately; a new token is created automatically the next time you open that repository's clone dialog.",
@@ -71,6 +71,7 @@
                     "announcements_post": "Post announcements",
                     "exercises_draft": "Create and edit unpublished exercises",
                     "programming_draft": "Create and edit unpublished programming exercises",
+                    "programming_repositories": "Clone and, while unpublished, push the template, solution and test repositories with git",
                     "lectures_write": "Create and edit lectures and slides"
                 }
             },
@@ -163,16 +164,12 @@
                 }
             },
             "vcsAccessTokensSettingsPage": {
-                "addTokenTitle": "Add personal access token",
-                "infoText": "You can generate a personal access token to interact with the Artemis Local Version Control System. You can use it to authenticate to Git over HTTP.",
+                "infoText": "The personal VCS access token is deprecated. It still works until it expires, but you can no longer create a new one. Use repository access tokens instead: the clone dialog of a repository creates a token for that single repository, and the overview of all your repository access tokens is shown further down on this page.",
+                "deleteHint": "Delete this token if it may have leaked or if you no longer need it.",
                 "deleteVcsAccessTokenQuestion": "Do you really want to delete your version control system access token? You will not be able to authenticate to local repositories cloned with this token any more.",
-                "createAccessToken": "Create new VCS access token",
-                "noTokenSet": "You do not have any user tokens",
-                "addToken": "Add new token",
+                "noTokenSet": "You do not have a personal VCS access token, so there is nothing to revoke.",
                 "deleteFailure": "Deleting the VCS access token failed",
                 "deleteSuccess": "Successfully deleted the VCS access token",
-                "addFailure": "Failed to set new VCS access token",
-                "addSuccess": "Successfully created a new VCS access token",
                 "vcsAccessToken": "VCS Access Token",
                 "expiryDate": "Expiry Date",
                 "actions": "Actions"
@@ -353,6 +350,7 @@
                 "deleteQuestion": "Are you sure you want to delete all your AI interactions? This action cannot be undone.",
                 "deleteSuccess": "All AI interactions have been successfully deleted.",
                 "deleteFailure": "Failed to delete AI data. Please try again.",
+                "updateFailure": "Your AI preference could not be saved. Please try again.",
                 "typeDeleteAllToConfirm": "To confirm, please type"
             },
             "quizTrainingSettings": {

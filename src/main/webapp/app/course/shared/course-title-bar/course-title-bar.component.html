@@ -1,8 +1,8 @@
-<!-- Height, vertical padding, action-control sizing and the surrounding dividers come from
-     `title-bar-frame` / `title-bar-compact-controls` in the component stylesheet, so this bar stays identical
-     to the admin title bar. The frame applies to the row below, not to this element: a page may also project a
+<!-- Height, vertical padding and the surrounding dividers come from the component stylesheet, the sizing of the
+     action controls from the `title-bar-controls` rules of layout.css, so this bar stays identical to the admin
+     title bar. The frame applies to the row below, not to this element: a page may also project a
      toolbar, which renders as a second row and makes the bar taller than `--title-bar-height` by design. -->
-<div id="course-title-bar" class="module-bg px-4! rounded-sm sticky top-0" [style.display]="displayStyle()">
+<div id="course-title-bar" class="bg-(--module-bg) px-4 rounded-sm sticky top-0" [style.display]="displayStyle()">
     <div class="course-title-bar-row">
         <div class="title-bar-title self-center flex">
             <div class="self-center">
@@ -23,7 +23,7 @@
     </div>
 
     @if (customToolbarTemplate()) {
-        <div class="mt-2 pt-2 border-t border-(--border-color)">
+        <div class="mt-2! pt-2 border-t border-(--border-color)">
             <ng-container *ngTemplateOutlet="customToolbarTemplate()!" />
         </div>
     }

@@ -30,7 +30,7 @@ import { CourseOverviewExercisesService } from 'app/course/overview/services/cou
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { GradeStepApi } from 'app/openapi/api/grade-step-api';
 import type { Grade } from 'app/openapi/model/grade';
-import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
+import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular/chart';
 import { CourseStatisticsResultsComponent } from './course-statistics-results.component';
 import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
 import { CourseStatisticsService } from './course-statistics.service';
@@ -690,16 +690,54 @@ describe('CourseStatisticsComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="statistics-type-totals-explanation"]')).toBeNull();
     });
 
-    it('keeps the required presentation count distinct from advanced presentation points', () => {
-        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ ...course, presentationScore: 3 });
-        fixture.detectChanges();
-        comp.overallPresentationScore.set(2);
-        comp.reachablePresentationPoints.set(0);
+    it('shows the current and required presentation scores in the overall points card', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ ...course, presentationScore: 2 });
+        const translate = vi.spyOn(TestBed.inject(TranslateService), 'get');
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.textContent).toContain('artemisApp.courseOverview.statistics.totalPresentationScore');
-        expect(fixture.nativeElement.textContent).toContain('artemisApp.courseOverview.statistics.presentationScoreBonus');
-        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.courseOverview.statistics.achievablePresentationPoints');
+        const scoreCard: HTMLElement = fixture.nativeElement.querySelector('[aria-labelledby="statistics-score-title"]');
+        const presentationScoreKey = 'artemisApp.courseOverview.statistics.currentPresentationScore';
+        expect(scoreCard.textContent).toContain(presentationScoreKey);
+        expect(scoreCard.textContent).not.toContain('artemisApp.courseOverview.statistics.bonus');
+        expect(translate).toHaveBeenCalledWith(presentationScoreKey, { current: 0, required: 2 });
+
+        comp.gradingScaleExists.set(true);
+        comp.isBonus.set(true);
+        comp.gradeDTO.set({ gradeName: '0', isPassingGrade: false, gradeType: 'BONUS' });
+        comp.overallPresentationScore.set(1);
+        fixture.detectChanges();
+
+        expect(scoreCard.textContent).toContain('artemisApp.courseOverview.statistics.bonus');
+        expect(scoreCard.textContent).toContain(presentationScoreKey);
+        expect(translate).toHaveBeenCalledWith(presentationScoreKey, { current: 1, required: 2 });
+        expect(fixture.nativeElement.querySelector('details').textContent).not.toContain(presentationScoreKey);
+    });
+
+    it('shows earned and attainable graded presentation points below the current grade', () => {
+        vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ ...course, presentationScore: 0 });
+        const translate = vi.spyOn(TestBed.inject(TranslateService), 'get');
+        fixture.detectChanges();
+
+        const scoreCard: HTMLElement = fixture.nativeElement.querySelector('[aria-labelledby="statistics-score-title"]');
+        const gradedPresentationPointsKey = 'artemisApp.courseOverview.statistics.gradedPresentationPoints';
+        expect(scoreCard.textContent).not.toContain(gradedPresentationPointsKey);
+
+        comp.reachablePresentationPoints.set(10);
+        fixture.detectChanges();
+
+        expect(scoreCard.textContent).toContain(gradedPresentationPointsKey);
+        expect(translate).toHaveBeenCalledWith(gradedPresentationPointsKey, { earned: 0, attainable: 10 });
+
+        comp.gradingScaleExists.set(true);
+        comp.gradeDTO.set({ gradeName: '2.7', isPassingGrade: true, gradeType: 'GRADE' });
+        comp.overallPresentationScore.set(6);
+        fixture.detectChanges();
+
+        expect(translate).toHaveBeenCalledWith(gradedPresentationPointsKey, { earned: 6, attainable: 10 });
+        const presentationPoints = scoreCard.querySelector(`[jhiTranslate="${gradedPresentationPointsKey}"]`);
+        expect(presentationPoints?.previousElementSibling?.textContent).toContain('artemisApp.courseOverview.statistics.grade');
+        expect(scoreCard.textContent).not.toContain('artemisApp.courseOverview.statistics.currentPresentationScore');
+        expect(fixture.nativeElement.querySelector('details').textContent).not.toContain(gradedPresentationPointsKey);
     });
 
     it('should set the course after being notified about a course update', () => {

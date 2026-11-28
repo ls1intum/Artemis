@@ -3,14 +3,15 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { catchError, map, startWith, switchMap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService, DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { faBan, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective, TumAetUiButtonSize, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiButtonSize } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogConfig, TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
@@ -51,7 +52,7 @@ import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exerc
 export class ProgrammingExerciseTriggerAllButtonComponent {
     private readonly submissionService = inject(ProgrammingSubmissionService);
     private readonly programmingBuildRunService = inject(ProgrammingBuildRunService);
-    private readonly dialogService = inject(DialogService);
+    private readonly dialogService = inject(TumAetUiDialogService);
     private readonly translateService = inject(TranslateService);
 
     FeatureToggle = FeatureToggle;
@@ -85,10 +86,9 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
      */
     openTriggerAllModal() {
         this.confirmationOpening.emit();
-        const dialogRef = this.dialogService.open(ProgrammingExerciseInstructorTriggerAllDialogComponent, {
+        const dialogRef = this.dialogService.open<ProgrammingExerciseInstructorTriggerAllDialogComponent, boolean>(ProgrammingExerciseInstructorTriggerAllDialogComponent, {
             header: this.translateService.instant('artemisApp.programmingExercise.resubmitAll'),
-            width: '50rem',
-            modal: true,
+            size: 'medium',
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
@@ -97,7 +97,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
                 dueDatePassed: hasDueDatePassed(this.exercise()),
             },
         });
-        dialogRef?.onClose.subscribe((confirmed: boolean | undefined) => {
+        dialogRef?.onClose.subscribe((confirmed) => {
             if (!confirmed) {
                 return;
             }
@@ -117,9 +117,9 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
 @Component({
     template: `
         <form name="triggerAllForm" (ngSubmit)="confirmTrigger()">
-            <div class="p-3">
+            <div class="p-4!">
                 @if (dueDatePassed()) {
-                    <p class="text-danger fw-bold" jhiTranslate="artemisApp.programmingExercise.resubmitAllConfirmAfterDueDate">
+                    <p class="font-bold text-state-danger" jhiTranslate="artemisApp.programmingExercise.resubmitAllConfirmAfterDueDate">
                         The due date has passed, some of the student submissions might have received manual results created by teaching assistants. Newly generated automatic
                         results would replace the manual results as the latest result for the participation.
                     </p>
@@ -128,17 +128,19 @@ export class ProgrammingExerciseTriggerAllButtonComponent {
                     WARNING: Triggering all participations again is a very expensive operation. This action will start a CI build for every participation in this exercise!
                 </p>
             </div>
-            <div class="d-flex justify-content-end gap-2 p-3 border-top">
-                <button type="button" class="btn btn-secondary" (click)="cancel()"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span></button>
-                <button type="submit" class="btn btn-danger"><fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.confirm">Confirm</span></button>
+            <div class="flex justify-end gap-2 border-t border-border p-4!">
+                <button type="button" tumAetUiButton severity="secondary" (click)="cancel()">
+                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+                <button type="submit" tumAetUiButton severity="danger"><fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.confirm">Confirm</span></button>
             </div>
         </form>
     `,
-    imports: [FormsModule, TranslateDirective, FaIconComponent],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, TumAetUiButtonDirective],
 })
 export class ProgrammingExerciseInstructorTriggerAllDialogComponent {
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig);
+    private readonly dialogRef = inject<TumAetUiDialogRef<boolean>>(TumAetUiDialogRef);
+    private readonly dialogConfig = inject<TumAetUiDialogConfig<{ exerciseId?: number; dueDatePassed?: boolean }>>(TumAetUiDialogConfig);
 
     readonly exerciseId = signal<number | undefined>(this.dialogConfig?.data?.exerciseId);
     readonly dueDatePassed = signal<boolean | undefined>(this.dialogConfig?.data?.dueDatePassed);

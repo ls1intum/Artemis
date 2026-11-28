@@ -16,7 +16,7 @@ import { FILTER_MENU_LISTBOX_ID, FilterMenuOption, filterOptionDomId } from '../
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [FaIconComponent, ArtemisTranslatePipe],
     templateUrl: './global-search-filter-menu.component.html',
-    styleUrls: ['./global-search-filter-menu.component.scss'],
+    styleUrls: ['./global-search-filter-menu.component.css'],
 })
 export class GlobalSearchFilterMenuComponent {
     options = input.required<FilterMenuOption[]>();

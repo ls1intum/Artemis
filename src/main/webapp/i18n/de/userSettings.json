@@ -13,7 +13,7 @@
                 "collapse": "Einstellungsmenü einklappen",
                 "expand": "Einstellungsmenü ausklappen"
             },
-            "vcsAccessTokenSettings": "VCS Token",
+            "vcsAccessTokenSettings": "Persönliches VCS-Token (veraltet)",
             "vcsAccessTokensOverview": {
                 "title": "Zugriffstokens",
                 "description": "Eine Übersicht der VCS-Zugriffstokens, mit denen du Repositories über HTTPS klonen kannst. Jedes Token ist auf ein einzelnes Repository beschränkt. Das Widerrufen eines Tokens deaktiviert es sofort; beim nächsten Öffnen des Klon-Dialogs dieses Repositories wird automatisch ein neues erstellt.",
@@ -71,6 +71,7 @@
                     "announcements_post": "Ankündigungen veröffentlichen",
                     "exercises_draft": "Unveröffentlichte Aufgaben erstellen und bearbeiten",
                     "programming_draft": "Unveröffentlichte Programmieraufgaben erstellen und bearbeiten",
+                    "programming_repositories": "Template-, Lösungs- und Test-Repositories mit Git klonen und, solange unveröffentlicht, pushen",
                     "lectures_write": "Vorlesungen und Folien erstellen und bearbeiten"
                 }
             },
@@ -163,16 +164,12 @@
                 }
             },
             "vcsAccessTokensSettingsPage": {
-                "addTokenTitle": "Neues Zugriffstoken erzeugen",
-                "infoText": "Du kannst ein persönliches Zugriffstoken generieren, um mit dem Artemis Local Version Control System zu interagieren. Verwende es um dich über HTTP bei Git zu authentifizieren.",
+                "infoText": "Das persönliche VCS-Zugriffstoken ist veraltet. Es funktioniert noch bis zu seinem Ablauf, aber du kannst kein neues mehr erstellen. Verwende stattdessen Repository-Zugriffstokens: Der Klon-Dialog eines Repositories erstellt ein Token für genau dieses Repository, und die Übersicht aller deiner Repository-Zugriffstokens findest du weiter unten auf dieser Seite.",
+                "deleteHint": "Lösche dieses Token, wenn es möglicherweise offengelegt wurde oder du es nicht mehr benötigst.",
                 "deleteVcsAccessTokenQuestion": "Möchtest du dein Zugriffstoken für das Versionskontrollsystem wirklich löschen? Du kannst dich nicht mehr bei lokalen Repositories authentifizieren, die mit diesem Token geklont wurden.",
-                "createAccessToken": "Neues VCS Zugriffstoken generieren",
-                "noTokenSet": "Du hast kein Zugriffstoken",
-                "addToken": "Neues Token hinzufügen",
+                "noTokenSet": "Du hast kein persönliches VCS-Zugriffstoken, es gibt also nichts zu widerrufen.",
                 "deleteFailure": "Das Löschen des VCS-Zugriffstokens ist fehlgeschlagen",
                 "deleteSuccess": "Das VCS-Zugriffstoken wurde erfolgreich gelöscht",
-                "addFailure": "Neues VCS-Zugriffstoken konnte nicht gespeichert werden",
-                "addSuccess": "Neues VCS-Zugriffstoken erfolgreich erstellt",
                 "vcsAccessToken": "VCS-Zugriffstoken",
                 "expiryDate": "Ablaufdatum",
                 "actions": "Aktionen"
@@ -353,6 +350,7 @@
                 "deleteQuestion": "Bist du sicher, dass du alle deine KI-Interaktionen löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
                 "deleteSuccess": "Alle KI-Interaktionen wurden erfolgreich gelöscht.",
                 "deleteFailure": "KI-Daten konnten nicht gelöscht werden. Bitte versuche es erneut.",
+                "updateFailure": "Deine KI-Auswahl konnte nicht gespeichert werden. Bitte versuche es erneut.",
                 "typeDeleteAllToConfirm": "Zum Bestätigen bitte eingeben"
             },
             "quizTrainingSettings": {

@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { Component, DestroyRef, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
@@ -26,7 +26,7 @@ import { QuizAssessmentApi } from 'app/openapi/api/quiz-assessment-api';
 import { HttpErrorResponse } from '@angular/common/http';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faHashtag, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ResultComponent } from '../result/result.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -165,7 +165,7 @@ export class ParticipationSubmissionComponent implements OnInit {
                 templateRef: this.submissionDateTemplate(),
             },
             {
-                headerIcon: 'pi pi-hashtag',
+                headerIcon: faHashtag,
                 headerTooltip: 'artemisApp.participation.participationSubmission.resultCount',
                 field: 'results',
                 width: '50px',

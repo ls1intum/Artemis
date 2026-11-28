@@ -1,6 +1,7 @@
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { Course } from './course.model';
+import type { InitialCommitAuthor } from './course-configuration.model';
 import type { CourseInformationSharingConfiguration, Language } from './course.model';
 import type { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
@@ -54,6 +55,7 @@ export interface CourseCreateDTO {
 
     // Data-privacy / retention: whether the course is grade-relevant (drives how long student data is retained)
     gradeRelevant: boolean;
+    studentWelcomeContext?: string;
 
     // Atlas auto-orchestration configuration (per-course)
     autoOrchestratorEnabled: boolean;
@@ -113,6 +115,7 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
 
         // Grade-relevance defaults to true when the course has no explicit configuration yet.
         gradeRelevant: course.courseConfiguration?.gradeRelevant ?? true,
+        studentWelcomeContext: course.courseConfiguration?.studentWelcomeContext,
 
         // Atlas auto-orchestration configuration (per-course)
         autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,
@@ -131,6 +134,8 @@ export interface CourseUpdateDTO extends CourseCreateDTO {
     courseInformationSharingMessagingCodeOfConduct?: string;
     onboardingDone: boolean;
     dataRetentionHold: boolean;
+    /** Who authors the first commit of the repositories of new programming exercises; left out, the server keeps the stored choice. */
+    initialCommitAuthor?: InitialCommitAuthor;
 }
 
 /**
@@ -146,5 +151,6 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         courseInformationSharingMessagingCodeOfConduct: course.courseInformationSharingMessagingCodeOfConduct,
         onboardingDone: course.onboardingDone ?? false,
         dataRetentionHold: course.courseConfiguration?.dataRetentionHold ?? false,
+        initialCommitAuthor: course.courseConfiguration?.initialCommitAuthor,
     });
 }

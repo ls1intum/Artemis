@@ -1,11 +1,11 @@
 import { Component, inject, input, output } from '@angular/core';
-import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming/manage/assess/repo-export/export-dialog/programming-assessment-repo-export-dialog.component';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
@@ -38,7 +38,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     imports: [TumAetUiButtonDirective, FaIconComponent, ArtemisTranslatePipe, FeatureToggleDirective, TranslateDirective],
 })
 export class ProgrammingAssessmentRepoExportButtonComponent {
-    private readonly dialogService = inject(DialogService);
+    private readonly dialogService = inject(TumAetUiDialogService);
     private readonly translateService = inject(TranslateService);
 
     readonly inDropdown = input(false);
@@ -69,10 +69,9 @@ export class ProgrammingAssessmentRepoExportButtonComponent {
         // dialog opens — closing the ref in ngOnDestroy would make the dialog flash and vanish.
         this.dialogService.open(ProgrammingAssessmentRepoExportDialogComponent, {
             header: this.translateService.instant('entity.exportRepos.title'),
-            modal: true,
             closable: true,
             closeOnEscape: true,
-            width: '50rem',
+            size: 'medium',
             data: {
                 programmingExercises: this.programmingExercises(),
                 participationIdList: this.participationIdList(),

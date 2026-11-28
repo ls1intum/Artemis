@@ -692,6 +692,11 @@ Artemis knows two kinds of roles:
 - **Global authorities** are carried by the session token: `ROLE_USER` (every signed-in user), `ROLE_ADMIN` and `ROLE_SUPER_ADMIN`.
 - **Course roles** (student, tutor, editor, instructor) are held per course. They are stored in `user_course_role` and read from the database whenever they are checked. They are never part of the token or of the authorities of a user, so granting or revoking a course role takes effect with the next request, and a user can be a tutor in one course and a student in another.
 
+To give or remove a course role in server code, call `CourseAccessService.addUserToCourse()` or
+`CourseAccessService.removeUserFromCourse()`. They change the `user_course_role` entry and do what belongs to the change,
+such as creating the learning path of a new student and creating or removing the repository access tokens of staff. The
+methods of `UserService` with the same names only change the entry.
+
 To reject unauthorized requests as early as possible, Artemis employs two solutions:
 
 1. **Implicit pre- and post-authorization annotations:**

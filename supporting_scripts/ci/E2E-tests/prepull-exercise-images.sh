@@ -26,7 +26,7 @@ set -euo pipefail
 # actually creates exercises for are listed — pulling every language in application.yml would cost
 # several gigabytes for images no test builds in.
 IMAGES=(
-    "ls1tum/artemis-maven-template:java25-5" # java default (also the default exercise language)
+    "ls1tum/artemis-maven-template:java25-7" # java default (also the default exercise language)
     "ls1tum/artemis-c-minimal-docker:1.0.0"   # c default
     "ls1tum/artemis-fact-minimal-docker:1.1.0" # c, fact project type
     "ls1tum/artemis-python-docker:v1.1.0"     # python default
@@ -39,8 +39,8 @@ CONFIG_FILE="${REPO_ROOT}/src/main/resources/config/application.yml"
 MAX_ATTEMPTS=2
 # Cold pulls of all four images together took 30 seconds on the CI runner, the Maven image 11 of them,
 # so this cap carries a large multiple of the real cost while keeping the worst case bounded: two
-# attempts per image, so a totally unreachable registry costs about 8 minutes before the step reports
-# why rather than hanging until the job timeout.
+# attempts per image, so a stalled registry costs about 8 minutes before the step reports why rather
+# than hanging until the job timeout. An unreachable proxy fails the pull after a ten second probe.
 PULL_TIMEOUT_SECONDS=120
 
 # Prints every image configured for the build agent, one per line.
@@ -122,15 +122,10 @@ for image in "${IMAGES[@]}"; do
     fi
 done
 
-# A bound turns a stalled pull into a non-zero exit so the retries can act on it. coreutils ships
-# `timeout` on the CI runners; macOS names it `gtimeout` when coreutils is installed via Homebrew,
-# which keeps the bound working for anyone running this locally.
-timeout_bin=""
-if command -v timeout > /dev/null 2>&1; then
-    timeout_bin="timeout"
-elif command -v gtimeout > /dev/null 2>&1; then
-    timeout_bin="gtimeout"
-fi
+# Docker Hub images are pulled through the registry proxy only, never from Docker Hub itself, and each
+# attempt is bounded, so a stalled pull turns into a non-zero exit that the retries can act on. See the
+# helper for the details.
+PULL_HELPER="${REPO_ROOT}/supporting_scripts/ci/pull-through-registry-proxy.sh"
 
 for image in "${IMAGES[@]}"; do
     if docker image inspect "$image" > /dev/null 2>&1; then
@@ -138,20 +133,10 @@ for image in "${IMAGES[@]}"; do
         continue
     fi
 
-    # Refuse to start a pull that cannot be bounded: an unbounded `docker pull` that stalls would hold
-    # the setup step open until the job timeout, which is the failure this script exists to remove. Only
-    # reached when an image is actually missing, so a machine with every image cached still succeeds.
-    if [ -z "$timeout_bin" ]; then
-        echo "::error title=Cannot bound the E2E image pull::${image} is missing and neither 'timeout' nor 'gtimeout' is available, so a stalled pull could hang this step indefinitely. Install coreutils (on macOS: brew install coreutils) or pull the image manually."
-        exit 1
-    fi
-
     pulled=false
     for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
         echo "Pulling ${image} (attempt ${attempt}/${MAX_ATTEMPTS}, up to ${PULL_TIMEOUT_SECONDS}s)..."
-        # SIGKILL after a short grace, so a pull wedged badly enough to ignore SIGTERM cannot hold the
-        # step open either.
-        if "$timeout_bin" --kill-after=30s "${PULL_TIMEOUT_SECONDS}s" docker pull --quiet "$image"; then
+        if IMAGE_PULL_TIMEOUT_SECONDS="$PULL_TIMEOUT_SECONDS" bash "$PULL_HELPER" "$image"; then
             pulled=true
             break
         fi
@@ -163,10 +148,9 @@ for image in "${IMAGES[@]}"; do
     done
 
     if [ "$pulled" != true ]; then
-        echo "::error title=Could not provision E2E exercise image::Failed to pull ${image} after ${MAX_ATTEMPTS} attempts of up to ${PULL_TIMEOUT_SECONDS}s. Programming-exercise builds cannot run without it, so every test asserting on a build result would fail with an unexplained 0% score. Check the runner's disk space and registry connectivity."
+        echo "::error title=Could not provision E2E exercise image::Failed to pull ${image} after ${MAX_ATTEMPTS} attempts of up to ${PULL_TIMEOUT_SECONDS}s. Programming-exercise builds cannot run without it, so every test asserting on a build result would fail with an unexplained 0% score. Check the runner's disk space and its connection to the registry proxy."
         exit 1
     fi
-    echo "Pulled: ${image}"
 done
 
 echo "All E2E exercise images are available."

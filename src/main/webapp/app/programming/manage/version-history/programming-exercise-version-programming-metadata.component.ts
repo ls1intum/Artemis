@@ -1,4 +1,6 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
@@ -16,9 +18,6 @@ import { booleanLabel } from 'app/exercise/version-history/shared/version-histor
 import dayjs from 'dayjs/esm';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DividerModule } from 'primeng/divider';
-import { PanelModule } from 'primeng/panel';
-import { TooltipModule } from 'primeng/tooltip';
 
 /**
  * View-model for a single row in the metadata panel.
@@ -66,8 +65,8 @@ interface MetadataField {
 @Component({
     selector: 'jhi-programming-exercise-version-programming-metadata',
     templateUrl: './programming-exercise-version-programming-metadata.component.html',
-    styleUrls: ['./programming-exercise-version-programming-metadata.component.scss'],
-    imports: [TumAetUiButtonDirective, PanelModule, DividerModule, TooltipModule, RouterLink, CdkCopyToClipboard, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    styleUrls: ['./programming-exercise-version-programming-metadata.component.css'],
+    imports: [TumAetUiButtonDirective, TumAetUiPanelComponent, TumAetUiTooltipDirective, RouterLink, CdkCopyToClipboard, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProgrammingExerciseVersionProgrammingMetadataComponent {

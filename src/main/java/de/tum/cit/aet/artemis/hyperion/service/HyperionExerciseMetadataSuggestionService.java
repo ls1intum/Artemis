@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.sanitizeInput;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -14,9 +13,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -25,10 +22,12 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionLlmPresets;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationMetadataSuggestionResponseDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -91,8 +90,7 @@ public class HyperionExerciseMetadataSuggestionService {
      */
     private static final int MAX_UNIQUENESS_ATTEMPTS = 50;
 
-    /** Null when no AI provider is configured, which is one of the ways this service falls back rather than fails. */
-    @Nullable
+    /** The client of the {@code metadata-suggestion} preset. */
     private final ChatClient chatClient;
 
     private final HyperionPromptTemplateService templateService;
@@ -111,27 +109,30 @@ public class HyperionExerciseMetadataSuggestionService {
      */
     private final boolean usesLegacyMaxTokens;
 
+    private final int outputTokens;
+
     /**
-     * @param chatClient                    the shared chat client, null when no AI provider is configured
-     * @param chatModels                    all configured chat models; only the first one's options are read, matching how the shared {@code ChatClient} bean is built
+     * @param chatClients                   the chat clients of the Hyperion LLM presets
      * @param templateService               loads the prompt template
      * @param llmTokenUsageService          meters what the suggestion costs
      * @param userRepository                resolves the calling user for that metering
      * @param courseRepository              loads the course the title and short name must be free in
      * @param programmingExerciseRepository answers whether a candidate title, short name, or project key is already taken
      */
-    public HyperionExerciseMetadataSuggestionService(@Nullable ChatClient chatClient, List<ChatModel> chatModels, HyperionPromptTemplateService templateService,
+    public HyperionExerciseMetadataSuggestionService(HyperionChatClientService chatClients, HyperionPromptTemplateService templateService,
             LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, CourseRepository courseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository) {
-        this.chatClient = chatClient;
+        this.chatClient = chatClients.forTask(HyperionLlmPresets.Task.METADATA_SUGGESTION);
         this.templateService = templateService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        ChatOptions configuredOptions = chatModels.isEmpty() ? null : chatModels.getFirst().getOptions();
-        boolean hasCompletionTokenOption = configuredOptions instanceof OpenAiChatOptions openAiOptions && openAiOptions.getMaxCompletionTokens() != null;
-        this.usesLegacyMaxTokens = !hasCompletionTokenOption && configuredOptions != null && configuredOptions.getMaxTokens() != null;
+        // Servers such as Ollama read only max_tokens; a preset that sets that field gets the cap in the same field.
+        LlmProperties.Preset preset = chatClients.presetFor(HyperionLlmPresets.Task.METADATA_SUGGESTION);
+        this.usesLegacyMaxTokens = preset.maxTokens() != null;
+        // The task needs at most MAX_OUTPUT_TOKENS; a lower limit of the preset stays in force.
+        this.outputTokens = preset.outputTokenLimit() == null ? MAX_OUTPUT_TOKENS : Math.min(MAX_OUTPUT_TOKENS, preset.outputTokenLimit());
     }
 
     /**
@@ -186,10 +187,6 @@ public class HyperionExerciseMetadataSuggestionService {
 
     /** One bounded model call, and the empty string for every way it can fail to produce something. */
     private String requestSuggestion(long courseId, @Nullable Long userId, String brief) {
-        if (chatClient == null) {
-            log.debug("No AI chat client is configured; deriving the generation metadata for course [{}] from the brief alone", courseId);
-            return "";
-        }
         if (brief.isBlank()) {
             return "";
         }
@@ -211,10 +208,10 @@ public class HyperionExerciseMetadataSuggestionService {
     private OpenAiChatOptions.Builder metadataOptions() {
         OpenAiChatOptions.Builder options = OpenAiChatOptions.builder();
         if (usesLegacyMaxTokens) {
-            options.maxTokens(MAX_OUTPUT_TOKENS);
+            options.maxTokens(outputTokens);
         }
         else {
-            options.maxCompletionTokens(MAX_OUTPUT_TOKENS);
+            options.maxCompletionTokens(outputTokens);
         }
         return options;
     }

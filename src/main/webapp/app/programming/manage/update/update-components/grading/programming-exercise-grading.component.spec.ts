@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ChangeDetectorRef, Signal, signal } from '@angular/core';
-import { MockDirective } from 'ng-mocks';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { NgModel } from '@angular/forms';
@@ -14,7 +13,6 @@ import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/su
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { SubmissionPolicyUpdateComponent } from 'app/exercise/submission-policy/submission-policy-update.component';
-import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -50,8 +48,6 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
-
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
@@ -512,7 +508,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
         const pointsField = fixture.debugElement.query(By.css('jhi-points-input[name=points]'));
         expect(pointsField.injector.get(NgModel).control.hasError('required')).toBe(true);
         expect(pointsField.componentInstance.min()).toBe(1);
-        const pointsFormGroup = pointsInput.closest('.form-group') as HTMLElement | null;
+        const pointsFormGroup = pointsInput.closest('[data-testid="points-field"]') as HTMLElement | null;
         expect(pointsFormGroup).not.toBeNull();
         expect(pointsFormGroup?.hidden).toBe(false);
 

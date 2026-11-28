@@ -31,11 +31,15 @@ import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.core.dto.PasswordResetKeyDTO;
-import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.SessionTestUtil;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
@@ -54,6 +58,15 @@ class SessionFreshnessIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Autowired
     private UserVcsAccessTokenService userVcsAccessTokenService;
+
+    @Autowired
+    private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
+
+    @Autowired
+    private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
     private UserService userService;
@@ -80,48 +93,17 @@ class SessionFreshnessIntegrationTest extends AbstractSpringIntegrationIndepende
         userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), LOGIN));
     }
 
-    private String createUserVcsAccessTokenPath() {
-        return "/api/account/user-vcs-access-token?expiryDate=" + ZonedDateTime.now().plusMonths(1);
-    }
-
-    @Test
-    @WithMockUser(username = LOGIN)
-    void aSessionThatStartedBeforeTheCredentialsChangedCannotCreateAnAccessToken() throws Exception {
-        userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
-        SessionTestUtil.actAsSessionStartedAt(LOGIN, Instant.now().minus(Duration.ofHours(1)));
-
-        request.putWithResponseBody(createUserVcsAccessTokenPath(), null, UserDTO.class, HttpStatus.UNAUTHORIZED);
-
-        assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
-    }
-
-    @Test
-    @WithMockUser(username = LOGIN)
-    void aSessionThatStartedAfterTheCredentialsChangedCanCreateAnAccessToken() throws Exception {
-        userActivityService.recordCredentialsChanged(user.getId(), Instant.now().minus(Duration.ofHours(1)));
-        SessionTestUtil.actAsSessionStartedAt(LOGIN, Instant.now().minus(Duration.ofMinutes(5)));
-
-        UserDTO created = request.putWithResponseBody(createUserVcsAccessTokenPath(), null, UserDTO.class, HttpStatus.OK);
-
-        assertThat(userVcsAccessTokenService.findToken(user.getId())).isEqualTo(created.getVcsAccessToken());
-    }
-
-    @Test
-    @WithMockUser(username = LOGIN)
-    void aSessionOfAnAccountThatNeverChangedItsCredentialsIsNotRefused() throws Exception {
-        SessionTestUtil.actAsSessionStartedAt(LOGIN, Instant.now().minus(Duration.ofDays(20)));
-
-        request.putWithResponseBody(createUserVcsAccessTokenPath(), null, UserDTO.class, HttpStatus.OK);
-    }
+    private static final String CREATE_PARTICIPATION_ACCESS_TOKEN_PATH = "/api/account/participation-vcs-access-token?participationId=1";
 
     /**
      * The scenario of the issue from end to end: the owner resets the password to end an intrusion and revokes every credential. The
-     * session the intruder is still using must not bring a revoked credential back.
+     * session the intruder is still using must not bring a revoked credential back. The personal token cannot be created any more, so
+     * the credential that is tried is the one of a participation.
      */
     @Test
     @WithMockUser(username = LOGIN)
     void aRevokedCredentialCannotBeCreatedAgainByTheSessionThatPredatesTheReset() throws Exception {
-        userVcsAccessTokenService.store(user.getId(), "vcpat-" + "a".repeat(44), ZonedDateTime.now().plusMonths(1));
+        userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(user, "vcpat-" + "a".repeat(44), ZonedDateTime.now().plusMonths(1));
         Instant sessionStartedBeforeTheReset = Instant.now().minus(Duration.ofHours(2));
         PasswordResetKeyDTO resetKey = userService.prepareUserForPasswordReset(user).orElseThrow();
 
@@ -129,7 +111,7 @@ class SessionFreshnessIntegrationTest extends AbstractSpringIntegrationIndepende
         assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
 
         SessionTestUtil.actAsSessionStartedAt(LOGIN, sessionStartedBeforeTheReset);
-        request.putWithResponseBody(createUserVcsAccessTokenPath(), null, UserDTO.class, HttpStatus.UNAUTHORIZED);
+        request.putWithResponseBody(CREATE_PARTICIPATION_ACCESS_TOKEN_PATH, null, String.class, HttpStatus.UNAUTHORIZED);
 
         assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
     }
@@ -140,58 +122,56 @@ class SessionFreshnessIntegrationTest extends AbstractSpringIntegrationIndepende
         userCreationService.deactivateUser(user);
         SessionTestUtil.actAsSessionStartedAt(LOGIN, Instant.now().plus(Duration.ofMinutes(5)));
 
-        request.putWithResponseBody(createUserVcsAccessTokenPath(), null, UserDTO.class, HttpStatus.UNAUTHORIZED);
+        request.putWithResponseBody(CREATE_PARTICIPATION_ACCESS_TOKEN_PATH, null, String.class, HttpStatus.UNAUTHORIZED);
+    }
+
+    private static final String PARTICIPANT_PREFIX = "sfparticipant";
+
+    private static final String PARTICIPANT = PARTICIPANT_PREFIX + "student1";
+
+    /**
+     * A real participation of a student, so that the tests below can tell a session that is refused from one that creates the token.
+     */
+    private long startParticipation() {
+        userUtilService.addUsers(PARTICIPANT_PREFIX, 1, 0, 0, 0);
+        var course = courseUtilService.addEnrolledEmptyCourse(PARTICIPANT_PREFIX);
+        var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        var submission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(SubmissionType.MANUAL).submitted(true);
+        long participationId = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, PARTICIPANT).getParticipation().getId();
+        // Starting a participation mints its token; the tests create it themselves, so that a refused request is told from an accepted one.
+        participationVCSAccessTokenRepository.deleteAll();
+        return participationId;
+    }
+
+    private String participationTokenPath(long participationId) {
+        return "/api/account/participation-vcs-access-token?participationId=" + participationId;
     }
 
     @Test
-    @WithMockUser(username = LOGIN)
+    @WithMockUser(username = PARTICIPANT)
     void aSessionThatStartedBeforeTheCredentialsChangedCannotCreateAParticipationAccessToken() throws Exception {
-        userActivityService.recordCredentialsChanged(user.getId(), Instant.now());
-        SessionTestUtil.actAsSessionStartedAt(LOGIN, Instant.now().minus(Duration.ofHours(1)));
+        long participationId = startParticipation();
+        userActivityService.recordCredentialsChanged(userUtilService.getUserByLogin(PARTICIPANT).getId(), Instant.now());
+        SessionTestUtil.actAsSessionStartedAt(PARTICIPANT, Instant.now().minus(Duration.ofHours(1)));
 
-        request.putWithResponseBody("/api/account/participation-vcs-access-token?participationId=1", null, String.class, HttpStatus.UNAUTHORIZED);
-    }
+        request.putWithResponseBody(participationTokenPath(participationId), null, String.class, HttpStatus.UNAUTHORIZED);
 
-    /**
-     * The account response is read on every page load, so an outdated session is not refused there. It must not carry the secret of a
-     * personal token that was created after the change, which the session could otherwise copy and use after it expired.
-     */
-    @Test
-    @WithMockUser(username = LOGIN)
-    void anOutdatedSessionDoesNotReadAReplacementPersonalTokenFromTheAccount() throws Exception {
-        Instant sessionStartedBeforeTheReset = Instant.now().minus(Duration.ofHours(2));
-        PasswordResetKeyDTO resetKey = userService.prepareUserForPasswordReset(user).orElseThrow();
-        userService.completePasswordReset("a-new-password-12", resetKey.id(), resetKey.secret(), new CredentialRevocationChoiceDTO(true, true, true)).orElseThrow();
-
-        SessionTestUtil.actAsSessionStartedAt(LOGIN, Instant.now().plus(Duration.ofMinutes(5)));
-        UserDTO created = request.putWithResponseBody(createUserVcsAccessTokenPath(), null, UserDTO.class, HttpStatus.OK);
-        assertThat(created.getVcsAccessToken()).isNotNull();
-
-        SessionTestUtil.actAsSessionStartedAt(LOGIN, sessionStartedBeforeTheReset);
-        UserDTO account = request.get("/api/core/public/account", HttpStatus.OK, UserDTO.class);
-
-        assertThat(account.getLogin()).isEqualTo(LOGIN);
-        assertThat(account.getVcsAccessToken()).isNull();
-        assertThat(account.getVcsAccessTokenExpiryDate()).isNull();
+        assertThat(participationVCSAccessTokenRepository.count()).as("no token was created for the refused session").isZero();
     }
 
     @Test
-    @WithMockUser(username = LOGIN)
-    void aCurrentSessionReadsItsPersonalTokenFromTheAccount() throws Exception {
-        userActivityService.recordCredentialsChanged(user.getId(), Instant.now().minus(Duration.ofHours(1)));
-        userVcsAccessTokenService.store(user.getId(), "vcpat-" + "b".repeat(44), ZonedDateTime.now().plusMonths(1));
-        SessionTestUtil.actAsSessionStartedAt(LOGIN, Instant.now().minus(Duration.ofMinutes(5)));
+    @WithMockUser(username = PARTICIPANT)
+    void aSessionThatStartedAfterTheCredentialsChangedCanCreateAParticipationAccessToken() throws Exception {
+        long participationId = startParticipation();
+        userActivityService.recordCredentialsChanged(userUtilService.getUserByLogin(PARTICIPANT).getId(), Instant.now().minus(Duration.ofHours(1)));
+        SessionTestUtil.actAsSessionStartedAt(PARTICIPANT, Instant.now().minus(Duration.ofMinutes(5)));
 
-        UserDTO account = request.get("/api/core/public/account", HttpStatus.OK, UserDTO.class);
+        String token = request.putWithResponseBody(participationTokenPath(participationId), null, String.class, HttpStatus.OK);
 
-        assertThat(account.getVcsAccessToken()).isEqualTo("vcpat-" + "b".repeat(44));
-        assertThat(account.getVcsAccessTokenExpiryDate()).isNotNull();
+        assertThat(token).isNotBlank();
+        assertThat(participationVCSAccessTokenRepository.count()).isOne();
     }
 
-    /**
-     * The participation token is minted when a participation is started, so a session could otherwise get a credential that outlives it
-     * just by reading it back.
-     */
     @Test
     @WithMockUser(username = LOGIN)
     void aSessionThatStartedBeforeTheCredentialsChangedCannotReadAParticipationAccessToken() throws Exception {

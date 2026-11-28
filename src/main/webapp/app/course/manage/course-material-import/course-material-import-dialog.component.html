@@ -36,7 +36,7 @@
                                 <td>{{ course.title }}</td>
                                 <td>{{ course.shortName }}</td>
                                 <td>{{ course.semester }}</td>
-                                <td class="text-end">
+                                <td class="text-right">
                                     <button
                                         type="button"
                                         tumAetUiButton
@@ -70,7 +70,7 @@
                     <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" [style.width.px]="50" [style.height.px]="50" />
                 </div>
             } @else {
-                <div class="selected-course-info mb-4!">
+                <div class="selected-course-info mb-4">
                     <span jhiTranslate="artemisApp.course.import.selectedCourse"></span>
                     <strong>{{ selectedCourse()?.title }}</strong>
                     @if (selectedCourse()?.semester) {
@@ -78,7 +78,7 @@
                     }
                 </div>
 
-                <p class="mb-4!" jhiTranslate="artemisApp.course.import.selectOptionsHint"></p>
+                <p class="mb-4" jhiTranslate="artemisApp.course.import.selectOptionsHint"></p>
 
                 <div class="options-grid">
                     <!-- Exercises -->

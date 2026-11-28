@@ -7,7 +7,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { CategoryIssuesMap } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
+import { TumAetUiChartSelectEvent } from '@tumaet/ui-angular/chart';
 
 describe('SCA category distribution chart', () => {
     let component: ScaCategoryDistributionChartComponent;

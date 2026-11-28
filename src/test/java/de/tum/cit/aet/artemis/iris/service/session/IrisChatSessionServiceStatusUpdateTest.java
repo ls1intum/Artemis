@@ -155,7 +155,7 @@ class IrisChatSessionServiceStatusUpdateTest {
             return message;
         });
 
-        var tokens = List.of(new LLMRequest("gpt-test", 10, 1.0F, 20, 2.0F, "IRIS_CHAT_TEST"));
+        var tokens = List.of(new LLMRequest("gpt-test", 10, 20, "IRIS_CHAT_TEST"));
         var trace = new LLMTokenUsageTrace();
         trace.setId(200L);
         when(llmTokenUsageService.saveLLMTokenUsage(eq(tokens), eq(LLMServiceType.IRIS), any())).thenReturn(trace);

@@ -1,5 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBook, faCalendarAlt, faGraduationCap, faHashtag, faLevelDownAlt, faReply, faTrophy } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -92,7 +92,7 @@ function truncateDescription(description: string, maxLength: number = DESCRIPTIO
     standalone: true,
     imports: [FaIconComponent, ArtemisTranslatePipe, MarkdownDirective, TumAetUiTagComponent],
     templateUrl: './search-result-item.component.html',
-    styleUrls: ['./search-result-item.component.scss'],
+    styleUrls: ['./search-result-item.component.css'],
 })
 export class SearchResultItemComponent {
     protected readonly faBook = faBook;

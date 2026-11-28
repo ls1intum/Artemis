@@ -1,53 +1,43 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, inject, input, model, output, signal } from '@angular/core';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { faBan, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
-import { IFileDeleteDelegate } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
-import { DeleteFileChange, FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { DeleteFileChange, FileChange, FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 
-// Modal -> Delete repository file
+/**
+ * Dialog that asks for confirmation before a file or folder of the repository is deleted.
+ */
 @Component({
     selector: 'jhi-code-editor-file-browser-delete',
     templateUrl: './code-editor-file-browser-delete.component.html',
     providers: [CodeEditorRepositoryFileService],
-    imports: [FormsModule, TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, FaIconComponent, ArtemisTranslatePipe, TumAetUiDialogComponent, TumAetUiButtonDirective],
 })
-export class CodeEditorFileBrowserDeleteComponent implements OnInit {
-    activeModal = inject(NgbActiveModal);
+export class CodeEditorFileBrowserDeleteComponent {
     private repositoryFileService = inject(CodeEditorRepositoryFileService);
 
-    readonly fileNameToDelete = signal<string | undefined>(undefined);
-    readonly parent = signal<IFileDeleteDelegate | undefined>(undefined);
-    readonly fileType = signal<FileType | undefined>(undefined);
+    readonly visible = model(false);
+    readonly fileNameToDelete = input<string>();
+    readonly fileType = input<FileType>();
+    /** Emits the change after the file or folder was deleted in the repository. */
+    readonly fileDeleted = output<FileChange>();
 
-    isLoading = false;
+    readonly isLoading = signal(false);
+
+    protected readonly FileType = FileType;
 
     // Icons
     faBan = faBan;
     faTrashAlt = faTrashAlt;
 
     /**
-     * @function ngOnInit
-     * @desc Initializes variables
-     */
-    ngOnInit(): void {
-        this.isLoading = false;
-    }
-
-    setInputs({ fileNameToDelete, parent, fileType }: { fileNameToDelete: string; parent: IFileDeleteDelegate; fileType: FileType }) {
-        this.fileNameToDelete.set(fileNameToDelete);
-        this.parent.set(parent);
-        this.fileType.set(fileType);
-    }
-
-    /**
-     * @function deleteFile
-     * @desc Reads the provided fileName and deletes the matching file in the repository
+     * Deletes the file or folder in the repository and reports the change. The dialog closes afterwards, unless it
+     * shows the confirmation for another file by then.
      */
     deleteFile() {
         // Guard against PROBLEM_STATEMENT deletion - it's a pseudo-file, not a real repository file
@@ -55,31 +45,34 @@ export class CodeEditorFileBrowserDeleteComponent implements OnInit {
             this.closeModal();
             return;
         }
-        this.isLoading = true;
-        // Make sure we have a filename
         const fileName = this.fileNameToDelete();
         const fileType = this.fileType();
-        const parent = this.parent();
-        if (fileName && fileType && parent) {
-            this.repositoryFileService.deleteFile(fileName).subscribe({
-                next: () => {
-                    this.closeModal();
-                    parent.onFileDeleted(new DeleteFileChange(fileType, fileName));
-                },
-                error: (err) => {
-                    captureException(err);
-                    // TODO: show the error to the user
-                },
-            });
+        if (!fileName || !fileType) {
+            return;
         }
-        this.isLoading = false;
+        this.isLoading.set(true);
+        this.repositoryFileService.deleteFile(fileName).subscribe({
+            next: () => {
+                this.isLoading.set(false);
+                // The user may have cancelled this confirmation and opened one for another file while the request
+                // was running. Only the confirmation that started the request is closed.
+                if (this.fileNameToDelete() === fileName) {
+                    this.closeModal();
+                }
+                this.fileDeleted.emit(new DeleteFileChange(fileType, fileName));
+            },
+            error: (err) => {
+                this.isLoading.set(false);
+                captureException(err);
+                // TODO: show the error to the user
+            },
+        });
     }
 
     /**
-     * @function closeModal
-     * @desc Dismisses the currently active modal (popup)
+     * Closes the dialog without deleting anything.
      */
     closeModal() {
-        this.activeModal.dismiss('cancel');
+        this.visible.set(false);
     }
 }

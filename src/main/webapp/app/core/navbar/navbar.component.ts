@@ -13,8 +13,8 @@ import {
     TumAetUiMenuItemDirective,
     TumAetUiMenuSeparatorComponent,
     TumAetUiMenuTriggerDirective,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+} from '@tumaet/ui-angular/menu';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { User } from 'app/account/user/user.model';
 import {
     MODULE_FEATURE_ATLAS,
@@ -66,7 +66,7 @@ import { HyperionActivityTrayComponent } from 'app/hyperion/activity-tray/hyperi
 @Component({
     selector: 'jhi-navbar',
     templateUrl: './navbar.component.html',
-    styleUrls: ['navbar.scss'],
+    styleUrls: ['navbar.css'],
     imports: [
         NgOptimizedImage,
         NgClass,

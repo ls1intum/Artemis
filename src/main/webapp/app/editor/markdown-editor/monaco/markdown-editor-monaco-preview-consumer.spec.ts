@@ -159,14 +159,14 @@ describe('MarkdownEditorMonacoComponent with the programming exercise instructio
         expect(secondTask[0].querySelector('.task-name')?.textContent).toBe('Implement Merge Sort');
 
         // The latest result passes the test of the first task, the test of the second task is not part of it.
-        expect(firstTask[0].querySelector('.test-icon.text-success')).not.toBeNull();
+        expect(firstTask[0].querySelector('.test-icon.text-state-success')).not.toBeNull();
         expect(firstTask[0].querySelector('.success')).not.toBeNull();
-        expect(secondTask[0].querySelector('.test-icon.text-secondary')).not.toBeNull();
-        expect(secondTask[0].querySelector('.test-icon.text-success')).toBeNull();
+        expect(secondTask[0].querySelector('.test-icon.text-muted-color')).not.toBeNull();
+        expect(secondTask[0].querySelector('.test-icon.text-state-success')).toBeNull();
 
         // The step wizard on top of the instructions summarizes both tasks.
         expect(previewWrapper().querySelectorAll('.stepwizard')).toHaveLength(1);
-        expect(previewWrapper().querySelectorAll('.btn-circle')).toHaveLength(2);
+        expect(previewWrapper().querySelectorAll('.stepwizard-button')).toHaveLength(2);
         expect(previewWrapper().querySelectorAll('.stepwizard-step--success')).toHaveLength(1);
         expect(previewWrapper().querySelectorAll('.stepwizard-step--not-executed')).toHaveLength(1);
         expect(previewWrapper().closest('.hidden')).not.toBeNull();

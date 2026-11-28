@@ -1,4 +1,4 @@
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { Component, computed, inject, input } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -9,7 +9,7 @@ import { NgClass } from '@angular/common';
 @Component({
     selector: 'jhi-included-in-score-badge',
     templateUrl: './included-in-score-badge.component.html',
-    styleUrls: ['./included-in-score-badge.component.scss'],
+    styleUrls: ['./included-in-score-badge.component.css'],
     imports: [TumAetUiTooltipDirective, NgClass],
 })
 export class IncludedInScoreBadgeComponent {

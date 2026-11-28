@@ -1,4 +1,4 @@
-<div class="doughnut mx-4!">
+<div class="doughnut mx-4">
     @if (titleLink()) {
         <a [routerLink]="['/course-management', course().id, titleLink()]">
             <h5 class="text-center m-0">{{ 'artemisApp.course.detail.' + doughnutChartTitle() + 'Title' | artemisTranslate }}</h5>
@@ -9,7 +9,7 @@
     }
     <div
         class="doughnut-chart-container relative"
-        [ngClass]="titleLink() ? 'clickable' : ''"
+        [ngClass]="titleLink() ? 'clickable cursor-pointer' : ''"
         (click)="openCorrespondingPage()"
         #keyboardAction10
         [attr.role]="titleLink() ? 'button' : null"
@@ -18,7 +18,7 @@
         (keydown.space)="titleLink() && $event.target === $event.currentTarget ? $event.preventDefault() : undefined"
         (keyup.space)="titleLink() && $event.target === $event.currentTarget ? keyboardAction10.click() : undefined"
     >
-        <div class="doughnut-chart-text" data-testid="course-chart-values">
+        <div class="doughnut-chart-text" [class.llm-cost-value]="contentType() === 'LLM_COST'" data-testid="course-chart-values">
             @if (receivedStats()) {
                 @if (currentPercentage() !== undefined) {
                     <div class="chart-value chart-value--large">{{ currentPercentage() }}%</div>
@@ -43,4 +43,12 @@
             [ariaLabel]="'artemisApp.course.detail.' + doughnutChartTitle() + 'Title' | artemisTranslate"
         />
     </div>
+    @if (contentType() === 'LLM_COST' && unpricedRequests() > 0) {
+        <p
+            class="text-center text-sm text-muted-color"
+            data-testid="course-llm-unpriced-requests"
+            jhiTranslate="artemisApp.course.detail.llmCostUnpricedRequests"
+            [translateValues]="{ count: unpricedRequests() }"
+        ></p>
+    }
 </div>

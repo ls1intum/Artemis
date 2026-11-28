@@ -51,7 +51,9 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { TumLiveUploadService } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { UnitCreationCardComponent } from '../unit-creation-card/unit-creation-card.component';
-import { TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -63,7 +65,7 @@ import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestrati
 @Component({
     selector: 'jhi-lecture-unit-management',
     templateUrl: './lecture-unit-management.component.html',
-    styleUrls: ['./lecture-unit-management.component.scss'],
+    styleUrls: ['./lecture-unit-management.component.css'],
     imports: [
         TranslateDirective,
         IngestionStatusBadgeComponent,

@@ -10,7 +10,7 @@
             lecture page reads like the other student pages; the start and end dates sit with the description instead.
             `px-*` rather than `p-*`, so the !important spacing of `p-*` does not overrule the class's vertical padding.
         -->
-        <div class="page-top-bar module-bg rounded-lg px-4! shell-divider-b flex items-center gap-4!">
+        <div class="page-top-bar bg-(--module-bg) rounded-lg px-4 shell-divider-b flex items-center gap-4">
             @if (isSidebarCollapsed()) {
                 <jhi-course-sidebar-toggle-button [isCollapsed]="isSidebarCollapsed()" (toggleSidebar)="toggleSidebar()" />
             }
@@ -26,7 +26,7 @@
             content below carries neither.
         -->
         <jhi-resizable-panels
-            class="flex-1 overflow-hidden"
+            class="flex-1 overflow-hidden!"
             [useViewportWidthForCollapse]="true"
             storageKey="lecture-details-split"
             [collapsedStateStorageKey]="courseId() === undefined ? undefined : 'course-side-panel-collapsed-' + courseId()"
@@ -47,7 +47,7 @@
                 @if (lecture.description) {
                     <div class="flex flex-wrap mb-2 mt-2 items-baseline">
                         <div class="w-auto">
-                            <h3 class="text-lg! font-semibold" jhiTranslate="artemisApp.courseOverview.lectureDetails.description"></h3>
+                            <h3 class="text-lg!" jhiTranslate="artemisApp.courseOverview.lectureDetails.description"></h3>
                         </div>
                     </div>
                     <div class="flex flex-wrap mb-2 markdown-preview">
@@ -56,9 +56,9 @@
                 }
                 <!-- LECTURE UNITS START-->
                 @if (lecture.lectureUnits) {
-                    <div class="flex flex-wrap mb-2 mt-2 items-center gap-4!">
+                    <div class="flex flex-wrap mb-2 mt-2 items-center gap-4">
                         <div class="w-auto">
-                            <h3 class="mb-0 text-lg! font-semibold" jhiTranslate="artemisApp.courseOverview.lectureDetails.lectureUnits"></h3>
+                            <h3 class="mb-0 text-lg!" jhiTranslate="artemisApp.courseOverview.lectureDetails.lectureUnits"></h3>
                         </div>
                         @if (hasPdfLectureUnit()) {
                             <button
@@ -68,7 +68,7 @@
                                 size="small"
                                 type="button"
                                 id="downloadButton"
-                                class="w-auto rounded-full"
+                                class="w-auto"
                                 (click)="downloadMergedFiles()"
                                 jhiTranslate="artemisApp.courseOverview.lectureDetails.downloadMergedPdf"
                             ></button>

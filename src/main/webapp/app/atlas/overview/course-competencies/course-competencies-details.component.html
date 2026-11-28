@@ -5,12 +5,12 @@
     </div>
 }
 @if (competency(); as competency) {
-    <div class="-mt-4!">
+    <div class="-mt-4">
         <!-- HEADER INFORMATION START -->
-        <div class="mt-2 me-1 course-info-bar">
+        <div class="mt-2! me-1! course-info-bar">
             <div class="-mx-2 flex flex-wrap items-center">
                 <div class="min-w-0 flex-1 px-2">
-                    <h3 class="mb-0!">
+                    <h3 class="mb-0">
                         <fa-icon
                             [icon]="getIcon(competency.taxonomy)"
                             [fixedWidth]="true"
@@ -31,7 +31,7 @@
                     }
                 </div>
                 @if (competency.softDueDate) {
-                    <div class="w-auto px-2 text-end">
+                    <div class="w-auto px-2 text-right">
                         <span class="align-middle" jhiTranslate="artemisApp.competency.competencyCard.softDueDate"></span>
                         <tumaet-ui-tag id="date-badge" class="align-middle" size="sm" [severity]="softDueDatePassed ? 'danger' : 'success'">
                             {{ competency.softDueDate | artemisTimeAgo }}
@@ -54,7 +54,7 @@
                 <div class="-mx-2 flex flex-wrap">
                     @for (lectureUnitLink of competency.lectureUnitLinks; track lectureUnitLink) {
                         @if (lectureUnitLink.lectureUnit; as lectureUnit) {
-                            <div class="mt-4! w-full px-2 lg:w-11/12">
+                            <div class="mt-4 w-full px-2 lg:w-11/12">
                                 @switch (lectureUnit.type) {
                                     @case (LectureUnitType.EXERCISE) {
                                         <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="competency!.course!" />
@@ -79,7 +79,7 @@
                 <div class="mx-auto my-2 w-1/2">
                     <jhi-competency-rings [progress]="progress" [mastery]="mastery" />
                 </div>
-                <jhi-side-panel class="mt-4! block" [panelHeader]="'artemisApp.competency.table.panelHeader' | artemisTranslate">
+                <jhi-side-panel class="mt-4 block" [panelHeader]="'artemisApp.competency.table.panelHeader' | artemisTranslate">
                     <div class="mb-1 flex">
                         <div class="w-7/12"><span jhiTranslate="artemisApp.competency.mastery"></span><jhi-help-icon text="artemisApp.competency.masteryDescription" /></div>
                         <div class="w-5/12">

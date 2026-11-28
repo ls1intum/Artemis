@@ -3,9 +3,9 @@
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepMessage"></p>
     <!-- User Prompt Input -->
     @if (hyperionEnabled) {
-        <div class="mb-3">
-            <div class="d-flex align-items-center mb-2">
-                <label for="userPrompt" class="form-label mb-0" jhiTranslate="artemisApp.programmingExercise.problemStatement.yourRequirements"></label>
+        <div class="mb-4">
+            <div class="flex items-center mb-2">
+                <label for="userPrompt" class="mb-0" jhiTranslate="artemisApp.programmingExercise.problemStatement.yourRequirements"></label>
                 <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.problemStatement.generateDraftDescription" />
             </div>
             <div class="textarea-counter-wrapper">
@@ -13,19 +13,26 @@
                     id="userPrompt"
                     [ngModel]="userPrompt()"
                     (ngModelChange)="userPrompt.set($event)"
-                    pTextarea
-                    fluid
+                    tumAetUiTextarea
+                    tumAetUiInputId="userPrompt"
                     rows="4"
                     [placeholder]="getTranslatedPlaceholder()"
                     [disabled]="isAiApplying()"
                     [maxlength]="MAX_USER_PROMPT_LENGTH"
-                    class="textarea-with-counter"
+                    class="textarea-with-counter w-full"
                 ></textarea>
-                <span class="textarea-char-count" [class.text-danger]="isPromptNearLimit()">{{ userPrompt()?.length || 0 }}/{{ MAX_USER_PROMPT_LENGTH }}</span>
+                <span class="textarea-char-count" [class.textarea-char-count--near-limit]="isPromptNearLimit()">{{ userPrompt()?.length || 0 }}/{{ MAX_USER_PROMPT_LENGTH }}</span>
             </div>
         </div>
-        <div class="d-flex align-items-center gap-2 mb-3">
-            <button pButton type="button" severity="primary" outlined [disabled]="!userPrompt()?.trim() || isAiApplying()" (click)="handleProblemStatementAction()">
+        <div class="flex items-center gap-2 mb-4">
+            <button
+                tumAetUiButton
+                type="button"
+                severity="primary"
+                variant="outlined"
+                [disabled]="!userPrompt()?.trim() || isAiApplying()"
+                (click)="handleProblemStatementAction()"
+            >
                 @if (isAiApplying()) {
                     <fa-icon [icon]="faSpinner" animation="spin" />
                 } @else {
@@ -37,18 +44,26 @@
                     <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.problemStatement.refinementAssistance"></span>
                 }
             </button>
-            <button pButton type="button" id="cancel-generation" severity="secondary" outlined (click)="cancelAiOperation()" [disabled]="!isGeneratingOrRefining()">
+            <button
+                tumAetUiButton
+                type="button"
+                id="cancel-generation"
+                severity="secondary"
+                variant="outlined"
+                (click)="cancelAiOperation()"
+                [disabled]="!isGeneratingOrRefining()"
+            >
                 <fa-icon [icon]="faBan" class="me-1" />
                 <span jhiTranslate="entity.action.cancel"></span>
             </button>
         </div>
     }
     @if (isEditFieldDisplayedRecord()?.problemStatement) {
-        <div class="form-group" id="field_problemStatement" name="problemStatement">
-            <label class="form-control-label" for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
+        <div class="mb-4" id="field_problemStatement" name="problemStatement">
+            <label for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
             @if (programmingExerciseCreationConfig().isImportFromExistingExercise || programmingExerciseCreationConfig().isImportFromFile) {
-                <p-message severity="warn">
-                    <span class="font-weight-bold">
+                <tumaet-ui-message severity="warn">
+                    <span class="font-bold">
                         {{ 'artemisApp.exercise.import.attention' | artemisTranslate }}
                     </span>
                     <span
@@ -58,7 +73,7 @@
                                 : 'artemisApp.exercise.import.embeddedFilesWarning'
                         }}"
                     ></span>
-                </p-message>
+                </tumaet-ui-message>
             }
             @if (programmingExerciseCreationConfig().isImportFromExistingExercise && programmingExercise()?.templateParticipation) {
                 <jhi-programming-exercise-instructions
@@ -102,14 +117,14 @@
                     [forceRender]="programmingExerciseCreationConfig().rerenderSubject"
                     class="form__editable-instructions"
                 />
-                <div class="d-flex justify-content-end mt-1">
-                    <small [class.text-danger]="isProblemStatementTooLong()"> {{ problemStatementLength() }}/{{ maxProblemStatementLength }} </small>
+                <div class="flex justify-end mt-1">
+                    <small [class.text-state-danger]="isProblemStatementTooLong()"> {{ problemStatementLength() }}/{{ maxProblemStatementLength }} </small>
                 </div>
 
                 @if (isProblemStatementTooLong()) {
-                    <p-message severity="error" styleClass="w-100 mt-2" [closable]="false">
+                    <tumaet-ui-message severity="error" class="w-full mt-2">
                         <span [jhiTranslate]="'artemisApp.programmingExercise.problemStatement.tooLong'" [translateValues]="{ max: maxProblemStatementLength }"></span>
-                    </p-message>
+                    </tumaet-ui-message>
                 }
             }
         </div>
@@ -128,7 +143,7 @@
         }
     }
     @if (isEditFieldDisplayedRecord()?.linkedCompetencies && !programmingExerciseCreationConfig().isExamMode) {
-        <div class="form-group">
+        <div class="mb-4">
             <jhi-competency-selection
                 id="competencies"
                 [labelName]="'artemisApp.competency.link.title' | artemisTranslate"

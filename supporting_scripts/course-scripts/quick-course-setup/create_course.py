@@ -17,7 +17,6 @@ config.read(['../config.ini', 'config.ini'])
 
 # Constants from config file
 SERVER_URL: str = config.get('Settings', 'server_url')
-IS_LOCAL_COURSE: bool = config.get('CourseSettings', 'is_local_course').lower() == 'true'  # Convert to boolean
 COURSE_NAME: str = config.get('CourseSettings', 'course_name')
 SPECIAL_CHARACTERS_REGEX: str = config.get('CourseSettings', 'special_character_regex')
 
@@ -40,11 +39,6 @@ def create_course(session: Session) -> requests.Response:
         "id": None,
         "title": str(COURSE_NAME),
         "shortName": str(course_short_name),
-        "customizeGroupNames": False,
-        "studentGroupName": None,
-        "teachingAssistantGroupName": None,
-        "editorGroupName": None,
-        "instructorGroupName": None,
         "courseInformationSharingMessagingCodeOfConduct": None,
         "semester": None,
         "testCourse": None,
@@ -69,13 +63,6 @@ def create_course(session: Session) -> requests.Response:
         "enrollmentEnabled": False
     }
 
-    if IS_LOCAL_COURSE:
-        default_course["customizeGroupNames"] = True
-        default_course["studentGroupName"] = "students"
-        default_course["teachingAssistantGroupName"] = "tutors"
-        default_course["editorGroupName"] = "editors"
-        default_course["instructorGroupName"] = "instructors"
-
     fields = {
         "course": ('blob.json', json.dumps(default_course), 'application/json')
     }
@@ -93,8 +80,6 @@ def create_course(session: Session) -> requests.Response:
         logging.info(f"Course with shortName {course_short_name} already exists. Please provide the course ID in the config file and set create_course to FALSE if you intend to add programming exercises to this course.")
         sys.exit(0)
     else:
-        logging.error("Problem with the group 'students' and interacting with a test server? "
-                      "Is 'is_local_course' in 'config.ini' set to 'False'?")
         raise Exception(
             f"Could not create course {COURSE_NAME}; Status code: {response.status_code}\n"
             f"Double check whether the courseShortName {course_short_name} is valid (e.g. no special characters such as '-')!\n"

@@ -4,7 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft, faScroll, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { EMPTY } from 'rxjs';
 import { catchError, finalize, switchMap, tap } from 'rxjs/operators';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -28,7 +28,7 @@ import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.mode
     selector: 'jhi-text-unit-fullscreen',
     imports: [FaIconComponent, RouterLink, TranslateDirective, TumAetUiButtonDirective],
     templateUrl: './text-unit-fullscreen.component.html',
-    styleUrl: './text-unit-fullscreen.component.scss',
+    styleUrl: './text-unit-fullscreen.component.css',
     encapsulation: ViewEncapsulation.None,
 })
 export class TextUnitFullscreenComponent implements OnInit {

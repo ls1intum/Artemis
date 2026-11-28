@@ -18,6 +18,7 @@ import org.springframework.mock.env.MockEnvironment;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
+import de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import io.weaviate.client6.v1.api.WeaviateClient;
@@ -44,8 +45,8 @@ class WeaviateServiceExternalCollectionTest {
     void wrapsAnExternalCollectionConnectionFailureAfterTheSdkInitializes() throws Exception {
         int port = server.getAddress().getPort();
         try (WeaviateClient client = WeaviateClient.connectToCustom(config -> config.scheme("http").httpHost("127.0.0.1").httpPort(port).grpcHost("127.0.0.1").grpcPort(port))) {
-            var properties = new WeaviateConfigurationProperties(true, "127.0.0.1", port, port, "http", "Artemis_", "none", null, null, null, null, null);
-            var service = new WeaviateService(Optional.of(client), properties, new MockEnvironment());
+            var properties = new WeaviateConfigurationProperties(true, "127.0.0.1", port, port, "http", "Artemis_", "none", null, null, null);
+            var service = new WeaviateService(Optional.of(client), properties, LlmTestCatalog.empty(), new MockEnvironment());
 
             assertThatThrownBy(() -> service.externalCollectionExists("Lectures")).isInstanceOf(WeaviateException.class)
                     .hasMessageStartingWith("Failed to check whether external collection 'Lectures' exists:").hasCauseInstanceOf(IOException.class);
