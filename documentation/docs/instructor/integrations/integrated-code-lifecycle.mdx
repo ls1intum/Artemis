@@ -2,7 +2,7 @@
 id: integrated-code-lifecycle
 title: Integrated Code Lifecycle
 sidebar_label: Integrated Code Lifecycle
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-25
 ---
 
 import Image, { ImageSize } from '../../../src/components/Image/Image';
@@ -228,18 +228,16 @@ This applies to all automatically provisioned tokens: your participation tokens 
 
 <Image src={vcsAccessTokensOverviewImg} alt={'The Access Tokens overview in the user settings, listing the tokens for one exercise with a revoke action'} size={ImageSize.large} />
 
-### Instructor user access tokens
+### Personal user access tokens (deprecated)
 
-Instructors can create a user access token in **User Settings → VCS Token**.
-This token is broader than a repository-scoped token: it can authenticate Git operations for all repositories that the user account is allowed to access.
-Use it when you need one token for several repositories or for automation. For everyday staff access to individual student assignment repositories, prefer the automatically provisioned repository-scoped token instead.
-
-Treat user access tokens like passwords.
-Never share them, never commit them to version control, and revoke them immediately if they might have been exposed.
+Earlier versions of Artemis let instructors create one personal access token that authenticated Git operations for all repositories of the account.
+That token is deprecated and cannot be created any more, because a leak exposed every repository of its owner.
+A token that already exists keeps working until it expires. **User Settings → Credentials** shows it and lets you delete it, which you should do if it might have been exposed or you no longer need it.
+Use the automatically provisioned repository-scoped token instead, or SSH for repeated work across many repositories.
+For automation and coding agents, use an agent access token with the scope for programming repositories, see [Working with Coding Agents](/instructor/integrations/coding-agents).
 
 ### Choosing an authentication method
 
 Repository-scoped staff tokens are the default choice for template, test, solution, and auxiliary repositories because they require no setup and stay limited to one repository.
 SSH is the best choice for repeated work across many repositories after you have configured an SSH key in your account settings.
-Instructor user access tokens are useful when you need a single HTTPS token for multiple repositories.
 Password authentication should be avoided where possible and may be disabled by the system administrator.

@@ -21,7 +21,7 @@ import { PageableResult } from 'app/foundation/pagination/pageable-table';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipationDTO } from 'app/exercise/shared/entities/participation/student-participation.dto';
-import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 
 describe('Participation Service', () => {
     let service: ParticipationService;
@@ -208,23 +208,6 @@ describe('Participation Service', () => {
 
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
-    });
-
-    it('should get build job ids for participation results', () => {
-        let resultGetBuildJobId: any;
-        const resultIdToBuildJobIdMap: { [key: string]: boolean } = { '1': true, '2': false };
-        const returnedFromService = resultIdToBuildJobIdMap;
-        const expected = { ...returnedFromService };
-
-        service
-            .getBuildJobIdsForResultsOfParticipation(1)
-            .pipe(take(1))
-            .subscribe((resp) => (resultGetBuildJobId = resp));
-
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-
-        expect(resultGetBuildJobId).toEqual(expected);
     });
 
     describe('searchParticipations', () => {

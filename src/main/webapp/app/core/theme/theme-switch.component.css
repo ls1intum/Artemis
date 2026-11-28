@@ -1,0 +1,126 @@
+.wrapper,
+.toggle-popover-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100%;
+}
+
+.wrapper .toggle-popover-wrapper .theme-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    outline-offset: 5px;
+    transform: translateY(-0.5px);
+}
+
+.wrapper .toggle-popover-wrapper .theme-toggle > svg {
+    inline-size: 90%;
+    block-size: 100%;
+    stroke-linecap: round;
+}
+
+.wrapper .toggle-popover-wrapper .theme-toggle .sun-and-moon > :is(.moon, .sun, .sun-beams) {
+    transform-origin: center center;
+}
+
+.wrapper .toggle-popover-wrapper .theme-toggle .sun-and-moon > :is(.moon, .sun) {
+    fill: var(--navbar-dark-color);
+}
+
+.wrapper .toggle-popover-wrapper .theme-toggle .sun-and-moon > .sun-beams {
+    stroke: var(--navbar-dark-color);
+    stroke-width: 2px;
+    transition:
+        transform 1s cubic-bezier(0.25, 0, 0.3, 1),
+        opacity 0.5s cubic-bezier(0.25, 0, 0.3, 1);
+}
+
+.wrapper .toggle-popover-wrapper .theme-toggle .sun-and-moon > .sun {
+    transition: transform 0.5s cubic-bezier(0.25, 0, 0.3, 1);
+}
+
+.wrapper .toggle-popover-wrapper .theme-toggle .sun-and-moon > .moon > circle {
+    transition: transform 0.25s cubic-bezier(0.9, 0, 0.1, 1);
+}
+
+@supports (cx: 1) {
+    .wrapper .toggle-popover-wrapper .theme-toggle .sun-and-moon > .moon > circle {
+        transition: cx 0.25s cubic-bezier(0.9, 0, 0.1, 1);
+    }
+}
+
+.wrapper .toggle-popover-wrapper .theme-toggle.dark .sun-and-moon > .sun-beams {
+    opacity: 0;
+    transform: rotateZ(-90deg);
+    transition-duration: 0.15s;
+}
+
+.wrapper .toggle-popover-wrapper .theme-toggle.dark .sun-and-moon > .moon > circle {
+    transform: translateX(-7px);
+    transition-duration: 0.8s;
+}
+
+@supports (cx: 1) {
+    .wrapper .toggle-popover-wrapper .theme-toggle.dark .sun-and-moon > .moon > circle {
+        transform: translateX(0);
+        cx: 17px;
+    }
+}
+
+.wrapper .toggle-popover-wrapper .theme-toggle.dark .sun-and-moon > .sun {
+    transform: scale(1.5);
+    transition-timing-function: cubic-bezier(0.25, 0, 0.3, 1);
+    transition-duration: 0.25s;
+}
+
+.wrapper .toggle-popover-wrapper .theme-toggle:hover .sun-and-moon > :is(.moon, .sun) {
+    fill: var(--link-color);
+}
+
+.wrapper .toggle-popover-wrapper .theme-toggle:hover .sun-and-moon > .sun-beams {
+    stroke: var(--link-color);
+}
+
+.theme-popover {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    max-width: 300px;
+    min-width: fit-content;
+    padding: 1rem;
+    font-size: 0.7875rem;
+    text-align: center;
+}
+
+.theme-popover .head {
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--warning);
+}
+
+.theme-popover .head span {
+    padding: 0 5px;
+    color: var(--body-color);
+}
+
+.theme-popover .switch-box {
+    border: 1px solid var(--theme-switch-box-border-color);
+    margin: 1rem 0.5em 0.5em;
+    padding: 0.3em 0.5em;
+    width: 100%;
+    min-width: fit-content;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: space-between;
+    align-items: center;
+    white-space: nowrap;
+}

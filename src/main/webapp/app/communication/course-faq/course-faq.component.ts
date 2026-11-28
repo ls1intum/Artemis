@@ -4,7 +4,6 @@ import { CourseTabRefreshService } from 'app/course/overview/services/course-tab
 import { debounceTime, filter, map } from 'rxjs/operators';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
-import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 
 import { CourseFaqAccordionComponent } from 'app/communication/course-faq/course-faq-accordion-component';
 import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
@@ -16,26 +15,31 @@ import { loadCourseFaqCategories } from 'app/communication/faq/faq.utils';
 import { onError } from 'app/foundation/util/global.utils';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
-import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { CommonModule } from '@angular/common';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
 
 @Component({
     selector: 'jhi-course-faq',
     templateUrl: './course-faq.component.html',
-    styleUrls: ['../../course/overview/course-overview/course-overview.scss', 'course-faq.component.scss'],
+    styleUrl: '../../course/overview/course-overview/course-overview.css',
     encapsulation: ViewEncapsulation.None,
     imports: [
         CourseTitleBarActionsDirective,
         CourseFaqAccordionComponent,
         CustomExerciseCategoryBadgeComponent,
         SearchFilterComponent,
-        NgbDropdownModule,
         TranslateDirective,
+        ArtemisTranslatePipe,
         FontAwesomeModule,
-        CommonModule,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
     ],
 })
 export class CourseFaqComponent implements OnInit, OnDestroy {
@@ -61,11 +65,9 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     readonly activeFilters = signal<Set<string>>(new Set<string>());
 
     readonly hasCategories = signal(false);
-    isCollapsed = false;
 
     searchInput = new BehaviorSubject<string>('');
 
-    readonly ButtonType = ButtonType;
     readonly faFilter = faFilter;
 
     private tabReselectionSubscription?: Subscription;

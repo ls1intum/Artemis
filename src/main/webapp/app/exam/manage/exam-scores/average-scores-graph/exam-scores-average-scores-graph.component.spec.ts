@@ -14,7 +14,7 @@ import { LocaleConversionService } from 'app/foundation/service/locale-conversio
 import { RouterModule } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
-import { TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
+import { TumAetUiChartSelectEvent } from '@tumaet/ui-angular/chart';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 
 describe('ExamScoresAverageScoresGraphComponent', () => {

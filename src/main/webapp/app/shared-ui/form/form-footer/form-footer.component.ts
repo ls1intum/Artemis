@@ -1,12 +1,13 @@
 import { Component, computed, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { translateValidationReasons } from 'app/exercise/util/exercise-validation.util';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { faBan, faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SwitchEditModeButtonComponent } from 'app/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { ExerciseUpdateNotificationComponent } from 'app/exercise/exercise-update-notification/exercise-update-notification.component';
@@ -17,9 +18,9 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-form-footer',
     templateUrl: 'form-footer.component.html',
-    styleUrls: ['form-footer.component.scss'],
+    styleUrls: ['form-footer.component.css'],
     imports: [
-        NgbTooltip,
+        TumAetUiTagComponent,
         SwitchEditModeButtonComponent,
         HelpIconComponent,
         ExerciseUpdateNotificationComponent,

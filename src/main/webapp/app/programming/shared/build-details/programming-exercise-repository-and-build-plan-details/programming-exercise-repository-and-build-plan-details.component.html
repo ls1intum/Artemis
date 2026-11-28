@@ -1,8 +1,8 @@
-<div id="preview" class="row ms-0 mt-1 mb-1 pt-1 pb-1">
-    <div class="col-auto rounded pt-1 pb-1 preview-box">
+<div id="preview" class="-me-2 mt-1 mb-1 flex flex-wrap pt-1 pb-1">
+    <div class="w-auto flex-none rounded-[0.15rem] px-2 pt-1 pb-1 preview-box">
         <div>
             <div>
-                <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.repositories"></span>
+                <span jhiTranslate="artemisApp.programmingExercise.preview.repositories"></span>
             </div>
             <hr class="pt-0 pb-0 mt-1 mb-1" />
             <ul>
@@ -51,9 +51,9 @@
         </div>
     </div>
     @if (!isLocalCIEnabled()) {
-        <div class="col-auto rounded pt-1 pb-1 preview-box">
+        <div class="w-auto flex-none rounded-[0.15rem] px-2 pt-1 pb-1 preview-box">
             <div>
-                <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.buildPlans"></span>
+                <span jhiTranslate="artemisApp.programmingExercise.preview.buildPlans"></span>
             </div>
             <hr class="pt-0 pb-0 mt-1 mb-1" />
             <ul>
@@ -80,9 +80,9 @@
             </ul>
         </div>
     } @else if (checkoutDirectories(); as checkoutDirectories) {
-        <div class="col-auto rounded pt-1 pb-1 preview-box" id="checkout-directory-preview-submission-build-plan">
+        <div class="w-auto flex-none rounded-[0.15rem] px-2 pt-1 pb-1 preview-box" id="checkout-directory-preview-submission-build-plan">
             <div>
-                <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.submissionBuildPlan"></span>
+                <span jhiTranslate="artemisApp.programmingExercise.preview.submissionBuildPlan"></span>
                 <jhi-help-icon text="artemisApp.programmingExercise.preview.templateBuildPlanTooltip" />
             </div>
             <jhi-programming-exercise-build-plan-checkout-directories
@@ -90,9 +90,9 @@
                 [auxiliaryRepositories]="programmingExercise().auxiliaryRepositories ?? []"
             />
         </div>
-        <div class="col-auto rounded pt-1 pb-1 preview-box" id="checkout-directory-preview-solution-build-plan">
+        <div class="w-auto flex-none rounded-[0.15rem] px-2 pt-1 pb-1 preview-box" id="checkout-directory-preview-solution-build-plan">
             <div>
-                <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.preview.solutionBuildPlan"></span>
+                <span jhiTranslate="artemisApp.programmingExercise.preview.solutionBuildPlan"></span>
                 <jhi-help-icon text="artemisApp.programmingExercise.preview.solutionBuildPlanTooltip" />
             </div>
             <jhi-programming-exercise-build-plan-checkout-directories
@@ -105,7 +105,13 @@
 
 <ng-template #repositoryBadge let-helpIconText="helpIconText" let-trailingRepoSlug="trailingRepoSlug" let-isBuildPlan="isBuildPlan" let-isAuxRepo="isAuxRepo">
     <li>
-        <code [class]="'text-white badge label-preview ' + (isBuildPlan ? ' text-uppercase' : 'text-lowercase') + (isAuxRepo ? ' bg-success' : ' bg-primary')">
+        <code
+            [class]="
+                'label-preview inline-block rounded-sm px-[0.65em] py-[0.35em] leading-none font-bold whitespace-nowrap text-white! ' +
+                (isBuildPlan ? 'uppercase' : 'lowercase') +
+                (isAuxRepo ? ' bg-state-success' : ' bg-(--primary)')
+            "
+        >
             {{ courseShortName() }}{{ programmingExercise().shortName }}{{ trailingRepoSlug }}
         </code>
         @if (helpIconText) {

@@ -235,6 +235,7 @@ public class LectureUnitResource {
     @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<LectureUnitForLearningPathNodeDetailsDTO> getLectureUnitForLearningPathNodeDetails(@PathVariable long lectureUnitId) {
         log.info("REST request to get lecture unit for learning path node details with id: {}", lectureUnitId);
+        lectureService.checkLectureUnitVisibleToUserElseThrow(lectureUnitId, userRepository.getUserWithCourseRolesAndAuthorities());
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);
         return ResponseEntity.ok(LectureUnitForLearningPathNodeDetailsDTO.of(lectureUnit));
     }
@@ -252,6 +253,7 @@ public class LectureUnitResource {
     @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<LectureUnitMaterialVersionsDTO> getLectureUnitMaterialVersions(@PathVariable long lectureUnitId) {
         log.debug("REST request to get material versions of lecture unit with id: {}", lectureUnitId);
+        lectureService.checkLectureUnitVisibleToUserElseThrow(lectureUnitId, userRepository.getUserWithCourseRolesAndAuthorities());
         return ResponseEntity.ok(lectureUnitRepository.findMaterialVersionsById(lectureUnitId).orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, lectureUnitId)));
     }
 

@@ -252,7 +252,7 @@ describe('CourseNotificationComponent', () => {
         expect(componentAsAny.notificationContentKey()).toBe('artemisApp.courseNotification.exerciseUpdatedNotification.content');
     });
 
-    it('should show the content with the message of its editor, escaped, when the notification carries one', () => {
+    it('should pass the original editor message to the translation directive', () => {
         fixture.componentRef.setInput(
             'courseNotification',
             createMockNotification(3, 101, 'attachmentChangedNotification', { unitName: 'Lecture 1', notificationText: 'Use <b>v2</b> & re-download' }),
@@ -260,7 +260,7 @@ describe('CourseNotificationComponent', () => {
         fixture.detectChanges();
 
         expect(componentAsAny.notificationContentKey()).toBe('artemisApp.courseNotification.attachmentChangedNotification.contentWithNotificationText');
-        expect(componentAsAny.notificationParameters().notificationText).toBe('Use &lt;b&gt;v2&lt;/b&gt; &amp; re-download');
+        expect(componentAsAny.notificationParameters().notificationText).toBe('Use <b>v2</b> & re-download');
         expect(componentAsAny.notificationParameters().unitName).toBe('Lecture 1');
     });
 
@@ -388,6 +388,18 @@ describe('CourseNotificationComponent rendering translated content', () => {
         const content = await renderContent('newPostNotification', { postMarkdownContent: '**Please** check the build log.' });
 
         expect(content.textContent).toBe('Please check the build log.');
+    });
+
+    it.each([
+        ['A & B', 'A & B'],
+        ['Use `<span>` for text', 'Use <span> for text'],
+        ['`<img src=x onerror="alert(1)">` & **safe**', '<img src=x onerror="alert(1)"> & safe'],
+        ['Literal &amp; entity', 'Literal & entity'],
+    ])('should display decoded Markdown preview text without interpreting it as markup (%s)', async (postMarkdownContent, expectedText) => {
+        const content = await renderContent('newPostNotification', { postMarkdownContent });
+
+        expect(content.textContent).toBe(expectedText);
+        expect(content.querySelector('span, img, strong')).toBeNull();
     });
 
     it('should use the reply preview for a thread answer even when the parent message has no preview', async () => {

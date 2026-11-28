@@ -32,6 +32,8 @@ public class SpringAIAutoConfigurationFilter implements AutoConfigurationImportF
 
     private static final Logger log = LoggerFactory.getLogger(SpringAIAutoConfigurationFilter.class);
 
+    private static final String OPENAI_MODEL_AUTOCONFIGURATION_PACKAGE = "org.springframework.ai.model.openai.autoconfigure.";
+
     private Environment env;
 
     @Override
@@ -51,9 +53,12 @@ public class SpringAIAutoConfigurationFilter implements AutoConfigurationImportF
                 continue;
             }
 
-            matches[i] = springAIEnabled || !fullyQualifiedClassName.startsWith("org.springframework.ai");
+            // Artemis builds every OpenAI client and model itself from artemis.llm (LlmClientService), so Spring AI never creates a shared model.
+            boolean openAiModel = fullyQualifiedClassName.startsWith(OPENAI_MODEL_AUTOCONFIGURATION_PACKAGE);
+            matches[i] = !openAiModel && (springAIEnabled || !fullyQualifiedClassName.startsWith("org.springframework.ai"));
             if (!matches[i]) {
-                log.debug("Excluding auto-configuration: {} because no AI workload is active", fullyQualifiedClassName);
+                log.debug("Excluding auto-configuration: {} because {}", fullyQualifiedClassName,
+                        openAiModel ? "Artemis configures LLMs under artemis.llm" : "no AI workload is active");
             }
         }
         return matches;

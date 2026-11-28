@@ -45,8 +45,8 @@ export class MessageEditorResources {
     }
 
     private async loadSlides(courseId: number): Promise<MessageSuggestion[]> {
-        const response = await firstValueFrom(this.lectures.findAllByCourseIdWithSlides(courseId));
-        return (response.body ?? []).flatMap((lecture) => [
+        const lectures = await firstValueFrom(this.lectures.findAllByCourseIdWithSlides(courseId));
+        return lectures.flatMap((lecture) => [
             // Lectures stay referenceable without attachment units, as they were in the previous editor.
             ...(lecture.id && lecture.title
                 ? [

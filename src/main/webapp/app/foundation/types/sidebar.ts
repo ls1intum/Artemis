@@ -192,7 +192,7 @@ export interface SidebarCardElement {
     /** Optional icon shown before {@link subtitleLeft}, e.g. a warning triangle. */
     subtitleLeftIcon?: IconProp;
 
-    /** Optional CSS class(es) applied to {@link subtitleLeft}, e.g. 'text-warning'. */
+    /** Optional CSS class(es) applied to {@link subtitleLeft}, e.g. 'text-state-warning'. */
     subtitleLeftClass?: string;
 
     /** Optional tooltip (native title) for {@link subtitleLeft}. */

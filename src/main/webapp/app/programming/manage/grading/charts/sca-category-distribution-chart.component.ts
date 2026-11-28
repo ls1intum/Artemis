@@ -1,4 +1,5 @@
-import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiButtonDirective, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular/chart';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
@@ -15,11 +16,11 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-sca-category-distribution-chart',
-    styleUrls: ['./sca-category-distribution-chart.scss'],
+    styleUrls: ['./sca-category-distribution-chart.css'],
     template: `
         <div>
             <div>
-                <div class="d-flex justify-content-between">
+                <div class="flex justify-between">
                     <h4 jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.title"></h4>
                     @if (tableFiltered) {
                         <button
@@ -34,7 +35,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
                 </div>
                 <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.categoryDistribution.description' | artemisTranslate"></p>
             </div>
-            <div class="chart bg-light">
+            <div class="chart bg-(--light) dark:bg-white/5">
                 <tumaet-ui-bar-chart
                     [labels]="chartData().labels"
                     [series]="chartData().series"

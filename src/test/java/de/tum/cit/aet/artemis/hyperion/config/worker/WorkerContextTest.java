@@ -111,8 +111,9 @@ class WorkerContextTest {
                 }
                 String typeName = type.getName();
                 assertThat(typeName).doesNotStartWith("org.hibernate.");
+                // the Hyperion workload calls models through the shared LLM client service; no other workload gets one
                 boolean selectedWorkload = "hyperion-generation".equals(context.getEnvironment().getProperty("artemis.aiworker.workload"))
-                        && typeName.startsWith("de.tum.cit.aet.artemis.hyperion.service.worker.");
+                        && (typeName.startsWith("de.tum.cit.aet.artemis.hyperion.service.worker.") || typeName.startsWith("de.tum.cit.aet.artemis.core.service.llm."));
                 if (typeName.startsWith("de.tum.cit.aet.artemis.") && !ArtemisApp.class.isAssignableFrom(type) && !selectedWorkload
                         && !typeName.startsWith(WorkerContextTest.class.getName() + "$") && allowedInfrastructure.stream().noneMatch(typeName::startsWith)) {
                     unexpectedBeans.add(name + "=" + typeName);
@@ -125,7 +126,7 @@ class WorkerContextTest {
     @Import(HyperionModel.class)
     @TestPropertySource(properties = { "artemis.aiworker.workload=hyperion-generation", "artemis.aiworker.profile=java-gradle", "artemis.aiworker.max-concurrent-executions=4",
             "spring.ai.model.chat=none", "spring.ai.model.audio.transcription=none", "spring.ai.model.audio.speech=none", "spring.ai.model.embedding=none",
-            "spring.ai.model.image=none", "spring.ai.model.moderation=none" })
+            "spring.ai.model.image=none", "spring.ai.model.moderation=none", "spring.ai.model.decision=none" })
     abstract static class HyperionChecksTest extends WorkerChecks {
 
         @Test
@@ -136,7 +137,7 @@ class WorkerContextTest {
             assertThat(context.getEnvironment().getProperty("spring.main.web-application-type")).isEqualTo("none");
             assertThat(context.getEnvironment().getProperty("spring.hazelcast.localInstances")).isEqualTo("false");
             assertThat(context).doesNotHaveBean("openAiEmbeddingModel").doesNotHaveBean("openAiImageModel").doesNotHaveBean("openAiSdkAudioSpeechModel")
-                    .doesNotHaveBean("openAiSdkAudioTranscriptionModel").doesNotHaveBean("openAiSdkModerationModel");
+                    .doesNotHaveBean("openAiSdkAudioTranscriptionModel").doesNotHaveBean("openAiSdkModerationModel").doesNotHaveBean("openAiDecisionModel");
             assertThat(context.getBean(WorkerSettings.class).maxConcurrentExecutions()).isEqualTo(4);
             assertThat(context.getBeanNamesForAnnotation(Controller.class)).isEmpty();
             assertThat(context.getBeanNamesForAnnotation(RestController.class)).isEmpty();
@@ -168,7 +169,7 @@ class WorkerContextTest {
                     .doesNotHaveBean(WorkerClientService.class).doesNotHaveBean(WorkerRegistryService.class).doesNotHaveBean(javax.sql.DataSource.class)
                     .doesNotHaveBean(EntityManagerFactory.class).doesNotHaveBean(ServletWebServerFactory.class);
             assertThat(context).doesNotHaveBean("openAiEmbeddingModel").doesNotHaveBean("openAiImageModel").doesNotHaveBean("openAiSdkAudioSpeechModel")
-                    .doesNotHaveBean("openAiSdkAudioTranscriptionModel").doesNotHaveBean("openAiSdkModerationModel");
+                    .doesNotHaveBean("openAiSdkAudioTranscriptionModel").doesNotHaveBean("openAiSdkModerationModel").doesNotHaveBean("openAiDecisionModel");
             assertThat(context.getBeanNamesForAnnotation(Controller.class)).isEmpty();
             assertThat(context.getBeanNamesForAnnotation(RestController.class)).isEmpty();
         }

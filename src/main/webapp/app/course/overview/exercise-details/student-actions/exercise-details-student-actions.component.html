@@ -68,7 +68,7 @@
         <!-- QUIZ EXERCISE ACTIONS END -->
         <!-- PROGRAMMING EXERCISE ACTIONS START -->
         @case (ExerciseType.PROGRAMMING) {
-            <div class="d-flex flex-wrap gap-1" jhi-programming-exercise-participation-actions [actions]="this" [startTooltipTabIndex]="0">
+            <div class="flex flex-wrap gap-1" jhi-programming-exercise-participation-actions [actions]="this" [startTooltipTabIndex]="0">
                 <!-- TODO: The exam mode reuses the whole component at the moment. We need the code button but not the open
                     code editor button. We should think about defining a component that contains only the code button. -->
                 @if (shouldDisplayIDEButtons()) {
@@ -128,7 +128,7 @@
                         [routerLink]="['/courses', courseId(), 'exercises', exercise().id, 'teams', assignedTeamId]"
                     ></button>
                 }
-                <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
+                <span tabindex="0" [tumAetUiTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeStartDate' | artemisTranslate) : ''">
                     @if (!gradedParticipation() && isStartExerciseAvailable()) {
                         <button
                             type="button"

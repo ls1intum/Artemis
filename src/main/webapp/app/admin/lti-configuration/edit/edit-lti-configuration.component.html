@@ -7,11 +7,11 @@
             jhiTranslate="{{ !platform()?.id ? 'artemisApp.lti.addLtiPlatform' : 'artemisApp.lti.editLtiPlatform' }}"
         ></h5>
         @if (loadFailed()) {
-            <tumaet-ui-message severity="error" class="mt-3 w-full" data-testid="lti-load-error">
+            <tumaet-ui-message severity="error" class="mt-4 w-full" data-testid="lti-load-error">
                 <span jhiTranslate="artemisApp.lti.editConfiguration.loadError"></span>
             </tumaet-ui-message>
         } @else {
-            <tumaet-ui-message severity="info" class="mt-3 w-full" data-testid="lti-documentation-message">
+            <tumaet-ui-message severity="info" class="mt-4 w-full" data-testid="lti-documentation-message">
                 <span jhiTranslate="artemisApp.lti.edit.documentationLink"></span>
                 <a
                     href="https://docs.artemis.tum.de/instructor/integrations/lti-configuration"
@@ -22,15 +22,15 @@
                 >.
             </tumaet-ui-message>
             <form [formGroup]="platformConfigurationForm" (ngSubmit)="save()" #editForm="ngForm">
-                <div class="mt-3">
-                    <div class="mb-3 flex flex-col gap-2" [hidden]="!platform()?.registrationId">
+                <div class="mt-4">
+                    <div class="mb-4 flex flex-col gap-2" [hidden]="!platform()?.registrationId">
                         <div class="flex items-center gap-1">
                             <label jhiTranslate="artemisApp.lti.registrationId" for="field_registrationId"></label>
                             <jhi-help-icon text="artemisApp.lti.edit.registrationIdTooltip" />
                         </div>
                         <input type="text" tumAetUiInput class="w-full" name="registrationId" id="field_registrationId" formControlName="registrationId" />
                     </div>
-                    <div class="mb-3 flex flex-col gap-2">
+                    <div class="mb-4 flex flex-col gap-2">
                         <div class="flex items-center gap-1">
                             <label jhiTranslate="artemisApp.lti.customName" for="field_customName"></label>
                             <span class="text-state-danger">*</span>
@@ -50,14 +50,14 @@
                             <small class="text-state-danger" jhiTranslate="artemisApp.lti.validation.customNameRequired"></small>
                         }
                     </div>
-                    <div class="mb-3 flex flex-col gap-2">
+                    <div class="mb-4 flex flex-col gap-2">
                         <div class="flex items-center gap-1">
                             <label jhiTranslate="artemisApp.lti.toolUrl" for="field_toolUrl"></label>
                             <jhi-help-icon text="artemisApp.lti.edit.originalUrlTooltip" />
                         </div>
                         <input type="text" tumAetUiInput class="w-full" name="originalUrl" id="field_toolUrl" formControlName="originalUrl" [maxlength]="fieldMaxLength" />
                     </div>
-                    <div class="mb-3 flex flex-col gap-2">
+                    <div class="mb-4 flex flex-col gap-2">
                         <div class="flex items-center gap-1">
                             <label jhiTranslate="artemisApp.lti.clientId" for="field_clientId"></label>
                             <span class="text-state-danger">*</span>
@@ -77,7 +77,7 @@
                             <small class="text-state-danger" jhiTranslate="artemisApp.lti.validation.clientIdRequired"></small>
                         }
                     </div>
-                    <div class="mb-3 flex flex-col gap-2">
+                    <div class="mb-4 flex flex-col gap-2">
                         <div class="flex items-center gap-1">
                             <label jhiTranslate="artemisApp.lti.authorizationUri" for="field_authorizationUri"></label>
                             <span class="text-state-danger">*</span>
@@ -97,7 +97,7 @@
                             <small class="text-state-danger" jhiTranslate="artemisApp.lti.validation.authorizationUriRequired"></small>
                         }
                     </div>
-                    <div class="mb-3 flex flex-col gap-2">
+                    <div class="mb-4 flex flex-col gap-2">
                         <div class="flex items-center gap-1">
                             <label jhiTranslate="artemisApp.lti.tokenUri" for="field_tokenUri"></label>
                             <span class="text-state-danger">*</span>
@@ -117,7 +117,7 @@
                             <small class="text-state-danger" jhiTranslate="artemisApp.lti.validation.tokenUriRequired"></small>
                         }
                     </div>
-                    <div class="mb-3 flex flex-col gap-2">
+                    <div class="mb-4 flex flex-col gap-2">
                         <div class="flex items-center gap-1">
                             <label jhiTranslate="artemisApp.lti.jwkSetUri" for="field_jwkSetUri"></label>
                             <span class="text-state-danger">*</span>
@@ -139,7 +139,7 @@
                     </div>
                 </div>
 
-                <div class="mt-3 flex items-center justify-end gap-2">
+                <div class="mt-4 flex items-center justify-end gap-2">
                     <tumaet-ui-button
                         type="button"
                         id="cancel-save"

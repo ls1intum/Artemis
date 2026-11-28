@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDialogConfig } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig } from '@tumaet/ui-angular/dialog';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { DialogTranslateHeaderComponent } from 'app/shared-ui/dynamic-dialog/dialog-translate-header.component';
 

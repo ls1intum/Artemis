@@ -1,0 +1,4 @@
+.hint {
+    color: var(--textblock-assessment-text-feedback-highlighted-color);
+    background-color: var(--textblock-assessment-text-feedback-highlighted-background);
+}

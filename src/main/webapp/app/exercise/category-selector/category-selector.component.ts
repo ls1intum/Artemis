@@ -1,4 +1,4 @@
-import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteOptionEvent, TumAetUiAutoCompleteSearchEvent } from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteOptionEvent, TumAetUiAutoCompleteSearchEvent } from '@tumaet/ui-angular/autocomplete';
 import { Component, computed, input, linkedSignal, output, signal, viewChild } from '@angular/core';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
@@ -13,7 +13,7 @@ const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '
 @Component({
     selector: 'jhi-category-selector',
     templateUrl: './category-selector.component.html',
-    styleUrls: ['./category-selector.component.scss'],
+    styleUrls: ['./category-selector.component.css'],
     imports: [TumAetUiAutoCompleteComponent, FormsModule, FaIconComponent, ColorSelectorComponent, ArtemisTranslatePipe],
 })
 export class CategorySelectorComponent {

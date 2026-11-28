@@ -13,6 +13,7 @@ import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-togg
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { ClientErrorHandler } from 'app/core/error-reporting/client-error.handler';
 import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.component';
 import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/components/modal/global-search-modal.component';
@@ -24,7 +25,7 @@ import { LazyRouteRecoveryService } from 'app/core/navigation/lazy-route-recover
 @Component({
     selector: 'jhi-app',
     templateUrl: './app.component.html',
-    styleUrls: ['./app.component.scss'],
+    styleUrls: ['./app.component.css'],
     imports: [
         AlertOverlayComponent,
         CdkScrollable,
@@ -51,6 +52,10 @@ export class AppComponent implements OnInit, OnDestroy {
     private embedPdfPreloadService = inject(EmbedPdfPreloadService);
     private clientErrorHandler = inject(ClientErrorHandler);
     private lazyRouteRecoveryService = inject(LazyRouteRecoveryService);
+    private accountService = inject(AccountService);
+
+    /** Whether a user is signed in: the global search is for signed-in users only, so its code is not loaded for a visitor of the sign-in page. */
+    protected readonly isAuthenticated = this.accountService.authenticated;
 
     protected readonly FeatureToggle = FeatureToggle;
 

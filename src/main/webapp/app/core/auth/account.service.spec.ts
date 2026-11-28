@@ -1,3 +1,4 @@
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { computed } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
@@ -24,6 +25,7 @@ import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { PendingEmailChangeDTO, UpdateBasicInformationResponseDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -40,6 +42,14 @@ describe('AccountService', () => {
     const user = { id: 1 } as User;
     const user2 = { id: 2 } as User;
     const user3 = { id: 3, authorities: [Authority.STUDENT] } as User;
+
+    const pendingEmailChange: PendingEmailChangeDTO = {
+        newEmail: 'new@example.org',
+        requestedAt: '2026-10-13T10:00:00Z',
+        expiresAt: '2026-10-14T10:00:00Z',
+        currentAddressConfirmed: false,
+        newAddressConfirmed: true,
+    };
 
     const authorities = [Authority.STUDENT, Authority.ADMIN, Authority.SUPER_ADMIN];
     const course = { id: 1 } as Course;
@@ -804,31 +814,6 @@ describe('AccountService', () => {
         });
     });
 
-    describe('test token related user retrieval logic', () => {
-        let fetchStub: ReturnType<typeof vi.spyOn>;
-
-        beforeEach(() => {
-            // @ts-ignore spying on private method
-            fetchStub = vi.spyOn(accountService, 'fetch');
-        });
-
-        it('should not retrieve user if vcs token is missing but not required', () => {
-            user.vcsAccessToken = undefined;
-            accountService.userIdentity.set(user);
-
-            accountService.identity();
-            expect(fetchStub).not.toHaveBeenCalled();
-        });
-
-        it('should not retrieve user if vcs token is present', () => {
-            user.vcsAccessToken = 'iAmAToken';
-            accountService.userIdentity.set(user);
-
-            accountService.identity();
-            expect(fetchStub).not.toHaveBeenCalled();
-        });
-    });
-
     describe('test vcs token related logic', () => {
         afterEach(() => {
             httpMock.verify();
@@ -839,17 +824,6 @@ describe('AccountService', () => {
 
             const req = httpMock.expectOne({ method: 'DELETE', url: 'api/account/user-vcs-access-token' });
             req.flush(null);
-        });
-
-        it('should add a new VCS access token', () => {
-            const expiryDate = '2024-10-10';
-
-            accountService.addNewVcsAccessToken(expiryDate).subscribe((response) => {
-                expect(response.status).toBe(200);
-            });
-
-            const req = httpMock.expectOne({ method: 'PUT', url: `api/account/user-vcs-access-token?expiryDate=${expiryDate}` });
-            req.flush({ status: 200 });
         });
 
         it('should get VCS access token for a participation', () => {
@@ -1043,7 +1017,7 @@ describe('AccountService', () => {
     describe('save', () => {
         const url = '/api/account/basic-information';
 
-        it('sends only the editable profile fields and emits on an empty 200', () => {
+        it('sends only the editable profile fields and returns the pending email change', () => {
             const userToSave: User = {
                 id: 1,
                 internal: true,
@@ -1055,7 +1029,7 @@ describe('AccountService', () => {
                 langKey: 'de',
                 imageUrl: 'profile.jpeg',
                 authorities: [Authority.STUDENT],
-                vcsAccessToken: 'token',
+                vcsAccessTokenExpiryDate: '2026-12-31',
             };
             const next = vi.fn();
             accountService.save(userToSave).subscribe({ next });
@@ -1070,9 +1044,10 @@ describe('AccountService', () => {
                 langKey: 'de',
                 imageUrl: 'profile.jpeg',
             });
-            req.flush(null, { status: 200, statusText: 'OK' });
+            expect(req.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+            req.flush({ pendingEmailChange });
 
-            expect(next).toHaveBeenCalledExactlyOnceWith(null);
+            expect(next).toHaveBeenCalledExactlyOnceWith({ pendingEmailChange });
         });
 
         it('propagates the email-in-use problem and failure headers', () => {
@@ -1102,6 +1077,53 @@ describe('AccountService', () => {
 
             expect(error).toHaveBeenCalledExactlyOnceWith(new Error('Cannot save account information without a login'));
             httpMock.expectNone(url);
+        });
+
+        it('should return no pending email change when the server has none', () => {
+            let result: UpdateBasicInformationResponseDTO | undefined;
+
+            accountService.save({ id: 1, login: 'testuser' } as User).subscribe((response) => (result = response));
+
+            httpMock.expectOne({ method: 'PUT', url }).flush({});
+            expect(result).toEqual({ pendingEmailChange: null });
+        });
+    });
+
+    describe('pending email change', () => {
+        it('should load the pending email change', () => {
+            let result: PendingEmailChangeDTO | undefined;
+
+            accountService.getPendingEmailChange().subscribe((response) => (result = response));
+
+            httpMock.expectOne({ method: 'GET', url: 'api/account/pending-email-change' }).flush(pendingEmailChange);
+            expect(result).toEqual(pendingEmailChange);
+        });
+
+        it('should return undefined when no email change is pending', () => {
+            let result: PendingEmailChangeDTO | undefined = pendingEmailChange;
+
+            accountService.getPendingEmailChange().subscribe((response) => (result = response));
+
+            httpMock.expectOne({ method: 'GET', url: 'api/account/pending-email-change' }).flush(null, { status: 204, statusText: 'No Content' });
+            expect(result).toBeUndefined();
+        });
+
+        it('should cancel the pending email change', () => {
+            let completed = false;
+
+            accountService.cancelPendingEmailChange().subscribe(() => (completed = true));
+
+            httpMock.expectOne({ method: 'DELETE', url: 'api/account/pending-email-change' }).flush(null);
+            expect(completed).toBe(true);
+        });
+
+        it('should resend the confirmation mails', () => {
+            let result: PendingEmailChangeDTO | undefined;
+
+            accountService.resendPendingEmailChange().subscribe((response) => (result = response));
+
+            httpMock.expectOne({ method: 'POST', url: 'api/account/pending-email-change/resend' }).flush(pendingEmailChange);
+            expect(result).toEqual(pendingEmailChange);
         });
     });
 

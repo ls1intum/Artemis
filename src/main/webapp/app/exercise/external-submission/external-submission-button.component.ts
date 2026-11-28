@@ -1,19 +1,20 @@
 import { Component, inject, input, output } from '@angular/core';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
+import type { Result } from 'app/openapi/model/result';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
-import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 
 @Component({
     selector: 'jhi-external-submission',
     template: `
         <tumaet-ui-button
-            severity="warn"
+            [severity]="outlined() ? 'secondary' : 'warn'"
+            [variant]="outlined() ? 'outlined' : 'solid'"
             size="small"
             [icon]="faPlus"
             [ariaLabel]="'entity.action.addExternalSubmission' | artemisTranslate"
@@ -29,6 +30,7 @@ export class ExternalSubmissionButtonComponent {
     private readonly translateService = inject(TranslateService);
 
     readonly exercise = input.required<Exercise>();
+    readonly outlined = input(false);
 
     /** Emitted with the new result once the dialog saved it, so the page can show it without a reload. */
     readonly resultCreated = output<Result>();

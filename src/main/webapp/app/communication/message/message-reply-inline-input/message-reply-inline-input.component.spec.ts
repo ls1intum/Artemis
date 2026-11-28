@@ -18,11 +18,9 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { DraftService } from 'app/communication/message/service/draft-message.service';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
-import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockProvider } from 'ng-mocks';
-import { DialogService } from 'primeng/dynamicdialog';
 import { By } from '@angular/platform-browser';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { PostingEditType } from 'app/communication/communication.util';
@@ -59,13 +57,12 @@ describe('MessageReplyInlineInputComponent', () => {
                 SessionStorageService,
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(DraftService),
-                { provide: DialogService, useValue: { open: vi.fn() } },
             ],
         });
 
         TestBed.overrideComponent(MessageReplyInlineInputComponent, {
-            remove: { imports: [PostingMarkdownEditorComponent, PostingButtonComponent, ArtemisTranslatePipe] },
-            add: { imports: [MockComponent(PostingMarkdownEditorComponent), MockComponent(PostingButtonComponent), MockPipe(ArtemisTranslatePipe)] },
+            remove: { imports: [PostingMarkdownEditorComponent, ArtemisTranslatePipe] },
+            add: { imports: [MockComponent(PostingMarkdownEditorComponent), MockPipe(ArtemisTranslatePipe)] },
         });
         fixture = TestBed.createComponent(MessageReplyInlineInputComponent);
         component = fixture.componentInstance;
@@ -125,6 +122,38 @@ describe('MessageReplyInlineInputComponent', () => {
         vi.advanceTimersByTime(0);
         expect(component.isLoading()).toBe(false);
         expect(onCreateSpy).toHaveBeenCalledExactlyOnceWith({ ...component.posting()!, content: newContent });
+    });
+
+    it('should offer cancel and save buttons only when an existing reply is edited', () => {
+        component.posting.set(communicationPostToCreateUser1);
+        fixture.detectChanges();
+        expect((fixture.nativeElement as HTMLElement).querySelector('#save')).toBeNull();
+
+        component.posting.set(directMessageUser1);
+        fixture.detectChanges();
+        const element: HTMLElement = fixture.nativeElement;
+        const [cancel, save] = Array.from(element.querySelectorAll<HTMLButtonElement>('button'));
+        expect(cancel.type).toBe('button');
+        expect(save.id).toBe('save');
+        expect(save.type).toBe('submit');
+        expect(save.disabled).toBe(false);
+
+        const onModalOpenSpy = vi.spyOn(component.isModalOpen, 'emit');
+        cancel.click();
+        expect(onModalOpenSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should disable the save button and show a spinner while the reply is saved', () => {
+        component.posting.set(directMessageUser1);
+        fixture.detectChanges();
+        const save = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>('#save')!;
+        expect(save.querySelector('fa-icon')).toBeNull();
+
+        component.isLoading.set(true);
+        fixture.detectChanges();
+
+        expect(save.disabled).toBe(true);
+        expect(save.querySelector('fa-icon')).not.toBeNull();
     });
 
     it('should hand the conversation and the edit type to the markdown editor, which decides whether @all is offered', () => {

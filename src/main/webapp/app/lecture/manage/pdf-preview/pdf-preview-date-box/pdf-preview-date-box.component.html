@@ -8,7 +8,7 @@
             }
         </h5>
     </div>
-    <div class="checkbox-container mb-4!">
+    <div class="checkbox-container mb-4">
         <tumaet-ui-checkbox inputId="date-box-checkbox" [checked]="hideForever()" (changed)="onHideForeverChange($event.checked)" />
         <label for="date-box-checkbox">
             <span jhiTranslate="artemisApp.attachment.pdfPreview.dateBox.hideForever"></span>
@@ -27,7 +27,7 @@
             Inline, not behind a field: the box lives in a popover that closes on any click outside it, and a picker's
             calendar opens in an overlay outside the popover, so choosing a day there would dismiss the box.
         -->
-        <div class="calendar-container mt-4!">
+        <div class="calendar-container mt-4">
             <tumaet-ui-date-picker
                 data-testid="hide-until-date"
                 [inline]="true"
@@ -83,7 +83,7 @@
             }
         </div>
     }
-    <div class="submit-container mt-4! flex justify-between">
+    <div class="submit-container mt-4 flex justify-between">
         <button tumAetUiButton severity="secondary" variant="solid" size="default" type="button" (click)="selectionCancelledOutput.emit(true)">
             <span jhiTranslate="entity.action.cancel"></span>
         </button>

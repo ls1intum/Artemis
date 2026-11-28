@@ -10,7 +10,7 @@ public record SemanticMutantOutcome(SemanticMutant mutant, Disposition dispositi
     }
 
     public enum Disposition {
-        /** The ordinary graded suite passed the mutant and the independent counterexample distinguished it from the pristine solution. */
+        /** The applicable grading accepted the invalid variant; an always-failing learner-test probe also detects undeserved partial credit. */
         SURVIVED_GRADED_SUITE,
         /** An ordinary graded test executed and failed, and the mutant's own counterexample independently proved that the same proposal violates its claimed rule. */
         KILLED_BY_GRADED_SUITE,

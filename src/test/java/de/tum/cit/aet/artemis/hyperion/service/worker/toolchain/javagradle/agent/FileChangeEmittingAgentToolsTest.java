@@ -2,18 +2,30 @@ package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agen
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
+import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationProgress.FileChange;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopResult;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopRunner;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.GenerationActivityTracker;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureCooldown;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.FakeInteractiveSandbox;
 
 class FileChangeEmittingAgentToolsTest {
 
@@ -32,6 +44,27 @@ class FileChangeEmittingAgentToolsTest {
         delegate = mock(SandboxAgentTools.class);
         emitted = new ArrayList<>();
         tools = new FileChangeEmittingAgentTools(delegate, emitted::add);
+    }
+
+    @Test
+    void streamingStagesCannotCompleteOnChatTextButUnstagedRepairCan() {
+        SandboxAgentTools sandboxTools = new SandboxAgentTools(new FakeInteractiveSandbox(), "s");
+        FileChangeEmittingAgentTools streamingTools = new FileChangeEmittingAgentTools(sandboxTools, emitted::add);
+        ChatModel model = mock(ChatModel.class);
+        when(model.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Finished in chat")))));
+        AgentLoopRunner runner = new AgentLoopRunner(List.of(model), 128_000, Duration.ZERO, ProviderFailureCooldown.disabled());
+
+        for (GenerationStage stage : GenerationStage.values()) {
+            sandboxTools.enterStage(stage);
+            var result = runner.run("system", "brief", streamingTools, 2, () -> false, null, null);
+            assertThat(result.status()).as("stage %s must explicitly submit", stage).isEqualTo(AgentLoopResult.Status.BUDGET_EXHAUSTED);
+            assertThat(result.turns()).isEqualTo(2);
+        }
+        sandboxTools.enterRepairScope(Set.of("tests"));
+        var repair = runner.run("system", "repair", streamingTools, 2, () -> false, null, null);
+        assertThat(repair.status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
+        assertThat(repair.turns()).isEqualTo(1);
+        assertThat(emitted).isEmpty();
     }
 
     @Test

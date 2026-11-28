@@ -249,6 +249,20 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(component.percentageOfCasesWithStudentAnswer(emptyPlagiarismCases)).toBe(0);
     });
 
+    it('should find the rendered card of an exercise to scroll to', () => {
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        const card = fixture.nativeElement.querySelector('#exercise-with-plagiarism-case-2') as HTMLElement;
+        expect(card).not.toBeNull();
+        expect(fixture.nativeElement.querySelectorAll('[data-testid^="exercise-with-plagiarism-case-"]')).toHaveLength(2);
+        card.scrollIntoView = vi.fn();
+
+        component.scrollToExerciseAfterViewInit(2);
+
+        expect(card.scrollIntoView).toHaveBeenCalledOnce();
+    });
+
     it('should scroll to the correct exercise element when scrollToExercise is called', () => {
         const nativeElement1 = { id: 'exercise-with-plagiarism-case-1', scrollIntoView: vi.fn() };
         const nativeElement2 = { id: 'exercise-with-plagiarism-case-2', scrollIntoView: vi.fn() };

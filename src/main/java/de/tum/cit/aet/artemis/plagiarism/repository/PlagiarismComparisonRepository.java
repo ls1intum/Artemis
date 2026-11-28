@@ -73,7 +73,7 @@ public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<Pla
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.plagiarismCase" })
-    Optional<Set<PlagiarismComparison>> findBySubmissions_SubmissionId(long submissions_submissionId);
+    Optional<Set<PlagiarismComparison>> findByPlagiarismResultExerciseIdAndSubmissions_SubmissionId(long exerciseId, long submissions_submissionId);
 
     @Modifying
     @Transactional // ok because of delete

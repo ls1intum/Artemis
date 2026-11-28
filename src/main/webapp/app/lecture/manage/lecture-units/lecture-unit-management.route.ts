@@ -1,7 +1,10 @@
-import { Routes } from '@angular/router';
+import { CanDeactivateFn, Routes } from '@angular/router';
+import { RecordingLeaveComponent } from './tum-live-upload/tum-live-creation';
 import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { AttachmentVideoUnitResolve } from 'app/lecture/manage/lecture-units/services/lecture-unit-management-resolve.service';
+
+const canLeaveRecordingEditor: CanDeactivateFn<RecordingLeaveComponent> = (component, _currentRoute, _currentState, nextState) => component.confirmRecordingLeave(nextState.url);
 
 export const lectureUnitRoute: Routes = [
     {
@@ -39,6 +42,7 @@ export const lectureUnitRoute: Routes = [
             },
             {
                 path: 'attachment-video-units/create',
+                canDeactivate: [canLeaveRecordingEditor],
                 loadComponent: () =>
                     import('app/lecture/manage/lecture-units/create-attachment-video-unit/create-attachment-video-unit.component').then(
                         (m) => m.CreateAttachmentVideoUnitComponent,
@@ -66,6 +70,7 @@ export const lectureUnitRoute: Routes = [
             },
             {
                 path: 'attachment-video-units/:attachmentVideoUnitId/edit',
+                canDeactivate: [canLeaveRecordingEditor],
                 loadComponent: () =>
                     import('app/lecture/manage/lecture-units/edit-attachment-video-unit/edit-attachment-video-unit.component').then((m) => m.EditAttachmentVideoUnitComponent),
                 data: {

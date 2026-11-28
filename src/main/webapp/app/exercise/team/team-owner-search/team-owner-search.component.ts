@@ -1,13 +1,13 @@
 import { Component, DestroyRef, OnInit, inject, input, output, signal, viewChild } from '@angular/core';
-import { Observable, Subject, combineLatest, of } from 'rxjs';
+import { Observable, combineLatest, of } from 'rxjs';
 import { User } from 'app/account/user/user.model';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
 import { Course, CourseRoleSlug } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteOptionEvent } from '@tumaet/ui-angular';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TumAetUiAutoCompleteComponent } from '@tumaet/ui-angular/autocomplete';
+import { createTeamSearch } from 'app/exercise/team/team-search.util';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
@@ -55,28 +55,6 @@ export class TeamOwnerSearchComponent implements OnInit {
         if (team.owner) {
             this.owner = deepClone(team.owner);
             this.inputDisplayValue = this.searchResultFormatter(this.owner);
-        }
-    }
-
-    readonly suggestions = signal<{ label: string; value: User; disabled: boolean }[]>([]);
-    private readonly searchQuery = new Subject<string>();
-
-    constructor() {
-        this.onSearch(this.searchQuery)
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe((values) => {
-                this.suggestions.set(values.map((value) => ({ label: this.searchResultFormatter(value), value, disabled: false })));
-            });
-    }
-
-    requestSearch(query: string): void {
-        this.searchQuery.next(query);
-    }
-
-    selectOption(event: TumAetUiAutoCompleteOptionEvent): void {
-        const option = this.suggestions().find((suggestion) => suggestion === event.value);
-        if (option && !option.disabled) {
-            this.onAutocompleteSelect(option.value);
         }
     }
 
@@ -138,6 +116,16 @@ export class TeamOwnerSearchComponent implements OnInit {
             map(([, ownerOptions]) => ownerOptions || []),
         );
     };
+
+    private readonly search = createTeamSearch(
+        this.destroyRef,
+        (queries) => this.onSearch(queries),
+        (value) => this.searchResultFormatter(value),
+        (value) => this.onAutocompleteSelect(value),
+    );
+    readonly suggestions = this.search.suggestions;
+    readonly requestSearch = this.search.requestSearch;
+    readonly selectOption = this.search.selectOption;
 
     /**
      * Load options of team owner

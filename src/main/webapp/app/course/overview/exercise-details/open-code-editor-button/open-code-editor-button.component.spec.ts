@@ -12,7 +12,7 @@ import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-to
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -34,7 +34,6 @@ describe('OpenCodeEditorButtonComponent', () => {
                 MockComponent(ExerciseActionButtonComponent),
                 MockDirective(FeatureToggleDirective),
                 MockDirective(RouterLink),
-                MockDirective(NgbPopover),
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
             ],
@@ -220,8 +219,8 @@ describe('OpenCodeEditorButtonComponent', () => {
         const buttons = debugElement.queryAll(By.css('button[jhi-exercise-action-button]'));
         expect(buttons.length).toBe(1);
 
-        // Check if NgbPopover directive is applied
-        const popoverButton = debugElement.query(By.directive(NgbPopover));
+        // Check that the button opens the popover
+        const popoverButton = debugElement.query(By.directive(TumAetUiPopoverTriggerDirective));
         expect(popoverButton).toBeTruthy();
     });
 

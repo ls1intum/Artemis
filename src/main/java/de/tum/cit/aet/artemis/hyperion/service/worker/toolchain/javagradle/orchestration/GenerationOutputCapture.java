@@ -12,8 +12,8 @@ import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput;
 import de.tum.cit.aet.artemis.hyperion.protocol.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
+import de.tum.cit.aet.artemis.hyperion.runtime.workspace.BinaryContent;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.WorkerUsageRecorder;
-import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.BinaryContent;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
 
 /** Seals the exact verified text and canonical binary/mode metadata before returning a candidate to core. */

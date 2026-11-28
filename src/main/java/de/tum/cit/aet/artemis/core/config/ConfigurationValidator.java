@@ -4,14 +4,28 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
-import static de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer.TEXT2VEC_OPENAI;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.DEFAULT_FINAL_STATE_RESERVED_BYTES;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.DEFAULT_MAX_FILE_DIFF_BYTES;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.DEFAULT_MAX_FILE_INPUT_BYTES;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.DEFAULT_MAX_PARTICIPATIONS_PER_RUN;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.DEFAULT_MAX_PAYLOAD_BYTES;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.DEFAULT_MAX_WINDOW_DAYS;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.FINAL_STATE_RESERVED_BYTES_PROPERTY;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MAX_FILE_DIFF_BYTES_PROPERTY;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MAX_FILE_INPUT_BYTES_PROPERTY;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MAX_PARTICIPATIONS_PER_RUN_PROPERTY;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MAX_PAYLOAD_BYTES_PROPERTY;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MAX_WINDOW_DAYS_PROPERTY;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MIN_BYTE_LIMIT;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import jakarta.annotation.PostConstruct;
@@ -28,6 +42,7 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.core.exception.ConflictingPasskeyConfigurationException;
 import de.tum.cit.aet.artemis.core.exception.InsecureDefaultCredentialException;
 import de.tum.cit.aet.artemis.core.exception.InvalidAdminConfigurationException;
+import de.tum.cit.aet.artemis.deimos.exception.DeimosConfigurationException;
 import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateConfigurationException;
@@ -71,6 +86,22 @@ public class ConfigurationValidator {
     private static final String JWT_BASE64_SECRET_PROPERTY = "jhipster.security.authentication.jwt.base64-secret";
 
     private static final String INTERNAL_ADMIN_PASSWORD_PROPERTY = "artemis.user-management.internal-admin.password";
+
+    private static final String ATHENA_ENABLED_PROPERTY = "artemis.athena.enabled";
+
+    private static final String ATHENA_SECRET_PROPERTY = "artemis.athena.secret";
+
+    /**
+     * Shared secrets for the Athena service that Artemis has shipped as examples: the packaged configuration value, the
+     * value of the docker prod fixtures, and the placeholder that replaced it there. A value starting with
+     * {@link #PLACEHOLDER_SECRET_PREFIX} is rejected as well.
+     * <p>
+     * Entries must never be removed, for the same reason as in {@link #KNOWN_DEFAULT_JWT_SECRETS}.
+     */
+    private static final Set<String> KNOWN_DEFAULT_ATHENA_SECRETS = Set.of("abcdef12345", "abcdefg12345", "CHANGE_ME_ATHENA_SECRET");
+
+    /** Marks a value in a shipped configuration file that an operator has to replace before the service can be used. */
+    private static final String PLACEHOLDER_SECRET_PREFIX = "CHANGE_ME";
 
     /**
      * The name PlantUML reads its rendering profile from, as a JVM system property first and as an environment variable
@@ -137,10 +168,6 @@ public class ConfigurationValidator {
 
     private final String weaviateVectorizerModule;
 
-    private final String weaviateOpenAiBaseUrl;
-
-    private final String weaviateGpuApiKey;
-
     private final String serverUrl;
 
     private final boolean isOpenApiDocsGeneration;
@@ -153,7 +180,6 @@ public class ConfigurationValidator {
             @Value("${artemis.weaviate.http-port:" + WeaviateConfigurationProperties.DEFAULT_HTTP_PORT + "}") int weaviatePort,
             @Value("${artemis.weaviate.grpc-port:" + WeaviateConfigurationProperties.DEFAULT_GRPC_PORT + "}") int weaviateGrpcPort,
             @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme, @Value("${artemis.weaviate.vectorizer-module:#{null}}") String weaviateVectorizerModule,
-            @Value("${artemis.weaviate.open-ai-base-url:#{null}}") String weaviateOpenAiBaseUrl, @Value("${artemis.weaviate.gpu-api-key:#{null}}") String weaviateGpuApiKey,
             @Value("${artemis.openapi-docs-generation:false}") boolean isOpenApiDocsGeneration, @Value("${server.url:}") String serverUrl) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
@@ -168,8 +194,6 @@ public class ConfigurationValidator {
         this.weaviateGrpcPort = weaviateGrpcPort;
         this.weaviateScheme = weaviateScheme;
         this.weaviateVectorizerModule = weaviateVectorizerModule;
-        this.weaviateOpenAiBaseUrl = weaviateOpenAiBaseUrl;
-        this.weaviateGpuApiKey = weaviateGpuApiKey;
         this.isOpenApiDocsGeneration = isOpenApiDocsGeneration;
         this.serverUrl = serverUrl;
     }
@@ -186,6 +210,76 @@ public class ConfigurationValidator {
         validateAdminConfiguration();
         validateNoShippedDefaultCredentials();
         validateWeaviateConfiguration();
+        validateDeimosConfiguration();
+    }
+
+    /**
+     * Validates the Deimos configuration at startup.
+     * <p>
+     * Only the payload and batch limits are checked here. The LLM preset that receives the student source code is checked
+     * by {@code LlmConfigurationValidator}, which refuses to start without an explicit assignment under
+     * {@code artemis.deimos.llm-preset}. Validation is skipped entirely when the module is disabled.
+     *
+     * @throws DeimosConfigurationException if Deimos is enabled but one of its limits is invalid
+     */
+    private void validateDeimosConfiguration() {
+        if (!artemisConfigHelper.isDeimosEnabled(environment)) {
+            return;
+        }
+
+        List<String> missingOrInvalidProperties = new ArrayList<>();
+
+        validateDeimosLimits(missingOrInvalidProperties);
+
+        if (!missingOrInvalidProperties.isEmpty()) {
+            String errorMessage = "Deimos is enabled but its configuration is incomplete or invalid: %s".formatted(missingOrInvalidProperties);
+            log.error(errorMessage);
+            throw new DeimosConfigurationException(errorMessage, missingOrInvalidProperties);
+        }
+    }
+
+    /**
+     * Validates the configurable Deimos payload and batch limits.
+     * <p>
+     * Read with the same property names and defaults as the services that apply them. The byte limits have a floor
+     * rather than only having to be positive: the notices and the header appended after the incremental snapshots must
+     * fit inside the final-state reservation, otherwise the payload would outgrow the configured total.
+     *
+     * @param missingOrInvalidProperties collects a description of every invalid property
+     */
+    private void validateDeimosLimits(List<String> missingOrInvalidProperties) {
+        int maxFileInputBytes = environment.getProperty(MAX_FILE_INPUT_BYTES_PROPERTY, Integer.class, DEFAULT_MAX_FILE_INPUT_BYTES);
+        int maxFileDiffBytes = environment.getProperty(MAX_FILE_DIFF_BYTES_PROPERTY, Integer.class, DEFAULT_MAX_FILE_DIFF_BYTES);
+        int maxPayloadBytes = environment.getProperty(MAX_PAYLOAD_BYTES_PROPERTY, Integer.class, DEFAULT_MAX_PAYLOAD_BYTES);
+        int finalStateReservedBytes = environment.getProperty(FINAL_STATE_RESERVED_BYTES_PROPERTY, Integer.class, DEFAULT_FINAL_STATE_RESERVED_BYTES);
+        long maxParticipationsPerRun = environment.getProperty(MAX_PARTICIPATIONS_PER_RUN_PROPERTY, Long.class, DEFAULT_MAX_PARTICIPATIONS_PER_RUN);
+        long maxWindowDays = environment.getProperty(MAX_WINDOW_DAYS_PROPERTY, Long.class, DEFAULT_MAX_WINDOW_DAYS);
+
+        Map<String, Integer> byteLimits = new LinkedHashMap<>();
+        byteLimits.put(MAX_FILE_INPUT_BYTES_PROPERTY, maxFileInputBytes);
+        byteLimits.put(MAX_FILE_DIFF_BYTES_PROPERTY, maxFileDiffBytes);
+        byteLimits.put(MAX_PAYLOAD_BYTES_PROPERTY, maxPayloadBytes);
+        byteLimits.put(FINAL_STATE_RESERVED_BYTES_PROPERTY, finalStateReservedBytes);
+        byteLimits.forEach((property, value) -> {
+            if (value < MIN_BYTE_LIMIT) {
+                missingOrInvalidProperties.add("%s (must be at least %d bytes, got %d)".formatted(property, MIN_BYTE_LIMIT, value));
+            }
+        });
+
+        if (finalStateReservedBytes >= maxPayloadBytes) {
+            missingOrInvalidProperties.add("%s (must be smaller than %s, got %d >= %d)".formatted(FINAL_STATE_RESERVED_BYTES_PROPERTY, MAX_PAYLOAD_BYTES_PROPERTY,
+                    finalStateReservedBytes, maxPayloadBytes));
+        }
+        if (maxFileDiffBytes > maxPayloadBytes) {
+            missingOrInvalidProperties
+                    .add("%s (must not exceed %s, got %d > %d)".formatted(MAX_FILE_DIFF_BYTES_PROPERTY, MAX_PAYLOAD_BYTES_PROPERTY, maxFileDiffBytes, maxPayloadBytes));
+        }
+        if (maxParticipationsPerRun <= 0) {
+            missingOrInvalidProperties.add("%s (must be positive, got %d)".formatted(MAX_PARTICIPATIONS_PER_RUN_PROPERTY, maxParticipationsPerRun));
+        }
+        if (maxWindowDays <= 0) {
+            missingOrInvalidProperties.add("%s (must be positive, got %d)".formatted(MAX_WINDOW_DAYS_PROPERTY, maxWindowDays));
+        }
     }
 
     /**
@@ -208,6 +302,7 @@ public class ConfigurationValidator {
 
         validateJwtSecret();
         validateProductionInternalAdminPassword();
+        validateProductionAthenaSecret();
         // The build-agent git password is checked by BuildAgentGitPasswordValidator instead, which is also active on
         // build-agent-only nodes. This validator is core-only, and those nodes are exactly the ones shipping the
         // default it has to reject.
@@ -320,6 +415,26 @@ public class ConfigurationValidator {
             throw new InsecureDefaultCredentialException(INTERNAL_ADMIN_PASSWORD_PROPERTY, "the internal admin password is identical to the internal admin username",
                     "Choose a password unrelated to the username, or leave both internal-admin properties empty to skip creating the account entirely.");
         }
+    }
+
+    /**
+     * Rejects a missing or shipped example secret for the Athena service when the Athena module is enabled. The secret
+     * authenticates Athena towards Artemis and gives access to the repositories of exercises that use Athena. With the
+     * module disabled the property is never read, so a shipped value is harmless and not checked.
+     */
+    private void validateProductionAthenaSecret() {
+        if (!Boolean.TRUE.equals(environment.getProperty(ATHENA_ENABLED_PROPERTY, Boolean.class))) {
+            return;
+        }
+        String secret = environment.getProperty(ATHENA_SECRET_PROPERTY);
+        String remediation = "Choose a unique random value, e.g. `openssl rand -hex 32`, and configure the same value in Athena.";
+        if (!StringUtils.hasText(secret)) {
+            throw new InsecureDefaultCredentialException(ATHENA_SECRET_PROPERTY, "the Athena module is enabled but no shared secret is configured", remediation);
+        }
+        if (secret.startsWith(PLACEHOLDER_SECRET_PREFIX)) {
+            throw new InsecureDefaultCredentialException(ATHENA_SECRET_PROPERTY, "the Athena secret is still the placeholder of the shipped configuration", remediation);
+        }
+        rejectIfKnownDefault(secret, KNOWN_DEFAULT_ATHENA_SECRETS, ATHENA_SECRET_PROPERTY, "the Athena secret is a value published in the Artemis repository", remediation);
     }
 
     /**
@@ -547,35 +662,7 @@ public class ConfigurationValidator {
                     .add("artemis.weaviate.vectorizer-module (must be one of " + Arrays.stream(SupportedVectorizer.values()).map(SupportedVectorizer::configValue).toList() + ")");
         }
 
-        boolean shouldValidateOpenAiSpecificProperties = TEXT2VEC_OPENAI.configValue().equals(weaviateVectorizerModule);
-        if (shouldValidateOpenAiSpecificProperties) {
-            if (!StringUtils.hasText(weaviateOpenAiBaseUrl)) {
-                invalidProperties.add("artemis.weaviate.open-ai-base-url (must be configured when using " + TEXT2VEC_OPENAI.configValue() + " vectorizer)");
-            }
-            else {
-                try {
-                    URI uri = URI.create(weaviateOpenAiBaseUrl);
-                    String scheme = uri.getScheme();
-                    boolean isInvalidUrl = !uri.isAbsolute() || (!"http".equals(scheme) && !"https".equals(scheme));
-                    if (isInvalidUrl) {
-                        invalidProperties.add("artemis.weaviate.open-ai-base-url (must be a valid absolute URL with http or https scheme when using "
-                                + TEXT2VEC_OPENAI.configValue() + " vectorizer)");
-                    }
-                }
-                catch (IllegalArgumentException e) {
-                    invalidProperties.add("artemis.weaviate.open-ai-base-url (must be a valid absolute URL with http or https scheme when using " + TEXT2VEC_OPENAI.configValue()
-                            + " vectorizer)");
-                }
-            }
-            if (!StringUtils.hasText(weaviateGpuApiKey)) {
-                invalidProperties
-                        .add("artemis.weaviate.gpu-api-key (must be configured when using " + TEXT2VEC_OPENAI.configValue() + " vectorizer, use a dummy value for Ollama)");
-            }
-            if (!StringUtils.hasText(environment.getProperty("artemis.weaviate.open-ai-embedding-model"))) {
-                invalidProperties.add("artemis.weaviate.open-ai-embedding-model (must be configured when using " + TEXT2VEC_OPENAI.configValue()
-                        + " vectorizer: Artemis computes the embeddings and sends the model name with every request)");
-            }
-        }
+        // The embedding endpoint and model of hybrid search come from artemis.weaviate.embedding-llm-preset, which LlmConfigurationValidator checks.
 
         if (!invalidProperties.isEmpty()) {
             String errorMessage = "Invalid Weaviate configuration: Weaviate is enabled but the following properties are missing or invalid: "

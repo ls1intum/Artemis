@@ -13,6 +13,10 @@
  * Effect on behavior: explicitly tagged code blocks whose language is not registered fall back to
  * escaped HTML (unchanged guard in `highlightWithHljs`), and `highlightAuto` auto-detects only among the
  * languages registered below.
+ *
+ * Do not register the `livescript` grammar while highlight.js has no release that fixes CVE-2026-133937
+ * (ReDoS in `src/languages/livescript.js`, reachable through `hljs.highlight` and `highlightAuto`).
+ * `highlight-languages.util.spec.ts` guards this.
  */
 import hljs from 'highlight.js/lib/core';
 

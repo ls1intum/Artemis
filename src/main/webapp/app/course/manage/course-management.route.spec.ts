@@ -5,6 +5,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, of } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
+import { COURSE_MANAGEMENT_EXTENSION_ROUTES } from './course-management-extension-routes';
 import { courseManagementRoutes, presentationAssessmentUrlMatcher } from 'app/course/manage/course-management.route';
 import { ArtemisRouteReuseStrategy } from 'app/core/config/artemis-route-reuse.strategy';
 import { PresentationAssessmentManagementComponent } from 'app/presentation/manage/presentation-assessment-management.component';
@@ -17,6 +18,8 @@ import { IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/consta
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { GocastGuard } from 'app/videosource/gocast/gocast-guard.service';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { HyperionGuard } from 'app/hyperion/shared/hyperion-guard.service';
 
 function presentationRoutes(routes: Routes): Routes {
     return routes.flatMap((route) => (route.matcher === presentationAssessmentUrlMatcher ? [route] : presentationRoutes(route.children ?? [])));
@@ -167,10 +170,13 @@ describe('courseManagementRoutes', () => {
         expect(creationRoute!.data?.['usesModuleBackground']).toBe(false);
     });
 
-    it('uses tutor metadata only for preloading the eight lazy assessment and exercise subtrees', () => {
+    it('preloads the assessment, exercise and extension routes with tutor metadata', () => {
         const children = containerRoute!.children?.find((route) => route.path === ':courseId' && route.children)?.children ?? [];
         const lazyRoutes = children.filter((route) => route.path === '' && route.loadChildren);
-        expect(lazyRoutes).toHaveLength(8);
+        expect(lazyRoutes).toHaveLength(9);
+        const extensions: Routes = [{ path: 'optional-exercise' }];
+        TestBed.configureTestingModule({ providers: [{ provide: COURSE_MANAGEMENT_EXTENSION_ROUTES, useValue: extensions }] });
+        expect(TestBed.runInInjectionContext(() => lazyRoutes[3].loadChildren!())).toBe(extensions);
         for (const route of lazyRoutes) {
             expect(route.data).toEqual({ authorities: IS_AT_LEAST_TUTOR });
             expect(route.canActivate).toBeUndefined();
@@ -188,6 +194,25 @@ describe('courseManagementRoutes', () => {
 
     it('provides team pages inside the management container', () => {
         expect(containerRoute!.children?.some((route) => route.path === ':courseId/exercises/:exerciseId/teams')).toBe(true);
+    });
+
+    it('redirects direct Smart Quizzes navigation when the feature is disabled', async () => {
+        const route = containerRoute!.children!.find((candidate) => candidate.path === ':courseId/smart-quizzes')!;
+        const getFeatureToggleActive = vi.fn(() => of(false));
+        TestBed.configureTestingModule({
+            providers: [
+                provideRouter([{ path: 'course-management', children: [route] }]),
+                { provide: UserRouteAccessService, useValue: { canActivate: () => true } },
+                { provide: HyperionGuard, useValue: { canActivate: () => true } },
+                { provide: FeatureToggleService, useValue: { getFeatureToggleActive } },
+            ],
+        });
+
+        const harness = await RouterTestingHarness.create();
+        await harness.navigateByUrl('/course-management/1/smart-quizzes');
+
+        expect(TestBed.inject(Router).url).toBe('/');
+        expect(getFeatureToggleActive).toHaveBeenCalledWith(FeatureToggle.SmartQuizzes);
     });
 
     it('provides instructor-only TUM.Live course connection management', () => {

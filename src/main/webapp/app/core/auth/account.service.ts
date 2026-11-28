@@ -1,5 +1,5 @@
 import { Service, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams, HttpResponse } from '@angular/common/http';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject, Observable, lastValueFrom, of, throwError } from 'rxjs';
 import { catchError, distinctUntilChanged, map } from 'rxjs/operators';
@@ -11,7 +11,6 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Authority, IS_AT_LEAST_ADMIN, IS_AT_LEAST_SUPER_ADMIN, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import dayjs from 'dayjs/esm';
 import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, addPublicFilePrefix } from 'app/app.constants';
@@ -19,6 +18,8 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountApi } from 'app/openapi/api/account-api';
 import { User as ApiUser } from 'app/openapi/model/user';
+import { PendingEmailChangeDTO, UpdateBasicInformationResponseDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 
 type CourseRole = 'STUDENT' | 'TEACHING_ASSISTANT' | 'EDITOR' | 'INSTRUCTOR';
 
@@ -36,7 +37,7 @@ function isAtLeastCourseRole(role: string, minimum: CourseRole): boolean {
 }
 
 export interface IAccountService {
-    save: (account: User) => Observable<void>;
+    save: (account: User) => Observable<UpdateBasicInformationResponseDTO>;
     authenticate: (identity?: User) => void;
     hasAnyAuthority: (authorities: readonly Authority[]) => Promise<boolean>;
     hasAnyAuthorityDirect: (authorities: readonly Authority[]) => boolean;
@@ -114,7 +115,13 @@ export class AccountService implements IAccountService {
         return this.http.get<User>('api/core/public/account', { observe: 'response' });
     }
 
-    save(user: User): Observable<void> {
+    /**
+     * Saves the basic account information (name, language and the requested email address).
+     * A changed email address of an internal user is not applied here: the server creates a pending request,
+     * returns it and mails a confirmation link to the current and to the new address.
+     * The caller shows failures inline, so no global error alert is raised.
+     */
+    save(user: User): Observable<UpdateBasicInformationResponseDTO> {
         if (user.login === undefined) {
             return throwError(() => new Error('Cannot save account information without a login'));
         }
@@ -128,7 +135,30 @@ export class AccountService implements IAccountService {
             langKey: user.langKey,
             imageUrl: user.imageUrl,
         };
-        return this.accountApi.saveAccount(profile);
+        return this.accountApi
+            .saveAccount(profile, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) })
+            .pipe(map((response) => ({ pendingEmailChange: response.pendingEmailChange ?? null })));
+    }
+
+    /**
+     * Loads the pending email change request of the signed-in account.
+     * @returns the pending request, or undefined when there is none (the server answers 204)
+     */
+    getPendingEmailChange(): Observable<PendingEmailChangeDTO | undefined> {
+        return this.http.get<PendingEmailChangeDTO | null>('api/account/pending-email-change').pipe(map((pendingEmailChange) => pendingEmailChange ?? undefined));
+    }
+
+    /** Cancels the pending email change request. Cancelling when nothing is pending is not an error. */
+    cancelPendingEmailChange(): Observable<void> {
+        return this.http.delete<void>('api/account/pending-email-change');
+    }
+
+    /**
+     * Mails new confirmation links to both addresses of the pending email change request.
+     * Earlier confirmations are reset and the validity restarts. The caller shows failures inline.
+     */
+    resendPendingEmailChange(): Observable<PendingEmailChangeDTO> {
+        return this.http.post<PendingEmailChangeDTO>('api/account/pending-email-change/resend', undefined, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) });
     }
 
     authenticate(identity?: User) {
@@ -413,20 +443,10 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Sends a request to the server to delete the user's current vcsAccessToken
+     * Sends a request to the server to revoke the user's deprecated personal VCS access token
      */
     deleteUserVcsAccessToken(): Observable<void> {
         return this.http.delete<void>('api/account/user-vcs-access-token');
-    }
-
-    /**
-     * Sends a request to the server to create a new vcsAccessToken for the user
-     *
-     * @param expiryDate The expiry date which should get set for the vcsAccessToken
-     */
-    addNewVcsAccessToken(expiryDate: string): Observable<EntityResponseType> {
-        const params = new HttpParams().set('expiryDate', expiryDate);
-        return this.http.put<User>('api/account/user-vcs-access-token', null, { observe: 'response', params });
     }
 
     /**

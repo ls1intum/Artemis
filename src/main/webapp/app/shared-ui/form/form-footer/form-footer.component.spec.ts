@@ -8,7 +8,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 describe('FormFooterComponent', () => {
@@ -75,7 +75,7 @@ describe('FormFooterComponent', () => {
     it('should display saving badge when isSaving is true', () => {
         fixture.componentRef.setInput('isSaving', true);
         fixture.detectChanges();
-        const savingBadge = fixture.debugElement.query(By.css('.badge.bg-secondary'));
+        const savingBadge = fixture.debugElement.query(By.css('[data-testid="form-footer-saving"]'));
         expect(savingBadge).toBeTruthy();
     });
 
@@ -91,7 +91,7 @@ describe('FormFooterComponent', () => {
         fixture.componentRef.setInput('invalidReasons', [{ translateKey: 'test.key', translateValues: {} }]);
         fixture.detectChanges();
 
-        expect(fixture.debugElement.query(By.css('.badge.bg-danger'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('tumaet-ui-tag'))).toBeNull();
     });
 
     it('should render every invalid reason as its own list item', () => {

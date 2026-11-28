@@ -286,6 +286,11 @@ public class FileUploadExerciseResource {
         }
         FileUploadExercise importedFileUploadExercise = inputDTO.toEntity();
         importedFileUploadExercise.setAssessmentType(AssessmentType.MANUAL);
+        // without a pattern in the request, the pattern of the imported exercise is kept
+        if (importedFileUploadExercise.getFilePattern() != null && !isFilePatternValid(importedFileUploadExercise)) {
+            throw new BadRequestAlertException("The file pattern is invalid. Please use a comma separated list with actual file endings without dots (e.g. 'png, pdf').",
+                    ENTITY_NAME, "filepattern.invalid");
+        }
         // Resolve and attach the ID-only course or exercise-group reference from the DTO before authorization.
         courseService.retrieveCourseOverExerciseGroupOrCourseId(importedFileUploadExercise);
 

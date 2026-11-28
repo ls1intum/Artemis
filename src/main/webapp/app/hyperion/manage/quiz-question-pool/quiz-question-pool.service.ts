@@ -6,16 +6,24 @@ import { HyperionQuizQuestionPoolApi } from 'app/openapi/api/hyperion-quiz-quest
 import { GeneratedQuizQuestion } from 'app/openapi/model/generated-quiz-question';
 import { QuizQuestionPoolItem } from 'app/openapi/model/quiz-question-pool-item';
 import { QuizQuestionPoolProgress } from 'app/openapi/model/quiz-question-pool-progress';
+import { QuizQuestionPoolBuild } from 'app/openapi/model/quiz-question-pool-build';
+import { QuizQuestionPoolLectureUnit } from 'app/openapi/model/quiz-question-pool-lecture-unit';
+import { QuizQuestionPoolSelection } from 'app/openapi/model/quiz-question-pool-selection';
 import { HyperionCourseSettings } from 'app/openapi/model/hyperion-course-settings';
 import { GeneratedQuestion } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
 import {
+    PoolBuild,
     PoolBuildStart,
+    PoolLectureUnit,
     PoolPlan,
     PoolProgress,
     PoolQuestion,
     PoolQuestionPage,
     PoolQuestionQuery,
     PoolReviewState,
+    PoolSelection,
+    PoolSelectionCandidate,
+    PoolSelectionRequest,
     PoolSettings,
 } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool.types';
 
@@ -30,6 +38,28 @@ export class QuizQuestionPoolService {
      */
     getProgress(courseId: number): Observable<PoolProgress> {
         return this.api.getQuizQuestionPoolProgress(courseId).pipe(map((progress) => this.toProgress(progress)));
+    }
+
+    /**
+     * Loads the lecture units the pool generates from, per competency, with their counts, exclusion and material state.
+     *
+     * @param courseId the course
+     */
+    getLectureUnits(courseId: number): Observable<PoolLectureUnit[]> {
+        return this.api.getQuizQuestionPoolLectureUnits(courseId).pipe(map((units) => (units ?? []).map((unit) => this.toLectureUnit(unit))));
+    }
+
+    /**
+     * Excludes a lecture unit from generation or includes it again. Excluding drops the unit's unreviewed questions and is refused
+     * with 409 while a build runs.
+     *
+     * @param courseId      the course
+     * @param lectureUnitId the lecture unit
+     * @param excluded      whether the unit is excluded
+     * @returns whether the unit is excluded now
+     */
+    updateLectureUnitRelevance(courseId: number, lectureUnitId: number, excluded: boolean): Observable<boolean> {
+        return this.api.updateQuizQuestionPoolLectureUnitRelevance(courseId, lectureUnitId, { excluded }).pipe(map((relevance) => !!relevance.excluded));
     }
 
     /**
@@ -135,6 +165,43 @@ export class QuizQuestionPoolService {
         return this.api.deleteQuizQuestionPoolQuestions(courseId, competencyId).pipe(map((result) => result.deleted));
     }
 
+    /**
+     * Draws approved questions from the pool for a new quiz and records the draw on the server.
+     *
+     * @param courseId the course
+     * @param request  the competencies, lecture units, count, question types and difficulties to draw
+     */
+    selectQuestions(courseId: number, request: PoolSelectionRequest): Observable<PoolSelection> {
+        return this.api.selectQuizQuestionPoolQuestions(courseId, request).pipe(map((selection) => this.toSelection(selection, request.count)));
+    }
+
+    /**
+     * Counts the questions a draw may take, per competency, lecture unit, question type and difficulty.
+     *
+     * @param courseId the course
+     */
+    getSelectionCandidates(courseId: number): Observable<PoolSelectionCandidate[]> {
+        return this.api.getQuizQuestionPoolSelectionCandidates(courseId).pipe(
+            map((candidates) =>
+                candidates.map((candidate) => ({
+                    competencyId: candidate.competencyId ?? 0,
+                    lectureUnitId: candidate.lectureUnitId ?? 0,
+                    questionType: candidate.questionType,
+                    difficulty: candidate.difficulty,
+                    count: candidate.count ?? 0,
+                })),
+            ),
+        );
+    }
+
+    private toSelection(selection: QuizQuestionPoolSelection, requested: number): PoolSelection {
+        return {
+            questions: (selection.questions ?? []).map((item) => this.toPoolQuestion(item)),
+            requested: selection.requested ?? requested,
+            competencyIdsWithoutQuestions: selection.competencyIdsWithoutQuestions ?? [],
+        };
+    }
+
     private toProgress(progress: QuizQuestionPoolProgress): PoolProgress {
         return {
             running: !!progress.running,
@@ -147,6 +214,38 @@ export class QuizQuestionPoolService {
             failed: progress.failed ?? 0,
             buildSettings: progress.buildSettings ? this.toSettings(progress.buildSettings) : undefined,
             modelConfigured: !!progress.modelConfigured,
+            lastBuild: progress.lastBuild ? this.toBuild(progress.lastBuild) : undefined,
+        };
+    }
+
+    private toBuild(build: QuizQuestionPoolBuild): PoolBuild {
+        return {
+            id: build.id,
+            trigger: build.trigger,
+            startedAt: build.startedAt,
+            finishedAt: build.finishedAt ?? undefined,
+            enqueued: build.enqueued ?? 0,
+            generated: build.generated ?? 0,
+            judged: build.judged ?? 0,
+            accepted: build.accepted ?? 0,
+            rejected: build.rejected ?? 0,
+            failed: build.failed ?? 0,
+            failure: build.failure ?? undefined,
+        };
+    }
+
+    private toLectureUnit(unit: QuizQuestionPoolLectureUnit): PoolLectureUnit {
+        return {
+            competencyId: unit.competencyId,
+            competencyTitle: unit.competencyTitle ?? '',
+            lectureUnitId: unit.lectureUnitId,
+            lectureUnitName: unit.lectureUnitName ?? '',
+            lectureTitle: unit.lectureTitle ?? undefined,
+            excluded: !!unit.excluded,
+            materialChanged: !!unit.materialChanged,
+            questionCount: unit.questionCount ?? 0,
+            approvedCount: unit.approvedCount ?? 0,
+            lastBuiltAt: unit.lastBuiltAt ?? undefined,
         };
     }
 
@@ -177,6 +276,7 @@ export class QuizQuestionPoolService {
             state: item.state,
             reviewState: item.reviewState,
             flagged: item.flagged ?? undefined,
+            materialChanged: !!item.materialChanged,
             question: item.question ? this.toGeneratedQuestion(item.question, item.id) : undefined,
             decision: item.decision
                 ? {
