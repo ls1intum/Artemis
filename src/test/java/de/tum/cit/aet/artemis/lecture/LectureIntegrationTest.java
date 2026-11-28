@@ -65,6 +65,8 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
 
     private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
+    private static final int DESCRIPTION_MAX_LENGTH = 50_000;
+
     @Autowired
     private LectureTestRepository lectureRepository;
 
@@ -255,6 +257,15 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         assertThat(channel.getName()).isEqualTo("lecture-loremipsum"); // note "i" is lower case as a channel name should not contain upper case letters
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void createLecture_descriptionTooLong_shouldReturnBadRequest() throws Exception {
+        LectureResource.SimpleLectureDTO lecture = new LectureResource.SimpleLectureDTO(null, "Lecture", "a".repeat(DESCRIPTION_MAX_LENGTH + 1), null, null, false, null,
+                LectureResource.SimpleLectureDTO.CourseDTO.from(course1));
+
+        request.postWithResponseBody("/api/lecture/lectures", lecture, Lecture.class, HttpStatus.BAD_REQUEST);
+    }
+
     @ParameterizedTest
     @ValueSource(ints = { 0, -1 })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
@@ -299,6 +310,15 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         assertThat(updatedLecture.description()).isEqualTo("Updated");
         assertThat(updatedLecture.startDate()).isEqualTo(updatedStartDate);
         assertThat(updatedLecture.endDate()).isEqualTo(updatedEndDate);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void updateLecture_descriptionTooLong_shouldReturnBadRequest() throws Exception {
+        LectureResource.SimpleLectureDTO lectureDto = new LectureResource.SimpleLectureDTO(lecture1.getId(), lecture1.getTitle(), "a".repeat(DESCRIPTION_MAX_LENGTH + 1),
+                lecture1.getStartDate(), lecture1.getEndDate(), false, null, LectureResource.SimpleLectureDTO.CourseDTO.from(lecture1.getCourse()));
+
+        request.putWithResponseBody("/api/lecture/lectures", lectureDto, LectureResource.SimpleLectureDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     @ParameterizedTest
