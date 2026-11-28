@@ -27,6 +27,9 @@ import de.tum.cit.aet.artemis.course.dto.CourseManagementDetailViewDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseStatsService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing Course.
@@ -68,6 +71,8 @@ public class CourseStatsResource {
     @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("courses/{courseId}/stats-for-assessment-dashboard")
     @EnforceAtLeastTutorInCourse
+    @ApiResponse(responseCode = "200", description = "The assessment statistics of the course. Unset counts, the correction-round arrays and an empty leaderboard are omitted")
+    @ApiResponse(responseCode = "403", description = "The user is not at least a tutor in the course", content = @Content)
     public ResponseEntity<StatsForDashboardDTO> getStatsForAssessmentDashboard(@PathVariable long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         StatsForDashboardDTO stats = courseStatsService.getStatsForDashboardDTO(course);
@@ -84,8 +89,11 @@ public class CourseStatsResource {
      */
     @GetMapping("courses/{courseId}/statistics")
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex,
-            @RequestParam Optional<Integer> periodSize) {
+    @ApiResponse(responseCode = "200", description = "The number of active students per week, oldest week first. A period that reaches back before the course start is shortened")
+    @ApiResponse(responseCode = "403", description = "The user is not at least a tutor in the course", content = @Content)
+    public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId,
+            @RequestParam @Parameter(description = "Which period to return: 0 ends in the current week, or in the week of the course end once the course is over, -1 is the period before it, and so on") Long periodIndex,
+            @RequestParam @Parameter(description = "Number of weeks per period; 17 when omitted") Optional<Integer> periodSize) {
         var course = courseRepository.findByIdElseThrow(courseId);
         var exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
         var chartEndDate = courseStatsService.determineEndDateForActiveStudents(course);
@@ -103,6 +111,8 @@ public class CourseStatsResource {
      */
     @GetMapping("courses/{courseId}/statistics-lifetime-overview")
     @EnforceAtLeastTutorInCourse
+    @ApiResponse(responseCode = "200", description = "The number of active students per week from the course start to now or the course end, oldest week first")
+    @ApiResponse(responseCode = "403", description = "The user is not at least a tutor in the course", content = @Content)
     public ResponseEntity<List<Integer>> getActiveStudentsForCourseLiveTime(@PathVariable Long courseId) {
         var course = courseRepository.findByIdElseThrow(courseId);
         var exerciseIds = exerciseRepository.findExerciseIdsByCourseId(courseId);
@@ -121,6 +131,8 @@ public class CourseStatsResource {
     @FeatureUsage(UserFeature.COURSE_MANAGEMENT_OVERVIEW)
     @GetMapping("courses/{courseId}/management-detail")
     @EnforceAtLeastTutorInCourse
+    @ApiResponse(responseCode = "200", description = "The assessment, complaint, feedback, score and cost figures of the course management detail view")
+    @ApiResponse(responseCode = "403", description = "The user is not at least a tutor in the course", content = @Content)
     public ResponseEntity<CourseManagementDetailViewDTO> getCourseDTOForDetailView(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale gradingScale = gradingScaleRepository.findByCourseId(courseId).orElse(null);

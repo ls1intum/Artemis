@@ -9,6 +9,7 @@ api/bonus-api.ts
 api/calendar-api.ts
 api/complaint-api.ts
 api/complaint-response-api.ts
+api/course-stats-api.ts
 api/example-submission-api.ts
 api/exercise-unit-api.ts
 api/global-search-api.ts
@@ -106,6 +107,7 @@ model/course-for-quiz-exercise.ts
 model/course-for-search-filter.ts
 model/course-grade-information.ts
 model/course-grade-score.ts
+model/course-management-detail-view.ts
 model/course-with-id.ts
 model/course.ts
 model/create-exercise-variant-group.ts
@@ -137,6 +139,7 @@ model/drop-location-create.ts
 model/drop-location-from-editor.ts
 model/drop-location-re-evaluate.ts
 model/drop-location.ts
+model/due-date-stat.ts
 model/entity-id-ref.ts
 model/exam-for-bonus.ts
 model/exam-seat.ts
@@ -254,10 +257,15 @@ model/point-counter.ts
 model/presentation-assessment-instance-request.ts
 model/presentation-assessment-instance.ts
 model/presentation-assessment-instances-batch-create.ts
+model/presentation-assessment-request.ts
 model/presentation-assessment-statistics.ts
 model/presentation-assessment-student-row.ts
 model/presentation-assessment-student.ts
 model/presentation-assessment.ts
+model/presentation-rubric-criterion.ts
+model/presentation-rubric-level.ts
+model/presentation-rubric-rating.ts
+model/presentation-rubric.ts
 model/problem-statement-generation-request.ts
 model/problem-statement-generation-response.ts
 model/problem-statement-global-refinement-request.ts
@@ -379,6 +387,7 @@ model/simple-lecture.ts
 model/slide-exercise.ts
 model/slide-order.ts
 model/slide.ts
+model/stats-for-dashboard.ts
 model/step-output.ts
 model/student-export.ts
 model/student-quiz-participation-with-questions.ts
@@ -408,6 +417,7 @@ model/tum-live-upload-start.ts
 model/tum-live-upload-state.ts
 model/tum-live-uploaded-unit.ts
 model/tutor-effort.ts
+model/tutor-leaderboard.ts
 model/tutor-participation.ts
 model/tutorial-group-configuration-free-period.ts
 model/tutorial-group-configuration.ts

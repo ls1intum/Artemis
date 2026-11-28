@@ -21,6 +21,8 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { AccountService } from 'app/core/auth/account.service';
 import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
+import { StatsForDashboard as StatsForDashboardDTO } from 'app/openapi/model/stats-for-dashboard';
+import { AssessmentDashboardInformationEntry } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard-information.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/account/user/user.model';
@@ -123,6 +125,19 @@ describe('AssessmentDashboardComponent', () => {
         numberOfOpenComplaints: 0,
         totalNumberOfAssessmentLocks: 2,
     } as StatsForDashboard;
+    // The course route sends plain JSON and leaves out what it does not set: the correction rounds, the automatic
+    // assessments, the number of students, both flags and, without eligible tutors, the leaderboard.
+    const courseStatsDTO: StatsForDashboardDTO = {
+        numberOfSubmissions: { inTime: 5, late: 2 },
+        totalNumberOfAssessments: 3,
+        totalNumberOfAssessmentLocks: 2,
+        numberOfAssessmentLocks: 1,
+        numberOfComplaints: 4,
+        numberOfOpenComplaints: 1,
+        numberOfMoreFeedbackRequests: 2,
+        numberOfOpenMoreFeedbackRequests: 0,
+        numberOfRatings: 0,
+    };
 
     const route = {
         snapshot: {
@@ -166,9 +181,7 @@ describe('AssessmentDashboardComponent', () => {
                     .mockReturnValue(of({ body: course }) as Observable<HttpResponse<Course>>);
                 const accountService = TestBed.inject(AccountService);
                 vi.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(true);
-                getStatsForTutorsStub = vi
-                    .spyOn(courseManagementService, 'getStatsForTutors')
-                    .mockReturnValue(of({ body: courseTutorStats }) as Observable<HttpResponse<StatsForDashboard>>);
+                getStatsForTutorsStub = vi.spyOn(courseManagementService, 'getStatsForTutors').mockReturnValue(of(courseStatsDTO));
             });
     });
 
@@ -211,6 +224,37 @@ describe('AssessmentDashboardComponent', () => {
         expect(comp.course()).toEqual(Course.from(course));
         expect(comp.allExercises()).toHaveLength(5);
         expect(comp.currentlyShownExercises()).toHaveLength(4);
+    });
+
+    it('should hydrate the course statistics as the course route sends them', () => {
+        const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+        activatedRoute.snapshot = {
+            paramMap: convertToParamMap({ courseId: course.id }),
+            url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
+        } as any;
+        comp.tutor.set(new User(1));
+
+        comp.ngOnInit();
+
+        const stats = comp.stats();
+        expect(stats).toBeInstanceOf(StatsForDashboard);
+        expect(comp.numberOfSubmissions()).toBeInstanceOf(DueDateStat);
+        // the progress of the dashboard information component is based on this total
+        expect(comp.numberOfSubmissions().total).toBe(7);
+        expect(comp.totalNumberOfAssessments()).toBe(3);
+        // omitted members keep the view defaults
+        expect(stats.tutorLeaderboardEntries).toEqual([]);
+        expect(comp.numberOfAssessmentsOfCorrectionRounds()).toEqual([new DueDateStat()]);
+        expect(stats.numberOfAutomaticAssistedAssessments).toEqual(new DueDateStat());
+        expect(stats.numberOfStudents).toBe(0);
+        expect(comp.numberOfTutorAssessments()).toBe(0);
+        expect(comp.complaints()).toEqual(new AssessmentDashboardInformationEntry(4, 0, 3));
+        expect(comp.moreFeedbackRequests()).toEqual(new AssessmentDashboardInformationEntry(2, 0, 2));
+        expect(comp.assessmentLocks()).toEqual(new AssessmentDashboardInformationEntry(2, 1));
+        expect(comp.ratings()).toEqual(new AssessmentDashboardInformationEntry(0, 0));
+        expect(comp.tutorIssues()).toEqual([]);
+        // the response body itself is not turned into class instances
+        expect(courseStatsDTO.numberOfSubmissions).not.toBeInstanceOf(DueDateStat);
     });
 
     it('should filter finished exercises with no correction rounds without throwing', () => {
@@ -335,7 +379,7 @@ describe('AssessmentDashboardComponent', () => {
                         hasIssuesWithPerformance: false,
                     } as TutorLeaderboardElement,
                 ];
-                getStatsForTutorsStub.mockReturnValue(of(new HttpResponse({ status: 200, body: stats })));
+                getStatsForTutorsStub.mockReturnValue(of(stats));
 
                 // when
                 comp.ngOnInit();

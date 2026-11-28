@@ -5,7 +5,13 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 // TODO: convert to record
+/**
+ * Statistics of an assessment dashboard, shared by the course, exam and exercise dashboards. Each producer sets only some of the
+ * properties: unset properties, empty arrays and an empty leaderboard are omitted from the JSON, while a set 0 or false is sent.
+ */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StatsForDashboardDTO {
 
@@ -167,6 +173,7 @@ public class StatsForDashboardDTO {
         this.feedbackRequestEnabled = feedbackRequestEnabled;
     }
 
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public long getNumberOfRatings() {
         return numberOfRatings == null ? 0L : numberOfRatings;
     }

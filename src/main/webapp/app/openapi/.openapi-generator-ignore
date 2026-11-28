@@ -73,6 +73,7 @@ api/text-unit-resources.ts
 api/tutorial-group-resources.ts
 api/exercise-unit-resources.ts
 api/admin-ai-worker-resources.ts
+api/course-stats-resources.ts
 api/bonus-resources.ts
 api/quiz-exercise-retrieval-resources.ts
 api/grading-scale-resources.ts
