@@ -45,7 +45,7 @@ public class UserDTO extends AuditingEntityDTO {
     @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH)
     private String login;
 
-    @Size(max = 50)
+    @Size(max = 101)
     private String name;
 
     @Size(max = 50)
@@ -82,8 +82,6 @@ public class UserDTO extends AuditingEntityDTO {
     private List<CourseAccessRightsDTO> courseRoles;
 
     private Set<OrganizationDTO> organizations;
-
-    private String vcsAccessToken;
 
     private ZonedDateTime vcsAccessTokenExpiryDate;
 
@@ -248,19 +246,6 @@ public class UserDTO extends AuditingEntityDTO {
 
     public void setOrganizations(Set<OrganizationDTO> organizations) {
         this.organizations = organizations;
-    }
-
-    public String getVcsAccessToken() {
-        return vcsAccessToken;
-    }
-
-    /**
-     * Only set this token if it is absolutely necessary in the client, otherwise this might reveal secret information
-     *
-     * @param vcsAccessToken the access token for the VCS repository
-     */
-    public void setVcsAccessToken(String vcsAccessToken) {
-        this.vcsAccessToken = vcsAccessToken;
     }
 
     public void setVcsAccessTokenExpiryDate(ZonedDateTime zoneDateTime) {

@@ -11,7 +11,7 @@ export interface TumAetUiCheckboxChangeEvent {
 @Component({
     selector: 'tumaet-ui-checkbox',
     templateUrl: './tumaet-ui-checkbox.component.html',
-    styleUrl: './tumaet-ui-checkbox.component.scss',
+    styleUrl: './tumaet-ui-checkbox.component.css',
     imports: [FaIconComponent],
     host: { class: 'tumaet-ui-checkbox' },
     providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => TumAetUiCheckboxComponent), multi: true }],

@@ -16,10 +16,6 @@ import {
     toPrerequisite,
 } from 'app/atlas/shared/dto/course-competency-response.dto';
 
-interface SuggestCompetencyRelationsResponseDTO {
-    relations: { tail_id: string; head_id: string; relation_type: string }[];
-}
-
 @Service()
 export class CourseCompetencyApiService extends BaseApiHttpService {
     private readonly basePath = `atlas/courses/$courseId/course-competencies`;
@@ -67,9 +63,5 @@ export class CourseCompetencyApiService extends BaseApiHttpService {
 
     async getCourseProgressForCourse(courseId: number): Promise<CourseCompetencyProgressDTO[]> {
         return await this.get<CourseCompetencyProgressDTO[]>(`${this.getPath(courseId)}/course-progress`);
-    }
-
-    async getSuggestedCompetencyRelations(courseId: number): Promise<SuggestCompetencyRelationsResponseDTO> {
-        return await this.get<SuggestCompetencyRelationsResponseDTO>(`atlas/courses/${courseId}/competencies/relations/suggest`);
     }
 }

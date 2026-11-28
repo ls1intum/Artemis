@@ -4,7 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowLeft, faScroll, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { EMPTY } from 'rxjs';
 import { catchError, finalize, switchMap, tap } from 'rxjs/operators';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -28,7 +28,7 @@ import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.mode
     selector: 'jhi-text-unit-fullscreen',
     imports: [FaIconComponent, RouterLink, TranslateDirective, TumAetUiButtonDirective],
     templateUrl: './text-unit-fullscreen.component.html',
-    styleUrl: './text-unit-fullscreen.component.scss',
+    styleUrl: './text-unit-fullscreen.component.css',
     encapsulation: ViewEncapsulation.None,
 })
 export class TextUnitFullscreenComponent implements OnInit {
@@ -77,15 +77,14 @@ export class TextUnitFullscreenComponent implements OnInit {
                     this.isTutorialLecture.set(false);
                     this.lectureId.set(Number(params.get('lectureId')));
                     return this.lectureService.findWithDetails(Number(params.get('lectureId'))).pipe(
-                        tap((response) => {
-                            const lecture = response.body;
+                        tap((lecture) => {
                             const unitId = Number(params.get('unitId'));
-                            const unit = lecture?.lectureUnits?.find((lectureUnit) => lectureUnit.id === unitId && lectureUnit.type === LectureUnitType.TEXT);
-                            this.lectureTitle.set(lecture?.title);
-                            this.isTutorialLecture.set(!!lecture?.isTutorialLecture);
+                            const unit = lecture.lectureUnits?.find((lectureUnit) => lectureUnit.id === unitId && lectureUnit.type === LectureUnitType.TEXT);
+                            this.lectureTitle.set(lecture.title);
+                            this.isTutorialLecture.set(!!lecture.isTutorialLecture);
                             this.textUnit.set(unit);
                             if (unit) {
-                                this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, unit.id);
+                                this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, unit.id, this.courseId());
                             }
                         }),
                         catchError((errorResponse: HttpErrorResponse) => {

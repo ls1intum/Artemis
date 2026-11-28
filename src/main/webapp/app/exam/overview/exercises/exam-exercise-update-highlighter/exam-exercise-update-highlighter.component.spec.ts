@@ -78,6 +78,23 @@ describe('ExamExerciseUpdateHighlighterComponent', () => {
         expect(stopPropagationSpy).toHaveBeenCalledOnce();
     });
 
+    it('should show the update banner and switch between the views with its button', () => {
+        fixture.detectChanges();
+        const banner = fixture.nativeElement.querySelector('[data-testid="problem-statement-update-banner"]');
+        expect(banner).not.toBeNull();
+        expect(component.showHighlightedDifferences()).toBe(true);
+
+        const emitSpy = vi.spyOn(component.problemStatementUpdateEvent, 'emit');
+        const button: HTMLButtonElement = banner.querySelector('#highlightDiffButton');
+        button.click();
+        expect(component.showHighlightedDifferences()).toBe(false);
+        expect(emitSpy).toHaveBeenLastCalledWith(component.updatedProblemStatementHTML);
+
+        button.click();
+        expect(component.showHighlightedDifferences()).toBe(true);
+        expect(emitSpy).toHaveBeenLastCalledWith(component.updatedProblemStatementWithHighlightedDifferencesHTML);
+    });
+
     describe('ExamExerciseUpdateHighlighterComponent for programming exercises', () => {
         const programmingExerciseDummy = { id: 42, problemStatement: oldProblemStatement, type: ExerciseType.PROGRAMMING } as Exercise;
         beforeEach(async () => {

@@ -1,8 +1,8 @@
 import { Component, DestroyRef, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTableSortEvent } from '@tumaet/ui-angular/table-directive';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { BaseEntity } from 'app/foundation/model/base-entity';
 import { SortService } from 'app/foundation/service/sort.service';
@@ -29,12 +29,10 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     protected router = inject(Router);
     private sortService = inject(SortService);
     private readonly destroyRef = inject(DestroyRef);
-    // Exercise imports use TUM UI. Keep the legacy injection path for unrelated lecture/exam imports
-    // that still share this data-loading base; the rendered exercise dialog never uses that path.
-    protected dialogRef = inject(TumAetUiDialogRef, { optional: true }) ?? inject(DynamicDialogRef, { optional: true });
-    protected dialogConfig = inject(TumAetUiDialogConfig, { optional: true }) ?? inject(DynamicDialogConfig, { optional: true });
+    protected dialogRef = inject(TumAetUiDialogRef, { optional: true });
+    protected dialogConfig = inject(TumAetUiDialogConfig, { optional: true });
 
-    /** Emits the item the user selected for the import, for hosts that embed the component without a PrimeNG dialog reference. */
+    /** Emits the item the user selected for the import, for hosts that embed the component without a dialog reference. */
     readonly selected = output<T>();
 
     readonly loading = signal(false);
@@ -58,15 +56,14 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     disabledIds: number[] = [];
 
     /**
-     * Returns true if the component is opened via PrimeNG DialogService.
-     * Used to conditionally hide the built-in modal header when PrimeNG provides its own.
+     * Returns true if the component is opened via the TUM AET UI dialog service.
+     * Used to conditionally hide the built-in modal header when the dialog provides its own.
      */
     get isOpenedAsDialog(): boolean {
         return this.dialogRef !== null;
     }
 
     // Icons
-    readonly faSort = faSort;
     readonly faCheck = faCheck;
     protected readonly search = new Subject<void>();
     protected readonly sort = new Subject<void>();
@@ -74,8 +71,8 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     // eslint-disable-next-line @angular-eslint/prefer-inject
     protected constructor(protected pagingService?: PagingService<T>) {
         effect(() => {
-            // When opened via PrimeNG DialogService the `disabledIds` input is never bound (data arrives through
-            // DynamicDialogConfig and is applied imperatively in subclasses' ngOnInit). Only sync from the input on
+            // When opened via the dialog service the `disabledIds` input is never bound (data arrives through
+            // the dialog config and is applied imperatively in subclasses' ngOnInit). Only sync from the input on
             // the template-binding path, otherwise this effect would run after ngOnInit and clobber the
             // dialog-provided value back to the default [] (defeating e.g. same-course import exclusion).
             if (!this.isOpenedAsDialog) {
@@ -142,6 +139,16 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     }
 
     /**
+     * Applies a sort request of a `tumAetUiSortableColumn` header and reloads the (server-sorted) page.
+     */
+    onTableSort(event: TumAetUiTableSortEvent): void {
+        if (!event.field) {
+            return;
+        }
+        this.setSearchParam({ sortedColumn: event.field, sortingOrder: event.order === 1 ? SortingOrder.ASCENDING : SortingOrder.DESCENDING });
+    }
+
+    /**
      *
      * Gives the ID for any item in the table, so that it can be tracked/identified by ngFor
      *
@@ -155,7 +162,7 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     }
 
     /**
-     * Closes the modal in which the import component is opened. Gives the selected item as a result.
+     * Closes the dialog in which the import component is opened. Gives the selected item as a result.
      *
      * @param item The item which was selected by the user for the import.
      */
@@ -165,7 +172,7 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     }
 
     /**
-     * Closes the modal in which the import component is opened by dismissing it
+     * Closes the dialog in which the import component is opened by dismissing it
      */
     clear() {
         this.dialogRef?.close();
@@ -180,14 +187,6 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
         if (pageNumber) {
             this.page = pageNumber;
         }
-    }
-
-    /**
-     * Handles a PrimeNG paginator page change. The event page is 0-indexed, so it is converted to the 1-indexed page
-     * used throughout this component before delegating to {@link onPageChange}.
-     */
-    onPaginatorPageChange(event: { page?: number }): void {
-        this.onPageChange((event.page ?? 0) + 1);
     }
 
     /**

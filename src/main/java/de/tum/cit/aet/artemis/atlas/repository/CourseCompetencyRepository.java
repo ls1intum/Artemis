@@ -217,6 +217,13 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
             """)
     String getCompetencyTitle(@Param("competencyId") long competencyId);
 
+    @Query("""
+            SELECT c.course.id
+            FROM CourseCompetency c
+            WHERE c.id = :competencyId
+            """)
+    Optional<Long> findCourseIdById(@Param("competencyId") long competencyId);
+
     /**
      * Query which fetches all course competencies for which the user has access to and match the search criteria.
      * The user has access to all competencies where they are an editor or instructor of the course or to all of they are an admin.

@@ -4,12 +4,15 @@ import { ProgrammingExerciseParticipationService } from 'app/programming/manage/
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { CommitsInfoGroupComponent } from './commits-info-group/commits-info-group.component';
 
 @Component({
     selector: 'jhi-commits-info',
     templateUrl: './commits-info.component.html',
-    imports: [TranslateDirective, CommitsInfoGroupComponent],
+    imports: [TranslateDirective, CommitsInfoGroupComponent, TumAetUiButtonDirective, TumAetUiTableDirective, TumAetUiTableLayoutComponent],
 })
 export class CommitsInfoComponent implements OnInit, OnDestroy {
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);

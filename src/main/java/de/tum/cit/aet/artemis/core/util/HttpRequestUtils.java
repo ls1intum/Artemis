@@ -21,24 +21,20 @@ public final class HttpRequestUtils {
         // Utility class, no instantiation allowed
     }
 
-    private static final String[] IP_HEADER_CANDIDATES = { "X-Forwarded-For", "Proxy-Client-IP", "WL-Proxy-Client-IP", "HTTP_X_FORWARDED_FOR", "HTTP_X_FORWARDED",
-            "HTTP_X_CLUSTER_CLIENT_IP", "HTTP_CLIENT_IP", "HTTP_FORWARDED_FOR", "HTTP_FORWARDED", "HTTP_VIA", "REMOTE_ADDR" };
-
     /**
-     * Extract Client IP Address from Http Request as String
+     * Extract the client address from the Http Request as String.
+     * <p>
+     * This is the address that the servlet container resolved for the request. Request headers are never read here: with
+     * {@code server.request.header.forwarded.strategy: web-server},
+     * Tomcat takes forwarding headers into account only for the proxies in {@code server.tomcat.remoteip.internal-proxies} and
+     * otherwise keeps the address of the connection, so the value cannot be chosen by the sender of a request.
      *
      * @param request Http Request
-     * @return String representation of IP Address
+     * @return String representation of IP Address, empty if the container reports none
      */
     public static String getIpStringFromRequest(@NonNull HttpServletRequest request) {
-        for (String header : IP_HEADER_CANDIDATES) {
-            String ipList = request.getHeader(header);
-            if (ipList != null && !ipList.isEmpty() && !"unknown".equalsIgnoreCase(ipList)) {
-                return ipList.split(",")[0];
-            }
-        }
-
-        return request.getRemoteAddr();
+        String address = request.getRemoteAddr();
+        return address == null ? "" : address;
     }
 
     /**
@@ -49,6 +45,10 @@ public final class HttpRequestUtils {
      */
     public static Optional<IPAddress> getIpAddressFromRequest(@NonNull HttpServletRequest request) {
         final String ipString = getIpStringFromRequest(request);
+        if (ipString.isBlank()) {
+            // The parser reads an empty string as the loopback address
+            return Optional.empty();
+        }
         final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
         return Optional.ofNullable(ipAddress);
     }
@@ -56,15 +56,15 @@ public final class HttpRequestUtils {
     /**
      * Resolves the address a request actually came from, believing forwarding headers only from a trusted proxy.
      * <p>
-     * Prefer this over {@link #getIpStringFromRequest} wherever the address decides an authorization outcome. That
-     * method returns the first {@code X-Forwarded-For} value whenever the header is present, so a caller names whatever
-     * address it likes. Here the header is consulted only when {@link HttpServletRequest#getRemoteAddr()} is a reverse
+     * Use this where the installation operates its own reverse proxies in front of Artemis and the address has to be
+     * resolved through them. {@link #getIpStringFromRequest} returns what the servlet container resolved and never reads
+     * headers itself. Here the header is consulted only when {@link HttpServletRequest#getRemoteAddr()} is a reverse
      * proxy the installation operates, and the list is then walked from the right, taking the last entry that did not
      * come from a trusted proxy: entries further left were supplied by the client, because a proxy appends to the
      * header rather than replacing it.
      * <p>
      * <b>This is a second filter, not the only one, and it cannot repair the first.</b> Artemis runs with
-     * {@code server.forward-headers-strategy: native}, so Tomcat's {@code RemoteIpValve} has already rewritten
+     * {@code server.request.header.forwarded.strategy: web-server}, so Tomcat's {@code RemoteIpValve} has already rewritten
      * {@code getRemoteAddr()} from {@code X-Forwarded-For} before this method sees anything, for any peer matching
      * {@code server.tomcat.remoteip.internal-proxies} - which defaults to the private ranges and loopback. The starting
      * point is therefore not the TCP peer but Tomcat's conclusion about it, and a caller connecting <em>from</em> one

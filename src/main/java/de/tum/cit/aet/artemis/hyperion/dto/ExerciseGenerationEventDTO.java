@@ -98,7 +98,10 @@ public record ExerciseGenerationEventDTO(@Schema(description = "The event kind",
         TOKEN_BUDGET_EXHAUSTED,
         /** The agent loop itself ended in an error before a verdict could be reached. */
         AGENT_ERROR,
-        /** The sandbox or build environment could not host the run, so no attempt was made. */
+        /**
+         * The sandbox or build environment could not host or verify the run: either no attempt was made, or verification failed on a server-side defect, such as server-seeded
+         * structural checks failing on a reference solution that matches the approved API, that no authoring repair can fix.
+         */
         ENVIRONMENT_UNAVAILABLE,
         /** The run failed with an unexpected exception. */
         RUN_FAILED,

@@ -32,7 +32,6 @@ import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/point
 import { ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseGroupTimelineLockStubComponent } from 'test/helpers/stubs/exercise/exercise-group-timeline-lock-stub.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
@@ -47,8 +46,10 @@ import { CategorySelectorComponent } from 'app/exercise/category-selector/catego
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
-import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationRequest, TumAetUiConfirmationService, TumAetUiSelectComponent } from '@tumaet/ui-angular';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationRequest, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -258,7 +259,7 @@ describe('ModelingExerciseUpdateComponent', () => {
                         PointsInputComponent,
                         MockDirective(TranslateDirective),
                         FaIconComponent,
-                        NgbTooltip,
+                        TumAetUiMessageComponent,
                         ArtemisTranslatePipe,
                         StubExerciseTitleChannelNameComponent,
                         MockComponent(TeamConfigFormGroupComponent),
@@ -488,11 +489,11 @@ describe('ModelingExerciseUpdateComponent', () => {
         const openModalSpy = vi.spyOn(variantLock, 'openModal');
         fixture.detectChanges();
 
-        const gradingOptions = fixture.debugElement.query(By.css('.col-12.col-md'));
+        const gradingOptions = fixture.debugElement.query(By.css('[data-testid="modeling-grading-options"]'));
         const notice = gradingOptions.query(By.directive(ExerciseGroupDateNoticeComponent));
 
         expect(gradingOptions.nativeElement.firstElementChild).toBe(notice.nativeElement);
-        expect((notice.nativeElement as HTMLElement).classList).toContain('mb-3');
+        expect((notice.nativeElement as HTMLElement).classList).toContain('mb-4!');
 
         (notice.componentInstance as ExerciseGroupDateNoticeComponent).editGroupDates.emit();
 

@@ -2,7 +2,7 @@
 id: system-design
 title: System Design
 sidebar_label: System Design
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-12
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -124,7 +124,11 @@ Everything that is optional in the diagram is left out in a small installation: 
 
 The Artemis application server uses the following (simplified) data model in its relational database (PostgreSQL).
 It supports multiple courses with multiple exercises.
-Each student in the participating student group can participate in the exercise by clicking
+A user takes part in a course through course roles. Each `UserCourseRole` entry connects one user with one course and
+one role (student, tutor, editor or instructor), so a user can hold several roles in the same course. A course role
+applies only in its course and is separate from the global authorities of a user, see
+[Authorization](/developer/guidelines/rest-api#authorization).
+Each student of the course can participate in the exercise by clicking
 the **Start Exercise** button.
 Then a repository for the student (User) will be created and configured.
 With the deprecated Jenkins integration, Artemis additionally creates a build plan for each student.
@@ -250,7 +254,7 @@ The higher the priority value, the sooner the build job is executed.
 
 The priority value is determined based on several factors related to the programming exercise and its context.
 Exercises that are part of an ongoing exam are given the highest priority of `1` to ensure quick feedback.
-Exam exercises that are part of a test exam or a test run within an exam are assigned a priority of `2`.
+Exam exercises that are part of a practice exam or a test run within an exam are assigned a priority of `2`.
 Submissions made after the due date, such as those in practice mode or finished exams, receive a lower priority of `3`.
 Optional exercises, which are not included in the overall score, are also assigned a priority of `3`.
 If the build is part of a batch, for example, if an instructor triggers a re-build of all submissions of an exercise, it is assigned the lowest priority of `4`.
@@ -321,7 +325,7 @@ with `artemis.distributed-data.provider`:
 
     The maintainers are considering to deprecate the Hazelcast provider. No decision has been made yet.
     Code outside the provider implementations must not depend on Hazelcast, so that the provider can be replaced.
-    The structures below use the Hazelcast type names; the Redis provider implements the same structures with versioned keys (`artemis:v1:*`).
+    The structures below use the Hazelcast type names; the Redis provider implements the same structures with versioned keys (`artemis:v2:*`).
 
 </Callout>
 

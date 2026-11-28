@@ -36,7 +36,9 @@ import {
     faUnderline,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { MessageCompletion, MessageEditorDom } from './message-editor-dom';
@@ -55,7 +57,7 @@ type ToolbarItem = { id: string; kind: 'format'; tag: FormatTag; icon: IconDefin
 @Component({
     selector: 'jhi-message-editor',
     templateUrl: './message-editor.component.html',
-    styleUrl: './message-editor.component.scss',
+    styleUrl: './message-editor.component.css',
     imports: [
         ArtemisTranslatePipe,
         FaIconComponent,
@@ -217,7 +219,7 @@ export class MessageEditorComponent {
                 this.editor ??= new MessageEditorDom(element, (value) => {
                     this.linkOpen.set(false);
                     this.lastValue = value;
-                    this.empty.set(value === '');
+                    this.empty.set(this.editor?.isBlank(value) ?? value === '');
                     this.contentChange.emit(value);
                     this.refreshFormatState();
                 });
@@ -225,7 +227,7 @@ export class MessageEditorComponent {
                     this.editor.load(content);
                     this.editorRevision.update((revision) => revision + 1);
                     this.lastValue = content;
-                    this.empty.set(content === '');
+                    this.empty.set(this.editor.isBlank(content));
                     this.existingLink = undefined;
                     this.composing = false;
                     this.composingText.set(false);
@@ -361,6 +363,7 @@ export class MessageEditorComponent {
     /** Handles editing shortcuts and completion acceptance before allowing the parent form's send shortcut to run. */
     protected keydown(event: KeyboardEvent): void {
         // Safari may confirm a candidate after compositionend with keyCode 229 and isComposing=false.
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- keyCode 229 is the only signal of that confirmation
         if (event.isComposing || this.composing || event.keyCode === 229) {
             event.stopPropagation();
             return;
@@ -647,6 +650,7 @@ export class MessageEditorComponent {
     /** Validates the destination before updating the captured link or selection and prevents form submission. */
     protected saveLink(event?: Event): void {
         event?.stopPropagation();
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- keyCode 229 is the only signal of an IME confirmation in Safari
         if (event instanceof KeyboardEvent && (this.linkComposing() || event.isComposing || event.keyCode === 229)) return;
         event?.preventDefault();
         const url = normalizeMessageLink(this.linkUrl());

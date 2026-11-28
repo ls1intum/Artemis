@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -42,9 +42,9 @@ public class AthenaFeedbackSendingService {
     /**
      * Creates a new service to send feedback to the Athena service
      */
-    public AthenaFeedbackSendingService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
+    public AthenaFeedbackSendingService(@Qualifier("athenaRestClient") RestClient athenaRestClient, AthenaModuleService athenaModuleService,
             AthenaDTOConverterService athenaDTOConverterService) {
-        connector = new AthenaConnector<>(athenaRestTemplate, ResponseDTO.class);
+        connector = new AthenaConnector<>(athenaRestClient, ResponseDTO.class);
         this.athenaModuleService = athenaModuleService;
         this.athenaDTOConverterService = athenaDTOConverterService;
     }

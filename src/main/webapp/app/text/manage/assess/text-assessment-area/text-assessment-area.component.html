@@ -27,11 +27,10 @@
     />
 }
 <div>
-    <span class="badge bg-primary mb-2" data-testid="text-assessment-word-count" jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount() }"></span>
-    <span
-        class="badge bg-primary mb-2"
-        data-testid="text-assessment-character-count"
-        jhiTranslate="artemisApp.textExercise.characterCount"
-        [translateValues]="{ count: characterCount() }"
-    ></span>
+    <tumaet-ui-tag severity="info" class="mb-2! inline-block" data-testid="text-assessment-word-count">
+        <span jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount() }"></span>
+    </tumaet-ui-tag>
+    <tumaet-ui-tag severity="info" class="mb-2! inline-block" data-testid="text-assessment-character-count">
+        <span jhiTranslate="artemisApp.textExercise.characterCount" [translateValues]="{ count: characterCount() }"></span>
+    </tumaet-ui-tag>
 </div>

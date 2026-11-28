@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.account.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -279,8 +281,8 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         passkeyCredentialId = passkeyCredentialUtilService.createAndSavePasskeyCredential(user).getCredentialId();
 
         vcsAccessTokenExpiryDate = ZonedDateTime.now().plusMonths(6).withNano(0);
-        // Seeded through the service: the personal token lives in user_vcs_access_token, not on the user row.
-        userVcsAccessTokenService.store(user.getId(), "vcs-token-" + user.getId(), vcsAccessTokenExpiryDate);
+        // Seeded through the fixture, because the product cannot create one any more: the personal token lives in user_vcs_access_token, not on the user row.
+        userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(user, "vcs-token-" + user.getId(), vcsAccessTokenExpiryDate);
 
         UserSshPublicKey sshKey = new UserSshPublicKey();
         sshKey.setUserId(user.getId());
@@ -564,12 +566,12 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         User updated = userCreationService.updateUser(userWithAuthorities, update);
         userService.activateUser(updated);
 
-        assertThat(auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged()).stream().filter(event -> Constants.ACTIVATE_USER.equals(event.getType())).toList())
+        assertThat(auditEventService.findAll(AuditLogType.SECURITY, null, Pageable.unpaged()).stream().filter(event -> Constants.ACTIVATE_USER.equals(event.getType())).toList())
                 .as("one activation produces one audit entry").hasSize(1);
     }
 
     private List<AuditEvent> deactivationEvents() {
-        return auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged()).stream().filter(event -> Constants.DEACTIVATE_USER.equals(event.getType())).toList();
+        return auditEventService.findAll(AuditLogType.SECURITY, null, Pageable.unpaged()).stream().filter(event -> Constants.DEACTIVATE_USER.equals(event.getType())).toList();
     }
 
     /**
@@ -580,7 +582,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
      * {@code AuditEventConstants.SECURITY_EVENT_TYPES}).
      */
     private void assertAccountStateAudited(String expectedType) {
-        assertThat(auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged())).anySatisfy(event -> {
+        assertThat(auditEventService.findAll(AuditLogType.SECURITY, null, Pageable.unpaged())).anySatisfy(event -> {
             assertThat(event.getType()).isEqualTo(expectedType);
             assertThat(event.getPrincipal()).as("the administrator who performed it, not the affected account").isEqualTo("admin");
             assertThat(event.getData()).containsEntry("user", user.getLogin());
@@ -698,7 +700,7 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         // Read through AuditEventService: it loads `data` through an entity graph, while findAll() leaves that collection
         // lazy and unreadable outside a session. The log to read from is the security one, because a password change is
         // a credential change (see AuditEventConstants.SECURITY_EVENT_TYPES).
-        assertThat(auditEventService.findAll(AuditLogType.SECURITY, Pageable.unpaged())).anySatisfy(event -> {
+        assertThat(auditEventService.findAll(AuditLogType.SECURITY, null, Pageable.unpaged())).anySatisfy(event -> {
             assertThat(event.getType()).isEqualTo(Constants.ADMIN_CHANGE_USER_PASSWORD);
             assertThat(event.getData()).containsEntry("revokedPasskeys", "true").containsEntry("revokedSshKeys", "true").containsEntry("revokedVcsAccessTokens", "true");
         });
@@ -751,6 +753,32 @@ class AccountCredentialRevocationIntegrationTest extends AbstractSpringIntegrati
         assertThat(update.isRevokeCredentials()).isTrue();
         request.put("/api/account/admin/users", update, HttpStatus.OK);
 
+        assertPasswordChangedTo(oldPasswordHash, "new-Password-123");
+        assertAllCredentialsRevoked();
+    }
+
+    /**
+     * The science identities follow a login change last, once the credential change has taken effect. When that rename
+     * fails, the password change and its revocation stand, and the account gets its previous login back: its events stay
+     * reachable under it, and retrying the update renames them, which it could not do once the logins matched.
+     */
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void aFailedScienceRenameKeepsTheRevocationAndRestoresTheLogin() throws Exception {
+        giveUserCredentials();
+        String oldPasswordHash = user.getPassword();
+        String previousLogin = user.getLogin();
+        doThrow(new IllegalStateException("science rename failed")).when(scienceEventApi).renameIdentity(anyString(), anyString());
+
+        User userWithAuthorities = userRepository.findOneWithAuthoritiesByLogin(previousLogin).orElseThrow();
+        ManagedUserVM update = new ManagedUserVM(userWithAuthorities, "new-Password-123");
+        update.setLogin(previousLogin + "renamed");
+        update.setName("Renamed User");
+        update.setRevokeCredentials(true);
+
+        request.put("/api/account/admin/users", update, HttpStatus.INTERNAL_SERVER_ERROR);
+
+        assertThat(reloadUser().getLogin()).isEqualTo(previousLogin);
         assertPasswordChangedTo(oldPasswordHash, "new-Password-123");
         assertAllCredentialsRevoked();
     }

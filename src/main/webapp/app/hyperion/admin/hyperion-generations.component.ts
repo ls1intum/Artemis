@@ -13,15 +13,14 @@ import { RouterLink } from '@angular/router';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ActiveGeneration } from 'app/openapi/model/active-generation';
 import { AdminHyperionGenerationMonitoringApi } from 'app/openapi/api/admin-hyperion-generation-monitoring-api';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiDialogComponent,
-    TumAetUiInputDirective,
-    TumAetUiMessageComponent,
-    TumAetUiTableDirective,
-    TumAetUiTagComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { AdminAiWorkerApi } from 'app/openapi/api/admin-ai-worker-api';
 import { WorkerStatus } from 'app/openapi/model/worker-status';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -35,6 +34,7 @@ const MAX_CANCELLATION_REASON_LENGTH = 500;
     templateUrl: './hyperion-generations.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        TumAetUiTableLayoutComponent,
         AiWorkersComponent,
         RouterLink,
         FormsModule,

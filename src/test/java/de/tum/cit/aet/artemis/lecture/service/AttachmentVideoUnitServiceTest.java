@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.parallel.Isolated;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -56,6 +57,7 @@ import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 // else, and AbstractArtemisIntegrationTest re-asserts the real path for every integration test afterwards.
 @Isolated
 @ExtendWith(MockitoExtension.class)
+@ResourceLock("FilePathConverter")
 class AttachmentVideoUnitServiceTest {
 
     private static final long LECTURE_UNIT_ID = 42L;
@@ -94,6 +96,9 @@ class AttachmentVideoUnitServiceTest {
     @Mock
     private AttachmentService attachmentService;
 
+    @Mock
+    private TumLiveUploadService tumLiveUploadService;
+
     @TempDir
     private Path tempDir;
 
@@ -113,7 +118,7 @@ class AttachmentVideoUnitServiceTest {
         FilePathConverter.setFileUploadPath(tempDir);
         service = new AttachmentVideoUnitService(slideSplitterService, attachmentVideoUnitRepository, attachmentRepository, fileService, Optional.<CompetencyProgressApi>empty(),
                 lectureUnitService, Optional.of(contentProcessingService), attachmentFileHashService, new LectureContentUpdateClassifierService(), slideRepository,
-                irisLectureUnitSyncService, attachmentService);
+                irisLectureUnitSyncService, attachmentService, tumLiveUploadService);
         // Lenient: a request rejected before any change never saves the unit or reads its slides.
         lenient().when(attachmentVideoUnitRepository.save(any(AttachmentVideoUnit.class))).thenAnswer(invocation -> invocation.getArgument(0));
         lenient().when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of());
@@ -607,9 +612,61 @@ class AttachmentVideoUnitServiceTest {
     }
 
     @Test
+    void updateAttachmentVideoUnitKeepsAnUploadedVideoAgainstAFormOpenedBeforeIt() {
+        var unit = attachmentVideoUnit("Unit", null);
+        // A TUM.Live upload was attached after the form was loaded without a video.
+        unit.setVideoSource("https://tum.live/w/algo/9");
+
+        // The client sends the empty link it was loaded with as "".
+        service.updateAttachmentVideoUnit(unit, attachmentVideoUnitDTO(unit, "Renamed", unit.getReleaseDate(), null, ""), null, null, null, false, null, null, Set.of());
+
+        assertThat(unit.getVideoSource()).isEqualTo("https://tum.live/w/algo/9");
+        verify(attachmentVideoUnitRepository, never()).updateVideoSourceIfUnchanged(anyLong(), any(), any());
+        verify(contentProcessingService, never()).triggerProcessing(any());
+
+        // A new link from that form is written only if the unit still has no video, which it has: the uploaded one stays.
+        var stored = attachmentVideoUnit("Unit", null);
+        stored.setVideoSource("https://tum.live/w/algo/9");
+        when(attachmentVideoUnitRepository.findById(LECTURE_UNIT_ID)).thenReturn(Optional.of(stored));
+        var updated = service.updateAttachmentVideoUnit(unit, attachmentVideoUnitDTO(unit, "Renamed", unit.getReleaseDate(), "https://video.example/other", ""), null, null, null,
+                false, null, null, Set.of());
+
+        verify(attachmentVideoUnitRepository).updateVideoSourceIfUnchanged(LECTURE_UNIT_ID, null, "https://video.example/other");
+        assertThat(updated.getVideoSource()).isEqualTo("https://tum.live/w/algo/9");
+        verify(tumLiveUploadService, never()).forgetUploadUnlessShown(anyLong(), any());
+    }
+
+    @Test
+    void updateAttachmentVideoUnitWithANewLinkForgetsTheUploadItNoLongerShows() {
+        var unit = attachmentVideoUnit("Unit", null);
+        unit.setVideoSource("https://tum.live/w/algo/9?video_only=1");
+        when(attachmentVideoUnitRepository.updateVideoSourceIfUnchanged(LECTURE_UNIT_ID, "https://tum.live/w/algo/9?video_only=1", "https://video.example/other")).thenReturn(true);
+
+        var updated = service.updateAttachmentVideoUnit(unit, attachmentVideoUnitDTO(unit, "Unit", unit.getReleaseDate(), "https://video.example/other"), null, null, null, false,
+                null, null, Set.of());
+
+        assertThat(updated.getVideoSource()).isEqualTo("https://video.example/other");
+        verify(tumLiveUploadService).forgetUploadUnlessShown(LECTURE_UNIT_ID, "https://video.example/other");
+    }
+
+    @Test
+    void updateAttachmentVideoUnitWithoutTheLoadedLinkEditsAgainstTheCurrentOne() {
+        var unit = attachmentVideoUnit("Unit", null);
+        unit.setVideoSource("https://video.example/current");
+        when(attachmentVideoUnitRepository.updateVideoSourceIfUnchanged(LECTURE_UNIT_ID, "https://video.example/current", "https://video.example/new")).thenReturn(true);
+
+        // A client from before loadedVideoSource does not send it.
+        var updated = service.updateAttachmentVideoUnit(unit, attachmentVideoUnitDTO(unit, "Unit", unit.getReleaseDate(), "https://video.example/new", null), null, null, null,
+                false, null, null, Set.of());
+
+        assertThat(updated.getVideoSource()).isEqualTo("https://video.example/new");
+    }
+
+    @Test
     void updateAttachmentVideoUnitMarksMetadataDirtyWhenContentProcessingIsUnavailable() {
         service = new AttachmentVideoUnitService(slideSplitterService, attachmentVideoUnitRepository, attachmentRepository, fileService, Optional.empty(), lectureUnitService,
-                Optional.empty(), attachmentFileHashService, new LectureContentUpdateClassifierService(), slideRepository, irisLectureUnitSyncService, attachmentService);
+                Optional.empty(), attachmentFileHashService, new LectureContentUpdateClassifierService(), slideRepository, irisLectureUnitSyncService, attachmentService,
+                tumLiveUploadService);
         var unit = attachmentVideoUnit("Old name", null);
         var dto = attachmentVideoUnitDTO(unit, "New name", unit.getReleaseDate(), "https://video.example/updated");
 
@@ -656,9 +713,15 @@ class AttachmentVideoUnitServiceTest {
     }
 
     private static AttachmentVideoUnitDTO attachmentVideoUnitDTO(AttachmentVideoUnit unit, String name, ZonedDateTime releaseDate, String videoSource) {
+        return attachmentVideoUnitDTO(unit, name, releaseDate, videoSource, unit.getVideoSource());
+    }
+
+    /** An update from a form that was loaded with {@code loadedVideoSource}. */
+    private static AttachmentVideoUnitDTO attachmentVideoUnitDTO(AttachmentVideoUnit unit, String name, ZonedDateTime releaseDate, String videoSource, String loadedVideoSource) {
         var current = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.NO_FILE_CHANGE);
         return new AttachmentVideoUnitDTO(current.id(), name, releaseDate, current.description(), videoSource, current.competencyLinks(), current.attachment(), current.slides(),
-                current.slideMetadataPending(), current.completed(), current.visibleToStudents(), current.lecture(), current.attachmentUpdateIntent(), current.type());
+                current.slideMetadataPending(), current.completed(), current.visibleToStudents(), current.lecture(), current.attachmentUpdateIntent(), loadedVideoSource,
+                current.type());
     }
 
     private static Attachment attachment() {

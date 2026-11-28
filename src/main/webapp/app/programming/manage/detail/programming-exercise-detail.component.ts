@@ -1,6 +1,6 @@
 import { HyperionRunLinkComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-link.component';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -22,9 +22,11 @@ import {
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { TranslateService } from '@ngx-translate/core';
-import { MODULE_FEATURE_DEIMOS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_DEIMOS, MODULE_FEATURE_PLAGIARISM, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -44,7 +46,10 @@ import { RepositoryDiffInformation, processRepositoryDiff } from 'app/programmin
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntityDeletionProgress } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { exerciseDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
 import { Detail, ProgrammingDiffReportDetail } from 'app/shared-ui/detail-overview-list/detail.model';
@@ -60,11 +65,12 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { StatisticsService } from 'app/exercise/statistics-graph/service/statistics.service';
 import dayjs from 'dayjs/esm';
+import { getBuildTimeWindow } from 'app/programming/shared/utils/build-time-window.utils';
 import { DeimosService } from 'app/programming/shared/services/deimos.service';
 import { DeimosDateRangeModalComponent, DeimosDateRangeSelection } from 'app/shared/deimos/deimos-date-range-modal.component';
 import { Observable, Subject, Subscription, forkJoin, from, of } from 'rxjs';
-import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
-import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
+import { catchError, mergeMap, switchMap, tap } from 'rxjs/operators';
+import { PROGRAMMING_EXERCISE_EXPORT_ACTION } from 'app/programming/api/programming-exercise-extensions';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
 import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
@@ -76,7 +82,7 @@ import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 @Component({
     selector: 'jhi-programming-exercise-detail',
     templateUrl: './programming-exercise-detail.component.html',
-    styleUrls: ['./programming-exercise-detail.component.scss'],
+    styleUrls: ['./programming-exercise-detail.component.css'],
     imports: [
         HyperionRunLinkComponent,
         TranslateDirective,
@@ -109,6 +115,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private exerciseService = inject(ExerciseService);
+    private entityDeletionService = inject(EntityDeletionService);
     private deimosService = inject(DeimosService);
 
     private artemisMarkdown = inject(ArtemisMarkdownService);
@@ -121,8 +128,10 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private consistencyCheckService = inject(ConsistencyCheckService);
-    private sharingService = inject(ProgrammingExerciseSharingService);
+    private readonly externalExport = inject(PROGRAMMING_EXERCISE_EXPORT_ACTION, { optional: true });
     private featureToggleService = inject(FeatureToggleService);
+    private destroyRef = inject(DestroyRef);
+    private readonly isAlive = trackAlive(this.destroyRef);
 
     protected readonly deimosModuleEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_DEIMOS);
 
@@ -191,7 +200,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly localCIEnabled = signal(true);
     readonly plagiarismEnabled = signal(false);
 
-    readonly isExportToSharingEnabled = signal(false);
+    readonly exportAction = toSignal(this.externalExport ?? of(undefined));
 
     isAdmin = false;
     readonly isBuildPlanEditable = signal(false);
@@ -211,7 +220,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     private templateAndSolutionParticipationSubscription?: Subscription;
     private exerciseStatisticsSubscription?: Subscription;
-    private sharingEnabledSubscription?: Subscription;
     private diffFetchSubscription?: Subscription;
 
     private dialogErrorSource = new Subject<string>();
@@ -230,39 +238,20 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         // REMOVE_IN_ARTEMIS_11 (Jenkins): drop the PROFILE_JENKINS operand below
         this.isBuildPlanEditable.set(this.profileService.isProfileActive(PROFILE_JENKINS) || this.profileService.isProfileActive(PROFILE_LOCALCI));
-        this.isExportToSharingEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_SHARING));
         // Get route data directly from snapshot - no subscription needed
         const programmingExercise = this.activatedRoute.snapshot.data?.programmingExercise;
         if (programmingExercise) {
             this.handleRouteData(programmingExercise);
+            if (this.programmingExercise().isAtLeastInstructor) {
+                this.resumeRunningDeletion();
+            }
         }
-
-        this.subscribeToSharingStatus();
-    }
-
-    /**
-     * Subscribes to the sharing service to check if exercise export to sharing is enabled.
-     * Updates isExportToSharingEnabled based on the service response, defaulting to false on errors.
-     */
-    private subscribeToSharingStatus(): void {
-        this.sharingEnabledSubscription = this.sharingService
-            .isSharingEnabled()
-            .pipe(
-                map((response) => response ?? false),
-                catchError(() => {
-                    return of(false);
-                }),
-            )
-            .subscribe((isEnabled) => {
-                this.isExportToSharingEnabled.set(isEnabled);
-            });
     }
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
         this.templateAndSolutionParticipationSubscription?.unsubscribe();
         this.exerciseStatisticsSubscription?.unsubscribe();
-        this.sharingEnabledSubscription?.unsubscribe();
         this.diffFetchSubscription?.unsubscribe();
     }
 
@@ -531,6 +520,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     getExerciseDetailsLanguageSection(exercise: ProgrammingExercise): DetailOverviewSection {
         const buildPlanPhases = parseBuildPlanPhases(exercise.buildConfig?.buildPlanConfiguration);
         const diffReportDetail = this.getDiffReportDetail();
+        const buildTimeWindow = getBuildTimeWindow(exercise);
         return {
             headline: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
             details: [
@@ -593,6 +583,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     type: DetailType.Text,
                     title: 'artemisApp.programmingExercise.packageName',
                     data: { text: exercise.packageName },
+                },
+                !!buildTimeWindow?.start && {
+                    type: DetailType.Date,
+                    title: 'artemisApp.programmingExercise.buildTimeWindow.start',
+                    data: { date: buildTimeWindow.start },
+                },
+                !!buildTimeWindow?.end && {
+                    type: DetailType.Date,
+                    title: 'artemisApp.programmingExercise.buildTimeWindow.end',
+                    data: { date: buildTimeWindow.end },
                 },
             ],
         };
@@ -724,28 +724,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    /** Preserves the sharing redirect workflow while presenting it as a menu command. */
-    exportExerciseToSharing(): void {
-        const exerciseId = this.programmingExercise().id;
-        if (exerciseId === undefined) {
-            return;
-        }
-        this.sharingService.exportProgrammingExerciseToSharing(exerciseId, window.location.href).subscribe({
-            next: (response) => {
-                if (response.body) {
-                    window.location.href = response.body;
-                } else {
-                    this.alertService.error('artemisApp.programmingExercise.sharing.error.noRedirect');
-                }
-            },
-            error: (errorResponse) => {
-                this.alertService.error('artemisApp.programmingExercise.sharing.error.export', {
-                    message: errorResponse?.error?.message || errorResponse?.error || 'Unknown error',
-                });
-            },
-        });
-    }
-
     generateStructureOracle() {
         this.programmingExerciseService.generateStructureOracle(this.programmingExercise().id!).subscribe({
             next: (res) => {
@@ -790,22 +768,56 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     deleteProgrammingExercise(event: { [key: string]: boolean }) {
-        this.programmingExerciseService.delete(this.programmingExercise().id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'programmingExerciseListModification',
-                    content: 'Deleted a programming exercise',
-                });
-                this.dialogErrorSource.next('');
-
-                if (!this.isExamExercise()) {
-                    void this.router.navigateByUrl(`/course-management/${this.courseId}/exercises`);
-                } else {
-                    void this.router.navigateByUrl(`/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}/exercise-groups`);
+        const exercise = this.programmingExercise();
+        const request$ = this.programmingExerciseService.delete(exercise.id!, event.deleteStudentReposBuildPlans, event.deleteBaseReposBuildPlans);
+        this.entityDeletionService.delete(exerciseDeletionTarget(exercise), request$).subscribe({
+            next: (progress) => {
+                this.onDeletionEnded(progress, exercise.id);
+                // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
+                // The subject is closed with the component, and the deletion can end after the user left the page.
+                if (this.isAlive()) {
+                    this.dialogErrorSource.next('');
                 }
             },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+            error: (error: HttpErrorResponse) => {
+                // The request can fail after the user left the page, when the subject is already closed.
+                if (this.isAlive()) {
+                    this.dialogErrorSource.next(error.message);
+                }
+            },
         });
+    }
+
+    /**
+     * Shows the progress of a deletion of this exercise that is already running, e.g. after the page was reloaded or another instructor started it.
+     */
+    private resumeRunningDeletion(): void {
+        const exercise = this.programmingExercise();
+        this.entityDeletionService.resume(exerciseDeletionTarget(exercise), this.destroyRef).subscribe((progress) => this.onDeletionEnded(progress, exercise.id));
+    }
+
+    private onDeletionEnded(progress: EntityDeletionProgress, deletedExerciseId: number | undefined): void {
+        if (isDeletionOutcomeUnknown(progress)) {
+            // Not known how it ended: only refresh the list, which shows the real state, instead of announcing a deletion or leaving the page.
+            this.eventManager.broadcast({ name: 'programmingExerciseListModification', content: 'Refresh after an unknown deletion outcome' });
+            return;
+        }
+        if (!isDeletionCompleted(progress)) {
+            return;
+        }
+        this.eventManager.broadcast({
+            name: 'programmingExerciseListModification',
+            content: 'Deleted a programming exercise',
+        });
+        // Only leave the page while it still shows the deleted exercise, not after the instructor moved on to something else.
+        if (!this.isAlive() || this.programmingExercise().id !== deletedExerciseId) {
+            return;
+        }
+        if (!this.isExamExercise()) {
+            void this.router.navigateByUrl(`/course-management/${this.courseId}/exercises`);
+        } else {
+            void this.router.navigateByUrl(`/course-management/${this.courseId}/exams/${this.programmingExercise().exerciseGroup?.exam?.id}/exercise-groups`);
+        }
     }
 
     /**
@@ -831,7 +843,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         }
     }
 
-    fetchExerciseDeletionSummary(): Observable<EntitySummary> {
+    fetchExerciseDeletionSummary(): Observable<EntitySummaryCategory[]> {
         return this.exerciseService.getDeletionSummary(this.programmingExercise());
     }
 

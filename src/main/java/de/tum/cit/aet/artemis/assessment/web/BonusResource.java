@@ -119,7 +119,19 @@ public class BonusResource {
             sourceGradingScale.getCourse().setMaxPoints((int) getSourceReachablePoints(sourceGradingScale));
         }
 
-        return ResponseEntity.ok(BonusResponseDTO.of(bonus, includeSourceGradeSteps));
+        BonusResponseDTO response = BonusResponseDTO.of(bonus, includeSourceGradeSteps);
+        if (sourceGradingScale != null && !mayReadSourceGradingScale(bonus, sourceGradingScale)) {
+            // The details of the source grading scale are only shown to users who belong to the source course or who teach the course of the exam.
+            response = response.withoutSourceGradingScale();
+        }
+        return ResponseEntity.ok(response);
+    }
+
+    private boolean mayReadSourceGradingScale(Bonus bonus, GradingScale sourceGradingScale) {
+        Course sourceCourse = sourceGradingScale.getCourseViaExamOrDirectly();
+        Course targetCourse = bonus.getBonusToGradingScale().getCourseViaExamOrDirectly();
+        return targetCourse != null && authCheckService.isAtLeastTeachingAssistantInCourse(targetCourse, null)
+                || sourceCourse != null && authCheckService.isAtLeastStudentInCourse(sourceCourse, null);
     }
 
     private BonusExampleDTO calculateGradeWithBonus(BonusStrategy bonusStrategy, Double calculationSign, Double bonusToAchievedPoints, Double sourceAchievedPoints,

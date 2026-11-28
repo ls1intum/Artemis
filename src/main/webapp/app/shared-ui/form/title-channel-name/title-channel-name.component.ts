@@ -7,7 +7,8 @@ import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiInputDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 @Component({
@@ -19,6 +20,7 @@ import { generateUuid } from 'app/foundation/util/crypto.utils';
 export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnInit {
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly titleErrorId = `title-error-${generateUuid()}`;
+    protected readonly channelNameErrorId = `channel-name-error-${generateUuid()}`;
 
     title = model<string | undefined>(undefined);
     channelName = model<string | undefined>(undefined);
@@ -31,6 +33,9 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     emphasizeLabels = input<boolean>(false);
     minTitleLength = input<number>();
     maxTitleLength = input<number>();
+    /** Localized validation messages supplied by the containing form, rendered with their corresponding input. */
+    titleValidationMessage = input<string>();
+    channelNameValidationMessage = input<string>();
     initChannelName = input<boolean>(true);
     hideChannelName = input<boolean>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();

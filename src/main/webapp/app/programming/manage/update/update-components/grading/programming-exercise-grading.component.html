@@ -1,9 +1,9 @@
-<section class="mb-5">
+<section class="mb-12">
     <h3 jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle" id="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle"></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepMessage"></p>
     @if (isEditFieldDisplayedRecord().includeExerciseInCourseScoreCalculation) {
-        <div class="form-group">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ programmingExercise().course ? 'Course' : 'Exam' }}Label"></label>
+        <div class="mb-4">
+            <label jhiTranslate="artemisApp.exercise.includedInOverallScore{{ programmingExercise().course ? 'Course' : 'Exam' }}Label"></label>
             <div>
                 <jhi-included-in-overall-score-picker
                     [includedInOverallScore]="programmingExercise().includedInOverallScore"
@@ -13,11 +13,11 @@
             </div>
         </div>
     }
-    <div class="row">
+    <div class="flex flex-wrap -mx-2">
         @if (isEditFieldDisplayedRecord().points) {
-            <div class="col">
-                <div class="form-group">
-                    <label class="label-narrow" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
+            <div class="min-w-0 flex-1 px-2">
+                <div class="mb-4" data-testid="points-field">
+                    <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.exercise.points" for="field_points"></label>
                     <span class="text-state-danger" aria-hidden="true">*</span>
                     <jhi-points-input
                         [required]="true"
@@ -30,15 +30,15 @@
                         #maxScore="ngModel"
                     />
                     @if (maxScore?.invalid && (maxScore?.dirty || maxScore?.touched) && maxScore?.errors) {
-                        <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.pointsError"></div>
+                        <tumaet-ui-message severity="error" class="mt-1"><span jhiTranslate="artemisApp.exercise.pointsError"></span></tumaet-ui-message>
                     }
                 </div>
             </div>
         }
         @if (isEditFieldDisplayedRecord().bonusPoints) {
-            <div class="col">
-                <div class="form-group" [hidden]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
-                    <label class="label-narrow" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
+            <div class="min-w-0 flex-1 px-2">
+                <div class="mb-4" [hidden]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
+                    <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.exercise.bonusPoints" for="field_bonusPoints"></label>
                     @if (programmingExercise().includedInOverallScore === IncludedInOverallScore.INCLUDED_COMPLETELY) {
                         <span class="text-state-danger" aria-hidden="true">*</span>
                     }
@@ -53,69 +53,67 @@
                         #bonusPoints="ngModel"
                     />
                     @if (bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors) {
-                        <div
-                            class="alert alert-danger"
-                            [hidden]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
-                            jhiTranslate="artemisApp.exercise.bonusPointsError"
-                        ></div>
+                        <tumaet-ui-message severity="error" class="mt-1" [hidden]="programmingExercise().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
+                            <span jhiTranslate="artemisApp.exercise.bonusPointsError"></span>
+                        </tumaet-ui-message>
                     }
                 </div>
             </div>
         }
     </div>
     @if (programmingExercise().staticCodeAnalysisEnabled) {
-        <div class="mt-2 mb-4">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title" for="field_maxPenalty"
+        <div class="mt-2 mb-6">
+            <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.title" for="field_maxPenalty"
                 >Max Static Code Analysis Penalty</label
             >
             <fa-icon
                 [icon]="faQuestionCircle"
-                class="text-secondary"
-                placement="auto"
-                ngbTooltip="{{ 'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.description' | artemisTranslate }}"
+                class="text-muted-color"
+                [tumAetUiTooltip]="'artemisApp.programmingExercise.maxStaticCodeAnalysisPenalty.description' | artemisTranslate"
             />
-            <div class="input-group">
-                <div class="input-group-prepend">
-                    <span class="input-group-text">%</span>
-                </div>
+            <tumaet-ui-input-group>
+                <tumaet-ui-input-group-addon>%</tumaet-ui-input-group-addon>
                 <input
                     type="number"
                     [pattern]="programmingExerciseCreationConfig().maxPenaltyPattern"
-                    class="form-control"
+                    tumAetUiInput
+                    class="w-full"
                     name="maxPenalty"
                     id="field_maxPenalty"
+                    tumAetUiInputId="field_maxPenalty"
                     [(ngModel)]="programmingExercise().maxStaticCodeAnalysisPenalty"
                     #maxPenalty="ngModel"
+                    [tumAetUiInputInvalid]="(maxPenalty.invalid && (maxPenalty.dirty || maxPenalty.touched)) ?? false"
                 />
-            </div>
+            </tumaet-ui-input-group>
             @for (error of maxPenalty.errors! | keyvalue; track error) {
                 @if (maxPenalty.invalid && (maxPenalty.dirty || maxPenalty.touched)) {
-                    <div class="alert alert-danger">
+                    <tumaet-ui-message severity="error" class="mt-1">
                         <div [jhiTranslate]="'artemisApp.exercise.form.maxPenalty' + '.' + error.key"></div>
-                    </div>
+                    </tumaet-ui-message>
                 }
             }
         </div>
     }
     @if (isEditFieldDisplayedRecord().submissionPolicy) {
-        <div class="form-group">
+        <div class="mb-4">
             <jhi-submission-policy-update
                 [editable]="!programmingExerciseCreationConfig().isEdit"
                 [programmingExercise]="programmingExercise()"
                 (submissionPolicyTypeChange)="calculateFormStatus()"
             />
             @if (programmingExerciseCreationConfig().isEdit) {
-                <p-message severity="info">
+                <tumaet-ui-message severity="info" class="mt-1">
                     <span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.editInGradingInformation"></span>
                     <a [href]="editPolicyUrl()">
                         <span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.goToGradingToEditInformation"></span>
                     </a>
-                </p-message>
+                </tumaet-ui-message>
             }
         </div>
     }
     @if (isEditFieldDisplayedRecord().timeline) {
-        <div class="form-group">
+        <div class="mb-4">
             @let programmingExerciseValue = programmingExercise();
             @let exampleSolutionPublicationDateSet =
                 !!programmingExerciseValue.exampleSolutionPublicationDate || !!programmingExerciseValue.exerciseGroup?.exam?.exampleSolutionPublicationDate;
@@ -144,8 +142,8 @@
         </div>
     }
     @if (isEditFieldDisplayedRecord().assessmentInstructions && programmingExercise().assessmentType === AssessmentType.SEMI_AUTOMATIC) {
-        <div class="form-group">
-            <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
+        <div class="mb-4">
+            <label jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions"></label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise()" [editable]="editable()" (criteriaGenerated)="criteriaGenerated.emit()" />
         </div>
     }

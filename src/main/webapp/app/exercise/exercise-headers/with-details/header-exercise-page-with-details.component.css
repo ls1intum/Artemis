@@ -1,0 +1,78 @@
+#exercise-header {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    font-size: 1.3rem;
+    line-height: 1.2;
+    font-weight: 400;
+}
+
+#exercise-header .right-col {
+    flex: 0 0 auto;
+}
+
+#exercise-header .right-col > div {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+#exercise-header .right-col > div:not(:last-child) {
+    margin-bottom: 5px;
+}
+
+#exercise-header .left-col {
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    display: flex;
+    gap: 5px;
+}
+
+@supports (flex-basis: min-content) {
+    #exercise-header .left-col {
+        flex: 1 1 min-content;
+    }
+}
+
+#exercise-header .left-col .title-row {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+#exercise-header .left-col .title-row .inner-row {
+    margin-bottom: 0;
+    margin-right: 10px;
+    font-size: 1.575rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+#exercise-header .left-col .title-row ::ng-deep .badge-row {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+#exercise-header .left-col .points-assessment-row,
+#exercise-header .left-col .submission-row {
+    white-space: nowrap;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25em;
+    align-items: center;
+}
+
+@media (max-width: 575.98px) {
+    #exercise-header {
+        font-size: 1.1rem;
+    }
+
+    #exercise-header .left-col .title-row .inner-row {
+        font-size: 1.3em;
+    }
+}

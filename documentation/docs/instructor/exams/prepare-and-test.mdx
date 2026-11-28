@@ -5,9 +5,9 @@ sidebar_label: Prepare and Test
 last_reviewed: 2026-11-07
 ---
 
-import Callout from "../../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
-import Image, {ImageSize} from "../../../src/components/Image/Image";
+import Callout from '../../../src/components/Callout/Callout';
+import { CalloutVariant } from '../../../src/components/Callout/Callout.types';
+import Image, { ImageSize } from '../../../src/components/Image/Image';
 import importStudentsDialog from './assets/import_students_dialog.png';
 import addStudents from './assets/add_students.png';
 import individualWorkingTime from './assets/individual_working_time.png';
@@ -28,13 +28,16 @@ exam's **Students** page, whose actions are grouped into three menus — **Stude
 Registration alone does not let anyone sit the exam; it only records who is entitled to one. The individual exams
 come afterwards. Once individual exams have already been generated, adding students asks for confirmation and generates the missing individual exams automatically. If exercises have already been prepared, Artemis prepares them for the new students too. Registration remains available during the exam and closes immediately at its end date.
 
-The **Students** menu offers four ways to add people:
+The **Students** menu offers three ways to add people, and an export of the list:
 
-- **Register** searches the instance for a single person by name or login.
+- **Register** searches all users by name, login, matriculation number or email. Select one or more students and register
+  them together. Staff of the course and administrators are not offered, and students who are already registered cannot
+  be selected.
 - **Register course students** adds everyone enrolled in the course at once.
-- **Import from CSV** adds a list. The file needs a `registrationNumber` and a `login` per row; `email`,
-  `firstname`, `lastname`, `seat` and `room` are optional, and `seat` and `room` matter only for the attendance
-  check. You can download [an example CSV file](./assets/example_import_students.csv) to start from.
+- **Import from CSV** adds a list. Every row needs at least one of `login`, `registrationNumber` or `email`, which
+  Artemis uses to find the student. `firstname`, `lastname`, `seat` and `room` are optional, and `seat` and `room`
+  matter only for the attendance check. You can download [an example CSV file](./assets/example_import_students.csv) to
+  start from.
 - **Export to CSV** goes the other way, and is the quickest way to hand a participant list to an examination
   office.
 
@@ -46,6 +49,16 @@ in the database and still counts in exports.
 
 <Image src={addStudents} alt="Students page listing the registered students" size={ImageSize.large} caption="The registered students of an exam" />
 
+### Find Students
+
+The search field above the table finds registered students by login or name. Separate several terms with commas to list
+every student who matches one of them. Most column headers sort the table. **Filter** narrows the list by progress:
+**Exam missing**, **Not started**, **Started** or **Submitted**. The **Progress** column shows these states, with the time
+of the submission once a student has submitted.
+
+After the exam ends, the table adds a **Status** column with the result of the attendance check, and the filter also
+offers **Did not attend**, **Attendance check failed** and **Attendance checked**.
+
 ### Rooms, Seats and Attendance
 
 The **Logistics** menu covers what an on-site exam needs beyond a list of names. **Distribute students** assigns
@@ -55,12 +68,17 @@ providing a signature. Existing signatures are retained, and attendance changes 
 
 In **Distribute students**, open **Exam Room Management** to view the available rooms and their capacities. This link keeps the current course and exam context, so an Instructor in that course can view the overview without administrator privileges. Uploading room data and deleting outdated rooms remain administrator operations.
 
-<Image src={contextualRoomOverview} alt="Exam room overview listing Friedrich L. Bauer Hörsaal with its building and default and maximum capacities" size={ImageSize.large} caption="The room overview available to the course Instructor from the exam’s room-distribution dialog." />
+<Image
+    src={contextualRoomOverview}
+    alt="Exam room overview listing Friedrich L. Bauer Hörsaal with its building and default and maximum capacities"
+    size={ImageSize.large}
+    caption="The room overview available to the course Instructor from the exam’s room-distribution dialog."
+/>
 
 <Callout variant={CalloutVariant.info}>
 
-  These three exist for the [Exam Participation Checker](/instructor/exams/participation-checker) iPad app, which
-  replaces the paper attendance list. That page explains the expected PDF layout and the app itself.
+These three exist for the [Exam Participation Checker](/instructor/exams/participation-checker) iPad app, which
+replaces the paper attendance list. That page explains the expected PDF layout and the app itself.
 
 </Callout>
 
@@ -77,8 +95,8 @@ again and it overwrites what is there, so use **Generate missing individual exam
 
 <Callout variant={CalloutVariant.warning}>
 
-  Complete initial generation before the exam starts. Later registrations automatically receive missing individual
-  exams until registration closes at the exam's end date, while existing exercise assignments stay unchanged.
+Complete initial generation before the exam starts. Later registrations automatically receive missing individual
+exams until registration closes at the exam's end date, while existing exercise assignments stay unchanged.
 
 </Callout>
 
@@ -97,8 +115,8 @@ reports progress while it runs.
 
 <Callout variant={CalloutVariant.danger}>
 
-  Run **Prepare exercise start** before the exam begins. Without it a student opens their exam and finds exercises
-  they cannot work on.
+Run **Prepare exercise start** before the exam begins. Without it a student opens their exam and finds exercises
+they cannot work on.
 
 </Callout>
 
@@ -119,7 +137,12 @@ exam scores, so it is the safe way to find out that an exercise is unsolvable or
 as many exercises as there are exercise groups, regardless of **Number of exercises in exam**; groups with no
 exercises are skipped.
 
-<Image src={createTestRunPopup} alt="Create a Test Run dialog with the working time and the exercises of each exercise group" size={ImageSize.large} caption="Choosing the exercises for a test run" />
+<Image
+    src={createTestRunPopup}
+    alt="Create a Test Run dialog with the working time and the exercises of each exercise group"
+    size={ImageSize.large}
+    caption="Choosing the exercises for a test run"
+/>
 
 From there you work through the exam as a student would, submit, and end the run. A banner marks the whole time as
 a test run so it cannot be confused with the real thing.
@@ -133,13 +156,18 @@ the exam described in these pages.
 
 If the course has AI feedback enabled, that same **Summary** offers a **Request AI Feedback** button. It requests AI
 feedback for every eligible text and modeling submission of the test run at once, exactly as students experience it
-in a test exam. A counter next to the button shows how many requests you have used for this exam.
+in a practice exam. A counter next to the button shows how many requests you have used for this exam.
 
 <Callout variant={CalloutVariant.warning}>
 
-  Delete your test runs before the real conduction begins.
+Delete your test runs before the real conduction begins.
 
 </Callout>
+
+Deleting an exam or an exercise group removes everything inside it. The confirmation dialog first lists the exercise
+groups, exercises by type, registered students, student exams, participations, submissions, results, complaints,
+plagiarism comparisons, builds, posts and test runs that will be deleted, and highlights large amounts. The deletion then runs in the
+background with a progress dialog. While it runs, the exam and its exercise groups cannot be deleted again.
 
 ## Work Through the Exam Checklist
 
@@ -148,7 +176,12 @@ into **Exam preparation**, **Exam conduction** and **Exam correction**. Each tas
 to the page where you act on it, so working down the list until nothing is flagged is the shortest reliable way to
 confirm an exam is ready.
 
-<Image src={examChecklist} alt="Preparation section of the exam checklist, each task with its state and a link to the page it is done on" size={ImageSize.large} caption="The preparation section of the exam checklist" />
+<Image
+    src={examChecklist}
+    alt="Preparation section of the exam checklist, each task with its state and a link to the page it is done on"
+    size={ImageSize.large}
+    caption="The preparation section of the exam checklist"
+/>
 
 The exam list shows the same information in one column per exam, so you can see the preparation, conduction and
 correction state of a whole semester at a glance.

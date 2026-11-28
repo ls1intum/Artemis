@@ -13,13 +13,11 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 import org.w3c.dom.Document;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -37,13 +35,13 @@ public class JenkinsJobService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsJobService.class);
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     @Value("${artemis.continuous-integration.url}")
     private URI jenkinsServerUri;
 
-    public JenkinsJobService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public JenkinsJobService(@Qualifier("jenkinsRestClient") RestClient restClient) {
+        this.restClient = restClient;
     }
 
     /**
@@ -61,7 +59,7 @@ public class JenkinsJobService {
 
         try {
             URI uri = JenkinsEndpoints.GET_JOB.buildEndpoint(jenkinsServerUri, folderJobName, jobName).build(true).toUri();
-            return restTemplate.getForObject(uri, JobWithDetails.class);
+            return restClient.get().uri(uri).retrieve().body(JobWithDetails.class);
         }
         catch (HttpClientErrorException.NotFound notFound) {
             log.warn("Cannot get the job {} in folder {} because it doesn't exist.", jobName, folderJobName);
@@ -92,7 +90,7 @@ public class JenkinsJobService {
     public FolderJob getFolderJob(String folderName) {
         try {
             URI uri = JenkinsEndpoints.GET_FOLDER_JOB.buildEndpoint(jenkinsServerUri, folderName).build(true).toUri();
-            return restTemplate.getForObject(uri, FolderJob.class);
+            return restClient.get().uri(uri).retrieve().body(FolderJob.class);
         }
         catch (HttpClientErrorException.NotFound notFound) {
             return null;
@@ -118,7 +116,7 @@ public class JenkinsJobService {
             }
 
             URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(jenkinsServerUri, folderName, jobName).build(true).toUri();
-            String xmlString = restTemplate.getForObject(uri, String.class);
+            String xmlString = restClient.get().uri(uri).retrieve().body(String.class);
 
             // Replace the old reference to the master and main branch by a reference to the default branch
             xmlString = xmlString.replace("*/master", "**");
@@ -150,7 +148,7 @@ public class JenkinsJobService {
         }
 
         URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(jenkinsServerUri, folderName).build(true).toUri();
-        String folderXml = restTemplate.getForObject(uri, String.class);
+        String folderXml = restClient.get().uri(uri).retrieve().body(String.class);
         if (folderXml == null) {
             throw new JenkinsException("Jenkins returned an empty config for folder " + folderName);
         }
@@ -171,7 +169,7 @@ public class JenkinsJobService {
             .queryParam("Submit", "OK")
             .build(true).toUri();
         //@formatter:on
-        restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), Void.class);
+        restClient.post().uri(uri).retrieve().toBodilessEntity();
     }
 
     /**
@@ -196,12 +194,9 @@ public class JenkinsJobService {
 
             URI uri = JenkinsEndpoints.NEW_PLAN.buildEndpoint(jenkinsServerUri, folderName).queryParam("name", jobName).build(true).toUri();
 
-            final var headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_XML);
             String jobXmlString = JenkinsXmlFileUtils.writeToString(jobConfig);
-            final var entity = new HttpEntity<>(jobXmlString, headers);
 
-            restTemplate.postForEntity(uri, entity, Void.class);
+            restClient.post().uri(uri).contentType(MediaType.APPLICATION_XML).body(jobXmlString).retrieve().toBodilessEntity();
         }
         catch (RestClientException | TransformerException e) {
             log.error(e.getMessage(), e);
@@ -221,12 +216,9 @@ public class JenkinsJobService {
         try {
             URI uri = JenkinsEndpoints.PLAN_CONFIG.buildEndpoint(jenkinsServerUri, folderName, jobName).build(true).toUri();
 
-            final var headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_XML);
             String jobXmlString = JenkinsXmlFileUtils.writeToString(jobConfig);
-            final var entity = new HttpEntity<>(jobXmlString, headers);
 
-            restTemplate.postForEntity(uri, entity, String.class);
+            restClient.post().uri(uri).contentType(MediaType.APPLICATION_XML).body(jobXmlString).retrieve().toBodilessEntity();
         }
         catch (HttpClientErrorException.NotFound e) {
             // We don't throw an exception if the project doesn't exist in Jenkins (404 status)
@@ -250,12 +242,9 @@ public class JenkinsJobService {
         try {
             URI uri = JenkinsEndpoints.FOLDER_CONFIG.buildEndpoint(jenkinsServerUri, folderName).build(true).toUri();
 
-            final var headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_XML);
             String jobXmlString = JenkinsXmlFileUtils.writeToString(folderConfig);
-            final var entity = new HttpEntity<>(jobXmlString, headers);
 
-            restTemplate.postForEntity(uri, entity, Void.class);
+            restClient.post().uri(uri).contentType(MediaType.APPLICATION_XML).body(jobXmlString).retrieve().toBodilessEntity();
         }
         catch (HttpClientErrorException.NotFound e) {
             // We don't throw an exception if the project doesn't exist in Jenkins (404 status)
@@ -276,7 +265,7 @@ public class JenkinsJobService {
     public void deleteJob(String folderName, String jobName) {
         try {
             URI uri = JenkinsEndpoints.DELETE_JOB.buildEndpoint(jenkinsServerUri, folderName, jobName).build(true).toUri();
-            restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), Void.class);
+            restClient.post().uri(uri).retrieve().toBodilessEntity();
         }
         catch (HttpClientErrorException.NotFound e) {
             // We don't throw an exception if the project doesn't exist in Jenkins (404 status)
@@ -296,7 +285,7 @@ public class JenkinsJobService {
     public void deleteFolderJob(String folderName) {
         try {
             URI uri = JenkinsEndpoints.DELETE_FOLDER.buildEndpoint(jenkinsServerUri, folderName).build(true).toUri();
-            restTemplate.postForEntity(uri, new HttpEntity<>(null, new HttpHeaders()), Void.class);
+            restClient.post().uri(uri).retrieve().toBodilessEntity();
         }
         catch (HttpClientErrorException.NotFound e) {
             // We don't throw an exception if the project doesn't exist in Jenkins (404 status)

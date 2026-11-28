@@ -1,0 +1,6 @@
+@layer tumaet-ui {
+    :host {
+        display: block;
+        padding: calc(var(--tumaet-ui-spacing) * 3.5) calc(var(--tumaet-ui-spacing) * 4.5) calc(var(--tumaet-ui-spacing) * 4.5);
+    }
+}

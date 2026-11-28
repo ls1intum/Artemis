@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
@@ -35,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLearningObjectLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.communication.service.linkpreview.LinkPreviewDocumentFetcher;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
@@ -138,7 +138,7 @@ public class OnlineUnitResource {
         existingOnlineUnit.setReleaseDate(onlineUnitDto.releaseDate());
 
         // This method computes the relevant changes for competency links and applies them to the existingTextUnit
-        lectureUnitService.updateCompetencyLinks(onlineUnitDto, existingOnlineUnit);
+        lectureUnitService.updateCompetencyLinks(onlineUnitDto, existingOnlineUnit, existingOnlineUnit.getLecture().getCourse().getId());
 
         // Note: Competency links are persisted automatically (due to CascadeType.PERSIST)
         existingOnlineUnit = onlineUnitRepository.save(existingOnlineUnit);
@@ -194,7 +194,7 @@ public class OnlineUnitResource {
         onlineUnit.setSource(onlineUnitDto.source());
         onlineUnit.setName(onlineUnitDto.name());
         onlineUnit.setReleaseDate(onlineUnitDto.releaseDate());
-        lectureUnitService.updateCompetencyLinks(onlineUnitDto, onlineUnit);
+        lectureUnitService.updateCompetencyLinks(onlineUnitDto, onlineUnit, lecture.getCourse().getId());
 
         lecture.addLectureUnit(onlineUnit);
         Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);
@@ -285,11 +285,16 @@ public class OnlineUnitResource {
             throw new BadRequestException("The specified link does not contain a valid domain");
         }
 
+        // Metadata is only retrieved from the ordinary web ports
+        if (url.getPort() != -1 && url.getPort() != 80 && url.getPort() != 443) {
+            throw new BadRequestException("The metadata of the specified link cannot be retrieved, because it does not use the port 80 or 443");
+        }
+
         log.info("Requesting online resource at {}", LINE_BREAK_PATTERN.matcher(url.toString()).replaceAll("_"));
 
         try {
-            // Request the document, limited to 3 seconds and 500 KB (enough for most websites)
-            Document document = Jsoup.connect(url.toString()).timeout(3000).maxBodySize(500000).get();
+            // The fetcher only talks to public hosts, re-validates every redirect target and limits the duration and the size of the response
+            Document document = LinkPreviewDocumentFetcher.fetch(url.toString());
             String title = getMetaTagContent(document, "title");
             String description = getMetaTagContent(document, "description");
 
@@ -346,7 +351,10 @@ public class OnlineUnitResource {
         if (source == null || source.isBlank()) {
             throw new BadRequestAlertException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
-        validateUrlStringAndReturnUrl(source);
+        URL url = validateUrlStringAndReturnUrl(source);
+        if (!"http".equalsIgnoreCase(url.getProtocol()) && !"https".equalsIgnoreCase(url.getProtocol())) {
+            throw new BadRequestAlertException("The source of an online unit must be an http or https address", ENTITY_NAME, "inputInvalid");
+        }
     }
 
     private static URL validateUrlStringAndReturnUrl(String urlString) {

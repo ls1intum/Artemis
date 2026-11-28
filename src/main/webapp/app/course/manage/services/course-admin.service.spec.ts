@@ -12,6 +12,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseAdminService } from 'app/course/manage/services/course-admin.service';
 import { provideHttpClient } from '@angular/common/http';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 
 describe('Course Admin Service', () => {
     let courseAdminService: CourseAdminService;
@@ -61,6 +62,38 @@ describe('Course Admin Service', () => {
             .subscribe((res) => expect(res.body).toEqual({}));
         const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${course.id}` });
         req.flush({});
+    });
+
+    it('should accept the deletion of a course with 202 and no body', () => {
+        let status: number | undefined;
+        courseAdminService
+            .delete(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => (status = res.status));
+        httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${course.id}` }).flush(null, { status: 202, statusText: 'Accepted' });
+        expect(status).toBe(202);
+    });
+
+    it('should read the operation progress of a course without an error alert', () => {
+        let progress: { startedAt?: unknown } | null | undefined;
+        courseAdminService
+            .getOperationProgress(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => (progress = res.body));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/operation-progress` });
+        expect(req.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+        req.flush({ operationType: 'DELETE', status: 'IN_PROGRESS', startedAt: '2026-11-08T10:00:00Z' });
+        expect(progress?.startedAt).toBeDefined();
+    });
+
+    it('should answer an empty body when no operation is known', () => {
+        let body: unknown = 'unset';
+        courseAdminService
+            .getOperationProgress(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => (body = res.body));
+        httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/operation-progress` }).flush(null, { status: 204, statusText: 'No Content' });
+        expect(body).toBeNull();
     });
 
     it('should get course summary', () => {

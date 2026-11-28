@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -19,6 +20,9 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.ai.chat.client.ChatClient;
@@ -26,6 +30,7 @@ import org.springframework.ai.chat.client.advisor.ChatModelCallAdvisor;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.DefaultUsage;
+import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
@@ -38,7 +43,11 @@ import com.openai.errors.OpenAIIoException;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.domain.LLMTokenUsageTrace;
+import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
+import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
@@ -267,16 +276,16 @@ class HyperionCodeGenerationServiceTest {
         Map<String, Object> templateVariables = Map.of("key", "value");
         String modelName = "gpt-5-mini-2025-08-07";
         String pipelineId = "HYPERION_CODE_GENERATION_SOLUTION_TEST_TEMPLATE";
-        LLMRequest llmRequest = new LLMRequest(modelName, 11, 0.23f, 7, 1.84f, pipelineId);
+        LLMRequest llmRequest = new LLMRequest(modelName, 11, 7, pipelineId);
 
         when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse, modelName, 11, 7));
-        when(llmTokenUsageService.buildLLMRequest(modelName, 11, 7, pipelineId)).thenReturn(llmRequest);
+        when(llmTokenUsageService.buildLLMRequest(any(ChatResponse.class), eq(pipelineId))).thenReturn(llmRequest);
 
         CodeGenerationResponseDTO result = strategy.testCallChatClient(user, exercise, "test-template", templateVariables);
 
         assertThat(result.getSolutionPlan()).isEqualTo(expectedPlan);
-        verify(llmTokenUsageService).buildLLMRequest(modelName, 11, 7, pipelineId);
+        verify(llmTokenUsageService).buildLLMRequest(any(ChatResponse.class), eq(pipelineId));
         verify(llmTokenUsageService).saveLLMTokenUsage(eq(List.of(llmRequest)), eq(LLMServiceType.HYPERION), any());
     }
 
@@ -318,11 +327,11 @@ class HyperionCodeGenerationServiceTest {
         Map<String, Object> templateVariables = Map.of("key", "value");
         String modelName = "gpt-5-mini-2025-08-07";
         String pipelineId = "HYPERION_CODE_GENERATION_SOLUTION_TEST_TEMPLATE";
-        LLMRequest llmRequest = new LLMRequest(modelName, 11, 0.23f, 7, 1.84f, pipelineId);
+        LLMRequest llmRequest = new LLMRequest(modelName, 11, 7, pipelineId);
 
         when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse, modelName, 11, 7));
-        when(llmTokenUsageService.buildLLMRequest(modelName, 11, 7, pipelineId)).thenReturn(llmRequest);
+        when(llmTokenUsageService.buildLLMRequest(any(ChatResponse.class), eq(pipelineId))).thenReturn(llmRequest);
         doThrow(new IllegalStateException("database unavailable")).when(llmTokenUsageService).saveLLMTokenUsage(any(), eq(LLMServiceType.HYPERION), any());
 
         CodeGenerationResponseDTO result = strategy.testCallChatClient(user, exercise, "test-template", templateVariables);
@@ -331,24 +340,37 @@ class HyperionCodeGenerationServiceTest {
         verify(llmTokenUsageService).saveLLMTokenUsage(eq(List.of(llmRequest)), eq(LLMServiceType.HYPERION), any());
     }
 
-    @Test
-    void callChatClient_withNegativeUsageMetadata_clampsTokenUsageToZeroBeforeTracking() throws Exception {
-        String expectedPlan = "Generated solution plan";
-        String jsonResponse = "{\"solutionPlan\":\"" + expectedPlan + "\",\"files\":[]}";
+    @ParameterizedTest
+    @CsvSource(value = { "11,7,true", "0,0,true", "-11,7,false", "11,-7,false", "null,7,false", "11,null,false", "null,null,false" }, nullValues = "null")
+    void callChatClient_onlyPersistsCompleteNonnegativeTokenCounts(Integer input, Integer output, boolean persisted) throws Exception {
+        String jsonResponse = "{\"solutionPlan\":\"Generated solution plan\",\"files\":[]}";
         Map<String, Object> templateVariables = Map.of("key", "value");
-        String modelName = "gpt-5-mini-2025-08-07";
-        String pipelineId = "HYPERION_CODE_GENERATION_SOLUTION_TEST_TEMPLATE";
-        LLMRequest llmRequest = new LLMRequest(modelName, 0, 0.23f, 7, 1.84f, pipelineId);
-
+        Usage usage = mock(Usage.class);
+        when(usage.getPromptTokens()).thenReturn(input);
+        when(usage.getCompletionTokens()).thenReturn(output);
+        ChatResponse response = new ChatResponse(List.of(new Generation(new AssistantMessage(jsonResponse))),
+                ChatResponseMetadata.builder().model("gpt-5-mini").usage(usage).build());
+        var traces = mock(LLMTokenUsageTraceRepository.class);
+        var accounting = new LLMTokenUsageService(traces, mock(LLMTokenUsageRequestRepository.class), LlmTestCatalog.empty());
+        ChatClient chatClient = ChatClient.builder(chatModel).defaultAdvisors(ChatModelCallAdvisor.builder().chatModel(chatModel).build()).build();
+        var testedStrategy = new TestCodeGenerationStrategy(chatClient, templates, accounting);
         when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
-        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse, modelName, -11, 7));
-        when(llmTokenUsageService.buildLLMRequest(modelName, 0, 7, pipelineId)).thenReturn(llmRequest);
+        when(chatModel.call(any(Prompt.class))).thenReturn(response);
 
-        CodeGenerationResponseDTO result = strategy.testCallChatClient(user, exercise, "test-template", templateVariables);
+        CodeGenerationResponseDTO result = testedStrategy.testCallChatClient(user, exercise, "test-template", templateVariables);
 
-        assertThat(result.getSolutionPlan()).isEqualTo(expectedPlan);
-        verify(llmTokenUsageService).buildLLMRequest(modelName, 0, 7, pipelineId);
-        verify(llmTokenUsageService).saveLLMTokenUsage(eq(List.of(llmRequest)), eq(LLMServiceType.HYPERION), any());
+        assertThat(result.getSolutionPlan()).isEqualTo("Generated solution plan");
+        if (persisted) {
+            var saved = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
+            verify(traces).save(saved.capture());
+            assertThat(saved.getValue().getLLMRequests()).singleElement().satisfies(request -> {
+                assertThat(request.getNumInputTokens()).isEqualTo(input);
+                assertThat(request.getNumOutputTokens()).isEqualTo(output);
+            });
+        }
+        else {
+            verifyNoInteractions(traces);
+        }
     }
 
     @Test
@@ -359,16 +381,16 @@ class HyperionCodeGenerationServiceTest {
         String modelName = "gpt-5-mini-2025-08-07";
         String promptPath = "/prompts/hyperion/solution/1_plan.st";
         String pipelineId = "HYPERION_CODE_GENERATION_SOLUTION_1_PLAN";
-        LLMRequest llmRequest = new LLMRequest(modelName, 11, 0.23f, 7, 1.84f, pipelineId);
+        LLMRequest llmRequest = new LLMRequest(modelName, 11, 7, pipelineId);
 
         when(templates.renderObject(promptPath, templateVariables)).thenReturn("rendered prompt");
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(jsonResponse, modelName, 11, 7));
-        when(llmTokenUsageService.buildLLMRequest(modelName, 11, 7, pipelineId)).thenReturn(llmRequest);
+        when(llmTokenUsageService.buildLLMRequest(any(ChatResponse.class), eq(pipelineId))).thenReturn(llmRequest);
 
         CodeGenerationResponseDTO result = strategy.testCallChatClient(user, exercise, promptPath, templateVariables);
 
         assertThat(result.getSolutionPlan()).isEqualTo(expectedPlan);
-        verify(llmTokenUsageService).buildLLMRequest(modelName, 11, 7, pipelineId);
+        verify(llmTokenUsageService).buildLLMRequest(any(ChatResponse.class), eq(pipelineId));
         verify(llmTokenUsageService).saveLLMTokenUsage(eq(List.of(llmRequest)), eq(LLMServiceType.HYPERION), any());
     }
 
@@ -579,7 +601,7 @@ class HyperionCodeGenerationServiceTest {
         private RepositoryType repositoryType = RepositoryType.SOLUTION;
 
         public TestCodeGenerationStrategy(ChatClient chatClient, HyperionPromptTemplateService templates, LLMTokenUsageService llmTokenUsageService) {
-            super(chatClient, templates, llmTokenUsageService);
+            super(de.tum.cit.aet.artemis.hyperion.service.HyperionTestChatClients.returning(chatClient), templates, llmTokenUsageService);
         }
 
         @Override

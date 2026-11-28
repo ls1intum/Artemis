@@ -44,7 +44,7 @@ test.describe('Exam authorization', { tag: '@slow' }, () => {
         const examBase = `${base}/exams/${exam.id}`;
         const examBody = { ...exam, id: undefined };
         // The role check runs after the body validation of the import endpoint, so the import has to send a valid body to be refused for the role
-        const examImportBody = { title: exam.title, visibleDate: exam.visibleDate, startDate: exam.startDate, endDate: exam.endDate, courseId: course.id };
+        const examImportBody = { title: exam.title, examMode: exam.examMode, visibleDate: exam.visibleDate, startDate: exam.startDate, endDate: exam.endDate, courseId: course.id };
         const group = { title: 'Forbidden group', isMandatory: true, exam: { id: exam.id } };
         calls = {
             instructorOnly: [
@@ -88,6 +88,7 @@ test.describe('Exam authorization', { tag: '@slow' }, () => {
                 { method: 'get', path: `${examBase}/export-students` },
                 { method: 'get', path: `${examBase}/verify-exam-users` },
                 { method: 'get', path: `${examBase}/students/search?searchTerm=student` },
+                { method: 'get', path: `${examBase}/exam-students/paged?page=0&pageSize=10&sortingOrder=ASCENDING&sortedColumn=name&searchTerm=` },
                 {
                     method: 'post',
                     path: `${examBase}/exam-users-save-images`,
@@ -100,7 +101,6 @@ test.describe('Exam authorization', { tag: '@slow' }, () => {
                 { method: 'get', path: `${examBase}/stats-for-exam-assessment-dashboard` },
                 { method: 'get', path: `${examBase}/latest-end-date` },
                 { method: 'get', path: `${base}/exams` },
-                { method: 'get', path: `${examBase}/exam-students/paged?page=0&pageSize=10&sortingOrder=ASCENDING&sortedColumn=name&searchTerm=` },
                 { method: 'post', path: `${examBase}/students/${studentOne.username}/attendance-check`, data: 'Forbidden check' },
                 {
                     method: 'post',

@@ -1,10 +1,14 @@
-import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewEncapsulation, inject, input, signal, viewChild } from '@angular/core';
+import { Component, HostBinding, OnInit, ViewEncapsulation, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { Observable, OperatorFunction, Subject, catchError, map, of } from 'rxjs';
+import { Observable, Subject, catchError, map, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { debounceTime, distinctUntilChanged, filter, switchMap, takeUntil, tap } from 'rxjs/operators';
-import { User, UserPublicInfoDTO } from 'app/account/user/user.model';
-import { NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
+import { switchMap, tap } from 'rxjs/operators';
+import { UserPublicInfoDTO } from 'app/account/user/user.model';
+import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteOptionEvent } from '@tumaet/ui-angular/autocomplete';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular/list';
 import { faX } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { addPublicFilePrefix } from 'app/app.constants';
@@ -20,7 +24,7 @@ export type SearchRoleGroup = 'tutors' | 'students' | 'instructors';
 /**
  * Generic Input Component for searching and selecting one or more users from a course.
  * - Implements ControlValueAccessor to be used in reactive forms.
- * - Uses ng-bootstrap typeahead to provide a search input.
+ * - Uses the TUM AET UI autocomplete to provide a search input.
  * - Uses server side search to efficiently search for users.
  * - Uses a custom formatter to display the user's name and login.
  * - Search requires at least 3 characters.
@@ -29,7 +33,7 @@ export type SearchRoleGroup = 'tutors' | 'students' | 'instructors';
 @Component({
     selector: 'jhi-course-users-selector',
     templateUrl: './course-users-selector.component.html',
-    styleUrls: ['./course-users-selector.component.scss'],
+    styleUrls: ['./course-users-selector.component.css'],
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,
@@ -38,18 +42,24 @@ export type SearchRoleGroup = 'tutors' | 'students' | 'instructors';
         },
     ],
     encapsulation: ViewEncapsulation.None,
-    imports: [NgbTypeahead, ProfilePictureComponent, TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
+    imports: [
+        ProfilePictureComponent,
+        TranslateDirective,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        TumAetUiAutoCompleteComponent,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiListComponent,
+        TumAetUiListItemDirective,
+    ],
 })
-export class CourseUsersSelectorComponent implements ControlValueAccessor, OnInit, OnDestroy {
+export class CourseUsersSelectorComponent implements ControlValueAccessor, OnInit {
     private courseManagementService = inject(CourseManagementService);
 
     @HostBinding('class.course-users-selector') hostClass = true;
 
-    private ngUnsubscribe = new Subject<void>();
-
-    readonly typeAheadInstance = viewChild.required<NgbTypeahead>('instance');
     readonly disabled = signal(false);
-    readonly searchInput = viewChild.required<ElementRef>('searchInput');
     readonly courseId = input.required<number>();
 
     @HostBinding('attr.id')
@@ -69,8 +79,24 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     faX = faX;
 
     readonly selectedUsers = signal<UserPublicInfoDTO[]>([]);
+    /** The users found by the last search, offered in the suggestions of the search input. */
+    readonly suggestions = signal<UserPublicInfoDTO[]>([]);
     readonly isSearching = signal(false);
     readonly searchFailed = signal(false);
+
+    /** What the search input shows, to repeat the search when a role filter changes. */
+    private readonly searchText = signal('');
+    private readonly searchTerms = new Subject<string>();
+
+    constructor() {
+        // The latest search wins: switching to a new term drops the response of the previous one.
+        this.searchTerms
+            .pipe(
+                switchMap((term) => this.findUsers(term)),
+                takeUntilDestroyed(),
+            )
+            .subscribe((users) => this.suggestions.set(users));
+    }
 
     ngOnInit(): void {
         const rolesToAllowSearchingIn = this.rolesToAllowSearchingIn();
@@ -84,13 +110,6 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
             this.searchInstructors.set(true);
         }
     }
-
-    ngOnDestroy() {
-        this.ngUnsubscribe.next();
-        this.ngUnsubscribe.complete();
-    }
-
-    usersFormatter = (user: UserPublicInfoDTO) => this.getUserLabel(user);
 
     trackIdentity(_index: number, item: UserPublicInfoDTO) {
         return item.id;
@@ -110,10 +129,9 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
         return label.trim();
     }
 
-    onSelectItem($event: NgbTypeaheadSelectItemEvent<User>) {
-        this.onUserSelected($event.item);
-        $event.preventDefault();
-        this.resetSearchInput();
+    onSelectItem(event: TumAetUiAutoCompleteOptionEvent) {
+        this.onUserSelected(event.value as UserPublicInfoDTO);
+        this.searchText.set('');
     }
 
     onDelete(index: number) {
@@ -122,59 +140,56 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     }
 
     onInputChange(event: Event): void {
-        const value = (event.target as HTMLInputElement).value;
-        // If the input value has fewer than 3 characters, close the suggestion popup
-        if (value.length < 3) {
-            this.typeAheadInstance().dismissPopup();
+        this.searchText.set((event.target as HTMLInputElement).value);
+    }
+
+    /** Offers the users of the changed roles for the text that is already typed. */
+    onFilterChange() {
+        const term = this.searchText().trim();
+        if (term) {
+            this.searchTerms.next(term.toLowerCase());
+        } else {
+            // Without text the search input only suggests users once it is focused again.
+            this.suggestions.set([]);
         }
     }
 
-    onFilterChange() {
-        this.typeAheadInstance()?.dismissPopup();
-        this.searchInput().nativeElement.dispatchEvent(new Event('input'));
+    requestSearch(query: string) {
+        this.searchTerms.next(query.trim().toLowerCase());
     }
 
-    search: OperatorFunction<string, readonly UserPublicInfoDTO[]> = (text$: Observable<string>) =>
-        text$.pipe(
-            debounceTime(200),
-            distinctUntilChanged(),
-            map((term) => (term ? term.trim().toLowerCase() : '')),
-            // the three letter minimum is enforced by the server only for searching for students as they are so many
-            filter((term) => term.length >= 3 || !this.searchStudents()),
-            switchMap((term) => {
-                const rolesToSearchIn: SearchRoleGroup[] = [];
-                if (this.searchStudents()) {
-                    rolesToSearchIn.push('students');
-                }
-                if (this.searchTutors()) {
-                    rolesToSearchIn.push('tutors');
-                }
-                if (this.searchInstructors()) {
-                    rolesToSearchIn.push('instructors');
-                }
-                if (rolesToSearchIn.length === 0) {
-                    this.searchFailed.set(false);
-                    return of([]);
-                } else {
-                    this.isSearching.set(true);
-                    return this.courseManagementService.searchUsers(this.courseId(), term, rolesToSearchIn).pipe(
-                        map((users) => users.body!),
-                        map((users) => users.filter((user) => !this.selectedUsers().find((selectedUser) => selectedUser.id === user.id))),
-                        tap(() => {
-                            this.isSearching.set(false);
-                            this.searchFailed.set(false);
-                        }),
-                        catchError(() => {
-                            this.searchFailed.set(true);
-                            this.isSearching.set(false);
-                            return of([]);
-                        }),
-                        takeUntil(this.ngUnsubscribe),
-                    );
-                }
+    private findUsers(term: string): Observable<UserPublicInfoDTO[]> {
+        const rolesToSearchIn: SearchRoleGroup[] = [];
+        if (this.searchStudents()) {
+            rolesToSearchIn.push('students');
+        }
+        if (this.searchTutors()) {
+            rolesToSearchIn.push('tutors');
+        }
+        if (this.searchInstructors()) {
+            rolesToSearchIn.push('instructors');
+        }
+        // the three letter minimum is enforced by the server only for searching for students as they are so many
+        if (rolesToSearchIn.length === 0 || (term.length < 3 && this.searchStudents())) {
+            this.isSearching.set(false);
+            this.searchFailed.set(false);
+            return of([]);
+        }
+        this.isSearching.set(true);
+        return this.courseManagementService.searchUsers(this.courseId(), term, rolesToSearchIn).pipe(
+            map((users) => users.body!),
+            map((users) => users.filter((user) => !this.selectedUsers().find((selectedUser) => selectedUser.id === user.id))),
+            tap(() => {
+                this.isSearching.set(false);
+                this.searchFailed.set(false);
             }),
-            takeUntil(this.ngUnsubscribe),
+            catchError(() => {
+                this.searchFailed.set(true);
+                this.isSearching.set(false);
+                return of([]);
+            }),
         );
+    }
 
     // === START CONTROL VALUE ACCESSOR ===
     onChange = (_selectedUsers: UserPublicInfoDTO[]) => {};
@@ -218,13 +233,6 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
                 }
                 this.onChange(this.selectedUsers());
             }
-        }
-    }
-
-    private resetSearchInput() {
-        const searchInput = this.searchInput();
-        if (searchInput) {
-            searchInput.nativeElement.value = '';
         }
     }
 

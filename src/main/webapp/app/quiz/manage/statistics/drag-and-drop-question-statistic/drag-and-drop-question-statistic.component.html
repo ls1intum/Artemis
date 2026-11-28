@@ -1,12 +1,12 @@
 @if (quizExercise()) {
-    <div class="row">
-        <div class="col-md-8 offset-md-2 text-center">
+    <div class="grid grid-cols-12 gap-x-6">
+        <div class="col-span-12 md:col-span-8 md:col-start-3 text-center">
             @if (quizExercise().title !== question.title) {
                 <h3>{{ quizExercise().title }}</h3>
             }
-            <div class="row">
+            <div class="grid grid-cols-12 gap-x-6">
                 @if (question) {
-                    <div class="col">
+                    <div class="col-span-12">
                         <h3>
                             {{ question.title }}
                             @if (question.invalid) {
@@ -25,7 +25,7 @@
                                 (toggleRated)="switchRated()"
                             />
                             <p>&nbsp;</p>
-                            <div class="drag-and-drop-quizStatistic-picture col-md-8 offset-md-2">
+                            <div class="drag-and-drop-quizStatistic-picture w-full md:mx-auto md:w-2/3">
                                 @let backgroundFilePath = question.backgroundFilePath;
                                 @if (backgroundFilePath) {
                                     <jhi-image [src]="addPublicFilePrefix(backgroundFilePath)!" />
@@ -91,7 +91,7 @@
                                 </div>
                             </div>
                             @if (!showSolution) {
-                                <div class="drag-and-drop-quizStatistic-picture">
+                                <div class="drag-and-drop-quizStatistic-picture w-full">
                                     <h4>Drag-Items:</h4>
                                     @if (question.dragItems && question.dragItems.length) {
                                         <div class="drag-items">
@@ -113,6 +113,6 @@
                 }
             </div>
         </div>
-        <jhi-quiz-statistics-footer />
     </div>
+    <jhi-quiz-statistics-footer />
 }

@@ -1,3 +1,4 @@
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { Location, NgClass, NgTemplateOutlet } from '@angular/common';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
@@ -39,7 +40,6 @@ import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/
 import { CategoryIssuesChartComponent } from '../charts/category-issues-chart.component';
 import { ScaCategoryDistributionChartComponent } from '../charts/sca-category-distribution-chart.component';
 import { FeedbackAnalysisComponent } from '../feedback-analysis/feedback-analysis.component';
-import { Message } from 'primeng/message';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
@@ -86,7 +86,7 @@ export type Table = 'testCases' | 'codeAnalysis';
 @Component({
     selector: 'jhi-programming-exercise-configure-grading',
     templateUrl: './programming-exercise-configure-grading.component.html',
-    styleUrls: ['./programming-exercise-configure-grading.scss'],
+    styleUrls: ['./programming-exercise-configure-grading.css'],
     encapsulation: ViewEncapsulation.None,
     providers: [ProgrammingExerciseTaskService],
     imports: [
@@ -107,7 +107,7 @@ export type Table = 'testCases' | 'codeAnalysis';
         ScaCategoryDistributionChartComponent,
         FeedbackAnalysisComponent,
         TableViewComponent,
-        Message,
+        TumAetUiMessageComponent,
     ],
 })
 export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnDestroy, ComponentCanDeactivate {

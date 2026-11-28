@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-6">
     <div class="flex flex-col gap-1">
-        <h3 id="artemisApp.lecture.sections.units" tabindex="-1" class="m-0 scroll-mt-4 text-lg font-semibold" jhiTranslate="artemisApp.lecture.sections.units"></h3>
+        <h3 id="artemisApp.lecture.sections.units" tabindex="-1" class="m-0 scroll-mt-4" jhiTranslate="artemisApp.lecture.sections.units"></h3>
         <p class="lecture-units-hint m-0 text-sm" jhiTranslate="artemisApp.lecture.sections.unitsDescription"></p>
     </div>
 
@@ -18,11 +18,11 @@
     />
 
     <section class="lecture-units-panel flex flex-col gap-3.5 rounded-lg p-3.5 sm:p-6" aria-labelledby="lecture-add-content-title" data-testid="lecture-add-content">
-        <h4 id="lecture-add-content-title" class="m-0 text-base font-semibold" jhiTranslate="artemisApp.lecture.addContent.title"></h4>
+        <h4 id="lecture-add-content-title" class="m-0" jhiTranslate="artemisApp.lecture.addContent.title"></h4>
         <jhi-unit-creation-card [emitEvents]="true" (onUnitCreationCardClicked)="onCreateLectureUnit($event)" />
         @if (!isEditingLectureUnit() && isAnyUnitFormOpen()) {
             <div #editFormContainer class="lecture-unit-form flex scroll-mt-4 flex-col gap-3.5 rounded-lg p-3.5 sm:p-6" data-testid="lecture-unit-create-form">
-                <h5 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.lecture.newLectureUnit"></h5>
+                <h5 class="m-0" jhiTranslate="artemisApp.lecture.newLectureUnit"></h5>
                 <ng-container [ngTemplateOutlet]="unitForms" />
             </div>
         }
@@ -31,7 +31,7 @@
 
     <section class="lecture-units-panel flex flex-col gap-3.5 rounded-lg p-3.5 sm:p-6" aria-labelledby="lecture-split-pdf-title" data-testid="lecture-split-pdf">
         <div class="flex flex-col gap-1">
-            <h4 id="lecture-split-pdf-title" class="m-0 text-base font-semibold" jhiTranslate="artemisApp.lecture.splitPdf.title"></h4>
+            <h4 id="lecture-split-pdf-title" class="m-0" jhiTranslate="artemisApp.lecture.splitPdf.title"></h4>
             <p class="lecture-units-hint m-0 text-sm" jhiTranslate="artemisApp.lecture.splitPdf.description"></p>
         </div>
         @if (pdfUnits().length) {
@@ -165,10 +165,20 @@
         />
     }
     @if (isAttachmentVideoUnitFormOpen()) {
+        @if (!isEditingLectureUnit()) {
+            @if (recordingRecovery(); as recovery) {
+                <jhi-tum-live-save-recovery [scope]="recovery" />
+            }
+        }
         <jhi-attachment-video-unit-form
             [isEditMode]="isEditingLectureUnit()"
             [autosave]="isEditingLectureUnit()"
             [hasCancelButton]="true"
+            [recordingAvailable]="recordingAvailable()"
+            [recordingSaveLocked]="recordingSaving() || (!isEditingLectureUnit() && !!recordingRecovery())"
+            [recordingSaving]="recordingSaving()"
+            [recordingTransferActive]="!!upload()?.transferring()"
+            [recordingPending]="!!upload()?.pendingRef()"
             (onCancel)="onCloseLectureUnitForms()"
             (formSubmitted)="createAttachmentVideoUnit($event)"
             (formChanged)="onAttachmentVideoUnitChanged($event)"
@@ -178,6 +188,18 @@
             [savingConfirmed]="savingConfirmed()"
             [formData]="attachmentVideoUnitFormData()"
         />
+        @if (isEditingLectureUnit() && editingUnit()?.id; as unitId) {
+            <!-- One instance per unit: switching to another unit must not carry over a running upload. -->
+            @for (id of [unitId]; track id) {
+                <jhi-tum-live-upload
+                    [lectureUnitId]="id"
+                    [initialFile]="initialRecording()"
+                    (initialFileConsumed)="initialRecording.set(undefined)"
+                    (attached)="onTumLiveVideoAttached(id)"
+                    (transferred)="unitManagementComponent()?.refreshTumLiveUploads()"
+                />
+            }
+        }
     }
     @if (isExerciseUnitFormOpen()) {
         <jhi-create-exercise-unit

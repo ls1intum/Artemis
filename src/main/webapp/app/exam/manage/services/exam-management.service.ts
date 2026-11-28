@@ -1,3 +1,4 @@
+import { ExamConductionCounts } from 'app/exam/shared/entities/exam-conduction-counts.model';
 import { Service, inject } from '@angular/core';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { ExamUserAttendanceCheckDTO } from 'app/exam/shared/entities/exam-users-attendance-check-dto.model';
@@ -21,19 +22,21 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamWideAnnouncementEvent } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ExamDeletionSummaryDTO } from 'app/exam/shared/entities/exam-deletion-summary.model';
+import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { buildExamDeletionSummary } from 'app/exam/manage/services/exam-deletion-summary.util';
 import { ExamUpdateDTO, toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 import { ExportExamUserDTO } from 'app/exam/manage/students/export-users/students-export.model';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/services/exam-exercise-start-preparation-status.model';
 import { ExamStudentDTO } from 'app/exam/manage/students/exam-student-dto.model';
-import { PageableResult } from 'app/foundation/pagination/pageable-table';
+import { PageableResult, toPageableResult } from 'app/foundation/pagination/pageable-table';
 import { ExamStudentSearch } from 'app/exam/manage/students/exam-student-dto.model';
 import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamImportResultDTO, ExerciseGroupImportResultDTO } from 'app/exam/shared/entities/exam-import-result.model';
 import { ExamImportProgress } from 'app/exam/shared/entities/exam-import-progress.model';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { CreateTestRunDTO } from 'app/exam/manage/test-runs/create-test-run-dto.model';
 import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -206,6 +209,10 @@ export class ExamManagementService {
         return this.http.get<ExamChecklist>(`${this.resourceUrl}/${courseId}/exams/${examId}/statistics${suffix}`, { observe: 'response' });
     }
 
+    getExamConductionCounts(courseId: number, examId: number): Observable<ExamConductionCounts> {
+        return this.http.get<ExamConductionCounts>(`${this.resourceUrl}/${courseId}/exams/${examId}/statistics/conduction`);
+    }
+
     /**
      * returns the stats of the exam with the provided unique identifiers for the assessment dashboard
      * @param courseId - the id of the course
@@ -271,12 +278,14 @@ export class ExamManagementService {
     }
 
     /**
-     * Returns a summary for the exam providing information potentially relevant for the deletion.
+     * Returns what is deleted together with the exam, grouped into categories for the delete dialog.
      * @param courseId The course id.
      * @param examId The exam id.
      */
-    getDeletionSummary(courseId: number, examId: number): Observable<HttpResponse<ExamDeletionSummaryDTO>> {
-        return this.http.get<ExamDeletionSummaryDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/deletion-summary`, { observe: 'response' });
+    getDeletionSummary(courseId: number, examId: number): Observable<EntitySummaryCategory[]> {
+        return this.http
+            .get<ExamDeletionSummaryDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/deletion-summary`, { observe: 'response' })
+            .pipe(map((response) => (response.body ? buildExamDeletionSummary(response.body) : [])));
     }
 
     /**
@@ -344,18 +353,19 @@ export class ExamManagementService {
                 observe: 'response',
             })
             .pipe(
-                map((res) => ({
-                    content: (res.body ?? []).map((row) =>
-                        cloneWith(row, { startedDate: convertDateFromServer(row.startedDate), submissionDate: convertDateFromServer(row.submissionDate) }),
-                    ),
-                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
-                })),
+                map(toPageableResult),
+                tap(({ content }) =>
+                    content.forEach((row) => {
+                        row.startedDate = convertDateFromServer(row.startedDate);
+                        row.submissionDate = convertDateFromServer(row.submissionDate);
+                    }),
+                ),
             );
     }
 
     /**
      * Search for Artemis users that can be registered for the exam.
-     * Matches login (prefix), full name (contains), email (contains), and registration number (contains).
+     * Matches the search term anywhere in the login, full name, email or registration number.
      * Each result is flagged with {@code isRegistered} if already registered for the exam.
      * @param courseId The course id.
      * @param examId The exam id.
@@ -370,12 +380,7 @@ export class ExamManagementService {
                 params: { searchTerm, page, size },
                 observe: 'response',
             })
-            .pipe(
-                map((res) => ({
-                    content: res.body ?? [],
-                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
-                })),
-            );
+            .pipe(map(toPageableResult));
     }
 
     /**

@@ -7,7 +7,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -19,7 +19,7 @@ describe('CourseCompetenciesRelationModalComponent', () => {
     let fixture: ComponentFixture<CourseCompetenciesRelationModalComponent>;
     let courseCompetencyApiService: CourseCompetencyApiService;
     let alertService: AlertService;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
 
     const courseId = 1;
     const courseCompetencies: CourseCompetency[] = [
@@ -39,19 +39,19 @@ describe('CourseCompetenciesRelationModalComponent', () => {
         dialogRef = {
             close: vi.fn(),
             onClose: new Subject<unknown>(),
-        } as unknown as DynamicDialogRef;
+        } as unknown as TumAetUiDialogRef;
 
         await TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 {
-                    provide: DynamicDialogRef,
+                    provide: TumAetUiDialogRef,
                     useValue: dialogRef,
                 },
                 {
-                    provide: DynamicDialogConfig,
-                    useValue: { data: { courseId, courseCompetencies } },
+                    provide: TumAetUiDialogConfig,
+                    useValue: new TumAetUiDialogConfig({ data: { courseId, courseCompetencies } }),
                 },
                 {
                     provide: TranslateService,
@@ -77,7 +77,7 @@ describe('CourseCompetenciesRelationModalComponent', () => {
 
         courseCompetencyApiService = TestBed.inject(CourseCompetencyApiService);
         alertService = TestBed.inject(AlertService);
-        dialogRef = TestBed.inject(DynamicDialogRef);
+        dialogRef = TestBed.inject(TumAetUiDialogRef);
 
         fixture = TestBed.createComponent(CourseCompetenciesRelationModalComponent);
         component = fixture.componentInstance;

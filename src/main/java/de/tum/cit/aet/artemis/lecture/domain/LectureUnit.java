@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.domain;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Optional;
@@ -55,6 +56,10 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
 })
 // @formatter:on
 public abstract class LectureUnit extends DomainObject implements LearningObject {
+
+    /** Creation is known for new content; older undated content deliberately stays unknown. */
+    @Column(name = "created_date")
+    private ZonedDateTime createdDate;
 
     @Transient
     private boolean completed;
@@ -169,6 +174,9 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     @PrePersist
     @PreUpdate
     private void updateLectureUnitOrder() {
+        if (getId() == null && createdDate == null) {
+            createdDate = ZonedDateTime.now(ZoneOffset.UTC);
+        }
         if (lecture == null) {
             return; // should not really happen due to nullable=false, but safe
         }
@@ -182,4 +190,14 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
     public String toString() {
         return "LectureUnit{" + "id=" + getId() + ", type=" + getType() + ", name='" + name + "'" + ", releaseDate=" + releaseDate + ", lectureUnitOrder=" + lectureUnitOrder + '}';
     }
+
+    @JsonIgnore
+    public ZonedDateTime getCreatedDate() {
+        return createdDate;
+    }
+
+    public void setCreatedDate(ZonedDateTime createdDate) {
+        this.createdDate = createdDate;
+    }
+
 }

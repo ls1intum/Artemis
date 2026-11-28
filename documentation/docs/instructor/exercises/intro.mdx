@@ -2,10 +2,10 @@
 id: intro
 title: General Information
 sidebar_label: General Information
-last_reviewed: 2026-11-06
+last_reviewed: 2026-11-08
 ---
 
-import Image, {ImageSize} from "../../../src/components/Image/Image";
+import Image, { ImageSize } from '../../../src/components/Image/Image';
 import exerciseSidebar from './assets/general/exercise-sidebar.png';
 import exerciseDetailsProgramming from './assets/general/exercise-details-programming.png';
 
@@ -43,6 +43,17 @@ exercises keep **Version History** as a link beside the heading. Reset and delet
 controls are in **Exercise administration** at the bottom, also reachable through the section navigation;
 their confirmations remain required. Programming exercises offer **Edit in editor** directly in the action bar.
 
+Before you confirm a deletion, the dialog lists what will be removed with the exercise, grouped by topic, for example
+student participations, submissions and results, assessments and complaints, plagiarism comparisons, posts in the
+exercise channel and, for programming exercises, builds. Large amounts are highlighted, so you notice an exercise
+with a lot of student data before you delete it. Deleting an exercise runs in the background: after you confirm, a
+progress dialog shows the current step and how many items are done. **Continue in background** closes the dialog
+without stopping the deletion, and a message tells you when it finished or failed. The server keeps deleting even
+if you close the browser tab. If you reload the page of an exercise of any type, of an exam or of its exercise
+groups while a deletion is still running, the progress dialog opens again. When the deletion fails, the dialog or
+message shows the reason and the exercise stays in the list; try again after fixing the cause. The same applies to
+deleting an exercise group or a whole exam, where the progress also names the exercise that is being deleted.
+
 **Create Variant** is a yellow action for supported programming and quiz exercises.
 Its availability depends on your role and the server's Hyperion configuration; see
 [Generate Variants with AI](/instructor/exercises/variant-generation).
@@ -51,7 +62,12 @@ Available actions depend on your role, the exercise's state, whether it belongs 
 server's enabled features. On narrow screens, some action labels collapse to icons with accessible names and
 tooltips. The section links still scroll through the same visible details.
 
-<Image src={exerciseDetailsProgramming} alt="Programming exercise details with the exercise title, grouped actions and section links" size={ImageSize.large} caption="Exercise details group navigation and editing actions above the saved configuration" />
+<Image
+    src={exerciseDetailsProgramming}
+    alt="Programming exercise details with the exercise title, grouped actions and section links"
+    size={ImageSize.large}
+    caption="Exercise details group navigation and editing actions above the saved configuration"
+/>
 
 ## Moving an Exercise Between Courses
 

@@ -405,12 +405,28 @@ describe('Lti13DeepLinkingComponent', () => {
 
     it('should sort exercises by title in ascending order', () => {
         component.exercises.set([exercise1, exercise2, exercise3]);
-        component.predicate = 'title';
-        component.reverse = false;
+        component.predicate.set('title');
+        component.reverse.set(false);
 
         component.sortRows();
 
         expect(sortServiceMock.sortByProperty).toHaveBeenCalledWith(expect.arrayContaining([exercise1, exercise2, exercise3]), 'title', false);
+    });
+
+    it('should apply the column header sort and re-sort the exercises', () => {
+        component.exercises.set([exercise1, exercise2, exercise3]);
+
+        component.onSort({ field: 'title', order: 1 });
+
+        expect(component.predicate()).toBe('title');
+        expect(component.reverse()).toBe(true);
+        expect(sortServiceMock.sortByProperty).toHaveBeenLastCalledWith(expect.arrayContaining([exercise1, exercise2, exercise3]), 'title', true);
+
+        component.onSort({ field: 'type', order: -1 });
+
+        expect(component.predicate()).toBe('type');
+        expect(component.reverse()).toBe(false);
+        expect(sortServiceMock.sortByProperty).toHaveBeenLastCalledWith(expect.arrayContaining([exercise1, exercise2, exercise3]), 'type', false);
     });
 
     it('should handle empty course gracefully', async () => {

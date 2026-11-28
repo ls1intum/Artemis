@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.core.security.annotations;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.lang.reflect.Method;
+import java.util.Locale;
+import java.util.Optional;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.admin.service.RateLimitConfigurationService;
 import de.tum.cit.aet.artemis.admin.service.RateLimitService;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import inet.ipaddr.IPAddress;
 
 /**
@@ -67,6 +70,19 @@ public class LimitRequestsPerMinuteAspect {
 
         if (annotation == null) {
             return;
+        }
+
+        if (annotation.perUser()) {
+            Optional<String> login = SecurityUtils.getCurrentUserLogin();
+            if (login.isPresent()) {
+                // An exempt address is not limited per user either
+                if (configurationService.isExempt(rateLimitService.resolveClientId())) {
+                    return;
+                }
+                // The login is lower-cased, so that the budget of a user cannot be split over spellings of the login name
+                rateLimitService.enforceBudget("user:" + login.get().toLowerCase(Locale.ROOT), annotation.type());
+                return;
+            }
         }
 
         IPAddress clientId = rateLimitService.resolveClientId();

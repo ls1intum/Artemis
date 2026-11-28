@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.BatchRelationPreviewResponseD
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.CompetencyRelationPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.RelationGraphPreviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.SingleRelationPreviewResponseDTO;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.MapCompetencyToCompetencyRequestDTO;
 
 /**
  * Unit tests for Atlas Agent DTOs.
@@ -335,41 +334,6 @@ class AtlasAgentDtoTest {
             String json = objectMapper.writeValueAsString(dto);
 
             assertThat(json).doesNotContain("\"viewOnly\"");
-        }
-    }
-
-    @Nested
-    class MapCompetencyToCompetencyRequestDTOTests {
-
-        @Test
-        void shouldSerializeToJsonWithCorrectPropertyNames() throws JacksonException {
-            MapCompetencyToCompetencyRequestDTO dto = new MapCompetencyToCompetencyRequestDTO(1L, 2L);
-
-            String json = objectMapper.writeValueAsString(dto);
-
-            assertThat(json).contains("\"source_competency_id\":1");
-            assertThat(json).contains("\"target_competency_id\":2");
-        }
-
-        @Test
-        void shouldDeserializeFromJson() throws JacksonException {
-            String json = "{\"source_competency_id\":10,\"target_competency_id\":20}";
-
-            MapCompetencyToCompetencyRequestDTO dto = objectMapper.readValue(json, MapCompetencyToCompetencyRequestDTO.class);
-
-            assertThat(dto.sourceCompetencyId()).isEqualTo(10L);
-            assertThat(dto.targetCompetencyId()).isEqualTo(20L);
-        }
-
-        @Test
-        void shouldRoundTripSuccessfully() throws JacksonException {
-            MapCompetencyToCompetencyRequestDTO original = new MapCompetencyToCompetencyRequestDTO(100L, 200L);
-
-            String json = objectMapper.writeValueAsString(original);
-            MapCompetencyToCompetencyRequestDTO back = objectMapper.readValue(json, MapCompetencyToCompetencyRequestDTO.class);
-
-            assertThat(back.sourceCompetencyId()).isEqualTo(original.sourceCompetencyId());
-            assertThat(back.targetCompetencyId()).isEqualTo(original.targetCompetencyId());
         }
     }
 

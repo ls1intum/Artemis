@@ -8,8 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { DialogService } from 'primeng/dynamicdialog';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 import { QuizExerciseUpdateComponent } from 'app/quiz/manage/update/quiz-exercise-update.component';
 import { QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -87,7 +86,6 @@ describe('QuizExerciseUpdateComponent schedule section', () => {
 
         await TestBed.configureTestingModule({
             providers: [
-                MockProvider(DialogService),
                 { provide: ActivatedRoute, useValue: { snapshot, params: of(snapshot.params), queryParams: of(snapshot.queryParams) } },
                 LocalStorageService,
                 SessionStorageService,

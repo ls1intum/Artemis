@@ -1,0 +1,39 @@
+.frame {
+    height: 39.375rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    border: 2px solid var(--border-color);
+    border-radius: 0.5rem;
+}
+
+.frame .header {
+    height: 2.25rem;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.frame .header .header-spacer {
+    width: 4.5rem;
+}
+
+.frame .header .day-info {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.frame .header .day-info .day-name {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.frame .scroll-container {
+    flex: 1;
+    overflow: auto;
+}

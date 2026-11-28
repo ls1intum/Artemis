@@ -6,9 +6,9 @@ import org.apache.sshd.common.AttributeRepository;
 import org.springframework.context.annotation.Profile;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.localvc.service.AccessLogSubject;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 
 @Profile(PROFILE_LOCALVC)
 public class SshConstants {
@@ -27,7 +27,7 @@ public class SshConstants {
 
     public static final AttributeRepository.AttributeKey<ProgrammingExercise> REPOSITORY_EXERCISE_KEY = new AttributeRepository.AttributeKey<>();
 
-    public static final AttributeRepository.AttributeKey<VcsAccessLog> VCS_ACCESS_LOG_KEY = new AttributeRepository.AttributeKey<>();
+    public static final AttributeRepository.AttributeKey<AccessLogSubject> ACCESS_LOG_SUBJECT_KEY = new AttributeRepository.AttributeKey<>();
 
     public static final AttributeRepository.AttributeKey<ProgrammingExerciseParticipation> PARTICIPATION_KEY = new AttributeRepository.AttributeKey<>();
 }

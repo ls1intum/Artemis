@@ -1,23 +1,26 @@
 import { Component, input, linkedSignal, output } from '@angular/core';
-import { TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { PresentationAssessment } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { PresentationAssessment, PresentationAssessmentStudentRowsRequest } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { PresentationAssessmentInstanceDetailsComponent } from 'app/presentation/manage/presentation-assessment-instance-details.component';
 import { PresentationInstanceActionsComponent } from 'app/presentation/manage/presentation-instance-actions.component';
 import { PresentationStudentToggleComponent } from 'app/presentation/manage/presentation-student-toggle.component';
+import { PresentationResultTagComponent } from 'app/presentation/manage/presentation-result-tag.component';
 import { PresentationStudentTableRow } from 'app/presentation/manage/presentation-assessment-management.helper';
 
 /** Lists the students assigned to one presentation with their grade, date and remark. */
 @Component({
     selector: 'jhi-presentation-assessment-instances-table',
     templateUrl: './presentation-assessment-instances-table.component.html',
-    styleUrl: './presentation-assessment-instances-table.component.scss',
+    styleUrl: './presentation-assessment-table.css',
     host: { class: 'block' },
     imports: [
         TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
         TumAetUiTagComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -25,6 +28,7 @@ import { PresentationStudentTableRow } from 'app/presentation/manage/presentatio
         PresentationAssessmentInstanceDetailsComponent,
         PresentationInstanceActionsComponent,
         PresentationStudentToggleComponent,
+        PresentationResultTagComponent,
     ],
 })
 export class PresentationAssessmentInstancesTableComponent {
@@ -32,6 +36,11 @@ export class PresentationAssessmentInstancesTableComponent {
     readonly presentationAssessment = input.required<PresentationAssessment>();
     /** Editors remove assigned students; tutors only grade them. */
     readonly canDelete = input(false);
+
+    /** The server sorts all students of the presentation, so the order applies across pages. */
+    readonly sortField = input.required<PresentationAssessmentStudentRowsRequest['sortField']>();
+    readonly sortOrder = input.required<number>();
+    readonly sortChange = output<TumAetUiTableSortEvent>();
 
     readonly editInstance = output<PresentationStudentTableRow>();
     readonly deleteInstance = output<PresentationStudentTableRow>();

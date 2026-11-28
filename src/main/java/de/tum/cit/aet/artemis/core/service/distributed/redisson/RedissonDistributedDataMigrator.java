@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSch
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.MIGRATION_LOCK_KEY;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.RELEASE_KEY;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.UNVERSIONED;
+import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.V1_TO_V2_STRUCTURES;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.VERSION;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.VERSION_KEY;
 import static de.tum.cit.aet.artemis.core.service.distributed.DistributedDataSchema.keyFor;
@@ -93,27 +94,33 @@ class RedissonDistributedDataMigrator {
      */
     void migrateToCurrentVersion() {
         RLock lock = redissonClient.getLock(MIGRATION_LOCK_KEY);
-        boolean acquired;
         try {
             // The watchdog renews the lock while this node is alive. A fixed lease could expire halfway through a
             // large queue and let another node publish the target version before the first migration is complete.
-            acquired = lock.tryLock(LOCK_WAIT_MINUTES, TimeUnit.MINUTES);
+            // SonarCloud reports java:S2222 on the next line although the lock is released in the finally block below on every path
+            // that acquired it: a timed tryLock that is interrupted or times out holds nothing, so there is nothing to release.
+            if (lock.tryLock(LOCK_WAIT_MINUTES, TimeUnit.MINUTES)) { // NOSONAR java:S2222 - reviewed, released in the finally block below
+                try {
+                    migrateUnderLock();
+                }
+                finally {
+                    try {
+                        lock.unlock();
+                    }
+                    catch (IllegalMonitorStateException e) {
+                        // The lock is no longer held by this thread, for example because the lease was lost. The migration outcome is already decided.
+                        log.warn("The distributed data migration lock was not held any more when releasing it", e);
+                    }
+                }
+            }
+            else {
+                throw new IllegalStateException("Another node has held the distributed data migration lock for more than " + LOCK_WAIT_MINUTES
+                        + " minutes. Not starting, because the namespace this release reads may still be incomplete. Check whether that node is stuck, then restart this one.");
+            }
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted while waiting for the distributed data migration lock", e);
-        }
-        if (!acquired) {
-            throw new IllegalStateException("Another node has held the distributed data migration lock for more than " + LOCK_WAIT_MINUTES
-                    + " minutes. Not starting, because the namespace this release reads may still be incomplete. Check whether that node is stuck, then restart this one.");
-        }
-        try {
-            migrateUnderLock();
-        }
-        finally {
-            if (lock.isHeldByCurrentThread()) {
-                lock.unlock();
-            }
         }
     }
 
@@ -230,7 +237,8 @@ class RedissonDistributedDataMigrator {
      * decision and a custom old-format decoder when a required representation is no longer wire-compatible.
      */
     private List<MigrationStep> migrationSteps() {
-        return List.of(new MigrationStep(UNVERSIONED, 1, () -> migrateWireCompatibleStructures(UNVERSIONED, 1, LEGACY_TO_V1_STRUCTURES)));
+        return List.of(new MigrationStep(UNVERSIONED, 1, () -> migrateWireCompatibleStructures(UNVERSIONED, 1, LEGACY_TO_V1_STRUCTURES)),
+                new MigrationStep(1, 2, () -> migrateWireCompatibleStructures(1, 2, V1_TO_V2_STRUCTURES)));
     }
 
     private void migrateWireCompatibleStructures(int fromVersion, int toVersion, List<CarriedOverStructure> structures) {

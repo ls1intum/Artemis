@@ -8,7 +8,6 @@ import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { By } from '@angular/platform-browser';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockPipe } from 'ng-mocks';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('Plagiarism Case Verdict Component', () => {
     let comp: PlagiarismCaseVerdictComponent;
@@ -16,7 +15,7 @@ describe('Plagiarism Case Verdict Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbTooltip, PlagiarismCaseVerdictComponent, MockPipe(ArtemisDatePipe)],
+            imports: [PlagiarismCaseVerdictComponent, MockPipe(ArtemisDatePipe)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -40,19 +39,19 @@ describe('Plagiarism Case Verdict Component', () => {
     });
 
     it.each([
-        [undefined, 'bg-secondary'],
-        [PlagiarismVerdict.PLAGIARISM, 'bg-danger'],
-        [PlagiarismVerdict.WARNING, 'bg-danger'],
-        [PlagiarismVerdict.POINT_DEDUCTION, 'bg-danger'],
-        [PlagiarismVerdict.NO_PLAGIARISM, 'bg-success'],
-    ])('should return correct verdict badge class', (verdict: PlagiarismVerdict | undefined, className: string) => {
+        [undefined, 'secondary'],
+        [PlagiarismVerdict.PLAGIARISM, 'danger'],
+        [PlagiarismVerdict.WARNING, 'danger'],
+        [PlagiarismVerdict.POINT_DEDUCTION, 'danger'],
+        [PlagiarismVerdict.NO_PLAGIARISM, 'success'],
+    ])('should render the verdict badge with the matching severity', (verdict: PlagiarismVerdict | undefined, severity: string) => {
         fixture.componentRef.setInput('plagiarismCase', {
             verdict,
         } as PlagiarismCase);
 
         fixture.detectChanges();
 
-        const element = fixture.debugElement.query(By.css('.badge'));
-        expect(element.classes).toHaveProperty(className);
+        const badge = fixture.debugElement.query(By.css('[data-testid="plagiarism-case-verdict-badge"]'));
+        expect(badge.nativeElement.querySelector('[data-severity]').getAttribute('data-severity')).toBe(severity);
     });
 });

@@ -1,17 +1,5 @@
-<p-dialog
-    [(visible)]="isVisible"
-    [modal]="true"
-    [draggable]="false"
-    [resizable]="false"
-    [dismissableMask]="true"
-    [closeOnEscape]="true"
-    [closable]="true"
-    appendTo="body"
-    [style]="{ width: '50rem' }"
-    [breakpoints]="{ '850px': '95vw' }"
-    [header]="'artemisApp.quizExercise.matchingInfoModalTitle' | artemisTranslate"
->
-    <table class="table">
+<tumaet-ui-dialog [(visible)]="isVisible" [dismissableMask]="true" size="medium" [header]="'artemisApp.quizExercise.matchingInfoModalTitle' | artemisTranslate">
+    <table tumAetUiTable>
         <tr>
             <th jhiTranslate="artemisApp.quizExercise.matchLetterCase.title"></th>
             <td jhiTranslate="artemisApp.quizExercise.matchLetterCase.explanation"></td>
@@ -23,9 +11,19 @@
         </tr>
     </table>
     <ng-template #footer>
-        <button type="button" class="btn btn-outline" (click)="isVisible.set(false)" jhiTranslate="entity.action.close"></button>
+        <button type="button" tumAetUiButton severity="secondary" variant="outlined" (click)="isVisible.set(false)" jhiTranslate="entity.action.close"></button>
     </ng-template>
-</p-dialog>
+</tumaet-ui-dialog>
 <div>
-    <button type="button" class="btn" (click)="open()"><fa-icon [icon]="farQuestionCircle" /></button>
+    <button
+        type="button"
+        tumAetUiButton
+        severity="secondary"
+        variant="text"
+        (click)="open()"
+        [attr.aria-label]="'artemisApp.quizExercise.matchingInfoModalTitle' | artemisTranslate"
+        [attr.title]="'artemisApp.quizExercise.matchingInfoModalTitle' | artemisTranslate"
+    >
+        <fa-icon [icon]="farQuestionCircle" />
+    </button>
 </div>

@@ -1,6 +1,8 @@
 import { Component, effect, input, viewChild } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { KeyValuePipe } from '@angular/common';
 import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
 
@@ -9,9 +11,9 @@ import { RemoveKeysPipe } from 'app/foundation/pipes/remove-keys.pipe';
  */
 @Component({
     selector: 'jhi-table-editable-field',
-    styles: ['.table-editable-field {display: flex; align-items: center}', '.table-editable-field__input {flex: 2 1 auto; margin-left: 0.25rem}'],
+    styles: ['.table-editable-field__input {flex: 2 1 auto; margin-left: 0.25rem}'],
     templateUrl: './table-editable-field.component.html',
-    imports: [FormsModule, TranslateDirective, KeyValuePipe, RemoveKeysPipe],
+    imports: [FormsModule, TumAetUiInputDirective, TumAetUiMessageComponent, ArtemisTranslatePipe, KeyValuePipe, RemoveKeysPipe],
 })
 export class TableEditableFieldComponent {
     private readonly editingInputRef = viewChild<NgModel>('editingInput');

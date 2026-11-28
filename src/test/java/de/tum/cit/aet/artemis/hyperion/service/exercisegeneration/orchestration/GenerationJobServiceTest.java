@@ -195,7 +195,7 @@ class GenerationJobServiceTest {
         var owner = user("owner");
         var target = exercise(42L);
         var context = new GenerationVariantPreparation(7L, org.mockito.Mockito.mock(GenerationVariantPreparation.SourceSnapshot.class), null);
-        var settings = new HyperionGenerationSettings("draft", "Quick draft", 20, Duration.ofMinutes(12), 600_000L, true, "CONTINUOUS", 128_000, null, false, false);
+        var settings = new HyperionGenerationSettings("draft", "Quick draft", 20, Duration.ofMinutes(12), 600_000L, true, "CONTINUOUS", 128_000, "testpreset", null, false, false);
 
         var event = service.prepareVariantJob(owner, target, "Change the domain", "budget", settings, new ExerciseGenerationInputDTO("Change the domain", List.of(), 7L), context);
 
@@ -233,7 +233,7 @@ class GenerationJobServiceTest {
         service.init();
         var owner = user("owner");
         var target = exercise(42L);
-        var settings = new HyperionGenerationSettings("draft", "Quick draft", 20, Duration.ofMinutes(12), 600_000L, true, "CONTINUOUS", 128_000, null, false, false);
+        var settings = new HyperionGenerationSettings("draft", "Quick draft", 20, Duration.ofMinutes(12), 600_000L, true, "CONTINUOUS", 128_000, "testpreset", null, false, false);
         var event = service.prepareVariantJob(owner, target, "Change the domain", "budget", settings, new ExerciseGenerationInputDTO("Change the domain", List.of(), 7L),
                 new GenerationVariantPreparation(7L, org.mockito.Mockito.mock(GenerationVariantPreparation.SourceSnapshot.class), null));
 
@@ -282,7 +282,7 @@ class GenerationJobServiceTest {
         User owner = user("owner");
         doAnswer(invocation -> {
             Consumer<GenerationUsage> observer = invocation.getArgument(4);
-            observer.accept(new GenerationUsage("model", 100, 1f, 50, 2f, "pipeline", "provider-id", 20L, 0.1f, true));
+            observer.accept(new GenerationUsage("model", 100, 50, "pipeline", "provider-id", 20L, true, 0.000182));
             return true;
         }).when(tokenUsageService).trackChatResponseTokenUsage(any(), any(), anyString(), any(), any());
 
@@ -315,7 +315,7 @@ class GenerationJobServiceTest {
         User owner = user("owner");
         doAnswer(invocation -> {
             Consumer<GenerationUsage> observer = invocation.getArgument(4);
-            observer.accept(new GenerationUsage("model", 100, 1f, 50, 2f, "pipeline", "provider-id", 20L, 0.1f, true));
+            observer.accept(new GenerationUsage("model", 100, 50, "pipeline", "provider-id", 20L, true, 0.000182));
             return true;
         }).when(tokenUsageService).trackChatResponseTokenUsage(any(), any(), anyString(), any(), any());
 
@@ -1990,8 +1990,8 @@ class GenerationJobServiceTest {
             }
         }, mock(GenerationTokenUsageService.class));
         service.init();
-        HyperionGenerationSettings narrowed = new HyperionGenerationSettings("draft", "Quick draft", 20, Duration.ofMinutes(12), 600_000L, true, "CONTINUOUS", 128_000, null, false,
-                false);
+        HyperionGenerationSettings narrowed = new HyperionGenerationSettings("draft", "Quick draft", 20, Duration.ofMinutes(12), 600_000L, true, "CONTINUOUS", 128_000,
+                "testpreset", null, false, false);
         Instant before = Instant.now();
 
         service.startJob(user("owner"), exercise(9_001L), "generate", GenerationMode.GENERATE, null, null, narrowed);
@@ -2007,8 +2007,8 @@ class GenerationJobServiceTest {
         // The caller must be able to verify what ran, not what it asked for.
         ProgrammingExercise exercise = exercise(9_002L);
         User owner = user("owner");
-        HyperionGenerationSettings thorough = new HyperionGenerationSettings("thorough", "Thorough", 90, Duration.ofMinutes(20), 6_000_000L, true, "CONTINUOUS", 128_000, null,
-                false, false);
+        HyperionGenerationSettings thorough = new HyperionGenerationSettings("thorough", "Thorough", 90, Duration.ofMinutes(20), 6_000_000L, true, "CONTINUOUS", 128_000,
+                "testpreset", null, false, false);
 
         jobService.startJob(owner, exercise, "generate", GenerationMode.GENERATE, null, null, thorough);
 

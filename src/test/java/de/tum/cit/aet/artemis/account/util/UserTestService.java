@@ -377,11 +377,9 @@ public class UserTestService {
 
         assertThat(userInDB.getLogin()).isEqualTo(student.getLogin());
         assertThat(userInDB.getId()).isEqualTo(student.getId());
+        // Science events are keyed by login, so a rename that skipped them would leave them unreachable for deletion and export.
+        assertThat(scienceEventRepository.findById(scienceEvent.getId()).orElseThrow().getIdentity()).isEqualTo(student.getLogin());
     }
-
-    // NOTE: updateUserGroups test removed — the admin user update API (ManagedUserVM) no longer
-    // carries group strings (UserDTO dropped the groups field in Phase 6). Course membership is
-    // now managed via user_course_role; see UserUtilService.enrollUserInCourse().
 
     // Test
     public User createExternalUser_asAdmin_isSuccessful() throws Exception {
@@ -405,12 +403,6 @@ public class UserTestService {
         assertThat(student).as("New user is equal to new user in DB").isEqualTo(userInDB);
 
         return userInDB;
-    }
-
-    // Test
-    public void createExternalUser_asAdmin_withVcsToken_isSuccessful() throws Exception {
-        var user = this.createExternalUser_asAdmin_isSuccessful();
-        assertThat(userVcsAccessTokenService.findToken(user.getId())).as("VCS Access token is set correctly").isEqualTo("acccess-token-value");
     }
 
     // Test
@@ -896,25 +888,19 @@ public class UserTestService {
     }
 
     // Test
-    public void createAndDeleteUserVcsAccessToken() throws Exception {
+    public void deleteUserVcsAccessTokenAndCannotCreateAnother() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
 
-        // Set expiry date to already past date -> Bad Request
-        ZonedDateTime expiryDate = ZonedDateTime.now().minusMonths(1);
-        var userDTO = request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.BAD_REQUEST);
-        assertThat(userDTO).isNull();
+        // The personal token is deprecated: it cannot be created any more, however the request looks
+        request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + ZonedDateTime.now().plusMonths(1), null, UserDTO.class, HttpStatus.METHOD_NOT_ALLOWED);
+        assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
 
-        // Correct expiry date -> OK
-        expiryDate = ZonedDateTime.now().plusMonths(1);
-        userDTO = request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.OK);
-        user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(userVcsAccessTokenService.findToken(user.getId())).isEqualTo(userDTO.getVcsAccessToken());
+        // A token that exists from before can be revoked, which is what is left of the feature for a token that leaked
+        userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(user, "vcpat-" + "c".repeat(44), ZonedDateTime.now().plusMonths(1));
         assertThat(userVcsAccessTokenService.findExpiryDate(user.getId())).isNotNull();
 
-        // Delete token
         request.delete("/api/account/user-vcs-access-token", HttpStatus.OK);
-        user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userVcsAccessTokenService.findToken(user.getId())).isNull();
         assertThat(userVcsAccessTokenService.findExpiryDate(user.getId())).isNull();
     }
