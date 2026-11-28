@@ -4,6 +4,13 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// publint and AreTheTypesWrong are not dependencies of the project: they are fetched on demand with `pnpm dlx` at exactly these
+// versions, so that they stay out of every install (about 46 packages). Bump a version here by hand when a newer tool is wanted.
+// renovate: datasource=npm depName=publint
+const PUBLINT_VERSION = '0.3.25';
+// renovate: datasource=npm depName=@arethetypeswrong/cli
+const ATTW_VERSION = '0.18.5';
+
 const root = dirname(fileURLToPath(import.meta.url));
 const manifest = JSON.parse(await readFile(resolve(root, 'dist-pack/package.json'), 'utf8'));
 assert.equal(manifest.name, '@tumaet/ui-angular');
@@ -34,8 +41,8 @@ for (const path of files) {
 }
 const tarball = resolve(destination, packed.filename);
 const options = { cwd: root, stdio: 'inherit' };
-execFileSync('pnpm', ['exec', 'publint', '--strict', tarball], options);
-execFileSync('pnpm', ['exec', 'attw', tarball, '--entrypoints', '.', ...entryPoints, '--profile', 'esm-only'], options);
+execFileSync('pnpm', ['dlx', `publint@${PUBLINT_VERSION}`, '--strict', tarball], options);
+execFileSync('pnpm', ['dlx', `@arethetypeswrong/cli@${ATTW_VERSION}`, tarball, '--entrypoints', '.', ...entryPoints, '--profile', 'esm-only'], options);
 const { integrity } = packed;
 await writeFile(resolve(destination, 'package.json'), JSON.stringify({ filename: packed.filename, name: manifest.name, version: manifest.version, integrity }, null, 2) + '\n');
 console.log(`Validated ${packed.filename} (${packed.size} bytes, ${files.length} files, ${integrity})`);

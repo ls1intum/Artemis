@@ -79,6 +79,7 @@ services:
         extends:
             file: ./broker.yml
             service: activemq-broker
+        restart: always
         networks:
             - artemis
 
