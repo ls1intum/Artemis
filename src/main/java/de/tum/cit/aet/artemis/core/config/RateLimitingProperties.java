@@ -78,6 +78,12 @@ public class RateLimitingProperties {
     private Integer loginOptionsRequestsPerMinute;
 
     /**
+     * Requests per minute for unauthenticated oidc flow initiation
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#OIDC_AUTHORIZATION}
+     */
+    private Integer oidcAuthorizationRequestsPerMinute;
+
+    /**
      * Failed password logins per minute that one account tolerates before further logins for it are answered with 429.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#FAILED_LOGIN}.
      */
@@ -220,6 +226,26 @@ public class RateLimitingProperties {
 
     public void setLoginOptionsRequestsPerMinute(Integer loginOptionsRequestsPerMinute) {
         this.loginOptionsRequestsPerMinute = loginOptionsRequestsPerMinute;
+    }
+
+    public Integer getOidcAuthorizationRequestsPerMinute() {
+        return oidcAuthorizationRequestsPerMinute;
+    }
+
+    /**
+     * Sets the requests per minute for unauthenticated oidc flow initiation.
+     *
+     * @param oidcAuthorizationRequestsPerMinute the requests per minute limit
+     */
+    public void setOidcAuthorizationRequestsPerMinute(Integer oidcAuthorizationRequestsPerMinute) {
+        // Use default value if oidcAuthorizationRequestsPerMinute is <= 0
+        // to prevent IllegalArgumentException for Bucket4j.
+        if (oidcAuthorizationRequestsPerMinute != null && oidcAuthorizationRequestsPerMinute <= 0) {
+            this.oidcAuthorizationRequestsPerMinute = 3000;
+        }
+        else {
+            this.oidcAuthorizationRequestsPerMinute = oidcAuthorizationRequestsPerMinute;
+        }
     }
 
     public Integer getProblemStatementRenderingRequestsPerMinute() {

@@ -19,6 +19,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizationRequestResolver;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -27,7 +28,9 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import de.tum.cit.aet.artemis.account.repository.oidc.DistributedOIDCAuthorizationRequestRepository;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationFailureHandler;
 import de.tum.cit.aet.artemis.account.security.OIDCAuthenticationSuccessHandler;
+import de.tum.cit.aet.artemis.account.security.OIDCRateLimitFilter;
 import de.tum.cit.aet.artemis.account.security.OIDCService;
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 
 /**
  * Describes the security configuration for OpenID Connect (OIDC) authentication.
@@ -53,6 +56,8 @@ public class OIDCConfiguration {
     private final OIDCAuthenticationFailureHandler oidcAuthenticationFailureHandler;
 
     private final DistributedOIDCAuthorizationRequestRepository authorizationRequestRepository;
+
+    private final RateLimitService rateLimitService;
 
     private final Environment environment;
 
@@ -82,11 +87,12 @@ public class OIDCConfiguration {
 
     public OIDCConfiguration(OIDCService oidcService, OIDCAuthenticationSuccessHandler oidcAuthenticationSuccessHandler,
             OIDCAuthenticationFailureHandler oidcAuthenticationFailureHandler, DistributedOIDCAuthorizationRequestRepository authorizationRequestRepository,
-            Environment environment) {
+            RateLimitService rateLimitService, Environment environment) {
         this.oidcService = oidcService;
         this.oidcAuthenticationSuccessHandler = oidcAuthenticationSuccessHandler;
         this.oidcAuthenticationFailureHandler = oidcAuthenticationFailureHandler;
         this.authorizationRequestRepository = authorizationRequestRepository;
+        this.rateLimitService = rateLimitService;
         this.environment = environment;
     }
 
@@ -158,6 +164,8 @@ public class OIDCConfiguration {
                 });
             }
         });
+
+        OIDCRateLimitFilter oidcRateLimitFilter = new OIDCRateLimitFilter(rateLimitService);
         // @formatter:off
         http
             // /oauth2/authorization/tum-login - user starts the authentication
@@ -170,6 +178,7 @@ public class OIDCConfiguration {
             .authorizeHttpRequests(auth -> auth
                 .anyRequest().authenticated()
             )
+            .addFilterBefore(oidcRateLimitFilter, OAuth2AuthorizationRequestRedirectFilter.class)
 
             // Activate Spring Security OAuth2 Login
             .oauth2Login(oauth2 -> oauth2
