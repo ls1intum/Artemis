@@ -17,7 +17,12 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -227,6 +232,41 @@ class ProcessingStateWorkerDispatchTest {
         LectureUnitCombinedStatusDTO status = (LectureUnitCombinedStatusDTO) pushed.getValue();
         assertThat(status.stageProgress()).isEqualTo(1);
         assertThat(status.stageTotal()).isEqualTo(1);
+    }
+
+    @Test
+    void renewWorkerLeasesWarnsOnceWhileAWorkerKeepsListingTheSameRevokedRuns() {
+        Logger serviceLogger = (Logger) LoggerFactory.getLogger(ProcessingStateCallbackService.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        serviceLogger.addAppender(appender);
+        try {
+            // A worker that ignores the revocation lists the same run with every heartbeat, once every few seconds, for as long as it runs.
+            for (int heartbeat = 0; heartbeat < 5; heartbeat++) {
+                assertThat(callbackService.renewWorkerLeases(WORKER_BOOT_ID, List.of("token-gone"))).containsExactly("token-gone");
+            }
+            assertThat(warnings(appender)).hasSize(1);
+
+            // A run that was not listed before is news, so it is reported at once.
+            callbackService.renewWorkerLeases(WORKER_BOOT_ID, List.of("token-gone", "token-gone-too"));
+            assertThat(warnings(appender)).hasSize(2);
+
+            // Another worker is another report.
+            callbackService.renewWorkerLeases("worker-boot-2", List.of("token-gone"));
+            assertThat(warnings(appender)).hasSize(3);
+
+            // A worker that sends no boot id is answered like any other, its runs are revoked.
+            assertThat(callbackService.renewWorkerLeases(null, List.of("token-gone"))).containsExactly("token-gone");
+            assertThat(warnings(appender)).hasSize(4);
+        }
+        finally {
+            serviceLogger.detachAppender(appender);
+            appender.stop();
+        }
+    }
+
+    private static List<ILoggingEvent> warnings(ListAppender<ILoggingEvent> appender) {
+        return appender.list.stream().filter(event -> event.getLevel() == Level.WARN).toList();
     }
 
     @Test
