@@ -137,7 +137,7 @@ overrides:
   # zustand/shallow, which zustand 5 still provides. Drop both entries once Apollon and @xyflow/react agree on their own
   # (`pnpm run check:duplicate-dependencies` lists what is still duplicated).
   '@xyflow/react>zustand': '5.1.0'
-  '@tumaet/apollon>@xyflow/system': '0.0.83'
+  '@tumaet/apollon>@xyflow/system': '0.0.84'
   'ng-mocks>@angular/common': '^22.0.0'
   'ng-mocks>@angular/core': '^22.0.0'
   'ng-mocks>@angular/forms': '^22.0.0'
