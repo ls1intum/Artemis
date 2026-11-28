@@ -3,14 +3,19 @@ package de.tum.cit.aet.artemis.sharing.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.health.contributor.Status;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
@@ -42,6 +47,31 @@ class SharingHealthHistoryTest {
         assertThat(disconnected.entries()).hasSize(SharingConnectorService.HEALTH_HISTORY_LIMIT);
         assertThat(disconnected.entries().getFirst().message()).contains("validation");
         assertThat(disconnected.entries().getLast().message()).isEqualTo("shutdown requested");
+    }
+
+    @Test
+    void staleConnectionReportsUnknownWithNewestEventFirst() {
+        var connector = mock(SharingConnectorService.class);
+        var lastConnect = Instant.parse("2020-01-01T12:00:00Z");
+        var connected = new SharingConnectorService.HealthEntry(lastConnect, "Connected");
+        var failure = new SharingConnectorService.HealthEntry(lastConnect.plusSeconds(60), "Failed validation");
+        when(connector.getHealthSnapshot()).thenReturn(new SharingConnectorService.HealthSnapshot(List.of(connected, failure), lastConnect));
+
+        var health = new SharingHealthIndicator(connector).health();
+
+        assertThat(health.getStatus()).isEqualTo(Status.UNKNOWN);
+        assertThat(health.getDetails().values()).containsExactly("Failed validation", "Connected");
+    }
+
+    @Test
+    void reinitializationWithoutAPlatformUrlSkipsTheRequest() {
+        var restClient = mock(RestClient.class);
+        var connector = new SharingConnectorService(restClient, mock(TaskScheduler.class));
+
+        connector.triggerReinit();
+
+        verifyNoInteractions(restClient);
+        assertThat(connector.getHealthSnapshot().entries()).isEmpty();
     }
 
     @Test

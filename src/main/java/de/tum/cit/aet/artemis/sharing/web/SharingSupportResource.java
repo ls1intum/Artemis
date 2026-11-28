@@ -117,8 +117,8 @@ public class SharingSupportResource {
                     return ResponseEntity.badRequest().build();
                 }
             }
-            catch (IllegalArgumentException | MalformedURLException e) {
-                log.error("Bad URL", e);
+            catch (IllegalArgumentException | MalformedURLException _) {
+                log.warn("Rejected config request: malformed apiBaseUrl");
                 return ResponseEntity.badRequest().build();
             }
             return ResponseEntity.ok(sharingConnectorService.getPluginConfig(parsedApiBaseUrl, installationName));
