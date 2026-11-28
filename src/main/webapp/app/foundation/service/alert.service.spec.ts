@@ -195,6 +195,35 @@ describe('Alert Service Test', () => {
         );
     });
 
+    it('should report an unknown translation key', () => {
+        vi.mocked(captureException).mockClear();
+
+        service.addAlert({ type: AlertType.INFO, translationKey: 'hello.jhipster' });
+
+        expect(captureException).toHaveBeenCalledOnce();
+    });
+
+    it('should not report a text with whitespace as an unknown translation key, but show it', () => {
+        vi.mocked(captureException).mockClear();
+
+        const alert = service.addAlert({ type: AlertType.DANGER, message: 'Http failure response for /api/exercise/exercises/1/teams/undefined: 404 Not Found' });
+
+        expect(alert.message).toBe('Http failure response for /api/exercise/exercises/1/teams/undefined: 404 Not Found');
+        expect(captureException).not.toHaveBeenCalled();
+    });
+
+    it('should show a message that is not a string without translating it', () => {
+        vi.mocked(captureException).mockClear();
+        const translateService = TestBed.inject(TranslateService);
+        const instant = vi.spyOn(translateService, 'instant');
+
+        const alert = service.addAlert({ type: AlertType.DANGER, message: { detail: 'unexpected' } as unknown as string });
+
+        expect(alert.message).toBe('[object Object]');
+        expect(instant).not.toHaveBeenCalled();
+        expect(captureException).not.toHaveBeenCalled();
+    });
+
     it('should display an alert on status 0', () => {
         // GIVEN
         eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 0 } });

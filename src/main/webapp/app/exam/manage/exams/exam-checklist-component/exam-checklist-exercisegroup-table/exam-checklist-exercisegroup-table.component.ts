@@ -4,7 +4,8 @@ import { ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entit
 import { ExerciseGroupColumn, ExerciseGroupVariantColumn } from 'app/exam/shared/entities/exercise-group-column.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NoDataComponent } from 'app/shared-ui/components/no-data/no-data-component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -12,7 +13,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-exam-checklist-exercisegroup-table',
     templateUrl: './exam-checklist-exercisegroup-table.component.html',
-    styleUrls: ['./exam-checklist-exercisegroup-table.component.scss'],
+    styleUrls: ['./exam-checklist-exercisegroup-table.component.css'],
     imports: [TranslateDirective, TumAetUiTableDirective, TumAetUiTooltipDirective, FaIconComponent, NoDataComponent, ArtemisTranslatePipe],
 })
 export class ExamChecklistExerciseGroupTableComponent {

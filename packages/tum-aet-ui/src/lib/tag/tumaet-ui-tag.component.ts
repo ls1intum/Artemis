@@ -27,7 +27,7 @@ const TAG_SEVERITY: Record<TumAetUiTagSeverity, string> = {
 @Component({
     selector: 'tumaet-ui-tag',
     templateUrl: './tumaet-ui-tag.component.html',
-    styleUrl: './tumaet-ui-tag.component.scss',
+    styleUrl: './tumaet-ui-tag.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumAetUiTagComponent {

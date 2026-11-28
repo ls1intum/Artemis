@@ -3,7 +3,8 @@ import { Subject } from 'rxjs';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiButtonDirective, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { Exercise, getCourseId } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -15,7 +16,7 @@ import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismC
 
 @Component({
     selector: 'jhi-plagiarism-header',
-    styleUrls: ['./plagiarism-header.component.scss'],
+    styleUrls: ['./plagiarism-header.component.css'],
     templateUrl: './plagiarism-header.component.html',
     imports: [TranslateDirective, ArtemisTranslatePipe, RouterModule, FaIconComponent, TumAetUiButtonDirective, TumAetUiConfirmDialogComponent],
     providers: [TumAetUiConfirmationService],

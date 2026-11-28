@@ -1,5 +1,7 @@
 import { Component, computed, input, model, output } from '@angular/core';
-import { TumAetUiDialogComponent, TumAetUiToggleSwitchComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -11,7 +13,7 @@ import { LEAGUES } from 'app/quiz/overview/course-training/league-resource';
 
 @Component({
     selector: 'jhi-quiz-training-dialog',
-    styleUrl: 'course-training.component.scss',
+    styleUrl: 'course-training.component.css',
     imports: [
         FormsModule,
         TranslateDirective,

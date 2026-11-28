@@ -19,7 +19,9 @@ import { FormsModule } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { CLEANUP_ACTION_PRESENTATION } from 'app/admin/cleanup-service/cleanup-action.util';
 
 /** The unit a configured retention period is expressed in, used to pick the matching singular/plural label key. */

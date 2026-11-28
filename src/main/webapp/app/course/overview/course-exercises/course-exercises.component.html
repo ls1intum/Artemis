@@ -1,7 +1,8 @@
 <div class="horizontal-scroll flex">
     @if (course()) {
         @if (!isShownViaLti()) {
-            <div [class]="{ 'sidebar-collapsed': isCollapsed() }">
+            <!-- A collapsed list is only faded and narrowed, so it is inert: its links and buttons must leave the tab order. -->
+            <div #listWrapper [class]="{ 'sidebar-collapsed': isCollapsed() }" [attr.inert]="isCollapsed() ? '' : null">
                 @if (sidebarData(); as data) {
                     <jhi-sidebar
                         [itemSelected]="exerciseSelected()"
@@ -32,6 +33,7 @@
 
         @if (exerciseSelected()) {
             <div
+                #contentArea
                 [class]="{ 'content-sidebar-width': !isCollapsed() }"
                 class="content-width scrollable-content no-header-bar-height"
                 [style]="isShownViaLti() ? { height: '90vh', position: 'relative' } : {}"

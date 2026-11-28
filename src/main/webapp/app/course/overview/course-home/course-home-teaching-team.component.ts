@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { TumAetUiAvatarComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiAvatarComponent } from '@tumaet/ui-angular/avatar';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseHomeTeachingTeam } from './course-home.model';

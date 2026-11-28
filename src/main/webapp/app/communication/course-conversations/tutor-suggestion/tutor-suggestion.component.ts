@@ -23,7 +23,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
 import { faArrowDown, faArrowUp, faArrowsRotate } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 /**
  * Component to display the tutor suggestion in the chat
@@ -33,7 +33,7 @@ import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
     standalone: true,
     selector: 'jhi-tutor-suggestion',
     templateUrl: './tutor-suggestion.component.html',
-    styleUrls: ['./tutor-suggestion.component.scss'],
+    styleUrls: ['./tutor-suggestion.component.css'],
     imports: [IrisLogoComponent, AsPipe, FormsModule, TranslateDirective, IrisBaseChatbotComponent, ButtonComponent, ArtemisDatePipe, ArtemisTimeAgoPipe, TumAetUiTooltipDirective],
 })
 export class TutorSuggestionComponent implements OnInit, OnDestroy {

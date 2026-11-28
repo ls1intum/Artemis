@@ -8,7 +8,9 @@ import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-sv
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ChartMultiSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { multiSeriesLineChart, referenceLineSeries } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
-import { TumAetUiButtonDirective, TumAetUiLineChartComponent, TumAetUiLineChartConfig, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiLineChartComponent, TumAetUiLineChartConfig } from '@tumaet/ui-angular/chart';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { mean } from 'app/foundation/util/statistics.util';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -26,7 +28,7 @@ export enum SwitchTimeSpanDirection {
 @Component({
     selector: 'jhi-course-detail-line-chart',
     templateUrl: './course-detail-line-chart.component.html',
-    styleUrls: ['./course-detail-line-chart.component.scss'],
+    styleUrls: ['./course-detail-line-chart.component.css'],
     imports: [
         RouterLink,
         TranslateDirective,

@@ -10,7 +10,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-rating',
     templateUrl: './rating.component.html',
-    styleUrls: ['./rating.component.scss'],
+    styleUrls: ['./rating.component.css'],
     imports: [TranslateDirective, StarRatingComponent],
 })
 export class RatingComponent {

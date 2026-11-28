@@ -15,7 +15,10 @@ import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
 import { UI_RELOAD_TIME } from 'app/foundation/constants/exercise-exam-constants';
 import { faArrowLeft, faCircleExclamation, faDoorClosed, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { ExamLiveEventsButtonComponent } from '../events/button/exam-live-events-button.component';
 import { ExamStartInformationComponent } from '../exam-start-information/exam-start-information.component';
 import { FormsModule } from '@angular/forms';
@@ -25,10 +28,13 @@ import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sid
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
+/** How often the start page checks whether the start button may be used. The window is minutes long, so a delay of a second at most goes unnoticed. */
+const START_WINDOW_CHECK_INTERVAL_MS = 1000;
+
 @Component({
     selector: 'jhi-exam-participation-cover',
     templateUrl: './exam-participation-cover.component.html',
-    styleUrls: ['./exam-participation-cover.scss'],
+    styleUrls: ['./exam-participation-cover.css'],
     imports: [
         NgTemplateOutlet,
         TumAetUiButtonDirective,
@@ -89,6 +95,13 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
     readonly formattedConfirmationText = signal<SafeHtml | undefined>(undefined);
 
     interval?: number;
+    /** Checks the clock for {@link startWindowOpen} while the start page is shown. */
+    private startWindowInterval?: number;
+    /**
+     * Whether the exam is visible and its start is less than EXAM_START_WAIT_TIME_MINUTES away, so that the student may press the start button.
+     * It depends on the clock only, which no view notices by itself: a signal makes the page re-render exactly when this changes (see {@link updateStartWindow}).
+     */
+    readonly startWindowOpen = signal(false);
     readonly waitingForExamStart = signal(false);
     readonly isFetching = signal(false);
     loadExamSubscription?: Subscription;
@@ -135,16 +148,30 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
                 }
             });
         });
+
+        // A live schedule update replaces the exam: do not wait for the next check of the clock.
+        effect(() => {
+            this.exam();
+            this.updateStartWindow();
+        });
     }
 
     ngOnInit(): void {
         const exam = this.exam();
         this.isAttendanceChecked.set(!isRealExam(exam) || !exam.examWithAttendanceCheck || this.attendanceChecked());
+        if (this.startView() && !this.testRun()) {
+            // The student may sit on this page for a long time before the window opens and does nothing in between: check the clock regularly.
+            this.updateStartWindow();
+            this.startWindowInterval = window.setInterval(() => this.updateStartWindow(), START_WINDOW_CHECK_INTERVAL_MS);
+        }
     }
 
     ngOnDestroy() {
         if (this.interval) {
             clearInterval(this.interval);
+        }
+        if (this.startWindowInterval) {
+            clearInterval(this.startWindowInterval);
         }
         this.loadExamSubscription?.unsubscribe();
     }
@@ -267,16 +294,16 @@ export class ExamParticipationCoverComponent implements OnDestroy, OnInit {
         if (this.testRun()) {
             return this.nameIsCorrect && this.confirmed && !!this.exam();
         }
+        return this.nameIsCorrect && this.confirmed && this.startWindowOpen();
+    }
+
+    /**
+     * Reads the clock and updates {@link startWindowOpen}. A signal that gets the value it already has does not notify the view, so calling this often does not cost a rendering.
+     */
+    updateStartWindow(): void {
         const now = this.serverDateService.now();
         const exam = this.exam();
-        return !!(
-            this.nameIsCorrect &&
-            this.confirmed &&
-            exam &&
-            exam.visibleDate &&
-            exam.visibleDate.isBefore(now) &&
-            now.add(EXAM_START_WAIT_TIME_MINUTES, 'minute').isAfter(exam.startDate)
-        );
+        this.startWindowOpen.set(!!(exam?.visibleDate && exam.visibleDate.isBefore(now) && now.add(EXAM_START_WAIT_TIME_MINUTES, 'minute').isAfter(exam.startDate)));
     }
 
     get endButtonEnabled(): boolean {

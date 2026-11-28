@@ -7,7 +7,7 @@ import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive
 @Component({
     selector: 'jhi-code-editor-grid',
     templateUrl: './code-editor-grid.component.html',
-    styleUrls: ['./code-editor-grid.scss'],
+    styleUrls: ['./code-editor-grid.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [ResizableDirective],
 })

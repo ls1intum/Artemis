@@ -5,7 +5,7 @@ import { McqResponseData, McqSetData } from 'app/iris/shared/entities/iris-conte
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { IrisMcqQuestionComponent } from './iris-mcq-question.component';
 
 /**
@@ -18,7 +18,7 @@ import { IrisMcqQuestionComponent } from './iris-mcq-question.component';
     imports: [IrisMcqQuestionComponent, TranslateDirective, ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './iris-mcq-carousel.component.html',
-    styleUrl: './iris-mcq-carousel.component.scss',
+    styleUrl: './iris-mcq-carousel.component.css',
 })
 export class IrisMcqCarouselComponent {
     readonly faChevronLeft = faChevronLeft;
