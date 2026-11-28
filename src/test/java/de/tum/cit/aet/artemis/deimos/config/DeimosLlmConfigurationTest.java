@@ -73,7 +73,7 @@ class DeimosLlmConfigurationTest {
         try {
             String baseUrl = "http://" + server.getAddress().getHostString() + ":" + server.getAddress().getPort();
             var endpoint = new Endpoint(EndpointType.OPENAI, baseUrl, apiKey, Duration.ofSeconds(10), 0, null, null, Map.of(), List.of());
-            var preset = new Preset(PRESET, "test-model", Api.CHAT_COMPLETIONS, null, 0.0, null, null, null, null, null, null);
+            var preset = new Preset(PRESET, "test-model", Api.RESPONSES, null, 0.0, null, null, null, null, null, null);
             var llmClientService = new LlmClientService(new LlmProperties(Map.of(PRESET, endpoint), Map.of(PRESET, preset), null), new JsonMapper(), ObservationRegistry.NOOP,
                     new SimpleMeterRegistry(), List.of());
             var client = new DefaultDeimosLlmClient(llmClientService, PRESET);

@@ -159,7 +159,7 @@ public class LlmConfigurationValidator {
             errors.add(key + ".model is required");
         }
         if (preset.api() == null) {
-            errors.add(key + ".api is required (responses, chat-completions or embeddings)");
+            errors.add(key + ".api is required (responses or embeddings)");
         }
         if (preset.timeout() != null && !preset.timeout().isPositive()) {
             errors.add(key + ".timeout must be positive");
@@ -213,7 +213,7 @@ public class LlmConfigurationValidator {
                 errors.add(source + " needs a preset with api embeddings, but " + assignment.preset() + " uses " + apiName(preset.api()));
             }
             if (assignment.usage() == LlmPresetAssignment.Usage.CHAT && embedding) {
-                errors.add(source + " needs a chat preset (api responses or chat-completions), but " + assignment.preset() + " uses embeddings");
+                errors.add(source + " needs a chat preset (api responses), but " + assignment.preset() + " uses embeddings");
             }
             if (assignment.requiresNoRetry() && properties.endpointOf(preset) != null && properties.effectiveMaxRetries(preset) != 0) {
                 errors.add(source + ": exercise generation retries on its own and needs max-retries 0 on preset " + assignment.preset() + " or its endpoint");

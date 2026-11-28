@@ -728,7 +728,7 @@ public class CompetencyOrchestrationService {
         AtlasToolCallBudget.checkResponse(chatResponse, toolContext);
         if (chatResponse != null && chatResponse.getResult() != null) {
             String finish = chatResponse.getResult().getMetadata().getFinishReason();
-            if (java.util.Set.of("failed", "incomplete", "cancelled", "queued", "in_progress", "missing_status", "unsupported_output", "invalid_usage")
+            if (java.util.Set.of("failed", "incomplete", "length", "cancelled", "queued", "in_progress", "missing_status", "unsupported_output", "invalid_usage")
                     .contains(finish == null ? "" : finish)) {
                 throw new IllegalStateException("Atlas Responses request did not complete: " + finish);
             }

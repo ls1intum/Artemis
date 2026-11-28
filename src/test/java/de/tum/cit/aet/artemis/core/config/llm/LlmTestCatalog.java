@@ -53,7 +53,7 @@ public final class LlmTestCatalog {
      */
     public static LlmProperties priced(String model, @Nullable Price price) {
         Endpoint endpoint = price == null ? endpoint("https://llm.example/v1") : endpoint("https://llm.example/v1", price);
-        return new LlmProperties(Map.of("test", endpoint), Map.of(PRESET, preset("test", model, Api.CHAT_COMPLETIONS)), null);
+        return new LlmProperties(Map.of("test", endpoint), Map.of(PRESET, preset("test", model, Api.RESPONSES)), null);
     }
 
     /**

@@ -20,6 +20,7 @@ import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.ToolResponseMessage;
 import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.metadata.FinishReasonCategory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.ChatOptions;
@@ -408,9 +409,14 @@ public class AgentLoopRunner {
                 return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
             }
 
+            boolean truncated = AgentToolBatch.isTruncatedByTokenLimit(response);
+            if (hasProviderFailure(response)) {
+                return failed(turn, lastAssistantText, conversation, "The AI service did not complete turn " + turn + ".");
+            }
+
             String assistantText = extractText(response);
             // A text-only reply cut off at the output limit is discarded below, so it must not become the session's final message either.
-            boolean discardedCutOffText = !response.hasToolCalls() && AgentToolBatch.isTruncatedByTokenLimit(response);
+            boolean discardedCutOffText = !response.hasToolCalls() && truncated;
             if (!discardedCutOffText && assistantText != null && !assistantText.isBlank()) {
                 lastAssistantText = assistantText;
             }
@@ -454,7 +460,7 @@ public class AgentLoopRunner {
             previousReplyCutOffWithoutAction = false;
             // A completion cut off by the token limit may carry silently truncated tool arguments (half a file in write_file's content). Executing them would corrupt the
             // workspace while the model believes the calls landed, so every call id is answered with a re-issue instruction instead.
-            if (AgentToolBatch.isTruncatedByTokenLimit(response) && !toolCalls.isEmpty()) {
+            if (truncated && !toolCalls.isEmpty()) {
                 emit(stepListener, "The response was cut off at the length limit; asking the agent to re-issue its last actions.");
                 conversation.add(response.getResult().getOutput());
                 conversation.add(AgentToolBatch.unexecutedResponses(toolCalls,
@@ -556,7 +562,7 @@ public class AgentLoopRunner {
                 emit(stepListener, "The agent tried an unavailable action and is correcting it.");
                 AssistantMessage failedTurn = response.getResult().getOutput();
                 conversation.add(failedTurn);
-                // Every requested call id must be answered, or the chat-completions tool-pairing contract is violated on the next request.
+                // Every requested call id must be answered, or the Responses tool-pairing contract is violated on the next request.
                 String outcome = executionStarted
                         ? "ERROR: this batch stopped after execution began. Some calls may have completed. Inspect the workspace before retrying any action."
                         : AgentToolBatch.preflightRejectionFeedback(toolCallbacks);
@@ -664,7 +670,8 @@ public class AgentLoopRunner {
                     emit(stepListener, "The AI service returned no response; usage could not be determined.");
                     return null;
                 }
-                if (!isEmptyResponse(response)) {
+                // Provider-declared failures and truncation have a finish reason even when there is no usable content.
+                if (hasProviderFailure(response) || AgentToolBatch.isTruncatedByTokenLimit(response) || !isEmptyResponse(response)) {
                     return response;
                 }
                 log.warn("Agent loop model call returned an empty response on turn {} (sample {}/{})", turn, sample, EMPTY_RESPONSE_SAMPLES);
@@ -730,6 +737,14 @@ public class AgentLoopRunner {
             }
         }
         return response;
+    }
+
+    private static boolean hasProviderFailure(ChatResponse response) {
+        if (response.getResult() == null) {
+            return false;
+        }
+        var category = response.getResult().getMetadata().getFinishReasonCategory();
+        return category == FinishReasonCategory.OTHER || category == FinishReasonCategory.FILTERED;
     }
 
     /** A response carrying neither a tool call nor any assistant text — no usable content, so re-sampling can help. */
@@ -857,8 +872,7 @@ public class AgentLoopRunner {
         }
         List<Message> summaryPrompt = List.of(new SystemMessage(SUMMARIZATION_SYSTEM_PROMPT),
                 new UserMessage("Summarize the following earlier session messages into the structured summary described above:\n\n" + transcript));
-        // The options must be OpenAiChatOptions rather than a generic ChatOptions: OpenAiChatModel#buildRequestPrompt casts the runtime options, so a DefaultChatOptions throws
-        // ClassCastException. Reasoning effort is pinned low where the provider supports it — a server-side reasoning default would otherwise consume the whole summary allowance.
+        // Preserve provider-specific options. Pin reasoning effort low where supported so it cannot consume the summary allowance.
         OpenAiChatOptions.Builder summaryOptions = configuredOptionsBuilder().toolCallbacks(List.of()).reasoningEffort(hasConfiguredReasoningEffort() ? "low" : null)
                 .maxTokens(null).maxCompletionTokens(null);
         int summaryOutputTokens = Math.min(SUMMARY_MAX_OUTPUT_TOKENS, configuredTurnTokenLimit().tokens());

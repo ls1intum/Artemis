@@ -15,7 +15,6 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.support.UsageCalculator;
 
 import com.openai.core.JsonValue;
-import com.openai.models.completions.CompletionUsage;
 import com.openai.models.responses.ResponseUsage;
 
 class LLMResponseCostTest {
@@ -25,9 +24,9 @@ class LLMResponseCostTest {
     }
 
     @Test
-    void readsChatCompletionUsdIncludingZero() {
+    void readsResponsesUsdIncludingZero() {
         for (double cost : new double[] { 0, 0.0000123 }) {
-            var nativeUsage = completion(cost, "USD");
+            var nativeUsage = responsesUsage(cost, "USD");
             assertThat(reportedUsd(new DefaultUsage(100, 20, 120, nativeUsage))).isEqualTo(cost);
         }
     }
@@ -45,24 +44,24 @@ class LLMResponseCostTest {
     @ParameterizedTest
     @CsvSource({ "-1,USD", "NaN,USD", "Infinity,USD", "1,EUR", "1,usd", "1,''" })
     void rejectsInvalidAmountsOrCurrencies(double amount, String currency) {
-        assertThat(reportedUsd(new DefaultUsage(100, 20, 120, completion(amount, currency)))).isNull();
+        assertThat(reportedUsd(new DefaultUsage(100, 20, 120, responsesUsage(amount, currency)))).isNull();
     }
 
     @Test
     void neverTreatsTheLastCallsCostAsAnAggregatedAmount() {
-        var last = new DefaultUsage(100, 20, 120, completion(0.5, "USD"));
+        var last = new DefaultUsage(100, 20, 120, responsesUsage(0.5, "USD"));
         var previous = new ChatResponse(List.of(), ChatResponseMetadata.builder().usage(last).build());
         var accumulated = UsageCalculator.getCumulativeUsage(last, previous);
 
         assertThat(accumulated.getPromptTokens()).isEqualTo(200);
         assertThat(reportedUsd(accumulated)).isNull();
-        assertThat(reportedUsd(new DefaultUsage(200, 20, 220, completion(0.5, "USD")))).isNull();
+        assertThat(reportedUsd(new DefaultUsage(200, 20, 220, responsesUsage(0.5, "USD")))).isNull();
     }
 
     @Test
     void toolCallingAdvisorAccumulatorAddsEveryRoundWithoutKeepingTheLastCost() {
         var accumulator = new UsageAccumulator();
-        var response = new ChatResponse(List.of(), ChatResponseMetadata.builder().usage(new DefaultUsage(100, 20, 120, completion(0.5, "USD"))).build());
+        var response = new ChatResponse(List.of(), ChatResponseMetadata.builder().usage(new DefaultUsage(100, 20, 120, responsesUsage(0.5, "USD"))).build());
         accumulator.addRoundResponse(response);
         accumulator.addRoundResponse(response);
 
@@ -80,8 +79,10 @@ class LLMResponseCostTest {
         assertThat(reportedUsd(new DefaultUsage(100, 20))).isNull();
     }
 
-    private static CompletionUsage completion(double cost, String currency) {
-        return CompletionUsage.builder().promptTokens(100).completionTokens(20).totalTokens(120).putAdditionalProperty("cost", JsonValue.from(cost))
+    private static ResponseUsage responsesUsage(double cost, String currency) {
+        return ResponseUsage.builder().inputTokens(100).outputTokens(20).totalTokens(120)
+                .inputTokensDetails(ResponseUsage.InputTokensDetails.builder().cachedTokens(0).cacheWriteTokens(0).build())
+                .outputTokensDetails(ResponseUsage.OutputTokensDetails.builder().reasoningTokens(0).build()).putAdditionalProperty("cost", JsonValue.from(cost))
                 .putAdditionalProperty("cost_currency", JsonValue.from(currency)).build();
     }
 }

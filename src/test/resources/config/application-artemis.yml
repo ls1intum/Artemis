@@ -105,11 +105,11 @@ artemis:
             testchat:
                 endpoint: test
                 model: openai/gpt-oss-20b
-                api: chat-completions
+                api: responses
             testgeneration:
                 endpoint: test
                 model: openai/gpt-oss-20b
-                api: chat-completions
+                api: responses
                 max-retries: 0
     hyperion:
         llm-presets:

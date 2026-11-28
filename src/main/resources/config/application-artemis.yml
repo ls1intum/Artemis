@@ -219,7 +219,7 @@ artemis:
   #     large:
   #       endpoint: main
   #       model: gpt-6.1-terra                     # deployment name on Microsoft Foundry
-  #       api: responses                           # responses, chat-completions or embeddings
+  #       api: responses                           # responses or embeddings
   #       reasoning-effort: medium
   #     generation:
   #       endpoint: main

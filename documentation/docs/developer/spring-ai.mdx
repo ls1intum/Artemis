@@ -66,7 +66,7 @@ The LLM service should now be running on http://localhost:1234.
 
 Verify http://localhost:1234/api/v0/models lists the models.
 
-The model `openai/gpt-oss-20b` should appear in the list.
+The model `openai/gpt-oss-20b` should appear in the list. Use an LM Studio version and model that support `POST /v1/responses`.
 
 ## Configuring Artemis
 
@@ -77,14 +77,14 @@ artemis:
   llm:
     endpoints:
       lmstudio:
-        # The OpenAI SDK appends /chat/completions itself, so the base URL includes the /v1 prefix.
+        # The OpenAI SDK appends /responses itself, so the base URL includes the /v1 prefix.
         # Without api-key Artemis sends no Authorization header, which LM Studio does not need.
         base-url: http://localhost:1234/v1
     presets:
       local:
         endpoint: lmstudio
         model: openai/gpt-oss-20b    # or whatever name your local server expects
-        api: chat-completions
+        api: responses
         temperature: 0.7
   hyperion:
     enabled: true
@@ -104,7 +104,7 @@ artemis:
 4. Click the **Check Consistency** button
 5. At startup, the **Artemis Server logs** list each assignment, for example:
     ```
-    LLM artemis.hyperion.llm-presets.consistency-check -> local (default) | openai/gpt-oss-20b | chat-completions | localhost | timeout PT5M, retries 3, auth none, no fallback price
+    LLM artemis.hyperion.llm-presets.consistency-check -> local (default) | openai/gpt-oss-20b | responses | localhost | timeout PT5M, retries 3, auth none, no fallback price
     ```
 6. View the **LMS Server logs**
     1. Via CLI

@@ -61,7 +61,7 @@ appear collapsed into a single snapshot.
 ## Prerequisites
 
 - A running Artemis instance that loads the `core` profile.
-- Network access to an OpenAI-compatible chat completions endpoint that you are permitted to send student code to.
+- Network access to an OpenAI-compatible Responses endpoint that you are permitted to send student code to.
 - Programming exercises with student participations and submissions.
 
 ## Enable the Deimos module
@@ -93,13 +93,13 @@ artemis:
   llm:
     endpoints:
       selfhosted:
-        base-url: https://llm.example.com/api   # the SDK appends /chat/completions
+        base-url: https://llm.example.com/api   # the SDK appends /responses
         api-key: "${DEIMOS_LLM_API_KEY:}"        # leave empty for an endpoint without authentication
     presets:
       deimos:
         endpoint: selfhosted
         model: openai/gpt-oss-120b
-        api: chat-completions
+        api: responses
         temperature: 0
         timeout: 90s
 ```
@@ -127,9 +127,8 @@ choice for an OpenAI-compatible endpoint without authentication. If the key is m
 participation, and the instructor's email reports the participations as *Analysis model rejected the API key (missing
 or wrong)*.
 
-Earlier releases configured Deimos under `artemis.deimos.llm` with a separate `completions-path`. The OpenAI SDK
-appends `/chat/completions` to the endpoint's `base-url`, so an endpoint that served `/api/chat/completions` now has
-the `base-url` `https://<host>/api`.
+Set the endpoint's `base-url` to the prefix before `/responses`. For an endpoint at
+`https://<host>/v1/responses`, use `https://<host>/v1`.
 
 ### Runtime feature toggle
 
@@ -240,7 +239,7 @@ from what they report to what you should check:
 | *Analysis model rate limit reached* | Endpoint concurrency limits against `max-pool-size`. This is usually an executor sizing problem, not a model problem. |
 | *Analysis model rejected the API key (missing or wrong)* | The `api-key` of the preset's endpoint. The endpoint answered `401` or `403`, so the key is missing, wrong, or not authorised for the configured model. The run stopped at the first such answer. |
 | *Analysis model returned an unusable answer* | The model itself. A model that will not emit a plain JSON object with `malicious` and `rationale` is the wrong model for this feature. |
-| *Analysis model could not be reached* | Endpoint address and network path. Also check that the endpoint `base-url` ends where the SDK can append `/chat/completions`. |
+| *Analysis model could not be reached* | Endpoint address and network path. Also check that the endpoint `base-url` ends where the SDK can append `/responses`. |
 | *Other failure* | Server log. The instructor's email carries the technical reason per participation. |
 
 Ask the instructor for the technical reason lines in the *Failure details* block; they carry the exception type and

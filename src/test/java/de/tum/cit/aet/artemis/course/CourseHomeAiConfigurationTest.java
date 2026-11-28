@@ -43,7 +43,7 @@ class CourseHomeAiConfigurationTest {
 
     private static LlmClientService llmClientService() {
         LlmClientService llmClientService = mock(LlmClientService.class);
-        when(llmClientService.preset("welcome")).thenReturn(LlmTestCatalog.preset("local", "test", LlmProperties.Api.CHAT_COMPLETIONS));
+        when(llmClientService.preset("welcome")).thenReturn(LlmTestCatalog.preset("local", "test", LlmProperties.Api.RESPONSES));
         when(llmClientService.isolatedChatModel(eq("welcome"), any(Duration.class), anyInt())).thenReturn(mock(ChatModel.class));
         return llmClientService;
     }

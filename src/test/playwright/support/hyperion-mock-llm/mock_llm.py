@@ -26,9 +26,7 @@ the server integration test's scripted ChatModel does:
 The variant title is deterministic (VARIANT_TITLE) so the E2E can assert the exact
 exercise surfaces in the course list.
 
-The mock only needs the blocking Chat Completions path (Spring AI `.call()` is
-non-streaming), but it also reshapes into SSE when `stream: true` is requested, so it
-stays a drop-in OpenAI server. Python 3 standard library only — runs as a bare
+The mock serves blocking Responses requests. Python 3 standard library only — runs as a bare
 process (see supporting_scripts/e2e/run-e2e-tests-local-fast.sh, RUN_HYPERION).
 
 Config via environment variables (all optional):
@@ -42,7 +40,6 @@ import os
 import sys
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Optional
 
 # Loopback by default: the mock is unauthenticated. Set MOCK_LLM_HOST=0.0.0.0 only if reached from outside.
 HOST = os.environ.get("MOCK_LLM_HOST", "127.0.0.1")
@@ -86,92 +83,40 @@ def all_text(messages: list) -> str:
     return "\n".join(message_text(m) for m in messages if isinstance(m, dict))
 
 
-def base_body(model: str) -> dict:
-    now = int(time.time())
+def responses_body(model: str, output: list) -> dict:
     return {
-        "id": f"chatcmpl-mock-{now}",
-        "object": "chat.completion",
-        "created": now,
+        "id": f"resp-mock-{time.time_ns()}",
+        "object": "response",
+        "created_at": int(time.time()),
         "model": model or "mock-model",
+        "status": "completed",
+        "output": output,
+        "usage": {"input_tokens": 100, "output_tokens": 20, "total_tokens": 120},
     }
 
 
 def content_response(model: str, content: str) -> dict:
-    body = base_body(model)
-    body["choices"] = [
-        {
-            "index": 0,
-            "message": {"role": "assistant", "content": content, "refusal": None, "tool_calls": None},
-            "logprobs": None,
-            "finish_reason": "stop",
-        }
-    ]
-    body["usage"] = {"prompt_tokens": 100, "completion_tokens": 20, "total_tokens": 120}
-    return body
+    return responses_body(model, [{
+        "type": "message",
+        "id": f"msg-mock-{time.time_ns()}",
+        "role": "assistant",
+        "status": "completed",
+        "content": [{"type": "output_text", "text": content, "annotations": []}],
+    }])
 
 
 def finish_tool_response(model: str, tools: list) -> dict:
-    """Ask the agent to call `finish` once. The clone is already valid, so finishing
-    without further edits is a valid (unmodified-but-consistent) variant."""
-    tool_name = "finish" if any(t.get("function", {}).get("name") == "finish" for t in tools if isinstance(t, dict)) else _first_tool_name(tools)
-    body = base_body(model)
-    body["choices"] = [
-        {
-            "index": 0,
-            "message": {
-                "role": "assistant",
-                "content": "Applied the change plan and validated the variant quiz.",
-                "refusal": None,
-                "tool_calls": [
-                    {
-                        "id": "call_mock_finish",
-                        "type": "function",
-                        "function": {"name": tool_name, "arguments": json.dumps({"summary": "Re-themed the quiz to the cargo bay domain and validated it."})},
-                    }
-                ],
-            },
-            "logprobs": None,
-            "finish_reason": "tool_calls",
-        }
-    ]
-    body["usage"] = {"prompt_tokens": 100, "completion_tokens": 20, "total_tokens": 120}
-    return body
-
-
-def _first_tool_name(tools: list) -> str:
-    for tool in tools:
-        if isinstance(tool, dict):
-            name = tool.get("function", {}).get("name")
-            if name:
-                return name
-    return "finish"
-
-
-def to_stream_chunks(response: dict) -> list:
-    """Reshape a non-streaming Chat Completions response into the SSE chunk sequence the
-    openai streaming client expects (used only if a caller sets stream=true)."""
-    choice = response["choices"][0]
-    message = choice["message"]
-
-    def chunk(delta: dict, finish_reason: Optional[str] = None) -> dict:
-        return {
-            "id": response["id"],
-            "object": "chat.completion.chunk",
-            "created": response["created"],
-            "model": response["model"],
-            "choices": [{"index": 0, "delta": delta, "finish_reason": finish_reason}],
-        }
-
-    chunks = []
-    content = message.get("content") or ""
-    for i, word in enumerate(content.split(" ") if content else []):
-        chunks.append(chunk({"content": word if i == 0 else f" {word}"}))
-    tool_calls = message.get("tool_calls")
-    if tool_calls:
-        chunks.append(chunk({"tool_calls": [{"index": i, "id": c["id"], "type": c["type"], "function": c["function"]} for i, c in enumerate(tool_calls)]}))
-    chunks.append(chunk({}, finish_reason=choice["finish_reason"]))
-    chunks.append({"id": response["id"], "object": "chat.completion.chunk", "created": response["created"], "model": response["model"], "choices": [], "usage": response["usage"]})
-    return chunks
+    """Ask the agent to call finish. The provisioned clone is already valid."""
+    tool_names = [tool["name"] for tool in tools if isinstance(tool, dict) and tool.get("name")]
+    tool_name = "finish" if "finish" in tool_names or not tool_names else tool_names[0]
+    return responses_body(model, [{
+        "id": "fc_mock_finish",
+        "call_id": "call_mock_finish",
+        "type": "function_call",
+        "status": "completed",
+        "name": tool_name,
+        "arguments": json.dumps({"summary": "Re-themed the quiz to the cargo bay domain and validated it."}),
+    }])
 
 
 class MockLLMHandler(BaseHTTPRequestHandler):
@@ -184,19 +129,6 @@ class MockLLMHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(payload)))
         self.end_headers()
         self.wfile.write(payload)
-
-    def _respond_stream(self, chunks: list) -> None:
-        self.send_response(200)
-        self.send_header("Content-Type", "text/event-stream")
-        self.send_header("Cache-Control", "no-cache")
-        self.send_header("Connection", "close")
-        self.end_headers()
-        for chunk in chunks:
-            self.wfile.write(f"data: {json.dumps(chunk)}\n\n".encode("utf-8"))
-            self.wfile.flush()
-        self.wfile.write(b"data: [DONE]\n\n")
-        self.wfile.flush()
-        self.close_connection = True
 
     def do_GET(self) -> None:  # noqa: N802 - http.server API
         if self.path.rstrip("/").endswith("/v1/models"):
@@ -216,15 +148,14 @@ class MockLLMHandler(BaseHTTPRequestHandler):
         model = body.get("model", "mock-model")
         path = self.path.rstrip("/")
 
-        if not path.endswith("/v1/chat/completions"):
+        if not path.endswith("/v1/responses"):
             log(f"unhandled POST {self.path}")
             self._respond(404, {"error": {"message": f"Unknown endpoint: {self.path}", "type": "invalid_request_error"}})
             return
 
         tools = body.get("tools") or []
-        messages = body.get("messages") or []
-        text = all_text(messages)
-        wants_stream = bool(body.get("stream"))
+        messages = body.get("input") or []
+        text = messages if isinstance(messages, str) else all_text(messages)
 
         # Deterministic slow path: when the request carries SLOW_MARKER (the E2E puts it in the
         # domain text, which lands in the planning system prompt), hold the PLANNING response so
@@ -244,11 +175,8 @@ class MockLLMHandler(BaseHTTPRequestHandler):
         else:
             phase, response = "OTHER", content_response(model, "ok")
 
-        log(f"chat.completions phase={phase} tools={len(tools)} stream={wants_stream}")
-        if wants_stream:
-            self._respond_stream(to_stream_chunks(response))
-        else:
-            self._respond(200, response)
+        log(f"responses phase={phase} tools={len(tools)}")
+        self._respond(200, response)
 
     def log_request(self, code="-", size="-") -> None:
         """Silence the per-request access log. Overriding this instead of `log_message` keeps the base signature

@@ -65,7 +65,7 @@
                 "-Dartemis.llm.endpoints.docs.max-retries=0",
                 "-Dartemis.llm.presets.docs.endpoint=docs",
                 "-Dartemis.llm.presets.docs.model=unused",
-                "-Dartemis.llm.presets.docs.api=chat-completions",
+                "-Dartemis.llm.presets.docs.api=responses",
                 "-Dartemis.hyperion.llm-presets.default=docs",
                 "-Dartemis.hyperion.agent.llm-preset=docs",
                 // Controller introspection only; no generation job is admitted by this documentation process.

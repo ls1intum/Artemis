@@ -69,7 +69,6 @@ DEFAULT_ALLOWLIST: dict[str, str] = {}
 
 # Route or path segments that exist only at run time or outside the annotations (placeholders are always accepted)
 ROUTE_SEGMENT_ALLOWLIST: dict[str, str] = {
-    "documentation/docs/admin/deimos.mdx: completions": "path of the external OpenAI compatible API that Deimos calls",
     "documentation/docs/admin/hyperion.mdx: otel": "path of the external Langfuse OTLP receiver",
     "documentation/docs/instructor/integrations/coding-agents.mdx: agent": "path on the documentation site (docs.artemis.tum.de), not on an Artemis server",
     "documentation/docs/instructor/integrations/coding-agents.mdx: openapi.yaml": "file name on the documentation site, see above",

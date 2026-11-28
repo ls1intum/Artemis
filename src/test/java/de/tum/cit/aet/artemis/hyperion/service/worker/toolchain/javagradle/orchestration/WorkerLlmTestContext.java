@@ -22,6 +22,6 @@ final class WorkerLlmTestContext {
                 .withUserConfiguration(LlmConfiguration.class, LlmClientService.class, JavaGradleGenerationAdapterService.class)
                 .withBean(MeterRegistry.class, SimpleMeterRegistry::new).withPropertyValues("artemis.aiworker.workload=hyperion-generation",
                         "artemis.llm.endpoints.test.base-url=https://example.invalid/v1", "artemis.llm.endpoints.test.api-key=test-key",
-                        "artemis.llm.presets.testpreset.endpoint=test", "artemis.llm.presets.testpreset.model=test-model", "artemis.llm.presets.testpreset.api=chat-completions");
+                        "artemis.llm.presets.testpreset.endpoint=test", "artemis.llm.presets.testpreset.model=test-model", "artemis.llm.presets.testpreset.api=responses");
     }
 }

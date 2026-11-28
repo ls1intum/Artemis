@@ -386,9 +386,8 @@ if [ "$SKIP_SERVER" = false ]; then
     # Optional: start the deterministic mock LLM and enable Hyperion on the server.
     # Hyperion enablement (artemis.hyperion.enabled=true) also makes management/info
     # activeModuleFeatures include "hyperion", which the variant e2e suite probes to
-    # decide whether to run. The mock speaks the OpenAI Chat Completions API, so its preset
-    # uses api chat-completions. The endpoint base URL ends with /v1; the SDK appends
-    # /chat/completions itself.
+    # decide whether to run. The mock speaks the OpenAI Responses API. The endpoint base URL
+    # ends with /v1, and the SDK appends /responses.
     if [ "$RUN_HYPERION" = true ]; then
         echo -e "${BLUE}Hyperion enabled (RUN_HYPERION=true): starting the mock LLM on port ${HYPERION_MOCK_LLM_PORT}...${NC}"
         # Kill any stale listener AND wait for the socket to be released — the new process cannot bind before.
@@ -422,7 +421,7 @@ if [ "$SKIP_SERVER" = false ]; then
         export ARTEMIS_LLM_ENDPOINTS_MOCK_APIKEY="dummy-key"
         export ARTEMIS_LLM_PRESETS_MOCK_ENDPOINT="mock"
         export ARTEMIS_LLM_PRESETS_MOCK_MODEL="mock-model"
-        export ARTEMIS_LLM_PRESETS_MOCK_API="chat-completions"
+        export ARTEMIS_LLM_PRESETS_MOCK_API="responses"
         export ARTEMIS_HYPERION_LLMPRESETS_DEFAULT="mock"
     fi
 

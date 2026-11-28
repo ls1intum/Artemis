@@ -17,16 +17,17 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.metadata.EmptyUsage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.http.okhttp.OpenAiHttpClientBuilderCustomizer;
 import org.springframework.ai.openai.setup.OpenAiSetup;
 import org.springframework.ai.tool.annotation.Tool;
 
 import com.openai.client.OpenAIClient;
-import com.openai.client.OpenAIClientAsync;
+
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.aiworker.api.LLMResponseCost;
+import de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesChatModel;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput.AccountingState;
 import de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate;
 import de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate.Kind;
@@ -52,10 +53,8 @@ class ProviderUsageWireTest {
     @Test
     void omittedWireUsageStopsBeforeToolsOrAnotherRequest() {
         String completion = """
-                {"id":"chatcmpl-test","object":"chat.completion","created":1,"model":"test-model",
-                 "choices":[{"index":0,"message":{"role":"assistant","content":null,
-                 "tool_calls":[{"id":"edit","type":"function","function":{"name":"write","arguments":"{}"}}]},
-                 "finish_reason":"tool_calls"}]}
+                {"id":"resp-test","object":"response","model":"test-model","status":"completed",
+                 "output":[{"type":"function_call","id":"fc_edit","call_id":"edit","name":"write","arguments":"{}","status":"completed"}]}
                 """;
         try (var wire = fixture(completion)) {
             var events = new ArrayList<ProviderUsageUpdate>();
@@ -80,8 +79,29 @@ class ProviderUsageWireTest {
     }
 
     @Test
+    void failedResponseWithUsageDoesNotCompleteTheAgentTurn() {
+        String failure = """
+                {"id":"resp-failed","object":"response","model":"test-model","status":"failed",
+                 "output":[],"usage":{"input_tokens":10,"output_tokens":2,"total_tokens":12}}
+                """;
+        try (var wire = fixture(failure)) {
+            var recorder = new WorkerUsageRecorder(1_000, 1, ignored -> {
+            });
+            var tools = new RecordingTools();
+            var runner = new AgentLoopRunner(List.of(wire.model()), 128_000, Duration.ofMinutes(5), ProviderFailureCooldown.disabled());
+
+            var result = runner.run("system", "brief", tools, 4, () -> false, recorder, null);
+
+            assertThat(result.status()).isEqualTo(AgentLoopResult.Status.ERROR);
+            assertThat(recorder.snapshot().modelCalls()).isEqualTo(1);
+            assertThat(wire.requests()).hasValue(1);
+            assertThat(tools.writes).isZero();
+        }
+    }
+
+    @Test
     void suppliedZeroWireCountsAreNotMissingUsage() {
-        try (var wire = fixture(textCompletion("{\"prompt_tokens\":0,\"completion_tokens\":0,\"total_tokens\":0}"))) {
+        try (var wire = fixture(textResponse("{\"input_tokens\":0,\"output_tokens\":0,\"total_tokens\":0}"))) {
             var response = wire.model().call(new Prompt("test"));
 
             assertThat(response.getMetadata().getUsage()).isNotInstanceOf(EmptyUsage.class);
@@ -100,8 +120,8 @@ class ProviderUsageWireTest {
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
     void cachedWireCountsAreOptional(boolean cacheReported) {
-        String cache = cacheReported ? ",\"prompt_tokens_details\":{\"cached_tokens\":3}" : "";
-        try (var wire = fixture(textCompletion("{\"prompt_tokens\":10,\"completion_tokens\":2,\"total_tokens\":12" + cache + "}"))) {
+        String cache = cacheReported ? ",\"input_tokens_details\":{\"cached_tokens\":3}" : "";
+        try (var wire = fixture(textResponse("{\"input_tokens\":10,\"output_tokens\":2,\"total_tokens\":12" + cache + "}"))) {
             var response = wire.model().call(new Prompt("test"));
             var call = ProviderUsageTransport.capture(response);
 
@@ -120,7 +140,7 @@ class ProviderUsageWireTest {
     @ParameterizedTest
     @ValueSource(doubles = { 0, 0.00001234 })
     void reportedUsdCostSurvivesSdkAndWorkerTransport(double amount) {
-        try (var wire = fixture(textCompletion("{\"prompt_tokens\":10,\"completion_tokens\":2,\"total_tokens\":12,\"cost\":" + amount + ",\"cost_currency\":\"USD\"}"))) {
+        try (var wire = fixture(textResponse("{\"input_tokens\":10,\"output_tokens\":2,\"total_tokens\":12,\"cost\":" + amount + ",\"cost_currency\":\"USD\"}"))) {
             var response = wire.model().call(new Prompt("test"));
             assertThat(reportedUsd(response)).isEqualTo(amount);
             var call = ProviderUsageTransport.capture(response);
@@ -130,71 +150,45 @@ class ProviderUsageWireTest {
     }
 
     @Test
-    void streamingUsdCostSurvivesHarmonyScrubbingAndWorkerTransport() {
-        String events = """
-                data: {"id":"chatcmpl-test","object":"chat.completion.chunk","created":1,"model":"test-model","choices":[{"index":0,"delta":{"role":"assistant","content":"finished<|end|>"},"finish_reason":null}]}
+    void reportedCostSurvivesHarmonyScrubbing() {
+        String usage = "{\"input_tokens\":10,\"output_tokens\":2,\"total_tokens\":12,\"cost\":0.00001234,\"cost_currency\":\"USD\"}";
+        try (var wire = fixture(textResponse(usage).replace("finished", "finished<|end|>"))) {
+            var response = new HarmonyScrubbingChatModel(wire.model()).call(new Prompt("test"));
 
-                data: {"id":"chatcmpl-test","object":"chat.completion.chunk","created":1,"model":"test-model","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
-
-                data: {"id":"chatcmpl-test","object":"chat.completion.chunk","created":1,"model":"test-model","choices":[],"usage":{"prompt_tokens":10,"completion_tokens":2,"total_tokens":12,"cost":0.00001234,"cost_currency":"USD"}}
-
-                data: [DONE]
-
-                """;
-        try (var wire = fixture(events, "text/event-stream")) {
-            var chunks = new HarmonyScrubbingChatModel(wire.model()).stream(new Prompt("test")).collectList().block(Duration.ofSeconds(5));
-            assertThat(chunks).isNotNull();
-            var priced = chunks.stream().filter(response -> reportedUsd(response) != null).toList();
-            assertThat(priced).singleElement().satisfies(response -> {
-                var call = ProviderUsageTransport.capture(response);
-                assertThat(call.totalCostUsd()).isEqualTo(0.00001234);
-                assertThat(reportedUsd(ProviderUsageTransport.restore(call, null))).isEqualTo(0.00001234);
-            });
-            assertThat(chunks.stream().flatMap(response -> response.getResults().stream()).map(generation -> generation.getOutput().getText()).toList())
-                    .noneMatch(text -> text != null && text.contains("<|end|>"));
+            assertThat(response.getResult().getOutput().getText()).isEqualTo("finished");
+            assertThat(reportedUsd(response)).isEqualTo(0.00001234);
             assertThat(wire.requests()).hasValue(1);
         }
     }
 
-    private static String textCompletion(String usage) {
+    private static String textResponse(String usage) {
         return """
-                {"id":"chatcmpl-test","object":"chat.completion","created":1,"model":"test-model",
-                 "choices":[{"index":0,"message":{"role":"assistant","content":"finished"},"finish_reason":"stop"}],
-                 "usage":%s}
+                {"id":"resp-test","object":"response","model":"test-model","status":"completed",
+                 "output":[{"type":"message","id":"msg-1","role":"assistant","status":"completed",
+                 "content":[{"type":"output_text","text":"finished","annotations":[]}]}],"usage":%s}
                 """.formatted(usage);
     }
 
-    private static WireFixture fixture(String completion) {
-        return fixture(completion, "application/json");
-    }
-
-    private static WireFixture fixture(String completion, String contentType) {
+    private static WireFixture fixture(String body) {
         var requests = new AtomicInteger();
         // The application interceptor returns before proceed: no DNS, socket, server or provider is used.
         OpenAiHttpClientBuilderCustomizer interceptor = builder -> builder.interceptor(chain -> {
             requests.incrementAndGet();
-            assertThat(chain.request().url().encodedPath()).isEqualTo("/v1/chat/completions");
-            return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(200).message("OK").header("Content-Type", contentType)
-                    .body(ResponseBody.create(completion, MediaType.get(contentType))).build();
+            assertThat(chain.request().url().encodedPath()).isEqualTo("/v1/responses");
+            return new Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(200).message("OK").header("Content-Type", "application/json")
+                    .body(ResponseBody.create(body, MediaType.get("application/json"))).build();
         });
         var client = OpenAiSetup.setupSyncClient("https://example.invalid/v1", "test-key", null, null, null, null, false, false, null, Duration.ofSeconds(2), 0, null, Map.of(),
                 ObservationRegistry.NOOP, null, List.of(interceptor));
-        var async = OpenAiSetup.setupAsyncClient("https://example.invalid/v1", "test-key", null, null, null, null, false, false, null, Duration.ofSeconds(2), 0, null, Map.of(),
-                ObservationRegistry.NOOP, null, List.of(interceptor));
-        var model = OpenAiChatModel.builder().openAiClient(client).openAiClientAsync(async).options(OpenAiChatOptions.builder().model("test-model").build()).build();
-        return new WireFixture(client, async, model, requests);
+        var model = new OpenAiResponsesChatModel(client, new JsonMapper(), OpenAiChatOptions.builder().model("test-model").build());
+        return new WireFixture(client, model, requests);
     }
 
-    private record WireFixture(OpenAIClient client, OpenAIClientAsync async, OpenAiChatModel model, AtomicInteger requests) implements AutoCloseable {
+    private record WireFixture(OpenAIClient client, OpenAiResponsesChatModel model, AtomicInteger requests) implements AutoCloseable {
 
         @Override
         public void close() {
-            try {
-                client.close();
-            }
-            finally {
-                async.close();
-            }
+            client.close();
         }
     }
 

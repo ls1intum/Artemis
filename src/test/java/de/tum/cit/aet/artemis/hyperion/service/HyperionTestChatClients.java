@@ -24,7 +24,7 @@ public final class HyperionTestChatClients {
     public static HyperionChatClientService returning(ChatClient chatClient) {
         HyperionChatClientService chatClients = mock(HyperionChatClientService.class);
         lenient().when(chatClients.forTask(any())).thenReturn(chatClient);
-        lenient().when(chatClients.presetFor(any())).thenReturn(LlmTestCatalog.preset("test", "test-model", LlmProperties.Api.CHAT_COMPLETIONS));
+        lenient().when(chatClients.presetFor(any())).thenReturn(LlmTestCatalog.preset("test", "test-model", LlmProperties.Api.RESPONSES));
         return chatClients;
     }
 }

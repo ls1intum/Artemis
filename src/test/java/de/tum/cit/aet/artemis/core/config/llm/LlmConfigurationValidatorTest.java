@@ -34,7 +34,7 @@ class LlmConfigurationValidatorTest {
     private static final String[] CATALOG = { "artemis.llm.endpoints.logos.base-url=https://logos.example.org/v1", "artemis.llm.endpoints.logos.api-key=key",
             "artemis.llm.presets.large.endpoint=logos", "artemis.llm.presets.large.model=gpt-6.1-terra", "artemis.llm.presets.large.api=responses",
             "artemis.llm.presets.large.reasoning-effort=medium", "artemis.llm.presets.small.endpoint=logos", "artemis.llm.presets.small.model=gpt-6-luna",
-            "artemis.llm.presets.small.api=chat-completions", "artemis.llm.presets.embed.endpoint=logos", "artemis.llm.presets.embed.model=qwen3-embedding",
+            "artemis.llm.presets.small.api=responses", "artemis.llm.presets.embed.endpoint=logos", "artemis.llm.presets.embed.model=qwen3-embedding",
             "artemis.llm.presets.embed.api=embeddings" };
 
     private final List<ILoggingEvent> logs = new ArrayList<>();
@@ -46,10 +46,18 @@ class LlmConfigurationValidatorTest {
                         .run(context -> assertThat(context).hasNotFailed()));
 
         assertThat(messages(Level.INFO))
-                .anySatisfy(line -> assertThat(line).startsWith("LLM artemis.hyperion.llm-presets.faq-rewrite -> small |").contains("gpt-6-luna", "chat-completions",
-                        "logos.example.org", "timeout PT5M", "retries 3", "auth key", "no fallback price"))
+                .anySatisfy(line -> assertThat(line).startsWith("LLM artemis.hyperion.llm-presets.faq-rewrite -> small |").contains("gpt-6-luna", "responses", "logos.example.org",
+                        "timeout PT5M", "retries 3", "auth key", "no fallback price"))
                 .anySatisfy(line -> assertThat(line).startsWith("LLM artemis.hyperion.llm-presets.checklist -> large (default) |"))
                 .anySatisfy(line -> assertThat(line).startsWith("LLM artemis.deimos.llm-preset -> small |"));
+    }
+
+    @Test
+    void formerChatCompletionsPresetCannotBind() {
+        runner(List.of(), "artemis.llm.presets.small.api=chat-completions").run(context -> {
+            assertThat(context).hasFailed();
+            assertThat(rootMessage(context.getStartupFailure())).contains("chat-completions");
+        });
     }
 
     @Test
@@ -101,7 +109,7 @@ class LlmConfigurationValidatorTest {
     @Test
     void temperatureIsAllowedWithReasoningEffortNone() {
         runner(List.of(single("artemis.deimos.llm-preset", "cold")), "artemis.hyperion.llm-presets.default=large", "artemis.llm.presets.cold.endpoint=logos",
-                "artemis.llm.presets.cold.model=m", "artemis.llm.presets.cold.api=chat-completions", "artemis.llm.presets.cold.reasoning-effort=none",
+                "artemis.llm.presets.cold.model=m", "artemis.llm.presets.cold.api=responses", "artemis.llm.presets.cold.reasoning-effort=none",
                 "artemis.llm.presets.cold.temperature=0").run(context -> assertThat(context).hasNotFailed());
     }
 
@@ -110,8 +118,8 @@ class LlmConfigurationValidatorTest {
         var embedding = LlmPresetAssignment.ofSingle("artemis.weaviate.embedding-llm-preset", "small", LlmPresetAssignment.Usage.EMBEDDING);
         runner(List.of(() -> List.of(embedding), single("artemis.deimos.llm-preset", "embed")), "artemis.hyperion.llm-presets.default=large").run(context -> {
             String message = rootMessage(context.getStartupFailure());
-            assertThat(message).contains("artemis.weaviate.embedding-llm-preset needs a preset with api embeddings, but small uses chat-completions")
-                    .contains("artemis.deimos.llm-preset needs a chat preset (api responses or chat-completions), but embed uses embeddings");
+            assertThat(message).contains("artemis.weaviate.embedding-llm-preset needs a preset with api embeddings, but small uses responses")
+                    .contains("artemis.deimos.llm-preset needs a chat preset (api responses), but embed uses embeddings");
         });
     }
 

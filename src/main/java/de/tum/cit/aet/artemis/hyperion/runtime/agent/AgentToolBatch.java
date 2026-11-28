@@ -121,7 +121,7 @@ final class AgentToolBatch {
     }
 
     /**
-     * Answers every call of a batch that was not executed with the same outcome, because the chat-completions tool-pairing contract requires a result for every requested call
+     * Answers every call of a batch that was not executed with the same outcome, because the Responses tool-pairing contract requires a result for every requested call
      * id.
      */
     static ToolResponseMessage unexecutedResponses(List<AssistantMessage.ToolCall> toolCalls, String outcome) {

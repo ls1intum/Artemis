@@ -49,8 +49,8 @@ class HyperionQuizQuestionPoolModelServiceTest {
         ChatClient judge = mock(ChatClient.class);
         when(llmClientService.chatClient("local")).thenReturn(generator);
         when(llmClientService.chatClient("judge")).thenReturn(judge);
-        when(llmClientService.preset("local")).thenReturn(LlmTestCatalog.preset("logos", "Qwen/Qwen3.8-27B", LlmProperties.Api.CHAT_COMPLETIONS));
-        when(llmClientService.preset("judge")).thenReturn(LlmTestCatalog.preset("logos", "openai/gpt-oss-120b", LlmProperties.Api.CHAT_COMPLETIONS));
+        when(llmClientService.preset("local")).thenReturn(LlmTestCatalog.preset("logos", "Qwen/Qwen3.8-27B", LlmProperties.Api.RESPONSES));
+        when(llmClientService.preset("judge")).thenReturn(LlmTestCatalog.preset("logos", "openai/gpt-oss-120b", LlmProperties.Api.RESPONSES));
 
         HyperionQuizQuestionPoolModelService service = new HyperionQuizQuestionPoolModelService(llmClientService, " local ", "judge");
 
