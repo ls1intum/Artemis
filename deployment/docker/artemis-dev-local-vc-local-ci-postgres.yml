@@ -19,6 +19,7 @@ services:
         extends:
             file: ./artemis.yml
             service: artemis-app
+        image: ${ARTEMIS_TRIAL_IMAGE:-ghcr.io/ls1intum/artemis}
         # just add this linux workaround for docker compose in a development version of artemis as developers
         # might want to access external services on the docker host
         extra_hosts:

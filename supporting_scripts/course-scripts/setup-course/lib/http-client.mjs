@@ -30,6 +30,7 @@ export class HttpClient {
             method,
             headers,
             redirect: 'manual',
+            signal: options.signal,
         };
 
         if (options.body) {
