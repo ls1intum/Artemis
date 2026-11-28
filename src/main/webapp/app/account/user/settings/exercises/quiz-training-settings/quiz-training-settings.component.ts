@@ -5,7 +5,9 @@ import { QuizTrainingApi } from 'app/openapi/api/quiz-training-api';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { TumAetUiCardComponent, TumAetUiMessageComponent, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
 
 @Component({
     selector: 'jhi-quiz-training-settings',

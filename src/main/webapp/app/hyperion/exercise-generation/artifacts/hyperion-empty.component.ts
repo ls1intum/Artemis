@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular/empty-state';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 

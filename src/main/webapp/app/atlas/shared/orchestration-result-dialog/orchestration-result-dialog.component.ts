@@ -1,6 +1,10 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, computed, input, model } from '@angular/core';
-import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiTableDirective, TumAetUiTableLayoutComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AppliedActionDTO, AppliedActionType } from 'app/atlas/shared/dto/competency-orchestration-dto';

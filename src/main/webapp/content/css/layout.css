@@ -97,6 +97,9 @@
     box-sizing: border-box;
     min-height: var(--title-bar-height);
     padding-block: var(--title-bar-padding-block);
+
+    /* The size container of the container queries below. */
+    container: title-bar / inline-size;
 }
 
 /*
@@ -143,10 +146,6 @@
     :is(.page-top-bar, .title-bar-controls) .tumaet-ui-select-button-option.tumaet-ui-select-button-option {
         padding-inline: 0.5rem;
     }
-}
-
-.page-top-bar {
-    container: title-bar / inline-size;
 }
 
 /*

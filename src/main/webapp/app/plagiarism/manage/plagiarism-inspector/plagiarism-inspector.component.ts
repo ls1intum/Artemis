@@ -16,17 +16,13 @@ import { faChevronDown, faChevronRight, faExclamationTriangle, faQuestionCircle 
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { Range } from 'app/foundation/util/utils';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiDialogComponent,
-    TumAetUiInputDirective,
-    TumAetUiMenuComponent,
-    TumAetUiMenuItemDirective,
-    TumAetUiMenuTriggerDirective,
-    TumAetUiProgressSpinnerComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { Subscription } from 'rxjs';
 import { PlagiarismResultDTO, PlagiarismResultStatsDTO } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';

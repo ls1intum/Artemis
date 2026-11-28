@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -8,7 +10,7 @@ import { QuizAiGeneratedQuestionCardComponent } from 'app/hyperion/quiz/quiz-ai-
 import { PoolQuestionView, PoolReviewRequest, PoolReviewState } from 'app/hyperion/manage/quiz-question-pool/quiz-question-pool.types';
 
 /**
- * One judged pool question: the question card, the filter's flagged verdicts, the expandable rationale and the review decision.
+ * One judged pool question: the question card, the filter's flagged verdicts, the expandable explanations and rationale, and the review decision.
  */
 @Component({
     selector: 'jhi-quiz-question-pool-item',
@@ -34,6 +36,7 @@ export class QuizQuestionPoolItemComponent {
     /** Disables the delete button and explains why, while a build runs. */
     readonly deletionBlocked = input(false);
     readonly toggleRationale = output<number>();
+    readonly toggleExplanations = output<number>();
     readonly review = output<PoolReviewRequest>();
     readonly delete = output<number>();
 

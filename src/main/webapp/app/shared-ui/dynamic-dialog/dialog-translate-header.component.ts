@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { TumAetUiDialogConfig } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig } from '@tumaet/ui-angular/dialog';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 /**

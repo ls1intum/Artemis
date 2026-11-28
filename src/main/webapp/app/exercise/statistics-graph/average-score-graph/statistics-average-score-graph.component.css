@@ -21,7 +21,7 @@
 }
 
 .switch-forward {
-    max-width: 30px !important;
+    max-width: 30px;
 }
 
 .switch-forward-placeholder {

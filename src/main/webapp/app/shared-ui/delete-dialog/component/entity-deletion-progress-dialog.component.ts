@@ -1,5 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
-import { TumAetUiButtonDirective, TumAetUiDialogConfig, TumAetUiDialogRef, TumAetUiProgressBarComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
+import { TumAetUiProgressBarComponent } from '@tumaet/ui-angular/progress-bar';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle, faExclamationTriangle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';

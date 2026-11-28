@@ -1,4 +1,5 @@
-import { TumAetUiButtonDirective, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, input, output } from '@angular/core';
 import { ComplaintApi } from 'app/openapi/api/complaint-api';

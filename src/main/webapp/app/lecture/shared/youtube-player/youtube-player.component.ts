@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { resizeVideoColumn, syncVideoTranscriptHeight } from '../video-transcript-layout.util';
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, ViewEncapsulation, computed, effect, input, output, signal, viewChild } from '@angular/core';
 import { YouTubePlayer } from '@angular/youtube-player';

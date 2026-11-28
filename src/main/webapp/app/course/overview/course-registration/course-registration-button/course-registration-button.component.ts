@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

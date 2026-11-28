@@ -27,7 +27,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 
 interface PostGroup {
     author: User | undefined;
