@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { DebugElement } from '@angular/core';
 import { Location } from '@angular/common';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { BehaviorSubject, Observable, Subject, asapScheduler, firstValueFrom, of, scheduled, throwError } from 'rxjs';
+import { BehaviorSubject, NEVER, Observable, Subject, asapScheduler, firstValueFrom, of, scheduled, throwError } from 'rxjs';
 import { outputToObservable } from '@angular/core/rxjs-interop';
 import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -69,6 +69,8 @@ type ContainerInternalsOverrides = {
     athenaService: AthenaService;
     loadFeedbackSuggestions: () => Promise<void>;
     onSubmissionReceived: (submissionId: string, submission?: ProgrammingSubmission) => Promise<void>;
+    handleReceivedSubmission: (submission: ProgrammingSubmission) => Promise<void>;
+    assessmentLoadGeneration: number;
 };
 type ContainerInternals = Omit<CodeEditorTutorAssessmentContainerComponent, keyof ContainerInternalsOverrides> & ContainerInternalsOverrides;
 const internals = (c: CodeEditorTutorAssessmentContainerComponent): ContainerInternals => c as unknown as ContainerInternals;
@@ -207,14 +209,14 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },
-                { provide: DialogService, useValue: { open: vi.fn() } },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn() } },
                 SessionStorageService,
                 LocalStorageService,
                 { provide: AthenaService, useClass: MockAthenaService },
                 { provide: ActivatedRoute, useValue: route() },
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
-                { provide: DialogService, useClass: MockDialogService },
+                { provide: TumAetUiDialogService, useClass: MockDialogService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -612,6 +614,20 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         addFeedbackAndValidateScore(comp, 5, 100);
     });
 
+    it('should not exceed 100% for max points with three decimal places', async () => {
+        comp.ngOnInit();
+        await flushMicrotasks();
+
+        comp.exercise().maxPoints = 10.006;
+        comp.exercise().bonusPoints = 0;
+        comp.automaticFeedback.set([]);
+        comp.referencedFeedback.set([]);
+        comp.unreferencedFeedback.set([]);
+        // full marks are rounded to 10.01 points, which would be sent as 100.04% and rejected by the server
+        addFeedbackAndValidateScore(comp, 10.006, 100);
+        addFeedbackAndValidateScore(comp, 1, 100);
+    });
+
     it('should calculate score correctly for IncludedAsBonusExercise', async () => {
         comp.ngOnInit();
         await flushMicrotasks();
@@ -893,6 +909,25 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(goSpy).toHaveBeenCalledExactlyOnceWith('/rewritten');
     });
 
+    it('should not replace new with the loaded submission id when a later navigation replaced the load', async () => {
+        let finishLoad!: () => void;
+        const loadCanFinish = new Promise<void>((resolve) => (finishLoad = resolve));
+        const handleReceivedSubmission = internals(comp).handleReceivedSubmission.bind(comp);
+        vi.spyOn(internals(comp), 'handleReceivedSubmission').mockImplementation(async (received) => {
+            await loadCanFinish;
+            await handleReceivedSubmission(received);
+        });
+        const goSpy = vi.spyOn(TestBed.inject(Location), 'go').mockImplementation(() => {});
+
+        const load = internals(comp).onSubmissionReceived('new', submission);
+        // what the route subscription does when the assessor navigates to another submission
+        internals(comp).assessmentLoadGeneration++;
+        finishLoad();
+        await load;
+
+        expect(goSpy).not.toHaveBeenCalled();
+    });
+
     it('should not invalidate assessment after saving', async () => {
         vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment');
 
@@ -1099,6 +1134,145 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         subject.complete();
         await loadPromise;
 
+        expect(comp.loadingFeedbackSuggestions()).toBe(false);
+    });
+
+    it('should discard a stale feedback-suggestions response once a newer request has started', async () => {
+        const staleSubject = new Subject<Feedback[]>();
+        const currentSubject = new Subject<Feedback[]>();
+        vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValueOnce(staleSubject.asObservable()).mockReturnValueOnce(currentSubject.asObservable());
+        comp.submission.set({ id: 42 } as ProgrammingSubmission);
+
+        const stalePromise = comp['loadFeedbackSuggestions']();
+        // The container is reused for a newer assessment, which starts its own request before the stale one resolves.
+        comp.submission.set({ id: 84 } as ProgrammingSubmission);
+        const currentPromise = comp['loadFeedbackSuggestions']();
+
+        staleSubject.next([{ type: FeedbackType.AUTOMATIC, credits: 1 }]);
+        staleSubject.complete();
+        await stalePromise;
+
+        expect(comp.hasAcceptedFeedbackSuggestions()).toBe(false);
+        expect(comp.loadingFeedbackSuggestions()).toBe(true);
+
+        currentSubject.next([]);
+        currentSubject.complete();
+        await currentPromise;
+        expect(comp.loadingFeedbackSuggestions()).toBe(false);
+    });
+
+    it('should discard a feedback-suggestions response that arrives after a save or submit replaced the manual result', async () => {
+        const suggestionsSubject = new Subject<Feedback[]>();
+        vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(suggestionsSubject.asObservable());
+        comp.submission.set({ id: 42 } as ProgrammingSubmission);
+        const requestedManualResult = { id: 1, feedbacks: [] } as Result;
+        comp.manualResult.set(requestedManualResult);
+
+        const loadPromise = comp['loadFeedbackSuggestions']();
+        // Save or submit completes while the suggestions are still loading and swaps in the persisted result.
+        const persistedManualResult = { id: 1, feedbacks: [] } as Result;
+        comp.manualResult.set(persistedManualResult);
+
+        suggestionsSubject.next([{ type: FeedbackType.AUTOMATIC, credits: 1, text: 'late suggestion' }]);
+        suggestionsSubject.complete();
+        await loadPromise;
+
+        expect(persistedManualResult.feedbacks).toEqual([]);
+        expect(requestedManualResult.feedbacks).toEqual([]);
+        expect(comp.hasAcceptedFeedbackSuggestions()).toBe(false);
+        expect(comp.hasPendingChanges).toBe(false);
+        expect(comp.loadingFeedbackSuggestions()).toBe(false);
+    });
+
+    it('should not alert for a stale feedback-suggestions failure once a newer request has started', async () => {
+        const staleSubject = new Subject<Feedback[]>();
+        vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValueOnce(staleSubject.asObservable()).mockReturnValueOnce(NEVER);
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        comp.submission.set({ id: 42 } as ProgrammingSubmission);
+
+        const stalePromise = comp['loadFeedbackSuggestions']();
+        comp.submission.set({ id: 84 } as ProgrammingSubmission);
+        comp['loadFeedbackSuggestions']();
+
+        staleSubject.error(new Error('network error'));
+        await stalePromise;
+
+        expect(errorSpy).not.toHaveBeenCalled();
+        expect(comp.loadingFeedbackSuggestions()).toBe(true);
+    });
+
+    it('should not alert for a feedback-suggestions failure that arrives after the component was destroyed', async () => {
+        const pendingSubject = new Subject<Feedback[]>();
+        vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValueOnce(pendingSubject.asObservable());
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        comp.submission.set({ id: 42 } as ProgrammingSubmission);
+
+        const pendingPromise = comp['loadFeedbackSuggestions']();
+        comp.ngOnDestroy();
+
+        pendingSubject.error(new Error('network error'));
+        await pendingPromise;
+
+        expect(errorSpy).not.toHaveBeenCalled();
+    });
+
+    it('should ignore a pending feedback-suggestions request once the lookup of the next submission starts', async () => {
+        const suggestions = new Subject<Feedback[]>();
+        vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValueOnce(suggestions.asObservable());
+        vi.spyOn(comp['programmingSubmissionService'], 'getSubmissionWithoutAssessment').mockReturnValue(NEVER);
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        comp.exercise.set(exercise);
+        comp.submission.set({ id: 42 } as ProgrammingSubmission);
+
+        const pendingRequest = comp['loadFeedbackSuggestions']();
+        comp.nextSubmission();
+        expect(comp.loadingFeedbackSuggestions()).toBe(false);
+
+        suggestions.error(new Error('network error'));
+        await pendingRequest;
+
+        expect(errorSpy).not.toHaveBeenCalled();
+    });
+
+    it('should discard a feedback-suggestions response that arrives while the next assessment is still loading', async () => {
+        const params = new BehaviorSubject<{ submissionId: number }>({ submissionId: 123 });
+        TestBed.inject(ActivatedRoute).params = params;
+        comp.ngOnInit();
+        await flushMicrotasks();
+
+        const suggestionsSubject = new Subject<Feedback[]>();
+        vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(suggestionsSubject.asObservable());
+        const previousManualResult = comp.manualResult();
+        const previousFeedbacks = [...(previousManualResult?.feedbacks ?? [])];
+        const loadPromise = comp['loadFeedbackSuggestions']();
+
+        // The tutor navigates to the next submission; the previous one stays loaded until the next one arrives.
+        lockAndGetProgrammingSubmissionParticipationStub.mockReturnValue(NEVER);
+        params.next({ submissionId: 456 });
+        expect(comp.loadingFeedbackSuggestions()).toBe(false);
+
+        suggestionsSubject.next([{ text: 'late suggestion', reference: 'file:src/Test.java_line:1', type: FeedbackType.MANUAL, credits: 1 } as Feedback]);
+        suggestionsSubject.complete();
+        await loadPromise;
+
+        expect(comp.manualResult()).toBe(previousManualResult);
+        expect(previousManualResult?.feedbacks ?? []).toEqual(previousFeedbacks);
+        expect(comp.hasAcceptedFeedbackSuggestions()).toBe(false);
+        expect(comp.loadingFeedbackSuggestions()).toBe(false);
+    });
+
+    it('should keep the save and submit busy state when loading feedback suggestions fails', async () => {
+        vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(throwError(() => new Error('network error')));
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        comp.submission.set({ id: 42 } as ProgrammingSubmission);
+        comp.saveBusy.set(true);
+        comp.submitBusy.set(true);
+
+        await comp['loadFeedbackSuggestions']();
+
+        expect(errorSpy).toHaveBeenCalledExactlyOnceWith('artemisApp.programmingAssessment.loadFeedbackSuggestionsFailed');
+        expect(comp.saveBusy()).toBe(true);
+        expect(comp.submitBusy()).toBe(true);
         expect(comp.loadingFeedbackSuggestions()).toBe(false);
     });
 

@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionTestChatClients;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -70,7 +71,7 @@ class HyperionTestRepositoryServiceTest {
         // ChatClient merges request options into the model's options, so the mocked ChatModel must return non-null options from getOptions().
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ChatClient chatClient = ChatClient.create(chatModel);
-        this.testRepository = new HyperionTestRepositoryService(chatClient, templates, gitService, contextRenderer, llmTokenUsageService);
+        this.testRepository = new HyperionTestRepositoryService(HyperionTestChatClients.returning(chatClient), templates, gitService, contextRenderer, llmTokenUsageService);
 
         this.user = new User();
         user.setLogin("testuser");

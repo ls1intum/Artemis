@@ -61,7 +61,7 @@ describe('SidebarCardMediumComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
-        expect(classes).toContain('border-success');
+        expect(classes).toContain('border-state-success');
     });
 
     it('should have success border class for medium difficulty', () => {
@@ -69,7 +69,7 @@ describe('SidebarCardMediumComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
-        expect(classes).toContain('border-warning');
+        expect(classes).toContain('border-state-warning');
     });
 
     it('should have success border class for hard difficulty', () => {
@@ -77,7 +77,7 @@ describe('SidebarCardMediumComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         const element: HTMLElement = fixture.nativeElement.querySelector('#test-sidebar-card-medium');
         const classes = element.className;
-        expect(classes).toContain('border-danger');
+        expect(classes).toContain('border-state-danger');
     });
 
     describe('variant group card', () => {

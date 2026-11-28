@@ -1,17 +1,17 @@
 <div class="flex h-full min-h-0 flex-col">
-    <header class="border-b border-border p-3!">
-        <h3 class="m-0 text-lg font-semibold">
+    <header class="border-b border-border p-3">
+        <h3 class="m-0">
             <span jhiTranslate="artemisApp.exercise.versionHistory.timeline.title"></span>
-            <span class="text-sm text-text-secondary">({{ totalItems() }})</span>
+            <span class="text-sm text-muted-color">({{ totalItems() }})</span>
         </h3>
     </header>
-    <div class="min-h-0 overflow-auto p-3!">
+    <div class="min-h-0 overflow-auto p-3">
         @if (loading()) {
             <tumaet-ui-progress-spinner />
         } @else if (timelineEntries().length === 0) {
             <tumaet-ui-message severity="info"><span jhiTranslate="artemisApp.exercise.versionHistory.timeline.empty"></span></tumaet-ui-message>
         } @else {
-            <ol class="m-0 flex list-none flex-col gap-3! p-0">
+            <ol class="m-0 flex list-none flex-col gap-3 p-0">
                 @for (entry of timelineEntries(); track entry.id) {
                     <li class="flex items-start gap-2">
                         <jhi-profile-picture
@@ -37,13 +37,13 @@
                             <span class="flex min-w-0 flex-col items-start gap-1">
                                 <span class="font-semibold">#{{ entry.id }}</span>
                                 <span class="break-words">{{ entry.displayName }}</span>
-                                <span class="text-sm text-text-secondary">{{ entry.secondaryName }}</span>
+                                <span class="text-sm text-muted-color">{{ entry.secondaryName }}</span>
                                 @if (entry.createdDate) {
-                                    <span class="text-xs text-text-secondary" [title]="entry.createdDate | artemisDate: 'long' : true">{{
+                                    <span class="text-xs text-muted-color" [title]="entry.createdDate | artemisDate: 'long' : true">{{
                                         entry.createdDate | artemisDate: 'short' : true
                                     }}</span>
                                 } @else {
-                                    <span class="text-xs text-text-secondary">-</span>
+                                    <span class="text-xs text-muted-color">-</span>
                                 }
                             </span>
                         </button>
@@ -54,7 +54,7 @@
         @if (hasMore()) {
             <tumaet-ui-button
                 data-testid="version-history-load-more"
-                class="mt-4! w-full"
+                class="mt-4 w-full"
                 severity="secondary"
                 variant="outlined"
                 [loading]="loadingMore()"

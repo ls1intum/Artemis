@@ -1,7 +1,7 @@
 @if (atlasEnabled() && competencies().length) {
-    <section class="mt-6! mb-2" [attr.aria-label]="'artemisApp.competency.competencyContribution.title' | artemisTranslate">
+    <section class="mt-6 mb-2" [attr.aria-label]="'artemisApp.competency.competencyContribution.title' | artemisTranslate">
         <div class="mb-2 flex items-center justify-between gap-2">
-            <h3 class="m-0 text-lg font-medium" jhiTranslate="artemisApp.competency.competencyContribution.title"></h3>
+            <h3 class="m-0" jhiTranslate="artemisApp.competency.competencyContribution.title"></h3>
             @if (competencies().length > 3) {
                 <div class="flex gap-2">
                     <button
@@ -31,7 +31,7 @@
                 </div>
             }
         </div>
-        <ul class="m-0 grid list-none grid-cols-1 gap-4! p-0 sm:grid-cols-3" aria-live="polite" data-testid="competency-contribution-cards">
+        <ul class="m-0 grid list-none grid-cols-1 gap-4 p-0 sm:grid-cols-3" aria-live="polite" data-testid="competency-contribution-cards">
             @for (competency of visibleCompetencies(); track competency.competencyId) {
                 <li class="min-w-0">
                     <jhi-competency-contribution-card

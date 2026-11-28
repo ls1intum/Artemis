@@ -25,7 +25,7 @@
                 <dl class="jh-entity-details markdown-preview">
                     @if (exampleSolutionInfo()?.exampleSolutionUML || exampleSolutionInfo()?.exampleSolution) {
                         @if (exampleSolutionInfo()?.exampleSolutionUML && exampleSolutionInfo()?.modelingExercise) {
-                            <dd class="editor-outline-background">
+                            <dd class="max-w-max bg-(--editor-outline-background)">
                                 <jhi-modeling-editor
                                     [readOnly]="true"
                                     [diagramType]="exampleSolutionInfo()?.modelingExercise?.diagramType"

@@ -13,7 +13,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { ActivatedRoute, NavigationEnd, Params, Router, RouterModule, RouterOutlet, provideRouter } from '@angular/router';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { ExerciseFilterModalComponent } from 'app/exercise/exercise-filter/exercise-filter-modal.component';
 import { ExerciseFilterResults } from 'app/foundation/types/exercise-filter';
 import { EventEmitter } from '@angular/core';
@@ -194,6 +194,14 @@ describe('SidebarComponent', () => {
         fixture.debugElement.query(By.css('[data-testid="course-sidebar-toggle"]')).triggerEventHandler('click');
 
         expect(emitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('shows the search field in the compact size', () => {
+        fixture.detectChanges();
+
+        const searchFilter = fixture.debugElement.query(By.directive(SearchFilterComponent));
+        expect(searchFilter).not.toBeNull();
+        expect((searchFilter.componentInstance as SearchFilterComponent).size()).toBe('small');
     });
 
     it('should filter sidebar items based on search criteria', () => {
@@ -447,20 +455,27 @@ describe('SidebarComponent', () => {
             expect(component.isFilterActive()).toBe(true);
         });
 
+        /** The entries only exist while the menu is open, in an overlay outside the component. */
+        function openCreateMenu(): void {
+            (fixture.nativeElement.querySelector('[data-testid="sidebar-create-menu-button"]') as HTMLElement).click();
+            fixture.changeDetectorRef.detectChanges();
+        }
+
         it('should show "Create Channel" button when canCreateChannel is true', () => {
             fixture.componentRef.setInput('inCommunication', true);
             fixture.componentRef.setInput('sidebarData', { sidebarType: 'default', canCreateChannel: true } as SidebarData);
             fixture.changeDetectorRef.detectChanges();
-            const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));
-            expect(createChannelButton).toBeTruthy();
+            openCreateMenu();
+            expect(document.querySelector('.createChannel')).not.toBeNull();
         });
 
         it('should not show "Create Channel" button when canCreateChannel is false', () => {
             fixture.componentRef.setInput('inCommunication', true);
             fixture.componentRef.setInput('sidebarData', { sidebarType: 'default', canCreateChannel: false } as SidebarData);
             fixture.changeDetectorRef.detectChanges();
-            const createChannelButton = fixture.debugElement.query(By.css('.createChannel'));
-            expect(createChannelButton).toBeFalsy();
+            openCreateMenu();
+            expect(document.querySelector('[role="menu"]')).not.toBeNull();
+            expect(document.querySelector('.createChannel')).toBeNull();
         });
     });
 });

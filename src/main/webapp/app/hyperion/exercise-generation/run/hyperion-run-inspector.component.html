@@ -1,4 +1,4 @@
-<div class="mx-auto flex w-full max-w-4xl min-w-0 flex-col gap-6!" data-testid="hyperion-run-page">
+<div class="mx-auto flex w-full max-w-4xl min-w-0 flex-col gap-6" data-testid="hyperion-run-page">
     <jhi-hyperion-run-header
         [exerciseId]="exerciseId()"
         [jobId]="jobId()"
@@ -44,13 +44,13 @@
     }
 
     @if (statusLoadFailed()) {
-        <tumaet-ui-message severity="error" class="block" data-testid="hyperion-run-status-unavailable">
+        <tumaet-ui-message severity="error" data-testid="hyperion-run-status-unavailable">
             <div class="flex min-w-0 flex-col gap-2">
                 <span jhiTranslate="artemisApp.hyperion.generation.run.statusUnavailable"></span>
                 @if (running()) {
                     <span class="text-sm" jhiTranslate="artemisApp.hyperion.generation.run.stillRunningOnServer"></span>
                 }
-                <div class="flex flex-wrap items-center gap-4!">
+                <div class="flex flex-wrap items-center gap-4">
                     @if (lastUpdateTime(); as time) {
                         <span class="text-sm" data-testid="hyperion-run-last-update">{{ 'artemisApp.hyperion.generation.run.lastUpdate' | artemisTranslate: { time } }}</span>
                     }
@@ -64,8 +64,8 @@
 
     @if (notStarted() || historyExpired()) {
         <tumaet-ui-card data-testid="hyperion-run-not-started">
-            <div class="flex items-center justify-between gap-4!">
-                <h2 class="text-xl font-medium">{{ idleTitleKey() | artemisTranslate }}</h2>
+            <div class="flex items-center justify-between gap-4">
+                <h2>{{ idleTitleKey() | artemisTranslate }}</h2>
             </div>
             <p class="m-0 text-sm" [jhiTranslate]="idleHintKey()"></p>
         </tumaet-ui-card>
@@ -74,7 +74,7 @@
             <tumaet-ui-card>
                 <jhi-hyperion-run-outcome [view]="view" />
                 <tumaet-ui-panel
-                    class="mt-4! block"
+                    class="mt-4 block"
                     toggleable
                     [collapsed]="true"
                     [header]="stageStripHeaderKey() | artemisTranslate: stageStripHeaderParams()"
@@ -92,8 +92,8 @@
         } @else {
             <!-- Keep projected headers outside control-flow blocks within the card. -->
             <tumaet-ui-card>
-                <div class="flex items-center justify-between gap-4!">
-                    <h2 class="text-xl font-medium" id="hyperion-run-progress-title">{{ 'artemisApp.hyperion.generation.run.progressTitle' | artemisTranslate }}</h2>
+                <div class="flex items-center justify-between gap-4">
+                    <h2 id="hyperion-run-progress-title">{{ 'artemisApp.hyperion.generation.run.progressTitle' | artemisTranslate }}</h2>
                     <div class="flex items-center gap-2">
                         @if (showStepCounter() && stepPosition(); as position) {
                             <span class="text-sm tabular-nums text-muted-color" data-testid="hyperion-run-step-counter">{{
@@ -102,7 +102,7 @@
                         }
                     </div>
                 </div>
-                <section class="mt-4!" aria-labelledby="hyperion-run-progress-title">
+                <section class="mt-4" aria-labelledby="hyperion-run-progress-title">
                     <jhi-hyperion-run-progress
                         [stages]="stages()"
                         [adapting]="adapting()"
@@ -132,7 +132,7 @@
         </tumaet-ui-card>
 
         @if (spend(); as spendView) {
-            <section class="hyperion-run-detail pt-6!">
+            <section class="hyperion-run-detail pt-6">
                 <jhi-hyperion-run-usage [spend]="spendView" [sealedAt]="endedAt()" />
             </section>
         }

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { ApollonDiagramListComponent } from '../list/apollon-diagram-list.component';
@@ -9,7 +9,7 @@ import { ApollonDiagramDetailComponent } from '../detail/apollon-diagram-detail.
     selector: 'jhi-apollon-diagram-import-dialog',
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './apollon-diagram-import-dialog.component.html',
-    styleUrls: ['./apollon-diagram-import-dialog.component.scss'],
+    styleUrls: ['./apollon-diagram-import-dialog.component.css'],
     providers: [ApollonDiagramService],
     imports: [ApollonDiagramListComponent, ApollonDiagramDetailComponent],
 })

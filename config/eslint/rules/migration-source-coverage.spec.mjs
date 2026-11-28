@@ -13,8 +13,8 @@ function normalizeMigrationPath(p) {
     return p
         .replace(/^\.\/app\//, '')
         .replace(/^.*\/app\//, '')
-        .replace(/\/\*\*\/\*\.(html|scss|ts)$/, '')
-        .replace(/\.component\.(html|scss|ts)$/, '');
+        .replace(/\/\*\*\/\*\.(html|css|ts)$/, '')
+        .replace(/\.component\.(html|css|ts)$/, '');
 }
 
 const sorted = (xs) => [...xs].sort();
@@ -47,18 +47,5 @@ describe('migration lock consistency', () => {
     it('every locked path is scanned by a tailwind @source entry (@source may be a superset)', () => {
         const uncovered = lockedPaths.filter((path) => path !== '@tumaet/ui-angular' && !isCovered(path));
         expect(uncovered, `locked paths missing from tailwind.css @source (their Tailwind utilities would silently not generate): ${uncovered.join(', ')}`).toEqual([]);
-    });
-
-    it('every path of the ambiguous-spacing scope is scanned by a tailwind @source entry', () => {
-        const spacingBlock = eslintConfig.find((c) => c.rules && c.rules['localRules/no-ambiguous-spacing-utility']);
-        expect(spacingBlock, 'config block enabling localRules/no-ambiguous-spacing-utility').toBeTruthy();
-        const spacingPaths = spacingBlock.files.map(normalizeMigrationPath);
-        expect(spacingPaths.length, 'ambiguous-spacing scoped paths').toBeGreaterThan(0);
-        // The rule tells authors to write a Tailwind utility, which only exists if tailwind.css scans the template.
-        const uncovered = spacingPaths.filter((path) => !isCovered(path));
-        expect(
-            uncovered,
-            `ambiguous-spacing paths missing from tailwind.css @source (the utilities the rule asks for would silently not generate): ${uncovered.join(', ')}`,
-        ).toEqual([]);
     });
 });

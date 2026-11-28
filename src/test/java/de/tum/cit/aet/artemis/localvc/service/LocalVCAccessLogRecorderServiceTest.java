@@ -6,10 +6,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -20,6 +22,8 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -195,6 +199,18 @@ class LocalVCAccessLogRecorderServiceTest {
         AuthenticationMechanism result = accessLogRecorder.resolveAuthenticationMechanismFromSessionOrRequest(context, testUser, testRepositoryUri);
 
         assertThat(result).isEqualTo(AuthenticationMechanism.USER_VCS_ACCESS_TOKEN);
+    }
+
+    @Test
+    void aPersonalAccessTokenOfACodingAgentIsLoggedAsSuch() throws Exception {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString(("user:art_pat_" + "a".repeat(43)).getBytes());
+        when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(authHeader);
+
+        AuthenticationMechanism result = accessLogRecorder.resolveAuthenticationMechanismFromSessionOrRequest(new AuthenticationContext.Request(request), testUser,
+                testRepositoryUri);
+
+        assertThat(result).isEqualTo(AuthenticationMechanism.AGENT_ACCESS_TOKEN);
     }
 
     @Test
@@ -456,6 +472,101 @@ class LocalVCAccessLogRecorderServiceTest {
 
         verify(vcsAccessLogService).createAccessLog(testUser, testParticipation.getId(), RepositoryActionType.PUSH, AuthenticationMechanism.SSH, "pushed", "10.0.0.2");
         verify(vcsAccessLogService).createAccessLog(testUser, testParticipation.getId(), RepositoryActionType.PUSH_FAIL, AuthenticationMechanism.SSH, "before", "10.0.0.2");
+    }
+
+    private GitOperationAudit auditOfAClone() {
+        var audit = new GitOperationAudit();
+        audit.onBeginNegotiateRound(0);
+        audit.onPackSent("head");
+        return audit;
+    }
+
+    @Test
+    void anEntryIsWrittenByAThreadThatWasInterruptedAndTheInterruptIsPassedOn() {
+        var subject = new AccessLogSubject(testUser, testParticipation.getId(), AuthenticationMechanism.SSH, "10.0.0.2");
+        var stored = new AtomicInteger();
+        doAnswer(invocation -> {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new IllegalStateException("no connection was acquired", new InterruptedException());
+            }
+            stored.incrementAndGet();
+            return null;
+        }).when(vcsAccessLogService).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
+
+        Thread.currentThread().interrupt();
+        try {
+            accessLogRecorder.recordFetch(subject, auditOfAClone());
+
+            assertThat(stored).hasValue(1);
+            // the entry was written at the first attempt: clearing the interrupt is what made it possible, not the second attempt
+            verify(vcsAccessLogService, times(1)).createAccessLog(testUser, testParticipation.getId(), RepositoryActionType.CLONE, AuthenticationMechanism.SSH, "head", "10.0.0.2");
+            verify(vcsAccessLogService, never()).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString(), any());
+            assertThat(Thread.currentThread().isInterrupted()).as("the interrupt is not lost").isTrue();
+        }
+        finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    void anEntryIsWrittenOnceMoreWhenTheInterruptArrivesWhileItIsWritten() {
+        var subject = new AccessLogSubject(testUser, testParticipation.getId(), AuthenticationMechanism.SSH, "10.0.0.2");
+        var stored = new AtomicInteger();
+        var timeOfRetry = new AtomicReference<ZonedDateTime>();
+        var timeInsideTheFirstAttempt = new AtomicReference<ZonedDateTime>();
+        // the first attempt is interrupted while it waits for a connection
+        doAnswer(invocation -> {
+            timeInsideTheFirstAttempt.set(ZonedDateTime.now());
+            // a retry that took a new time would fall after this wait, also on a clock with a coarse resolution
+            Thread.sleep(10);
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("no connection was acquired", new InterruptedException());
+        }).when(vcsAccessLogService).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
+        // the second one carries the time that was taken before the first attempt
+        doAnswer(invocation -> {
+            if (Thread.currentThread().isInterrupted()) {
+                throw new IllegalStateException("no connection was acquired", new InterruptedException());
+            }
+            timeOfRetry.set(invocation.getArgument(6));
+            stored.incrementAndGet();
+            return null;
+        }).when(vcsAccessLogService).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString(), any());
+
+        var before = ZonedDateTime.now();
+        try {
+            accessLogRecorder.recordFetch(subject, auditOfAClone());
+
+            assertThat(stored).hasValue(1);
+            assertThat(timeOfRetry.get()).as("the time of the first attempt, taken before it started").isBetween(before, timeInsideTheFirstAttempt.get());
+            // the retry writes the same event as the first attempt, with the time added
+            verify(vcsAccessLogService, times(1)).createAccessLog(testUser, testParticipation.getId(), RepositoryActionType.CLONE, AuthenticationMechanism.SSH, "head", "10.0.0.2");
+            verify(vcsAccessLogService, times(1)).createAccessLog(testUser, testParticipation.getId(), RepositoryActionType.CLONE, AuthenticationMechanism.SSH, "head", "10.0.0.2",
+                    timeOfRetry.get());
+            verifyNoMoreInteractions(vcsAccessLogService);
+            assertThat(Thread.currentThread().isInterrupted()).as("the interrupt is not lost").isTrue();
+        }
+        finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    void aFailureThatIsNoInterruptIsNotWrittenAgainAndLeavesTheThreadAlone() {
+        var subject = new AccessLogSubject(testUser, testParticipation.getId(), AuthenticationMechanism.SSH, "10.0.0.2");
+        doThrow(new IllegalStateException("the database is away")).when(vcsAccessLogService).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
+
+        try {
+            accessLogRecorder.recordFetch(subject, auditOfAClone());
+
+            verify(vcsAccessLogService, times(1)).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
+            // no other attempt either, for example one with a time
+            verifyNoMoreInteractions(vcsAccessLogService);
+            assertThat(Thread.currentThread().isInterrupted()).isFalse();
+        }
+        finally {
+            // a regression that sets the flag must not leave it set for the next test
+            Thread.interrupted();
+        }
     }
 
     @Test

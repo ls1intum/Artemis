@@ -24,7 +24,9 @@ import { faBookmark, faCheck, faPencilAlt, faShare, faSmile, faTrash, faTriangle
 import { DOCUMENT, NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingHeaderComponent } from '../posting-header/posting-header.component';
 import { AnswerPostCreateEditModalComponent } from '../posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
@@ -44,7 +46,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-answer-post',
     templateUrl: './answer-post.component.html',
-    styleUrls: ['./answer-post.component.scss'],
+    styleUrls: ['../communication.component.css', './answer-post.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         SavedPostingBannerComponent,

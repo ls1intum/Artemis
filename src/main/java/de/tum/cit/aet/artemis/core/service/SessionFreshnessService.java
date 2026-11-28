@@ -14,7 +14,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.SessionOutdatedException;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 
@@ -83,28 +82,6 @@ public class SessionFreshnessService {
             return true;
         }
         return passkeyTokenRenewalService.mayExtendSessionForAccount(authentication.getName(), sessionStartedAt.get());
-    }
-
-    /**
-     * The same decision for a caller that has loaded the account of the request already, which saves looking it up by login.
-     * <p>
-     * An account that is not the one the session belongs to is not used: the decision is then made from the account that the
-     * authentication names, as in {@link #isCurrentSession(Authentication)}, so that passing the wrong account can never make a
-     * session look current.
-     *
-     * @param authentication the authentication of the request, may be {@code null}
-     * @param account        the account the request is made for, as it is now
-     * @return {@code true} if the session may create credentials, or if the authentication carries no session start to check
-     */
-    public boolean isCurrentSession(Authentication authentication, User account) {
-        Optional<Instant> sessionStartedAt = sessionStartedAt(authentication);
-        if (sessionStartedAt.isEmpty()) {
-            return true;
-        }
-        if (!authentication.getName().equals(account.getLogin())) {
-            return passkeyTokenRenewalService.mayExtendSessionForAccount(authentication.getName(), sessionStartedAt.get());
-        }
-        return passkeyTokenRenewalService.mayExtendSessionOf(account, sessionStartedAt.get());
     }
 
     /**

@@ -179,6 +179,29 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testGetExamUserSignatureForbiddenForStudentOfTheExamCourse() throws Exception {
+        var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        var exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course, 1);
+        var user = new ExamUserDTO(TEST_PREFIX + "student1", null, null, null, null, null, "", "", true, true, true, true, null, null, null, null, null, null, null, null);
+        var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
+        ExamUser examUser = request.postWithMultipartFile("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/exam-users", user, "examUserDTO", file,
+                ExamUser.class, HttpStatus.OK);
+
+        // the registered student only is a student of the course of the exam, so neither the signature nor the image of any exam user is theirs to read
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        request.get("%s%s".formatted(ARTEMIS_FILE_PATH_PREFIX, examUser.getSigningImagePath()), HttpStatus.FORBIDDEN, byte[].class);
+        request.get("/api/core/files/exam-users/" + examUser.getId() + "/image.png", HttpStatus.FORBIDDEN, byte[].class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetExamUserFilesNotFoundForUnknownExamUser() throws Exception {
+        request.get("/api/core/files/exam-users/999999/signatures/signature.png", HttpStatus.NOT_FOUND, byte[].class);
+        request.get("/api/core/files/exam-users/999999/image.png", HttpStatus.NOT_FOUND, byte[].class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
     void testGetTemplateFile() throws Exception {
         String javaReadme = request.get("/api/core/files/templates/JAVA/PLAIN_MAVEN", HttpStatus.OK, String.class);
         assertThat(javaReadme).isNotEmpty();
@@ -335,6 +358,24 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(
                 request.get("/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnitId + "/student/" + STORED_ATTACHMENT_FILENAME, HttpStatus.OK, byte[].class))
                 .isEqualTo(content);
+    }
+
+    /**
+     * The last segment of a student version URL only suggests a file name: the file is resolved by the unit id, so a name with a space or colon is served like any other, and
+     * a segment that tries to leave the directory is never used to read another file.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetStudentVersionIgnoresTheSuggestedFilenameAndRejectsTraversal() throws Exception {
+        byte[] content = "lecture attachment content".getBytes();
+        Attachment attachment = createLectureAttachmentWithStoredFile(content);
+        long attachmentVideoUnitId = attachment.getAttachmentVideoUnit().getId();
+        String studentUrl = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnitId + "/student/";
+
+        assertThat(request.get(studentUrl + "Slide%20Set%204%3A%20Memory_uP%20I.pdf", HttpStatus.OK, byte[].class)).isEqualTo(content);
+
+        request.get(studentUrl + "..%2F..%2F..%2Fetc%2Fpasswd", HttpStatus.BAD_REQUEST, byte[].class);
+        request.get(studentUrl + "%2E%2E/%2E%2E/etc/passwd", HttpStatus.BAD_REQUEST, byte[].class);
     }
 
     /**

@@ -374,7 +374,7 @@ public class CourseUtilService {
     /**
      * Creates and saves two courses with exercises, lectures, lecture units and competencies.
      *
-     * @param userPrefix                  The prefix of the course user groups.
+     * @param userPrefix                  The login prefix of the course's test users.
      * @param withParticipations          True, if 5 participations by student1 should be added to the course exercises. If false, no participations are added.
      * @param withFiles                   True, if lecture unit attachments with files should be generated. If false, attachments without files are generated.
      * @param numberOfTutorParticipations The number of tutor participations to add to the modeling exercise. "withParticipations" should be set to true for this to have an effect.
@@ -395,7 +395,7 @@ public class CourseUtilService {
     /**
      * Creates and saves two Courses with Exercises of each type and two Lectures. For each Lecture, a LectureUnit of each type is added.
      *
-     * @param userPrefix                  The prefix of the Course's user groups
+     * @param userPrefix                  The login prefix of the course's test users
      * @param withParticipations          True, if 5 participations by student1 should be added for the Course's Exercises
      * @param withFiles                   True, if the LectureUnit of type AttachmentVideoUnit should contain an Attachment with a link to an image file
      * @param numberOfTutorParticipations The number of tutor participations to add to the ModelingExercise ("withParticipations" must be true for this to have an effect)
@@ -421,7 +421,7 @@ public class CourseUtilService {
     /**
      * Creates and saves two courses with exercises and lectures. Requires at least two students.
      *
-     * @param userPrefix                  The prefix of the course user groups.
+     * @param userPrefix                  The login prefix of the course's test users.
      * @param withParticipations          True, if 5 participations by student1 should be added to the course exercises. If false, no participations are added.
      * @param numberOfTutorParticipations The number of tutor participations to add to the modeling exercise. "withParticipations" should be set to true for this to have an effect.
      * @return The list of created and saved courses.
@@ -596,7 +596,7 @@ public class CourseUtilService {
     /**
      * Creates and saves course with all exercise types. Also creates participations together with submissions and results.
      *
-     * @param userPrefix                 The prefix of the course user groups.
+     * @param userPrefix                 The login prefix of the course's test users.
      * @param hasAssessmentDueDatePassed True, if the assessment due date of the exercises has passed.
      * @return The created course.
      */
@@ -781,7 +781,7 @@ public class CourseUtilService {
      * Creates and saves course with all exercise types. Also creates participations together with submissions and results.
      * including test Runs and Late Submissions
      *
-     * @param userPrefix                 The prefix of the course user groups.
+     * @param userPrefix                 The login prefix of the course's test users.
      * @param hasAssessmentDueDatePassed True, if the assessment due date of the exercises has passed.
      * @return The created course.
      */
@@ -1192,8 +1192,8 @@ public class CourseUtilService {
      * text exercises in a cyclic manner.
      *
      * @param shortName                     The short name of the course.
-     * @param userPrefix                    The prefix of the course user groups.
-     * @param suffix                        The suffix of the course user groups.
+     * @param userPrefix                    The login prefix of the course's test users.
+     * @param suffix                        Not used.
      * @param numberOfExercises             Number of generated exercises. E.g. if you set it to 4, 2 modeling exercises, one text and one file-upload exercise will be generated.
      *                                          (that's why there is the %3 check)
      * @param numberOfSubmissionPerExercise For each exercise this number of submissions will be generated. E.g. if you have 2 exercises, and set this to 4, in total 8
@@ -1219,8 +1219,8 @@ public class CourseUtilService {
      * text exercises in a cyclic manner.
      *
      * @param courseShortName               The short name of the course.
-     * @param userPrefix                    The prefix of the course user groups.
-     * @param suffix                        The suffix of the course user groups.
+     * @param userPrefix                    The login prefix of the course's test users.
+     * @param suffix                        Not used.
      * @param numberOfExercises             Number of generated exercises. E.g. if you set it to 4, 2 modeling exercises, one text and one file-upload exercise will be generated.
      *                                          (that's why there is the %3 check)
      * @param numberOfSubmissionPerExercise For each exercise this number of submissions will be generated. E.g. if you have 2 exercises, and set this to 4, in total 8
@@ -1334,7 +1334,7 @@ public class CourseUtilService {
     /**
      * Creates and saves a course with one text, one modeling, and one file upload exercise. It also generates a submission for each exercise.
      *
-     * @param userPrefix The prefix of the course user groups.
+     * @param userPrefix The login prefix of the course's test users.
      * @return The created course.
      * @throws IOException If a file cannot be loaded from resources.
      */
@@ -1362,7 +1362,7 @@ public class CourseUtilService {
     /**
      * Creates and saves a course with exam and submissions. The exam includes one file upload, one text and one modeling exercise.
      *
-     * @param userPrefix The prefix of the course user groups.
+     * @param userPrefix The login prefix of the course's test users.
      * @return The created course.
      * @throws IOException If a file cannot be loaded from resources.
      */
@@ -1434,6 +1434,18 @@ public class CourseUtilService {
             course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
             courseRepo.saveWithDefaultConfigurations(course);
         }
+    }
+
+    /**
+     * Switches the presentation assessments of a course on or off, as the course settings do.
+     *
+     * @param course  the course whose setting changes
+     * @param enabled whether instructors and tutors can manage presentations in the course
+     */
+    public void setPresentationAssessmentsEnabled(Course course, boolean enabled) {
+        CourseConfiguration courseConfiguration = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
+        courseConfiguration.setPresentationAssessmentsEnabled(enabled);
+        course.setCourseConfiguration(courseConfigurationRepository.save(courseConfiguration));
     }
 
     /**

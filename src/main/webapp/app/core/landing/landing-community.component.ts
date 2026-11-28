@@ -151,7 +151,7 @@ import { COMMUNITY_LINKS } from 'app/core/landing/landing-data';
                             <h3 class="community-card-title">
                                 {{ link.titleKey | artemisTranslate }}
                                 <fa-icon class="community-card-icon" [icon]="faArrowUpRightFromSquare" />
-                                <span class="visually-hidden">{{ 'landing.opensInNewTab' | artemisTranslate }}</span>
+                                <span class="sr-only">{{ 'landing.opensInNewTab' | artemisTranslate }}</span>
                             </h3>
                             <p class="community-card-description">{{ link.descriptionKey | artemisTranslate }}</p>
                         </a>

@@ -1,12 +1,12 @@
 @if (activeConversation() && courseId()) {
-    <div class="flex flex-col gap-4!">
+    <div class="flex flex-col gap-4">
         @if (maxSelectable() !== undefined) {
             <tumaet-ui-message severity="info">
                 <span jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.maxUsersNote" [translateValues]="{ max: maxSelectable() }"></span>
             </tumaet-ui-message>
         }
         <div [hidden]="maxSelectable() === 0">
-            <div class="flex flex-col gap-4!">
+            <div class="flex flex-col gap-4">
                 <div class="mode-switch" [hidden]="!getAsChannel(activeConversation())">
                     <tumaet-ui-select-button
                         data-testid="add-users-mode-select"
@@ -18,9 +18,9 @@
                         [ngModelOptions]="{ standalone: true }"
                     />
                 </div>
-                <form class="flex flex-col gap-4!" (ngSubmit)="submitForm()" [formGroup]="form">
+                <form class="flex flex-col gap-4" (ngSubmit)="submitForm()" [formGroup]="form">
                     <div class="individual-select" [hidden]="mode !== 'individual'">
-                        <div class="flex flex-col gap-4!">
+                        <div class="flex flex-col gap-4">
                             <jhi-course-users-selector
                                 formControlName="selectedUsers"
                                 [courseId]="courseId()"
@@ -39,7 +39,7 @@
                         </div>
                     </div>
                     <div class="group-select" [hidden]="mode !== 'group'">
-                        <div class="flex flex-wrap gap-4!">
+                        <div class="flex flex-wrap gap-4">
                             <div class="flex items-center gap-2">
                                 <tumaet-ui-checkbox inputId="allStudents" formControlName="addAllStudents" />
                                 <label for="allStudents" jhiTranslate="artemisApp.dialogs.addUsers.addUsersForm.addAllStudents"></label>

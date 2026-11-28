@@ -12,7 +12,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-course-card-header',
     templateUrl: './course-card-header.component.html',
-    styleUrls: ['./course-card-header.component.scss'],
+    styleUrls: ['./course-card-header.component.css'],
     imports: [ImageComponent, RouterModule, SlicePipe, CommonModule, CourseNotificationBubbleComponent, FaIconComponent, TranslateDirective],
 })
 export class CourseCardHeaderComponent {

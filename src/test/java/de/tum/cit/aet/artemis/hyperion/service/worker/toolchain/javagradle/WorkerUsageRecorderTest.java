@@ -37,12 +37,12 @@ class WorkerUsageRecorderTest {
     @Test
     void streamsProviderEvidenceAndCountsWithoutInventingPrices() {
         var events = new ArrayList<ProviderUsageUpdate>();
-        var recorder = new WorkerUsageRecorder(1_000, 0.1, true, events::add);
-        var call = new ProviderUsageUpdate.Call("model", "request", 100, 20, 80L);
+        var recorder = new WorkerUsageRecorder(1_000, 0.1, events::add);
+        var call = new ProviderUsageUpdate.Call("model", "request", 100, 20, 80L, null);
 
         recorder.recordAttempt();
         recorder.recordTurn();
-        recorder.accept(ProviderUsageTransport.restore(call));
+        recorder.accept(ProviderUsageTransport.restore(call, null));
         recorder.recordToolCalls(2);
 
         assertThat(events).extracting(ProviderUsageUpdate::kind).containsExactly(Kind.ATTEMPT, Kind.TURN, Kind.RESPONSE, Kind.TOOL_CALLS);
@@ -59,28 +59,27 @@ class WorkerUsageRecorderTest {
         assertThat(snapshot.models()).containsExactly("model");
         assertThat(snapshot.providerRequestIds()).containsExactly("request");
         assertThat(snapshot.providerRequestIdsComplete()).isTrue();
-        assertThat(snapshot.estimatedCostEurComplete()).isFalse();
         assertThat(recorder.accountingState()).isEqualTo(AccountingState.COMPLETE);
     }
 
     @Test
     void cachedInputBudgetUsesRoundedWeightedTokensAndStopsAtTheExactLimit() {
-        var recorder = new WorkerUsageRecorder(49, 0.1, true, ignored -> {
+        var recorder = new WorkerUsageRecorder(49, 0.1, ignored -> {
         });
-        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "first", 100, 20, 80L)));
+        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "first", 100, 20, 80L, null), null));
         assertThat(recorder.shouldStopAuthoring()).isFalse();
         assertThat(recorder.budgetExhausted()).isFalse(); // 20 uncached + 8 weighted cache + 20 output
-        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "second", 1, 0, 0L)));
+        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "second", 1, 0, 0L, null), null));
         assertThat(recorder.budgetExhausted()).isTrue();
         assertThat(recorder.shouldStopAuthoring()).isTrue();
     }
 
     @Test
     void missingCacheAndRequestIdStayUnknownAndCannotDiscountTheBudget() {
-        var recorder = new WorkerUsageRecorder(100, 0.1, true, ignored -> {
+        var recorder = new WorkerUsageRecorder(100, 0.1, ignored -> {
         });
-        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", null, 100, 0, null)));
-        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "known", 1, 0, 0L)));
+        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", null, 100, 0, null, null), null));
+        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "known", 1, 0, 0L, null), null));
         assertThat(recorder.budgetExhausted()).isTrue();
         assertThat(recorder.snapshot().cachedInputTokensComplete()).isFalse();
         assertThat(recorder.snapshot().providerRequestIdsComplete()).isFalse();
@@ -88,15 +87,15 @@ class WorkerUsageRecorderTest {
     }
 
     @Test
-    void retriesAndMissingUsageAreAbsorbingUncertainty() {
+    void missingUsageIsAbsorbingUncertainty() {
         var events = new ArrayList<ProviderUsageUpdate>();
-        var recorder = new WorkerUsageRecorder(100, 1, false, events::add);
+        var recorder = new WorkerUsageRecorder(100, 1, events::add);
         assertThat(recorder.shouldStopAuthoring()).isFalse();
         assertThatThrownBy(() -> recorder.accept(null)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("no usage metadata");
         assertThat(recorder.shouldStopAuthoring()).isTrue();
         assertThat(recorder.budgetExhausted()).isFalse();
         recorder.markUncertain();
-        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "known", 1, 0, 0L)));
+        recorder.accept(ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "known", 1, 0, 0L, null), null));
         assertThat(recorder.shouldStopAuthoring()).isTrue();
         assertThat(recorder.accountingState()).isEqualTo(AccountingState.INCOMPLETE);
         assertThat(events).filteredOn(event -> event.kind() == Kind.UNCERTAIN).hasSize(1);
@@ -106,7 +105,7 @@ class WorkerUsageRecorderTest {
     @Test
     void missingUsageStopsTheRunnerBeforeToolsOrAnotherRequest() {
         var events = new ArrayList<ProviderUsageUpdate>();
-        var recorder = new WorkerUsageRecorder(1_000, 1, true, events::add);
+        var recorder = new WorkerUsageRecorder(1_000, 1, events::add);
         ChatModel model = mock(ChatModel.class);
         var call = new AssistantMessage.ToolCall("edit", "function", "write", "{}");
         var response = new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("").toolCalls(List.of(call)).build())), mock(ChatResponseMetadata.class));
@@ -126,7 +125,7 @@ class WorkerUsageRecorderTest {
     @Test
     void missingSummaryUsageStopsBeforeTheNextAuthoringRequest() {
         var events = new ArrayList<ProviderUsageUpdate>();
-        var recorder = new WorkerUsageRecorder(1_000, 1, true, events::add);
+        var recorder = new WorkerUsageRecorder(1_000, 1, events::add);
         ChatModel model = mock(ChatModel.class);
         when(model.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("summary"))), mock(ChatResponseMetadata.class)));
         var runner = new AgentLoopRunner(List.of(model), 24_000, Duration.ofMinutes(5), ProviderFailureCooldown.disabled());
@@ -143,25 +142,6 @@ class WorkerUsageRecorderTest {
         verify(model, times(1)).call(any(Prompt.class));
         assertThat(recorder.accountingState()).isEqualTo(AccountingState.INCOMPLETE);
         assertThat(events).extracting(ProviderUsageUpdate::kind).containsExactly(Kind.UNCERTAIN);
-    }
-
-    @Test
-    void retryEnabledAccountingStillAllowsAResponseWithValidUsage() {
-        var events = new ArrayList<ProviderUsageUpdate>();
-        var recorder = new WorkerUsageRecorder(1_000, 1, false, events::add);
-        ChatModel model = mock(ChatModel.class);
-        var metadata = ProviderUsageTransport.restore(new ProviderUsageUpdate.Call("model", "request", 10, 2, 0L)).getMetadata();
-        when(model.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("finished"))), metadata));
-        var runner = new AgentLoopRunner(List.of(model), 128_000, Duration.ofMinutes(5), ProviderFailureCooldown.disabled());
-
-        var session = runner.runTextSession("system", null, "brief", 4, () -> false, recorder, null);
-
-        assertThat(session.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
-        assertThat(recorder.shouldStopAuthoring()).isFalse();
-        assertThat(recorder.accountingState()).isEqualTo(AccountingState.INCOMPLETE);
-        assertThat(recorder.snapshot().modelCalls()).isEqualTo(1);
-        assertThat(events).extracting(ProviderUsageUpdate::kind).containsExactly(Kind.UNCERTAIN, Kind.TURN, Kind.RESPONSE, Kind.TOOL_CALLS);
-        verify(model, times(1)).call(any(Prompt.class));
     }
 
     static class RecordingTools implements SubmitVetoAware {
@@ -187,7 +167,7 @@ class WorkerUsageRecorderTest {
 
     @Test
     void failedEventDeliveryCannotClaimCompleteAccounting() {
-        var recorder = new WorkerUsageRecorder(100, 1, true, ignored -> {
+        var recorder = new WorkerUsageRecorder(100, 1, ignored -> {
             throw new IllegalStateException("disconnected");
         });
         assertThatThrownBy(recorder::recordTurn).isInstanceOf(IllegalStateException.class);
@@ -198,21 +178,8 @@ class WorkerUsageRecorderTest {
     }
 
     @Test
-    void indeterminateUsageStopsEvenWhenRetryUncertaintyWasAlreadyReported() {
-        var events = new ArrayList<ProviderUsageUpdate>();
-        var recorder = new WorkerUsageRecorder(1_000, 1, false, events::add);
-        assertThat(recorder.shouldStopAuthoring()).isFalse();
-
-        recorder.markUncertain();
-
-        assertThat(recorder.shouldStopAuthoring()).isTrue();
-        assertThat(recorder.budgetExhausted()).isFalse();
-        assertThat(events).extracting(ProviderUsageUpdate::kind).containsExactly(Kind.UNCERTAIN);
-    }
-
-    @Test
     void negativeToolCountsCannotDecreaseUsage() {
-        var recorder = new WorkerUsageRecorder(100, 1, true, ignored -> {
+        var recorder = new WorkerUsageRecorder(100, 1, ignored -> {
         });
         recorder.recordToolCalls(2);
         assertThatThrownBy(() -> recorder.recordToolCalls(-1)).isInstanceOf(IllegalArgumentException.class);

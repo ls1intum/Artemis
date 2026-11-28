@@ -1,12 +1,13 @@
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiCheckboxComponent, TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
 import { Component, OnDestroy, effect, inject, input, model, output, signal } from '@angular/core';
 import { faCheckDouble, faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
-import type { TumAetUiInputSize } from '@tumaet/ui-angular';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { Subscription, distinctUntilChanged, filter } from 'rxjs';
 import { SidebarEventService } from './service/sidebar-event.service';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseFilterOptions, ExerciseFilterResults } from 'app/foundation/types/exercise-filter';
 import {
     getAchievablePointsAndAchievedScoreFilterOptions,
@@ -31,7 +32,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-sidebar',
     templateUrl: './sidebar.component.html',
-    styleUrls: ['./sidebar.component.scss'],
+    styleUrls: ['./sidebar.component.css'],
     host: {
         '[class.fit-container-height]': 'fitContainerHeight()',
     },
@@ -40,11 +41,10 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         FaIconComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
-        NgbDropdownButtonItem,
-        NgbDropdownItem,
+        TumAetUiButtonDirective,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
         SidebarAccordionComponent,
         SidebarCardComponent,
         SearchFilterPipe,
@@ -69,7 +69,6 @@ export class SidebarComponent implements OnDestroy {
     onCreateChannelPressed = output<void>();
     onMarkAllChannelsAsRead = output<void>();
     readonly searchFieldEnabled = input<boolean>(true);
-    readonly searchFieldSize = input<TumAetUiInputSize | undefined>(undefined);
     /** Size the scrollable list from the available container height instead of the viewport. */
     readonly fitContainerHeight = input(false);
     readonly sidebarData = input.required<SidebarData>();

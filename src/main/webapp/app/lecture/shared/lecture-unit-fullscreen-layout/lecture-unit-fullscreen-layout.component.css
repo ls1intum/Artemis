@@ -1,0 +1,120 @@
+.content-container--hidden {
+    display: none;
+}
+
+.content-container--fullscreen {
+    position: fixed;
+    inset: var(--lecture-combined-view-top, var(--header-height, 4rem)) 0 0;
+    z-index: 5002;
+    display: flex;
+    padding: 0.75rem;
+    box-sizing: border-box;
+    background-color: var(--lecture-combined-view-surface);
+    overflow: hidden;
+}
+
+/*
+ * The main content renders either as a direct child (no sidebar) or inside a splitter panel (sidebar /
+ * horizontal split); the descendant selector covers both, so it stays stretched to fill its container.
+ */
+.content-container--fullscreen .main-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.content-container--fullscreen .main-content > [content-main] {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.content-container--fullscreen.content-container--with-sidebar .iris-sidebar {
+    position: relative;
+    min-width: 120px;
+
+    /*
+     * Fill the full height of the splitter panel (a flex column). Without flex/min-height the sidebar
+     * shrinks to its content, so the embedded Iris chat collapsed and its absolutely-positioned disclaimer
+     * overlapped the input. The sibling .main-content already does this; the old split.js row stretched it.
+     */
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--lecture-combined-view-surface);
+    overflow: hidden;
+}
+
+.content-container--fullscreen.content-container--with-sidebar .iris-sidebar > [content-sidebar] {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.content-container--fullscreen .iris-sidebar__header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.25rem 0.25rem 0.5rem;
+    flex-shrink: 0;
+}
+
+.content-container--fullscreen .iris-sidebar__close-button {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+    color: var(--tumaet-ui-text-color);
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    border-radius: 0.25rem;
+    flex-shrink: 0;
+}
+
+.content-container--fullscreen .iris-sidebar__close-button:hover,
+.content-container--fullscreen .iris-sidebar__close-button:active {
+    opacity: 0.8;
+    background-color: var(--tumaet-ui-hover-background);
+}
+
+.content-container--fullscreen .iris-sidebar__close-button:focus-visible {
+    outline: 2px solid var(--tumaet-ui-focus-color);
+    outline-offset: -2px;
+}
+
+.content-container--fullscreen .iris-sidebar__close-button fa-icon {
+    font-size: 1.25rem;
+}
+
+.fullscreen-splitter {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+}
+
+body.lecture-combined-view-fullscreen-active .jh-breadcrumb-container,
+body.lecture-combined-view-fullscreen-active jhi-footer {
+    display: none !important;
+}
+
+body.lecture-combined-view-fullscreen-active .mat-drawer-container {
+    transform: none !important;
+}
+
+body.lecture-combined-view-fullscreen-active .mat-drawer-content {
+    z-index: 4000 !important;
+    width: 100vw !important;
+    margin-left: 0 !important;
+    transform: none !important;
+}

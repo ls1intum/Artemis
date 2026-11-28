@@ -66,7 +66,7 @@
         <div class="flex flex-col gap-2">
             <div class="flex items-end">
                 <div>
-                    <label for="importCSV" class="label-narrow font-bold" jhiTranslate="artemisApp.importUsers.csvFile.label"></label>
+                    <label for="importCSV" class="label-narrow inline-block mb-[0.1rem] font-bold" jhiTranslate="artemisApp.importUsers.csvFile.label"></label>
                     <jhi-help-icon text="artemisApp.importUsers.csvFile.tooltip" class="me-1" />
                 </div>
                 @if (isParsing()) {
@@ -76,7 +76,7 @@
             <div class="mt-2">
                 <input id="importCSV" type="file" accept=".csv" (change)="onCSVFileSelect($event)" />
                 @if (validationError() || noUsersFoundError()) {
-                    <div class="mt-6! mb-2 text-state-danger">
+                    <div class="mt-6 mb-2 text-state-danger">
                         <div [jhiTranslate]="'artemisApp.importUsers.usersForImport.importFailed'"></div>
                         <ul class="mt-1">
                             @if (validationError()) {
@@ -96,9 +96,9 @@
             </div>
         </div>
         @if (previewUsers().length > 0) {
-            <div class="flex flex-col gap-2 mt-6!">
+            <div class="flex flex-col gap-2 mt-6">
                 <div>
-                    <label class="label-narrow font-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"></label>
+                    <label class="label-narrow inline-block mb-[0.1rem] font-bold" jhiTranslate="artemisApp.importUsers.usersForImport.label"></label>
                     <jhi-help-icon text="artemisApp.importUsers.usersForImport.tooltip" class="me-1" />
                 </div>
                 <tumaet-ui-table-layout class="mt-2 [--table-layout-offset:32rem] max-md:[--table-layout-offset:40rem]">

@@ -39,6 +39,13 @@ describe('ArtemisTranslatePipe', () => {
         expect(pipe.transform(null)).toBe('');
     });
 
+    it('returns an empty string instead of throwing for a query that is not a string', () => {
+        const pipe = TestBed.runInInjectionContext(() => new ArtemisTranslatePipe());
+        expect(pipe.transform({ key: 'greeting' } as unknown as string)).toBe('');
+        expect(pipe.transform(42 as unknown as string)).toBe('');
+        expect(translateService.instant).not.toHaveBeenCalled();
+    });
+
     it('renders the translation for the active language', async () => {
         const fixture = TestBed.createComponent(TranslateHostComponent);
         fixture.autoDetectChanges();

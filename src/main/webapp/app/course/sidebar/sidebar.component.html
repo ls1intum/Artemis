@@ -1,9 +1,9 @@
 <div class="sidebar-wrap">
-    <div class="d-flex sidebar rounded-3 px-2 sidebar-width hide-on_print">
-        <div class="w-100 bg-module">
+    <div class="flex sidebar rounded-sm px-2 sidebar-width hide-on_print">
+        <div class="w-full bg-module">
             <div class="sidebar-content">
                 @if (pageTitle() || showSidebarToggle()) {
-                    <div class="d-flex align-items-center justify-content-between gap-2 py-2">
+                    <div class="flex items-center justify-between gap-2 py-2">
                         @if (pageTitle()) {
                             <jhi-course-title-bar-title class="py-1" [title]="pageTitle()" />
                         }
@@ -16,7 +16,7 @@
                 <div class="sidebar-body">
                     @if (searchFieldEnabled()) {
                         <div class="mt-2 flex items-stretch">
-                            <jhi-search-filter [size]="searchFieldSize()" (newSearchEvent)="setSearchValue($event)" class="flex-grow-1 search-filter" />
+                            <jhi-search-filter size="small" (newSearchEvent)="setSearchValue($event)" class="grow search-filter" />
                             @if (showFilter()) {
                                 <div class="ms-2">
                                     <a
@@ -33,44 +33,52 @@
                                         @if (isFilterActive()) {
                                             <fa-icon [icon]="faFilterCurrentlyApplied" class="text-primary" />
                                         } @else {
-                                            <fa-icon [icon]="faFilter" class="text-secondary" />
+                                            <fa-icon [icon]="faFilter" class="text-(--secondary)" />
                                         }
                                     </a>
                                 </div>
                             }
 
                             @if (inCommunication()) {
-                                <div class="ms-2 flex" ngbDropdown>
-                                    <button type="button" data-testid="sidebar-create-menu-button" class="btn btn-primary btn-sm square-button" ngbDropdownToggle>
+                                <div class="ms-2 flex">
+                                    <button
+                                        type="button"
+                                        tumAetUiButton
+                                        size="small"
+                                        data-testid="sidebar-create-menu-button"
+                                        class="square-button"
+                                        [tumAetUiMenuTrigger]="createMenu"
+                                    >
                                         <fa-icon [icon]="faPlusCircle" class="item-icon" />
                                     </button>
-
-                                    <div ngbDropdownMenu>
-                                        @if (sidebarDataInternal()?.messagingEnabled) {
-                                            <button type="button" (click)="createDirectChat()" class="p-2" ngbDropdownItem>
-                                                <fa-icon [icon]="faUser" class="item-icon" [fixedWidth]="true" />
-                                                <span jhiTranslate="artemisApp.courseOverview.sidebar.createDirectChat"></span>
+                                    <ng-template #createMenu>
+                                        <tumaet-ui-menu>
+                                            @if (sidebarDataInternal()?.messagingEnabled) {
+                                                <button type="button" tumAetUiMenuItem (triggered)="createDirectChat()">
+                                                    <fa-icon [icon]="faUser" class="item-icon" [fixedWidth]="true" />
+                                                    <span jhiTranslate="artemisApp.courseOverview.sidebar.createDirectChat"></span>
+                                                </button>
+                                                <button type="button" tumAetUiMenuItem (triggered)="createGroupChat()">
+                                                    <fa-icon [icon]="faPeopleGroup" class="item-icon" [fixedWidth]="true" />
+                                                    <span jhiTranslate="artemisApp.courseOverview.sidebar.createGroupChat"></span>
+                                                </button>
+                                            }
+                                            @if (sidebarDataInternal()?.canCreateChannel) {
+                                                <button type="button" tumAetUiMenuItem class="createChannel" (triggered)="createNewChannel()">
+                                                    <fa-icon [icon]="faHashtag" class="item-icon" />
+                                                    <span jhiTranslate="artemisApp.courseOverview.sidebar.createChannel"></span>
+                                                </button>
+                                            }
+                                            <button type="button" tumAetUiMenuItem (triggered)="browseChannels()">
+                                                <fa-icon [icon]="faSearch" class="item-icon" />
+                                                <span jhiTranslate="artemisApp.courseOverview.sidebar.browseChannels"></span>
                                             </button>
-                                            <button type="button" (click)="createGroupChat()" class="p-2" ngbDropdownItem>
-                                                <fa-icon [icon]="faPeopleGroup" class="item-icon" [fixedWidth]="true" />
-                                                <span jhiTranslate="artemisApp.courseOverview.sidebar.createGroupChat"></span>
+                                            <button type="button" tumAetUiMenuItem (triggered)="markAllMessagesAsChecked()">
+                                                <fa-icon [icon]="faCheckDouble" class="item-icon" />
+                                                <span jhiTranslate="artemisApp.courseOverview.sidebar.setChannelAsRead"></span>
                                             </button>
-                                        }
-                                        @if (sidebarDataInternal()?.canCreateChannel) {
-                                            <button type="button" (click)="createNewChannel()" class="p-2 createChannel" ngbDropdownItem>
-                                                <fa-icon [icon]="faHashtag" class="item-icon" />
-                                                <span jhiTranslate="artemisApp.courseOverview.sidebar.createChannel"></span>
-                                            </button>
-                                        }
-                                        <button type="button" (click)="browseChannels()" class="p-2" ngbDropdownItem>
-                                            <fa-icon [icon]="faSearch" class="item-icon" />
-                                            <span jhiTranslate="artemisApp.courseOverview.sidebar.browseChannels"></span>
-                                        </button>
-                                        <button type="button" (click)="markAllMessagesAsChecked()" class="p-2" ngbDropdownItem>
-                                            <fa-icon [icon]="faCheckDouble" class="item-icon" />
-                                            <span jhiTranslate="artemisApp.courseOverview.sidebar.setChannelAsRead"></span>
-                                        </button>
-                                    </div>
+                                        </tumaet-ui-menu>
+                                    </ng-template>
                                 </div>
                             }
                         </div>

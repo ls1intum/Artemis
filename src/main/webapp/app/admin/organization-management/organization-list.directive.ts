@@ -1,6 +1,6 @@
 import { Directive, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TumAetUiTableQueryEvent } from '@tumaet/ui-angular';
+import { TumAetUiTableQueryEvent } from '@tumaet/ui-angular/table';
 import { OrganizationManagementService } from './organization-management.service';
 import { Organization } from './organization.model';
 import { AlertService } from 'app/foundation/service/alert.service';

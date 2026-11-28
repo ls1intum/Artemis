@@ -1,22 +1,22 @@
 <div *titleBarTitle class="flex items-center">
-    <h5 class="mb-0!" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title"></h5>
+    <h5 class="mb-0" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title"></h5>
 </div>
 @for (suspiciousSessionsSet of suspiciousSessions(); track suspiciousSessionsSet; let i = $index) {
-    <p class="mb-0!">
+    <p class="mb-0">
         {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.case' | artemisTranslate }}
-        <span class="bold">{{ i + 1 }}</span>
+        <span class="font-bold">{{ i + 1 }}</span>
     </p>
     <p>
         {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.reasons' | artemisTranslate }}
         <!-- all sessions have the same reasons, so we can just use the first one -->
         @for (reason of suspiciousSessionsSet.examSessions.at(0)?.suspiciousReasons; track reason; let i = $index) {
-            <span class="bold" [jhiTranslate]="mapEnumToTranslationString(reason)" [translateValues]="{ range: ipSubnet() }"></span>
+            <span class="font-bold" [jhiTranslate]="mapEnumToTranslationString(reason)" [translateValues]="{ range: ipSubnet() }"></span>
             @if (i < suspiciousSessionsSet.examSessions.at(0)?.suspiciousReasons?.length! - 1) {
                 <span>,</span>
             }
         }
     </p>
-    <div class="overflow-x-auto mb-6!">
+    <div class="overflow-x-auto mb-6">
         <table tumAetUiTable class="table-fixed">
             <thead>
                 <tr>

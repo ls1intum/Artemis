@@ -1,4 +1,4 @@
-import { TumAetUiTableSortEvent } from '@tumaet/ui-angular';
+import { TumAetUiTableSortEvent } from '@tumaet/ui-angular/table-directive';
 import { getIcon } from 'app/atlas/shared/entities/competency.model';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import {

@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
  * <ul>
  * <li>exam: {@code title}, {@code endDate}, {@code publishResultsDate}, {@code numberOfCorrectionRoundsInExam},
  * {@code id} (tutor-leaderboard complaint links) and {@code course} — the latter fed through {@code Course.from} then
- * {@code accountService.setAccessRightsForCourse}, which needs the three group names, plus {@code complaintsEnabled} /
+ * {@code accountService.setAccessRightsForCourse}, which needs the course id, plus {@code complaintsEnabled} /
  * {@code requestMoreFeedbackEnabled} (bound into the dashboard-information sub-component);</li>
  * <li>each exercise: {@code type} (icon), {@code title}, {@code releaseDate} (not-released tag),
  * {@code includedInOverallScore} (hide-optional filter), {@code teamMode} (Teams button),
@@ -87,10 +87,10 @@ public record ExamForAssessmentDashboardDTO(long id, @Nullable String title, @Nu
     }
 
     /**
-     * Slim course projection for the assessment dashboard: the three group names the client turns into
+     * Slim course projection for the assessment dashboard: the id, from which the client derives
      * {@code isAtLeast{Tutor,Editor,Instructor}} via {@code accountService.setAccessRightsForCourse} (gating the scores /
-     * grading / plagiarism / test-run action buttons and the exam-assessment buttons), plus the id and the two feature
-     * flags the dashboard-information sub-component binds.
+     * grading / plagiarism / test-run action buttons and the exam-assessment buttons), plus the two feature flags the
+     * dashboard-information sub-component binds.
      *
      * @param id                         the id of the course
      * @param complaintsEnabled          whether complaints are enabled (dashboard-information binding)

@@ -1,7 +1,8 @@
 import { Component, DestroyRef, OnInit, effect, inject, input, output, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiDialogConfig, TumAetUiDialogRef, TumAetUiTableSortEvent } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTableSortEvent } from '@tumaet/ui-angular/table-directive';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { BaseEntity } from 'app/foundation/model/base-entity';
 import { SortService } from 'app/foundation/service/sort.service';

@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.localvc.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PERSONAL_ACCESS_TOKEN_PREFIX;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCCredentials.extractUsernameAndPassword;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCCredentials.secretMatches;
 import static de.tum.cit.aet.artemis.localvc.service.LocalVCPersonalAccessTokenManagementService.TOKEN_PREFIX;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 import java.util.Optional;
@@ -249,20 +251,57 @@ public class LocalVCAccessLogRecorderService {
         if (vcsAccessLogService.isEmpty()) {
             return;
         }
+        // An SSH session is closed as soon as the client has its answer, which is before the entry of the command is written, and closing it interrupts the thread of the command.
+        // An interrupted thread cannot wait for a database connection, so the entry is written as if there was no interrupt, and the interrupt is passed on afterwards. If it
+        // arrives while the entry is written, the entry is written once more.
+        boolean interrupted = Thread.interrupted();
+        // The time of the access stays the same if the entry is written once more, as the entries of an operation are joined by their times
+        ZonedDateTime firstAttemptAt = ZonedDateTime.now(ZoneId.systemDefault());
         try {
-            if (accessedAt == null) {
-                vcsAccessLogService.get().createAccessLog(subject.user(), subject.participationId(), action, subject.mechanism(), Objects.requireNonNullElse(commitHash, ""),
-                        subject.ipAddress());
-            }
-            else {
-                vcsAccessLogService.get().createAccessLog(subject.user(), subject.participationId(), action, subject.mechanism(), Objects.requireNonNullElse(commitHash, ""),
-                        subject.ipAddress(), accessedAt);
+            for (int attempt = 1; attempt <= 2; attempt++) {
+                try {
+                    store(subject, action, commitHash, attempt == 1 ? accessedAt : Objects.requireNonNullElse(accessedAt, firstAttemptAt));
+                    return;
+                }
+                catch (RuntimeException e) {
+                    boolean cancelled = isCausedByInterruption(e);
+                    interrupted |= cancelled;
+                    if (cancelled && attempt == 1) {
+                        Thread.interrupted();
+                        continue;
+                    }
+                    // The operation has happened and its response must not change for it, so a failure to describe it is only reported.
+                    log.warn("Could not write the VCS access log entry ({}) of user {} to participation {}", action, subject.user().getLogin(), subject.participationId(), e);
+                    return;
+                }
             }
         }
-        catch (RuntimeException e) {
-            // The operation has happened and its response must not change for it, so a failure to describe it is only reported.
-            log.warn("Could not write the VCS access log entry ({}) of user {} to participation {}", action, subject.user().getLogin(), subject.participationId(), e);
+        finally {
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
         }
+    }
+
+    private void store(AccessLogSubject subject, RepositoryActionType action, @Nullable String commitHash, @Nullable ZonedDateTime accessedAt) {
+        if (accessedAt == null) {
+            vcsAccessLogService.get().createAccessLog(subject.user(), subject.participationId(), action, subject.mechanism(), Objects.requireNonNullElse(commitHash, ""),
+                    subject.ipAddress());
+        }
+        else {
+            vcsAccessLogService.get().createAccessLog(subject.user(), subject.participationId(), action, subject.mechanism(), Objects.requireNonNullElse(commitHash, ""),
+                    subject.ipAddress(), accessedAt);
+        }
+    }
+
+    private static boolean isCausedByInterruption(Throwable failure) {
+        int depth = 0;
+        for (Throwable cause = failure; cause != null && depth < 10; cause = cause.getCause(), depth++) {
+            if (cause instanceof InterruptedException) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -313,6 +352,9 @@ public class LocalVCAccessLogRecorderService {
         UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
 
         String password = usernameAndPassword.password();
+        if (password.startsWith(PERSONAL_ACCESS_TOKEN_PREFIX)) {
+            return AuthenticationMechanism.AGENT_ACCESS_TOKEN;
+        }
         if (!password.startsWith(TOKEN_PREFIX)) {
             return AuthenticationMechanism.PASSWORD;
         }

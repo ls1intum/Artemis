@@ -1,5 +1,5 @@
 <form [formGroup]="formGroup" (ngSubmit)="confirm()">
-    <div class="message-inline-input-form__wrapper mb-4! me-1 pt-[5px]">
+    <div class="message-inline-input-form__wrapper mb-4 me-1 pt-[5px]">
         <jhi-posting-markdown-editor
             formControlName="content"
             [draftIdentity]="'reply:' + posting()?.post?.id + ':' + (posting()?.id ?? 'new')"

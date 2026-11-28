@@ -1,25 +1,23 @@
-/* Bootstrap Reboot remains the reset while legacy Bootstrap coexists with TUM AET UI. */
+/* Preflight is not imported: content/css/base.css holds the element defaults of the application. */
 @layer theme, base, utilities;
 
 @import 'tailwindcss/theme.css' layer(theme);
 
-/* Limit scanning because Bootstrap classes such as `collapse` and `table` are also valid Tailwind utilities. */
+/* Scanning is limited to the folders listed with `@source` below. */
 @import 'tailwindcss/utilities.css' layer(utilities) source(none);
-
-@plugin 'tailwindcss-primeui';
 
 /*
  * Width of the grey dividers between the app shell's regions (sidebar / title bar / content / footer). Under the
  * `--spacing-*` namespace so it is usable both as Tailwind utilities (`pr-divider`, `ms-divider`) and, because this
- * `@theme` block is not `inline`, as `var(--spacing-divider)` from SCSS (see the `shell-content-height` mixin).
+ * `@theme` block is not `inline`, as `var(--spacing-divider)` in a stylesheet (the height of the shells subtracts it).
  */
 @theme {
     --spacing-divider: 6px;
 }
 
 /*
- * The remaining shell metrics. They live here, next to the divider, because they are theme-independent: the per-theme
- * SCSS files carry colours, and a metric placed there would have to be repeated in both to be emitted for both themes.
+ * The remaining shell metrics. They live here, next to the divider, because they are theme-independent: the theme
+ * files carry colours, and the shell metrics are kept together here.
  *
  * `--navbar-height` and `--footer-height` are fallbacks for the first paint; `observeShellMetrics()` keeps them in
  * sync with the rendered elements from then on. `--header-height` is deliberately not among them — exam mode owns that
@@ -29,6 +27,8 @@
  * i.e. `--title-bar-height` in total, identically across the student overview, course management and admin shells.
  */
 :root {
+    color-scheme: light;
+
     --title-bar-height: 40px;
     --title-bar-content-height: 28px;
     --title-bar-padding-block: 6px;
@@ -47,77 +47,9 @@
      */
     --sidebar-nav-width: 164px;
     --sidebar-nav-width-collapsed: 64px;
-}
 
-@theme inline {
-    --color-state-danger: var(--danger);
-    --color-state-success: var(--success);
-    --color-state-warning: var(--warning);
-    --color-state-info: var(--info);
-}
-
-/* Scanning may precede a module becoming fully Bootstrap-free; the migration rule checks locked paths are covered. */
-@source './app/programming/manage/code-editor/instructor-and-editor-container';
-@source './app/programming/manage/detail';
-@source './app/programming/manage/vcs-repository-access-log-view';
-@source './app/programming/manage/status';
-@source './app/programming/shared/instructions-render/step-wizard';
-@source './app/course/manage/athena-settings-update';
-@source './app/course/manage/control-center/about-athena-modal';
-@source './app/course/request';
-@source './app/course/overview/course-statistics';
-@source './app/core/about-us';
-@source './app/core/usage-statistics';
-@source './app/course/shared/course-sidebar-toggle-button';
-@source './app/course/manage/course-lti-configuration';
-@source './app/course/manage/course-material-import';
-@source './app/course/manage/course-scores';
-@source './app/programming/manage/assess/repo-export/export-dialog';
-@source './app/programming/manage/consistency-check';
-@source './app/programming/manage/edit-selected';
-@source './app/programming/manage/grading/feedback-analysis';
-@source './app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students';
-@source './app/programming/shared/commits-info';
-@source './app/programming/shared/diff-review-banner';
-@source './app/core/feature-overview';
-@source './app/core/layouts/footer';
-@source './app/course/overview/setup-passkey-modal';
-@source './app/course/overview/courses';
-@source './app/course/overview/course-registration';
-@source './app/course/sidebar';
-@source './app/course/manage/update';
-@source './app/programming/shared/programming-exercise-update-timeline';
-@source './app/programming/shared/build-window-notice';
-@source './app/programming/manage/update/update-components/build-time-window';
-@source './app/course/manage/user-management-dropdown';
-
-/* The submit-button forms describe why they are blocked, and dim the blocked button, with these utilities. They are
-   still Bootstrap-heavy, so scanning them would also emit .col-11/.col-12/.bg-primary as Tailwind utilities on top of
-   Bootstrap's own. Emit just the ones they use instead. A blocked button is aria-disabled rather than disabled, so it
-   stays focusable and keeps the pointer events its tooltip needs; that also means :disabled cannot style it. */
-@source inline("sr-only");
-@source inline("hidden");
-@source inline("sm:inline");
-@source inline("aria-disabled:opacity-60");
-@source inline("aria-disabled:cursor-not-allowed");
-
-/* The Bootstrap-heavy drag-and-drop question editor uses these utilities for its text length hint and live counter. */
-@source inline("max-w-[150px] pointer-events-none absolute bottom-2 right-3 z-[4] text-xs leading-none text-muted-color text-state-danger");
-
-/* Test prose can contain class-shaped words and does not contribute runtime utilities. */
-@source not './app/**/*.spec.ts';
-
-/* Prevent bare Bootstrap component names from becoming Tailwind utilities in scanned modules. */
-@source not inline("collapse");
-@source not inline("table");
-
-/* Align Tailwind's `dark:` variant with Artemis' framework-neutral theme attribute. */
-@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
-
-:root {
-    color-scheme: light;
-
-    --tumaet-ui-font-family: var(--bs-body-font-family);
+    /* The roles of TUM AET UI, mapped to the tokens of the Artemis themes. The dark theme overrides some of them below. */
+    --tumaet-ui-font-family: var(--font-family-sans-serif);
     --tumaet-ui-primary-color: color-mix(in srgb, var(--primary) 88%, black);
     --tumaet-ui-primary-contrast-color: var(--colored-btn-font);
     --tumaet-ui-accent-color: var(--primary-dark);
@@ -153,10 +85,28 @@
     --tumaet-ui-tooltip-color: var(--tooltip-color);
 }
 
+@theme inline {
+    --color-state-danger: var(--danger);
+    --color-state-success: var(--success);
+    --color-state-warning: var(--warning);
+    --color-state-info: var(--info);
+}
+
+/* Test prose can contain class-shaped words and does not contribute runtime utilities. */
+@source not './app/**/*.spec.ts';
+
+/* `localRules/no-bootstrap-classes` bans the class names `collapse` and `table` in templates, so a stray use must not
+   start to render as the Tailwind utility of the same name either. */
+@source not inline("collapse");
+@source not inline("table");
+
+/* Align Tailwind's `dark:` variant with Artemis' framework-neutral theme attribute. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 [data-theme='dark'] {
     color-scheme: dark;
 
-    /* A solid blue with a white label, matching the legacy Bootstrap primary button (and light mode), rather than a
+    /* A solid blue with a white label, matching the primary button of the light theme, rather than a
        pale tint with near-black text that reads as washed-out on a dark page. */
     --tumaet-ui-primary-color: var(--primary);
     --tumaet-ui-primary-contrast-color: var(--colored-btn-font);
@@ -189,8 +139,70 @@
     *,
     ::before,
     ::after {
-        border-color: var(--p-content-border-color);
+        border-color: var(--ui-border-color);
     }
+}
+
+/*
+ * The brand colour and the neutral surface ramp as Tailwind colours (`text-primary`, `bg-primary/10`,
+ * `border-surface-200`). Their values are theme variables, see "Tailwind colour utilities" in
+ * content/css/themes/light.css and dark.css.
+ */
+@theme inline {
+    --color-primary: var(--ui-primary);
+    --color-primary-contrast: var(--ui-primary-contrast);
+    --color-surface-0: var(--ui-surface-0);
+    --color-surface-50: var(--ui-surface-50);
+    --color-surface-100: var(--ui-surface-100);
+    --color-surface-200: var(--ui-surface-200);
+    --color-surface-300: var(--ui-surface-300);
+    --color-surface-400: var(--ui-surface-400);
+    --color-surface-500: var(--ui-surface-500);
+    --color-surface-600: var(--ui-surface-600);
+    --color-surface-700: var(--ui-surface-700);
+    --color-surface-800: var(--ui-surface-800);
+    --color-surface-900: var(--ui-surface-900);
+    --color-surface-950: var(--ui-surface-950);
+}
+
+@utility border-surface {
+    border-color: var(--ui-border-color);
+}
+
+@utility bg-emphasis {
+    background: var(--ui-emphasis-background);
+    color: var(--ui-emphasis-color);
+}
+
+@utility bg-highlight {
+    background: var(--ui-highlight-background);
+    color: var(--ui-highlight-color);
+}
+
+@utility text-color {
+    color: var(--ui-text-color);
+}
+
+/* A colon after a label, for example in front of a value in the same line. */
+@layer utilities {
+    .colon-suffix::after {
+        content: ':';
+    }
+}
+
+@utility text-muted-color {
+    color: var(--ui-text-muted-color);
+}
+
+/*
+ * The radius of `rounded` and the three shadows the application uses have the values Artemis has always rendered,
+ * not Tailwind's defaults.
+ */
+@theme {
+    --radius: 0.15rem;
+    --shadow-sm: 0 0.125rem 0.25rem rgb(0 0 0 / 0.075);
+    --shadow: 0 0.5rem 1rem rgb(0 0 0 / 0.15);
+    --shadow-lg: 0 1rem 3rem rgb(0 0 0 / 0.175);
 }
 
 @theme inline {
@@ -198,26 +210,7 @@
     --color-surface-sunken: var(--tumaet-ui-control-background);
     --color-surface-raised: var(--tumaet-ui-content-background);
     --color-surface-hover: var(--tumaet-ui-hover-background);
-    --color-text: var(--tumaet-ui-text-color);
-    --color-text-secondary: var(--tumaet-ui-muted-color);
 }
-
-/* Button action groups migrated to TUM AET UI; keep their layout utilities explicit. */
-@source './app/core/legal/data-export/confirmation/data-export-confirmation-dialog.component.html';
-@source './app/core/legal/data-export/data-export.component.html';
-@source './app/course/manage/control-center/athena-enabled/athena-enabled.component.html';
-@source './app/course/manage/course-material-import/course-material-import-dialog.component.html';
-@source './app/course/manage/course-scores/course-scores.component.html';
-@source './app/course/manage/exercises/course-management-exercises.component.html';
-@source './app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component.html';
-@source './app/programming/manage/code-editor/file-browser/file/code-editor-file-browser-file.component.html';
-@source './app/programming/manage/code-editor/file-browser/folder/code-editor-file-browser-folder.component.html';
-@source './app/programming/manage/grading/charts/test-case-distribution-chart.component.html';
-@source './app/programming/manage/grading/table-actions/programming-exercise-grading-table-actions.component.html';
-@source './app/programming/manage/grading/tasks/programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.component.html';
-@source './app/programming/manage/version-history/programming-exercise-version-programming-metadata.component.html';
-@source './app/programming/shared/actions/trigger-build-button/programming-exercise-trigger-build-button.component.html';
-@source './app/programming/shared/code-editor/actions/code-editor-actions.component.html';
 
 /* The migrated modules and components: Tailwind scans every template and component in them. eslint.config.mjs and stylelint.config.json lock the same list. */
 @source './app/account';
@@ -227,8 +220,9 @@
 @source './app/atlas';
 @source './app/calendar';
 @source './app/communication';
-@source './app/core/alert';
-@source './app/core/navbar/global-search/components/modal';
+@source './app/app.component.html';
+@source './app/core';
+@source './app/course';
 @source './app/editor';
 @source './app/exam';
 @source './app/exercise';
@@ -245,6 +239,7 @@
 @source './app/notification';
 @source './app/plagiarism';
 @source './app/presentation';
+@source './app/programming';
 @source './app/quiz';
 @source './app/shared';
 @source './app/shared-ui';
@@ -252,3 +247,5 @@
 @source './app/text';
 @source './app/tutorialgroup';
 @source './app/videosource';
+
+/* Participation build and repository export controls live outside the migrated exercise module. */

@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 
 export interface GitDiffReportModalData {
@@ -13,7 +14,7 @@ export interface GitDiffReportModalData {
     selector: 'jhi-git-diff-report-modal',
     templateUrl: './git-diff-report-modal.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [GitDiffReportComponent, TranslateDirective],
+    imports: [GitDiffReportComponent, TumAetUiProgressSpinnerComponent, ArtemisTranslatePipe],
 })
 export class GitDiffReportModalComponent {
     private readonly dialogRef = inject(TumAetUiDialogRef);

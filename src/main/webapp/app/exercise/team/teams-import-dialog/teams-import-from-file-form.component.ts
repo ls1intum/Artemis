@@ -36,7 +36,7 @@ type CsvEntry = { [column: string]: string };
 @Component({
     selector: 'jhi-teams-import-from-file-form',
     templateUrl: './teams-import-from-file-form.component.html',
-    styleUrls: ['./teams-import-from-file-form.component.scss'],
+    styleUrls: ['./teams-import-from-file-form.component.css'],
     imports: [TranslateDirective, HelpIconComponent, FaIconComponent],
 })
 export class TeamsImportFromFileFormComponent {

@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ExportButtonComponent } from 'app/shared-ui/export/button/export-button.component';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { Subject } from 'rxjs';
 import { CsvExportOptions, ExportDialogCloseResult } from 'app/shared-ui/export/modal/export-modal.component';
 import { vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 
 describe('ExportButtonComponent', () => {
     let fixture: ComponentFixture<ExportButtonComponent>;

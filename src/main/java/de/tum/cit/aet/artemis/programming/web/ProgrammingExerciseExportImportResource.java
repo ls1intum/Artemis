@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -236,6 +235,7 @@ public class ProgrammingExerciseExportImportResource {
 
         newExercise.validateGeneralSettings();
         programmingExerciseValidationService.validateBuildConfigSize(newBuildConfig);
+        programmingExerciseValidationService.validateDockerImageRegistry(newBuildConfig);
 
         final User user = userRepository.getUserWithAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(newExercise);
@@ -371,7 +371,7 @@ public class ProgrammingExerciseExportImportResource {
             return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(importedExercise,
                     programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(importedExercise.getId())));
         }
-        catch (IOException | URISyntaxException | GitAPIException e) {
+        catch (IOException | GitAPIException e) {
             log.error(e.getMessage(), e);
             throw new InternalServerErrorException("Error while importing programming exercise from file: " + e.getMessage());
         }

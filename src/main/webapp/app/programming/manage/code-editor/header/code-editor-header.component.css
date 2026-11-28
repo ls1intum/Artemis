@@ -1,0 +1,18 @@
+/*
+ * The header also renders outside the code editor grid (build plan editor), where the panel styles of
+ * code-editor-grid.css are not loaded. These rules give it the same look there.
+ */
+.code-editor-panel-header {
+    align-items: center;
+    min-height: 42px;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--code-editor-panel-header-background);
+    color: var(--code-editor-panel-header-color);
+    border-bottom: 1px solid var(--code-editor-panel-header-border);
+}
+
+.editor-panel-title {
+    margin-bottom: 0;
+    font-size: 1rem;
+    color: inherit;
+}

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.course.dto;
 
 import java.time.ZonedDateTime;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -79,7 +80,10 @@ public record CourseUpdateDTO(
 
         // Atlas auto-orchestration configuration (per-course): kill switch plus nullable overrides.
         boolean autoOrchestratorEnabled, @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer debounceWindowSecondsOverride,
-        @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) implements CourseSettingsDTO {
+        @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride, @Size(max = 2000) String studentWelcomeContext,
+
+        // Who authors the first commit of the repositories of new programming exercises. Omitted: unchanged.
+        @Nullable @Valid InitialCommitAuthorDTO initialCommitAuthor) implements CourseSettingsDTO {
 
     /**
      * Applies the DTO values to an existing Course entity.
@@ -124,6 +128,15 @@ public record CourseUpdateDTO(
         configuration.setAutoOrchestratorEnabled(autoOrchestratorEnabled);
         configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
         configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
+        if (studentWelcomeContext != null) {
+            configuration.setStudentWelcomeContext(studentWelcomeContext);
+        }
+        if (initialCommitAuthor != null) {
+            // Checked here as well as by bean validation, so that a caller that applies this DTO directly cannot store an identity that injects git header data.
+            initialCommitAuthor.validate();
+            InitialCommitAuthorDTO strippedAuthor = initialCommitAuthor.stripped();
+            configuration.setInitialCommitAuthor(strippedAuthor.mode(), strippedAuthor.name(), strippedAuthor.email());
+        }
 
         return course;
     }
