@@ -7,16 +7,19 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * View Model extending the UserDTO, which is meant to be used in the user management UI.
  */
+@Schema(name = "ManagedUserVMDTO")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ManagedUserVM extends UserDTO {
 
     @Size(min = Constants.PASSWORD_MIN_LENGTH, max = Constants.PASSWORD_MAX_LENGTH)
     private String password;
 
+    @Schema(defaultValue = "false")
     private boolean revokeCredentials;
 
     public ManagedUserVM() {

@@ -18,6 +18,7 @@ import jakarta.validation.Valid;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -77,6 +78,12 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing users.
@@ -160,6 +167,10 @@ public class AdminUserResource {
      * @throws URISyntaxException       if the Location URI syntax is incorrect
      * @throws BadRequestAlertException 400 (Bad Request) if the login or email is already in use
      */
+    @ApiResponse(responseCode = "201", description = "Created", headers = { @Header(name = "Location", description = "URI of the created user", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-alert", description = "Alert message using the configured application header prefix", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-params", description = "Alert parameter using the configured application header prefix", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
+    @Operation(description = "Creates a user. Omit the ID and omit the password to let Artemis generate one for an internal account.")
     @PostMapping("users")
     public ResponseEntity<UserDTO> createUser(@Valid @RequestBody ManagedUserVM userToBeCreated) throws URISyntaxException, AccessForbiddenAlertException {
         this.userService.checkUsernameAndPasswordValidityElseThrow(userToBeCreated.getLogin(), userToBeCreated.getPassword());
@@ -194,6 +205,9 @@ public class AdminUserResource {
      * @param userId the id of the user to activate
      * @return the ResponseEntity with status 200 (OK) and with body the activated user, or with status 404 (Not Found)
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "X-artemisApp-alert", description = "Alert message using the configured application header prefix", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-params", description = "Alert parameter using the configured application header prefix", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
     @PatchMapping("users/{userId}/activate")
     public ResponseEntity<UserDTO> activateUser(@PathVariable long userId) throws AccessForbiddenAlertException {
         log.debug("REST request to activate User {}", userId);
@@ -214,6 +228,9 @@ public class AdminUserResource {
      * @param userId the id of the user to deactivate
      * @return the ResponseEntity with status 200 (OK) and with body the deactivated user, or with status 404 (Not Found)
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "X-artemisApp-alert", description = "Alert message using the configured application header prefix", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-params", description = "Alert parameter using the configured application header prefix", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
     @PatchMapping("users/{userId}/deactivate")
     public ResponseEntity<UserDTO> deactivateUser(@PathVariable long userId) throws AccessForbiddenAlertException {
         log.debug("REST request to deactivate User {}", userId);
@@ -236,6 +253,10 @@ public class AdminUserResource {
      * @throws EmailAlreadyUsedException 400 (Bad Request) if the email is already in use
      * @throws LoginAlreadyUsedException 400 (Bad Request) if the login is already in use
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "X-artemisApp-alert", description = "Alert message using the configured application header prefix", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-params", description = "Alert parameter using the configured application header prefix", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
+    @Operation(description = "Updates an existing user. The body must include the ID of that user.")
     @PutMapping("users")
     public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws AccessForbiddenAlertException {
         this.userService.checkUsernameAndPasswordValidityElseThrow(managedUserVM.getLogin(), managedUserVM.getPassword());
@@ -315,8 +336,10 @@ public class AdminUserResource {
      * @param login the login of the user to find
      * @return the ResponseEntity with status 200 (OK) and with body the "login" user, or with status 404 (Not Found)
      */
+    @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)
+    @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/problem+json", schema = @Schema(type = "object")))
     @GetMapping("users/{login:" + Constants.LOGIN_REGEX + "}")
-    public ResponseEntity<UserDTO> getUser(@PathVariable String login) {
+    public ResponseEntity<UserDTO> getUser(@Parameter(schema = @Schema(pattern = Constants.LOGIN_REGEX)) @PathVariable String login) {
         log.debug("REST request to get User : {}", login);
         return ResponseUtil.wrapOrNotFound(userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(login).map(user -> {
             user.setVisibleRegistrationNumber();
@@ -332,8 +355,10 @@ public class AdminUserResource {
      * @param login the login of the user whose course roles should be returned
      * @return the ResponseEntity with status 200 (OK) and the course roles of the user (empty if the user is in no course), or 404 (Not Found) if the user does not exist
      */
+    @ApiResponse(responseCode = "200", description = "OK", useReturnTypeSchema = true)
+    @ApiResponse(responseCode = "404", description = "User not found", content = @Content(mediaType = "application/problem+json", schema = @Schema(type = "object")))
     @GetMapping("users/{login:" + Constants.LOGIN_REGEX + "}/course-roles")
-    public ResponseEntity<List<UserCourseRoleDTO>> getCourseRoles(@PathVariable String login) {
+    public ResponseEntity<List<UserCourseRoleDTO>> getCourseRoles(@Parameter(schema = @Schema(pattern = Constants.LOGIN_REGEX)) @PathVariable String login) {
         log.debug("REST request to get the course roles of User : {}", login);
         Long userId = userRepository.findIdByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
         return ResponseEntity.ok(userCourseRoleRepository.findCourseRoleDTOsByUser_Id(userId));
@@ -346,8 +371,11 @@ public class AdminUserResource {
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
     @FeatureUsage(UserFeature.COURSE_MEMBERS)
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "X-Total-Count", description = "Total number of matching entries", schema = @Schema(type = "integer", format = "int64")),
+            @Header(name = "Link", description = "Pagination links", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
     @GetMapping("users/search")
-    public ResponseEntity<List<UserDTO>> searchAllUsers(@RequestParam("loginOrName") String loginOrName) {
+    public ResponseEntity<List<UserDTO>> searchAllUsers(@Parameter(schema = @Schema(minLength = 3)) @RequestParam("loginOrName") String loginOrName) {
         log.debug("REST request to search all Users for {}", loginOrName);
         // restrict result size by only allowing reasonable searches
         if (loginOrName.length() < 3) {
@@ -381,6 +409,8 @@ public class AdminUserResource {
      * @param userDtos the list of users (with at one unique user identifier) who should be imported to Artemis
      * @return the list of users who could not be imported, because they could NOT be found in the Artemis database and could NOT be found in the connected LDAP
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "Content-Version", description = "Artemis API version when the API version filter is active", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
     @PostMapping("users/import")
     public ResponseEntity<List<StudentDTO>> importUsers(@RequestBody List<StudentDTO> userDtos) {
         log.debug("REST request to import {} to Artemis", userDtos);
@@ -394,6 +424,9 @@ public class AdminUserResource {
      * @param userId of the user to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated user
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "X-artemisApp-alert", description = "Alert message using the configured application header prefix", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-params", description = "Alert parameter using the configured application header prefix", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
     @PutMapping("users/{userId}/sync-ldap")
     public ResponseEntity<UserDTO> syncUserViaLdap(@PathVariable Long userId) {
         log.debug("REST request to update ldap information User : {}", userId);
@@ -414,8 +447,11 @@ public class AdminUserResource {
      * @param userSearch the pagination information for user search
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "X-Total-Count", description = "Total number of matching entries", schema = @Schema(type = "integer", format = "int64")),
+            @Header(name = "Link", description = "Pagination links", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
     @GetMapping("users")
-    public ResponseEntity<List<UserDTO>> getAllUsers(UserPageableSearchDTO userSearch) {
+    public ResponseEntity<List<UserDTO>> getAllUsers(@ParameterObject UserPageableSearchDTO userSearch) {
         final Page<UserDTO> page = userRepository.getAllManagedUsers(userSearch);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -426,6 +462,8 @@ public class AdminUserResource {
      *
      * @return the ResponseEntity with status 200 (OK) and with body all logins of not enrolled users
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "Content-Version", description = "Artemis API version when the API version filter is active", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
     @GetMapping("users/not-enrolled")
     public ResponseEntity<List<String>> getNotEnrolledUsers() {
         List<String> logins = userRepository.findAllNotEnrolledUsers();
@@ -442,14 +480,18 @@ public class AdminUserResource {
         return ResponseEntity.ok(authorityRepository.getAuthorities());
     }
 
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "Content-Version", description = "Artemis API version when the API version filter is active", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
     @GetMapping("users/{login:" + Constants.LOGIN_REGEX + "}/deletion-impact")
-    public ResponseEntity<UserDeletionImpactDTO> getUserDeletionImpact(@PathVariable String login) {
+    public ResponseEntity<UserDeletionImpactDTO> getUserDeletionImpact(@Parameter(schema = @Schema(pattern = Constants.LOGIN_REGEX)) @PathVariable String login) {
         User target = userRepository.findOneWithAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
         checkDeletionTarget(target);
         return ResponseEntity.ok(userDeletionPlanService.createImpact(target, UserDeletionMode.ADMIN_FORCED));
     }
 
     @UsageInteraction(FeatureInteraction.VIEW)
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "Content-Version", description = "Artemis API version when the API version filter is active", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
     @PostMapping("users/deletion-impact")
     public ResponseEntity<BulkUserDeletionImpactDTO> getBulkUserDeletionImpact(@Valid @RequestBody BulkUserDeletionImpactRequestDTO request) {
         List<User> targets = loadDeletionTargets(request.logins());
@@ -463,8 +505,14 @@ public class AdminUserResource {
      * @param request the impact fingerprint the administrator confirmed
      * @return the outcome of the deletion
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "X-artemisApp-alert", description = "Alert message using the configured application header prefix", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-params", description = "Alert parameter using the configured application header prefix", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
+    @ApiResponse(responseCode = "403", description = "Deletion forbidden", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDeletionResultDTO.class)))
+    @ApiResponse(responseCode = "409", description = "Deletion plan changed", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDeletionResultDTO.class)))
     @DeleteMapping("users/{login:" + Constants.LOGIN_REGEX + "}")
-    public ResponseEntity<UserDeletionResultDTO> deleteUser(@PathVariable String login, @Valid @RequestBody PermanentUserDeletionRequestDTO request) {
+    public ResponseEntity<UserDeletionResultDTO> deleteUser(@Parameter(schema = @Schema(pattern = Constants.LOGIN_REGEX)) @PathVariable String login,
+            @Valid @RequestBody PermanentUserDeletionRequestDTO request) {
         User target = userRepository.findOneWithAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
         checkDeletionTarget(target);
         String actor = userRepository.getUser().getLogin();
@@ -489,6 +537,9 @@ public class AdminUserResource {
      * @param request confirmed users and their impact fingerprints
      * @return the ResponseEntity with status 200 (OK)
      */
+    @ApiResponse(responseCode = "200", description = "OK", headers = {
+            @Header(name = "X-artemisApp-alert", description = "Alert message using the configured application header prefix", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-params", description = "Alert parameter using the configured application header prefix", schema = @Schema(type = "string")) }, useReturnTypeSchema = true)
     @DeleteMapping("users")
     public ResponseEntity<List<UserDeletionResultDTO>> deleteUsers(@Valid @RequestBody BulkUserDeletionRequestDTO request) {
         log.debug("REST request to permanently delete {} users", request.users().size());

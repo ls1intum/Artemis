@@ -1,6 +1,7 @@
 import { Service, inject } from '@angular/core';
 import { HttpClient, HttpContext, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map, throwError } from 'rxjs';
+import dayjs from 'dayjs/esm';
 
 import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { createRequestOption } from 'app/foundation/util/request.util';
@@ -9,8 +10,17 @@ import { COURSE_ROLE_SLUGS, CourseForRoleAssignment, CourseRoleName, UserCourseR
 import { UserFilter } from 'app/admin/user-management/user-management.component';
 import { BulkUserDeletionImpact, BulkUserDeletionRequest, UserDeletionImpact, UserDeletionResult } from 'app/account/user/shared/user-deletion.model';
 
+import { AdminUserApi } from 'app/openapi/api/admin-user-api';
+import { ManagedUserVM } from 'app/openapi/model/managed-user-vm';
+import { Student } from 'app/openapi/model/student';
+import { User as ApiUser } from 'app/openapi/model/user';
+import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { SortingOrder } from 'app/foundation/pagination/pageable-table';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
+
 @Service()
 export class AdminUserService {
+    private readonly adminUserApi = inject(AdminUserApi);
     private http = inject(HttpClient);
 
     public resourceUrl = 'api/account/admin/users';
@@ -23,7 +33,10 @@ export class AdminUserService {
      * @return Observable<HttpResponse<User>> with the created user as body.
      */
     create(user: User): Observable<HttpResponse<User>> {
-        return this.http.post<User>(this.resourceUrl, user, { observe: 'response' });
+        const request = this.managedUserRequest(user);
+        return request
+            ? this.adminUserApi.createUser(request).pipe(map((response) => this.mapUserResponse(response)))
+            : throwError(() => new Error('Creating a user requires a login.'));
     }
 
     /**
@@ -32,7 +45,21 @@ export class AdminUserService {
      * @return Observable<HttpResponse<User[]>> with not found Users
      */
     importAll(users: Partial<User>[]): Observable<HttpResponse<User[]>> {
-        return this.http.post<User[]>(`${this.resourceUrl}/import`, users, { observe: 'response' });
+        const students: Student[] = users.map((user) => ({
+            login: user.login,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            registrationNumber: 'registrationNumber' in user && typeof user.registrationNumber === 'string' ? user.registrationNumber : user.visibleRegistrationNumber,
+            isTestUser: user.isTestUser,
+        }));
+        return this.adminUserApi.importUsers(students).pipe(
+            map((response) =>
+                response.clone<User[]>({
+                    body: response.body?.map(({ registrationNumber, ...student }) => hydrate(new User(), student, { visibleRegistrationNumber: registrationNumber })) ?? null,
+                }),
+            ),
+        );
     }
 
     /**
@@ -41,7 +68,10 @@ export class AdminUserService {
      * @return Observable<HttpResponse<User>> with the updated user as body.
      */
     update(user: User): Observable<HttpResponse<User>> {
-        return this.http.put<User>(this.resourceUrl, user, { observe: 'response' });
+        const request = this.managedUserRequest(user);
+        return request
+            ? this.adminUserApi.updateUser(request).pipe(map((response) => this.mapUserResponse(response)))
+            : throwError(() => new Error('Updating a user requires a login.'));
     }
 
     /**
@@ -50,7 +80,7 @@ export class AdminUserService {
      * @return Observable<HttpResponse<User>> with the updated user as body.
      */
     activate(userId: number): Observable<HttpResponse<User>> {
-        return this.http.patch<User>(`${this.resourceUrl}/${userId}/activate`, null, { observe: 'response' });
+        return this.adminUserApi.activateUser(userId).pipe(map((response) => this.mapUserResponse(response)));
     }
 
     /**
@@ -59,7 +89,7 @@ export class AdminUserService {
      * @return Observable<HttpResponse<User>> with the updated user as body.
      */
     deactivate(userId: number): Observable<HttpResponse<User>> {
-        return this.http.patch<User>(`${this.resourceUrl}/${userId}/deactivate`, null, { observe: 'response' });
+        return this.adminUserApi.deactivateUser(userId).pipe(map((response) => this.mapUserResponse(response)));
     }
 
     /**
@@ -69,11 +99,31 @@ export class AdminUserService {
      * @return Observable<HttpResponse<User[]>> with the list of users that match the query as body.
      */
     query(req?: Record<string, unknown>, filter?: UserFilter): Observable<HttpResponse<User[]>> {
-        let options = createRequestOption(req);
-        if (filter) {
-            options = filter.adjustOptions(options);
+        const request = createRequestOption(req);
+        const options = filter?.adjustOptions(request) ?? request;
+        const csvValues = (name: string) => options.getAll(name)?.flatMap((value) => value.split(','));
+        const numberValue = (name: string) => (options.has(name) ? Number(options.get(name)) : undefined);
+        const pageSize = numberValue('pageSize');
+        const sortedColumn = options.get('sortedColumn');
+        if (pageSize === undefined || sortedColumn === null) {
+            return throwError(() => new Error('Listing users requires a page size and sort column.'));
         }
-        return this.http.get<User[]>(this.resourceUrl, { params: options, observe: 'response' });
+        const sortingOrder = options.get('sortingOrder');
+        const withoutEnrollment = options.get('findWithoutCourseEnrollment');
+        return this.adminUserApi
+            .getAllUsers(
+                pageSize,
+                sortedColumn,
+                csvValues('authorities'),
+                csvValues('origins'),
+                csvValues('status'),
+                withoutEnrollment === null ? undefined : withoutEnrollment === 'true',
+                csvValues('registrationNumbers'),
+                options.get('searchTerm') ?? undefined,
+                numberValue('page'),
+                sortingOrder === SortingOrder.ASCENDING || sortingOrder === SortingOrder.DESCENDING ? sortingOrder : undefined,
+            )
+            .pipe(map((response) => response.clone<User[]>({ body: response.body?.map((user) => this.mapUser(user)) ?? null })));
     }
 
     /**
@@ -81,7 +131,7 @@ export class AdminUserService {
      * @return Observable<HttpResponse<string[]>> with the sorted list of all logins of not enrolled users
      */
     queryNotEnrolledUsers(): Observable<HttpResponse<string[]>> {
-        return this.http.get<string[]>(`${this.resourceUrl}/not-enrolled`, { observe: 'response' });
+        return this.adminUserApi.getNotEnrolledUsers();
     }
 
     /**
@@ -90,7 +140,7 @@ export class AdminUserService {
      * @return Observable<HttpResponse<User>> with the found user as body.
      */
     findUser(login: string): Observable<User> {
-        return this.http.get<User>(`${this.resourceUrl}/${login}`);
+        return this.adminUserApi.getUser(login).pipe(map((user) => this.mapUser(user)));
     }
 
     /**
@@ -100,7 +150,7 @@ export class AdminUserService {
      * @return Observable<UserCourseRole[]> with the course roles of the user, ordered by course title.
      */
     getCourseRoles(login: string): Observable<UserCourseRole[]> {
-        return this.http.get<UserCourseRole[]>(`${this.resourceUrl}/${login}/course-roles`, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) });
+        return this.adminUserApi.getCourseRoles(login, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, true) });
     }
 
     /**
@@ -139,7 +189,7 @@ export class AdminUserService {
      * @return Observable<User> with the updated user as body.
      */
     syncLdap(userId: number): Observable<User> {
-        return this.http.put<User>(`${this.resourceUrl}/${userId}/sync-ldap`, { observe: 'response' });
+        return this.adminUserApi.syncUserViaLdap(userId).pipe(map((response) => this.mapUserResponse(response).body!));
     }
 
     /**
@@ -148,34 +198,70 @@ export class AdminUserService {
      * @return Observable<HttpResponse<void>>
      */
     deleteUser(login: string, impactFingerprint = ''): Observable<HttpResponse<UserDeletionResult>> {
-        return this.http.delete<UserDeletionResult>(`${this.resourceUrl}/${login}`, { body: { impactFingerprint }, observe: 'response' });
+        return this.adminUserApi.deleteUser(login, { impactFingerprint });
     }
 
     /**
      * Preview the exact impact of permanently deleting one user.
      */
     getDeletionImpact(login: string): Observable<HttpResponse<UserDeletionImpact>> {
-        return this.http.get<UserDeletionImpact>(`${this.resourceUrl}/${login}/deletion-impact`, { observe: 'response' });
+        return this.adminUserApi.getUserDeletionImpact(login);
     }
 
     /**
      * Preview and aggregate the exact impact of permanently deleting multiple users.
      */
     getBulkDeletionImpact(logins: string[]): Observable<HttpResponse<BulkUserDeletionImpact>> {
-        return this.http.post<BulkUserDeletionImpact>(`${this.resourceUrl}/deletion-impact`, { logins }, { observe: 'response' });
+        return this.adminUserApi.getBulkUserDeletionImpact({ logins });
     }
 
     /**
      * Delete users after confirming their individual impact fingerprints.
      */
     deleteUsers(request: BulkUserDeletionRequest): Observable<HttpResponse<UserDeletionResult[]>> {
-        return this.http.delete<UserDeletionResult[]>(`${this.resourceUrl}`, { body: request, observe: 'response' });
+        return this.adminUserApi.deleteUsers(request);
     }
 
     /**
      * Get the authorities.
      */
     authorities(): Observable<string[]> {
-        return this.http.get<string[]>(`${this.resourceUrl}/authorities`);
+        return this.adminUserApi.getAuthorities();
+    }
+
+    private managedUserRequest(user: User): ManagedUserVM | undefined {
+        if (user.login === undefined) {
+            return undefined;
+        }
+        return {
+            id: user.id,
+            login: user.login,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            imageUrl: user.imageUrl,
+            langKey: user.langKey,
+            activated: user.activated,
+            internal: user.internal,
+            visibleRegistrationNumber: user.visibleRegistrationNumber,
+            authorities: user.authorities,
+            organizations: user.organizations,
+            password: user.password,
+            revokeCredentials: user.revokeCredentials,
+            isTestUser: user.isTestUser,
+        };
+    }
+
+    private mapUserResponse(response: HttpResponse<ApiUser>): HttpResponse<User> {
+        return response.clone<User>({ body: response.body === null ? null : this.mapUser(response.body) });
+    }
+
+    private mapUser({ createdDate, lastModifiedDate, selectedLLMUsage, selectedLLMUsageTimestamp, ...user }: ApiUser): User {
+        return hydrate(new User(), user, {
+            createdDate: createdDate ? new Date(createdDate) : undefined,
+            lastModifiedDate: lastModifiedDate ? new Date(lastModifiedDate) : undefined,
+            selectedLLMUsage: selectedLLMUsage ? LLMSelectionDecision[selectedLLMUsage] : undefined,
+            selectedLLMUsageTimestamp: selectedLLMUsageTimestamp ? dayjs(selectedLLMUsageTimestamp) : undefined,
+        });
     }
 }

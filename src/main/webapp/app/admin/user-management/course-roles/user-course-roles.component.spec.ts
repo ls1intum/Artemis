@@ -18,7 +18,7 @@ describe('UserCourseRolesComponent', () => {
     let fixture: ComponentFixture<UserCourseRolesComponent>;
     let httpMock: HttpTestingController;
 
-    const courseRolesUrl = 'api/account/admin/users/student1/course-roles';
+    const courseRolesUrl = '/api/account/admin/users/student1/course-roles';
 
     const courseRoles: UserCourseRole[] = [
         { courseId: 1, courseTitle: 'Algorithms', courseShortName: 'ALGO', role: 'INSTRUCTOR' },
@@ -206,7 +206,7 @@ describe('UserCourseRolesComponent', () => {
 
         fixture.componentRef.setInput('login', 'student2');
         fixture.detectChanges();
-        httpMock.expectOne('api/account/admin/users/student2/course-roles').flush([courseRoles[0]]);
+        httpMock.expectOne('/api/account/admin/users/student2/course-roles').flush([courseRoles[0]]);
         await fixture.whenStable();
         fixture.detectChanges();
 

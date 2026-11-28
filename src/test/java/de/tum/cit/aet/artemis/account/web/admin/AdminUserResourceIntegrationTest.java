@@ -1028,6 +1028,25 @@ class AdminUserResourceIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void deletionRequiresValidJsonBodies() throws Exception {
+        userUtilService.addAdmin("");
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "deletebody");
+        String bulkUrl = "/api/account/admin/users";
+        String singleUrl = bulkUrl + "/" + user.getLogin();
+
+        mockMvc.perform(delete(singleUrl)).andExpect(status().isBadRequest());
+        mockMvc.perform(delete(singleUrl).contentType(MediaType.APPLICATION_JSON).content("""
+                {"impactFingerprint":""}
+                """)).andExpect(status().isBadRequest());
+        mockMvc.perform(delete(bulkUrl)).andExpect(status().isBadRequest());
+        mockMvc.perform(delete(bulkUrl).contentType(MediaType.APPLICATION_JSON).content("""
+                {"users":[]}
+                """)).andExpect(status().isBadRequest());
+        assertThat(userTestRepository.findById(user.getId())).isPresent();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "staleactoradmin", roles = "ADMIN")
     void permanentDeletionRejectsAnUnconfirmedImpact() throws Exception {
         userUtilService.addAdmin(TEST_PREFIX + "staleactor");

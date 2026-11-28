@@ -55,7 +55,9 @@ api/complaint-resources.ts
 api/quiz-exercise-creation-update-resources.ts
 api/result-resources.ts
 api/rating-resources.ts
+api/admin-organization-resources.ts
 api/grade-step-resources.ts
+api/admin-user-resources.ts
 api/assessment-upload-resources.ts
 api/quiz-submission-resources.ts
 api/ingestion-browser-resources.ts
