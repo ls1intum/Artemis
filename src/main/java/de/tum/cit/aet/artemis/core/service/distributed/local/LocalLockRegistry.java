@@ -49,7 +49,7 @@ final class LocalLockRegistry<K> {
             acquired = entry.lock.tryLock(millis, TimeUnit.MILLISECONDS);
             return acquired;
         }
-        catch (InterruptedException e) {
+        catch (InterruptedException _) {
             Thread.currentThread().interrupt();
             return false;
         }

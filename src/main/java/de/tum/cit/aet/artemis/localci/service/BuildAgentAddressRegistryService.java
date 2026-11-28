@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 import jakarta.annotation.PostConstruct;
@@ -46,7 +47,7 @@ public class BuildAgentAddressRegistryService {
 
     private final DistributedDataAccessService distributedDataAccessService;
 
-    private volatile Map<String, Set<String>> addressesByAgentName = Map.of();
+    private final AtomicReference<Map<String, Set<String>>> addressesByAgentName = new AtomicReference<>(Map.of());
 
     // Requests missing an address in their snapshot share a refresh that completed after they arrived.
     private final ReentrantLock refreshOnMissLock = new ReentrantLock(true);
@@ -101,7 +102,7 @@ public class BuildAgentAddressRegistryService {
         try {
             Map<String, Set<String>> snapshot = new HashMap<>();
             distributedDataAccessService.getBuildAgentReportedAddressMap().forEach((name, info) -> snapshot.put(name, Set.copyOf(info.addresses())));
-            addressesByAgentName = Map.copyOf(snapshot);
+            addressesByAgentName.set(Map.copyOf(snapshot));
             return true;
         }
         catch (RuntimeException e) {
@@ -125,15 +126,14 @@ public class BuildAgentAddressRegistryService {
         }
         // Stamped before anything that can block, because this is what the reconcile below has to be newer than.
         long arrivedAt = System.nanoTime();
-        if (matchesAddress(addressesByAgentName.get(agentName), ipAddress)) {
+        if (matchesAddress(addressesByAgentName.get().get(agentName), ipAddress)) {
             return true;
         }
 
         if (!reconcileForDecision(arrivedAt)) {
             return false;
         }
-        Map<String, Set<String>> snapshot = addressesByAgentName;
-        Set<String> addresses = snapshot.get(agentName);
+        Set<String> addresses = addressesByAgentName.get().get(agentName);
         return addresses == null || matchesAddress(addresses, ipAddress);
     }
 
@@ -150,7 +150,7 @@ public class BuildAgentAddressRegistryService {
                 return false;
             }
         }
-        catch (InterruptedException e) {
+        catch (InterruptedException _) {
             Thread.currentThread().interrupt();
             return false;
         }
@@ -204,7 +204,7 @@ public class BuildAgentAddressRegistryService {
         if (ipAddress == null) {
             return false;
         }
-        return addressesByAgentName.values().stream().anyMatch(addresses -> matchesAddress(addresses, ipAddress));
+        return addressesByAgentName.get().values().stream().anyMatch(addresses -> matchesAddress(addresses, ipAddress));
     }
 
 }
