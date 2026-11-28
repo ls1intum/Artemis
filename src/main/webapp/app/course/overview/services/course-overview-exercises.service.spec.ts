@@ -301,6 +301,41 @@ describe('CourseOverviewExercisesService', () => {
         expect(updatedExercise?.studentParticipations).toEqual([newTeamParticipation, practiceParticipation]);
     });
 
+    it('should unassign the team and keep the practice participation when the assignment carries no participations', async () => {
+        const oldTeamParticipation = { id: 10, testRun: false } as StudentParticipation;
+        const practiceParticipation = { id: 11, testRun: true } as StudentParticipation;
+        const teamExercise = { id: 7, studentAssignedTeamId: 23, studentParticipations: [oldTeamParticipation, practiceParticipation] } as Exercise;
+        const initialData = { ...data, exercises: [teamExercise] };
+        fetchSpy.mockReturnValue(of(initialData));
+        courseStorageService.setCourses([{ id: 1, exercises: initialData.exercises } as Course]);
+        service.load(1).subscribe();
+        await Promise.resolve();
+
+        // The server leaves the empty participation list and the missing team out of the JSON of an unassignment.
+        teamUpdates.next({ exerciseId: 7 });
+
+        const updatedExercise = courseStorageService.getCourse(1)?.exercises?.[0];
+        expect(updatedExercise?.studentAssignedTeamId).toBeUndefined();
+        expect(updatedExercise?.studentParticipations).toEqual([practiceParticipation]);
+    });
+
+    it('should keep the participations when the assignment brings a team without participations', async () => {
+        const teamParticipation = { id: 10, testRun: false } as StudentParticipation;
+        const teamExercise = { id: 7, studentParticipations: [teamParticipation] } as Exercise;
+        const initialData = { ...data, exercises: [teamExercise] };
+        fetchSpy.mockReturnValue(of(initialData));
+        courseStorageService.setCourses([{ id: 1, exercises: initialData.exercises } as Course]);
+        service.load(1).subscribe();
+        await Promise.resolve();
+
+        // A team without participations has its empty list left out of the JSON, and the message can be replayed after the student started the exercise.
+        teamUpdates.next({ exerciseId: 7, teamId: 24 });
+
+        const updatedExercise = courseStorageService.getCourse(1)?.exercises?.[0];
+        expect(updatedExercise?.studentAssignedTeamId).toBe(24);
+        expect(updatedExercise?.studentParticipations).toEqual([teamParticipation]);
+    });
+
     it('should stop applying live updates after the per-visit state is cleared', () => {
         const storedCourse = { id: 1, exercises: [exercise] } as Course;
         courseStorageService.setCourses([storedCourse]);

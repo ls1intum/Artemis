@@ -25,6 +25,7 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const repoRoot = resolve(__dirname, '..', '..');
 const staticRoot = join(repoRoot, 'build', 'resources', 'main', 'static');
 const reportsDir = join(repoRoot, 'build', 'reports', 'lighthouse');
+// renovate: datasource=npm depName=lighthouse
 const LIGHTHOUSE_VERSION = '13.6.0';
 
 const args = new Set(process.argv.slice(2));
