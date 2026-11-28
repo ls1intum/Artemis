@@ -1,8 +1,8 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { EMPTY, Observable, Subscription, of, throwError } from 'rxjs';
@@ -12,7 +12,9 @@ import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.serv
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
 import { faCircleNotch, faExternalLink, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faPlayCircle } from '@fortawesome/free-regular-svg-icons';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { Participation, getExercise } from 'app/exercise/shared/entities/participation/participation.model';
+import { AlertService } from 'app/foundation/service/alert.service';
+import { isPushOutsideBuildWindow } from 'app/programming/shared/utils/build-time-window.utils';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -29,17 +31,18 @@ import { CodeEditorResolveConflictModalComponent } from 'app/programming/shared/
     selector: 'jhi-code-editor-actions',
     templateUrl: './code-editor-actions.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TumAetUiButtonDirective, FeatureToggleDirective, NgbTooltip, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink],
+    imports: [TumAetUiButtonDirective, FeatureToggleDirective, TumAetUiTooltipDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink],
 })
 export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     private readonly repositoryService = inject(CodeEditorRepositoryService);
     private readonly repositoryFileService = inject(CodeEditorRepositoryFileService);
     private readonly conflictService = inject(CodeEditorConflictStateService);
-    private readonly dialogService = inject(DialogService);
+    private readonly dialogService = inject(TumAetUiDialogService);
     private readonly translateService = inject(TranslateService);
     private readonly submissionService = inject(CodeEditorSubmissionService);
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
+    private readonly alertService = inject(AlertService);
 
     CommitState = CommitState;
     EditorState = EditorState;
@@ -76,8 +79,8 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     autoSaveTimer = 0;
     autoSaveInterval?: number;
 
-    private refreshModalRef?: DynamicDialogRef;
-    private conflictModalRef?: DynamicDialogRef;
+    private refreshModalRef?: TumAetUiDialogRef<boolean, CodeEditorConfirmRefreshModalComponent>;
+    private conflictModalRef?: TumAetUiDialogRef<boolean, CodeEditorResolveConflictModalComponent>;
 
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
@@ -116,11 +119,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         this.routeParamsSubscription = this.route.params.subscribe((params) => {
             const repositoryType = params['repositoryType'] ?? 'USER';
             const courseId = Number(params['courseId']);
-            const repositoryId = Number(params['repositoryId']);
+            // The page of the code of a student has the id of the participation instead of the one of a repository
+            const repositoryId = Number(params['repositoryId'] ?? params['participationId']);
             const exerciseId = Number(params['exerciseId']);
             const examId = Number(params['examId']);
             const exerciseGroupId = Number(params['exerciseGroupId']);
-            this.repositoryLink.set(getLocalRepositoryLink(courseId, exerciseId, repositoryType, repositoryId, examId, exerciseGroupId));
+            this.repositoryLink.set(getLocalRepositoryLink(courseId, exerciseId, repositoryType, repositoryId, exerciseGroupId, examId));
         });
         this.isInCourseManagement.set(this.router.url.includes('course-management'));
 
@@ -180,11 +184,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         }
         if (this.editorState() !== EditorState.CLEAN) {
             this.refreshModalRef =
-                this.dialogService.open(CodeEditorConfirmRefreshModalComponent, {
+                this.dialogService.open<CodeEditorConfirmRefreshModalComponent, boolean>(CodeEditorConfirmRefreshModalComponent, {
                     header: this.translateService.instant('artemisApp.editor.refresh.refreshExplanationShort'),
-                    width: '50rem',
-                    modal: true,
-                    closable: true,
+                    size: 'large',
                     closeOnEscape: true,
                     dismissableMask: false,
                 }) ?? undefined;
@@ -285,8 +287,12 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                     if (this.editorState() === EditorState.CLEAN) {
                         this.commitState.set(CommitState.CLEAN);
                     }
-                    // Optimistic: assume a build follows the commit on a buildable repo.
-                    if (this.buildable()) {
+                    const participation = this.participation();
+                    if (isPushOutsideBuildWindow(participation && getExercise(participation), participation)) {
+                        // The server saved the commit without building it, so no build follows.
+                        this.alertService.info('artemisApp.editor.committedOutsideBuildWindow');
+                    } else if (this.buildable()) {
+                        // Optimistic: assume a build follows the commit on a buildable repo.
                         this.isBuilding.set(true);
                     }
                 }),
@@ -322,11 +328,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             return;
         }
         this.conflictModalRef =
-            this.dialogService.open(CodeEditorResolveConflictModalComponent, {
+            this.dialogService.open<CodeEditorResolveConflictModalComponent, boolean>(CodeEditorResolveConflictModalComponent, {
                 header: this.translateService.instant('artemisApp.editor.conflict.conflictExplanationShort'),
-                width: '50rem',
-                modal: true,
-                closable: true,
+                size: 'large',
                 closeOnEscape: true,
                 dismissableMask: false,
             }) ?? undefined;

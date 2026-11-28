@@ -1,12 +1,20 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.buildagent.dto.LocalCITestJobDTO;
 import de.tum.cit.aet.artemis.buildagent.service.parser.TestResultXmlParser;
@@ -18,6 +26,48 @@ class TestResultXmlParserTest {
     private final List<LocalCITestJobDTO> failedTests = new ArrayList<>();
 
     private final List<LocalCITestJobDTO> successfulTests = new ArrayList<>();
+
+    private final List<TestCaseResult> hyperionFailures = new ArrayList<>();
+
+    private final List<TestCaseResult> hyperionSuccesses = new ArrayList<>();
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void rejectsExternalEntitiesWithoutExposingLocalFiles(boolean hyperion, @TempDir Path directory) throws IOException {
+        Path secret = directory.resolve("secret.txt");
+        FileUtils.writeStringToFile(secret.toFile(), "private-file-content", StandardCharsets.UTF_8);
+        String report = """
+                <!DOCTYPE testsuite [<!ENTITY secret SYSTEM "%s">]>
+                <testsuite><testcase name="fails"><failure>&secret;</failure></testcase></testsuite>
+                """.formatted(secret.toUri());
+
+        assertThatThrownBy(() -> parseWithSelectedParser(hyperion, report)).isInstanceOf(RuntimeException.class).hasMessageNotContaining("private-file-content");
+        assertThat(failedTests).isEmpty();
+        assertThat(successfulTests).isEmpty();
+        assertThat(hyperionFailures).isEmpty();
+        assertThat(hyperionSuccesses).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void rejectsMalformedXmlWithoutAppendingPartialResults(boolean hyperion) {
+        String report = "<testsuite><testcase name=\"passes\"/><testcase name=\"broken\"></testsuite>";
+
+        assertThatThrownBy(() -> parseWithSelectedParser(hyperion, report)).isInstanceOf(RuntimeException.class);
+        assertThat(failedTests).isEmpty();
+        assertThat(successfulTests).isEmpty();
+        assertThat(hyperionFailures).isEmpty();
+        assertThat(hyperionSuccesses).isEmpty();
+    }
+
+    private void parseWithSelectedParser(boolean hyperion, String report) throws IOException {
+        if (hyperion) {
+            new JUnitReportParser(20_000).processTestResultFile(report, hyperionFailures, hyperionSuccesses);
+        }
+        else {
+            TestResultXmlParser.processTestResultFile(report, failedTests, successfulTests);
+        }
+    }
 
     @Test
     void localCiAndHyperionAgreeOnNestedJUnitReports() throws IOException {
@@ -46,6 +96,55 @@ class TestResultXmlParserTest {
         assertThat(hyperionSuccesses).extracting(TestCaseResult::name).containsExactly("first.nested.passes");
         assertThat(failedTests).map(test -> new TestCaseResult(test.name(), test.testMessages())).containsExactlyElementsOf(hyperionFailures);
         assertThat(successfulTests).map(test -> new TestCaseResult(test.name(), test.testMessages())).containsExactlyElementsOf(hyperionSuccesses);
+    }
+
+    @Test
+    void keepsTheClassOfTestsAndOfClassLevelFailuresIncludingNestedClasses() throws IOException {
+        // Gradle and Surefire report an error in @BeforeAll as one failed test with a made-up name, whose classname is the failing class.
+        String report = """
+                <testsuites>
+                    <testsuite name="de.tum.Outer$Inner">
+                        <testcase name="innerPasses()" classname="de.tum.Outer$Inner"/>
+                    </testsuite>
+                    <testsuite name="de.tum.Broken">
+                        <testcase name="initializationError" classname="de.tum.Broken"><failure message="boom"/></testcase>
+                    </testsuite>
+                    <testsuite name="de.tum.Legacy">
+                        <testcase name="withoutClass()"/>
+                    </testsuite>
+                </testsuites>
+                """;
+
+        TestResultXmlParser.processTestResultFile(report, failedTests, successfulTests);
+
+        assertThat(failedTests).singleElement().satisfies(test -> {
+            assertThat(test.testClass()).isEqualTo("de.tum.Broken");
+            assertThat(test.testMessages()).containsExactly("boom");
+        });
+        assertThat(successfulTests).extracting(LocalCITestJobDTO::name, LocalCITestJobDTO::testClass)
+                .containsExactly(tuple("de.tum.Outer$Inner.innerPasses()", "de.tum.Outer$Inner"), tuple("de.tum.Legacy.withoutClass()", null));
+    }
+
+    @Test
+    void keepsTheClassOfAGradleClassLevelFailureWithoutPrefixingTheName() throws IOException {
+        // Gradle writes one file per class with the class as the only root suite; an error in @BeforeAll is its made-up "classMethod" test.
+        String report = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <testsuite name="de.tum.Outer$Inner" tests="1" skipped="0" failures="1" errors="0">
+                    <testcase name="classMethod" classname="de.tum.Outer$Inner" time="0.002">
+                        <failure message="java.lang.IllegalStateException: setup exploded" type="java.lang.IllegalStateException">stack trace</failure>
+                    </testcase>
+                </testsuite>
+                """;
+
+        TestResultXmlParser.processTestResultFile(report, failedTests, successfulTests);
+
+        assertThat(successfulTests).isEmpty();
+        assertThat(failedTests).singleElement().satisfies(test -> {
+            assertThat(test.name()).isEqualTo("classMethod");
+            assertThat(test.testClass()).isEqualTo("de.tum.Outer$Inner");
+            assertThat(test.testMessages()).containsExactly("java.lang.IllegalStateException: setup exploded");
+        });
     }
 
     @Test

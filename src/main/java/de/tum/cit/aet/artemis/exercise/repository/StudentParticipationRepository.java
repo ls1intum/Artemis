@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -43,6 +45,7 @@ import de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.ParticipationFilter;
 import de.tum.cit.aet.artemis.exercise.domain.participation.IdToPresentationScoreSum;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.AssessmentPublicationRecipientDTO;
@@ -1427,7 +1430,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH r.assessor
             WHERE p.testRun = FALSE
                 AND se.id IN :studentExamId
-                AND e.testExam = TRUE
+                AND e.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND (s.id = (SELECT MAX(s2.id) FROM p.submissions s2) OR s.id IS NULL)
             """)
     List<StudentParticipation> findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultAndAssessorIgnoreTestRuns(
@@ -1442,7 +1445,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     LEFT JOIN FETCH s.results r
                 WHERE p.testRun = FALSE
                     AND se.id IN :studentExamId
-                    AND e.testExam = TRUE
+                    AND e.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                     AND (s.id = (SELECT MAX(s2.id) FROM p.submissions s2) OR s.id IS NULL)
             """)
     List<StudentParticipation> findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(@Param("studentExamId") long studentExamId);
@@ -1711,7 +1714,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(), studentExam.getExercises());
         }
 
-        if (studentExam.isTestExam()) {
+        if (!studentExam.getExamMode().isReal()) {
             if (withAssessor) {
                 return findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultAndAssessorIgnoreTestRuns(studentExam.getId());
             }
@@ -1932,6 +1935,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * - The corresponding task name for each feedback item by checking if the feedback test case name is associated with a task.
      * If a feedback item is not assigned to a task, it is labeled as "Not assigned to task."
      * - The error category for each feedback item, classified as one of "Student Error", "Ares Error", or "AST Error".
+     * The category is derived from the start of the message, ignoring case: an English or German Ares security message
+     * (also behind the {@code java.lang.SecurityException: } prefix a Gradle test report adds) is an "Ares Error", an English
+     * or German Ares AST message is an "AST Error", and every other message is a "Student Error".
+     * The German AST message is recognised in three spellings: with a precomposed "ü", with "u" followed by U+0308, and with
+     * "w" followed by U+0308, which Ares 2 writes by mistake. Stored results keep that text even once Ares corrects its
+     * message bundle.
      * <br>
      * It supports filtering by:
      * - Search term: Case-insensitive filtering on feedback detail text.
@@ -1978,8 +1987,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     WHERE t.exercise.id = :exerciseId AND tct.testName = tc.testName
                 ), 'Not assigned to task'),
                 CASE
-                    WHEN LOWER(MIN(m.text)) LIKE 'ares security error%' THEN 'Ares Error'
-                    WHEN LOWER(MIN(m.text)) LIKE 'unwanted statement found%' THEN 'AST Error'
+                    WHEN LOWER(MIN(m.text)) LIKE 'ares security error%'
+                        OR LOWER(MIN(m.text)) LIKE 'ares sicherheitsfehler%'
+                        OR LOWER(MIN(m.text)) LIKE 'ares-sicherheitsfehler%'
+                        OR LOWER(MIN(m.text)) LIKE 'java.lang.securityexception: ares security error%'
+                        OR LOWER(MIN(m.text)) LIKE 'java.lang.securityexception: ares sicherheitsfehler%'
+                        OR LOWER(MIN(m.text)) LIKE 'java.lang.securityexception: ares-sicherheitsfehler%' THEN 'Ares Error'
+                    WHEN LOWER(MIN(m.text)) LIKE 'unwanted statement found%'
+                        OR LOWER(MIN(m.text)) LIKE 'unerwünschte anweisung gefunden%'
+                        OR LOWER(MIN(m.text)) LIKE 'unerwu\u0308nschte anweisung gefunden%'
+                        OR LOWER(MIN(m.text)) LIKE 'unerw\u0308nschte anweisung gefunden%' THEN 'AST Error'
                     ELSE 'Student Error'
                 END,
                 CASE WHEN MAX(LENGTH(m.text)) > de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH THEN TRUE ELSE FALSE END
@@ -2006,8 +2023,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                         WHERE t.taskName IN (:filterTaskNames)
                     ))
                 AND (:#{#filterErrorCategories != NULL && #filterErrorCategories.size() < 1} = TRUE OR CASE
-                            WHEN LOWER(m.text) LIKE 'ares security error%' THEN 'Ares Error'
-                            WHEN LOWER(m.text) LIKE 'unwanted statement found%' THEN 'AST Error'
+                            WHEN LOWER(m.text) LIKE 'ares security error%'
+                                OR LOWER(m.text) LIKE 'ares sicherheitsfehler%'
+                                OR LOWER(m.text) LIKE 'ares-sicherheitsfehler%'
+                                OR LOWER(m.text) LIKE 'java.lang.securityexception: ares security error%'
+                                OR LOWER(m.text) LIKE 'java.lang.securityexception: ares sicherheitsfehler%'
+                                OR LOWER(m.text) LIKE 'java.lang.securityexception: ares-sicherheitsfehler%' THEN 'Ares Error'
+                            WHEN LOWER(m.text) LIKE 'unwanted statement found%'
+                                OR LOWER(m.text) LIKE 'unerwünschte anweisung gefunden%'
+                                OR LOWER(m.text) LIKE 'unerwu\u0308nschte anweisung gefunden%'
+                                OR LOWER(m.text) LIKE 'unerw\u0308nschte anweisung gefunden%' THEN 'AST Error'
                             ELSE 'Student Error'
                         END IN (:filterErrorCategories))
             GROUP BY m.id, tc.testName
@@ -2288,33 +2313,26 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     }
 
     /**
-     * Returns a page of participation IDs for the given exercise for the management view, applying search, filter, and score-range predicates.
-     * Uses {@link StudentParticipationSpecs} to build the query dynamically via the Criteria API.
-     * <p>
-     * An individual exercise yields the participations of students. A team exercise yields the participations of teams and the practice participations of single students.
+     * Returns participation IDs for the management page using validated filters and the requested search and ordering.
      *
-     * @param exerciseId       the exercise to query
-     * @param teamMode         whether the exercise uses teams
-     * @param searchTerm       free-text search (matched against student login/name or team name/shortName)
-     * @param filterProp       filter property name (All, Failed, NoSubmissions, NoPracticeMode, Successful, Unsuccessful, BuildFailed, Manual, Automatic, Locked)
-     * @param stuckBuildCutoff for the Failed filter: participations whose latest submission has no result and was submitted before this timestamp are considered stuck (nullable)
-     * @param scoreRangeLower  inclusive lower bound of score range filter (nullable)
-     * @param scoreRangeUpper  upper bound of score range filter; exclusive unless equal to 100 (nullable)
+     * @param exerciseId       exercise to search
+     * @param teamMode         whether team and practice participations should be included
+     * @param search           search and ordering
+     * @param filters          validated selections
+     * @param scoreRangeLower  inclusive lower score bound, or null
+     * @param scoreRangeUpper  upper score bound, or null
+     * @param stuckBuildCutoff cutoff for builds without results
      * @param pageable         pagination information
-     * @param sortOrder        ascending or descending
-     * @param sortedColumn     the column to sort by
-     * @return a page of participation IDs
+     * @return a page of matching participation IDs
      */
-    default Page<Long> findParticipationIdsForManagement(long exerciseId, boolean teamMode, String searchTerm, String filterProp, ZonedDateTime stuckBuildCutoff,
-            Integer scoreRangeLower, Integer scoreRangeUpper, Pageable pageable, SortingOrder sortOrder, String sortedColumn) {
+    default Page<Long> findParticipationIdsForManagement(long exerciseId, boolean teamMode, PagedSearchDTO search, Set<ParticipationFilter> filters,
+            @Nullable Integer scoreRangeLower, @Nullable Integer scoreRangeUpper, ZonedDateTime stuckBuildCutoff, Pageable pageable) {
         Specification<StudentParticipation> spec = Specification.where(StudentParticipationSpecs.forExercise(exerciseId)).and(StudentParticipationSpecs.forManagementMode(teamMode))
-                .and(StudentParticipationSpecs.searchForManagement(searchTerm, teamMode)).and(StudentParticipationSpecs.managementFilter(filterProp, stuckBuildCutoff))
-                .and(StudentParticipationSpecs.scoreInRange(scoreRangeLower, scoreRangeUpper))
-                .and(StudentParticipationSpecs.orderedForManagement(sortedColumn, sortOrder != null ? sortOrder : SortingOrder.ASCENDING, teamMode));
-
+                .and(StudentParticipationSpecs.searchForManagement(search.searchTerm(), teamMode))
+                .and(StudentParticipationSpecs.managementFilters(filters, stuckBuildCutoff, scoreRangeLower, scoreRangeUpper)).and(StudentParticipationSpecs
+                        .orderedForManagement(search.sortedColumn(), search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING, teamMode));
         Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.unsorted());
-        Page<StudentParticipation> page = findAll(spec, unsortedPageable);
-        return page.map(StudentParticipation::getId);
+        return findAll(spec, unsortedPageable).map(StudentParticipation::getId);
     }
 
     /**

@@ -25,8 +25,8 @@ export interface ExerciseGenerationLiveUsage {
     tokenBudget: number;
     /** Provider responses accounted for so far */
     modelCalls: number;
-    /** Estimated cost in EUR, absent when any model used has no configured price */
-    estimatedCostEur?: number;
-    /** Whether a price was configured for every response counted so far */
-    estimatedCostComplete: boolean;
+    /** Cost in USD, absent when any response has neither a reported USD cost nor complete USD prices */
+    costUsd?: number;
+    /** Whether every response counted so far has a reported or completely estimated USD cost */
+    costUsdComplete: boolean;
 }

@@ -157,9 +157,6 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
                 await forEachViewport(page, async ({ width, height }) => {
                     const name = `${theme}-${width}x${height}`;
                     await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
-                    if (theme === 'dark') {
-                        await page.waitForFunction(() => (document.getElementById('artemis-theme-override') as HTMLLinkElement | null)?.sheet != null);
-                    }
                     await verifyScrolling(page, viewport, width < 600);
                     if (width === 1280 || width === 480) {
                         await attachScreenshot(page, `course-students-${name}`);
@@ -277,9 +274,6 @@ test.describe('Course management TUM UI tables', { tag: '@slow' }, () => {
                 await page.emulateMedia({ colorScheme: theme });
                 await forEachViewport(page, async (viewport) => {
                     await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
-                    if (theme === 'dark') {
-                        await page.waitForFunction(() => (document.getElementById('artemis-theme-override') as HTMLLinkElement | null)?.sheet != null);
-                    }
                     await check(viewport);
                     if (viewport.width === 1280 || viewport.width === 480) {
                         await page.mouse.move(0, 0);

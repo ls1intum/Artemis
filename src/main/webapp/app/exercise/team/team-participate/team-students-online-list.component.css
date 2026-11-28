@@ -1,0 +1,113 @@
+:host {
+    display: block;
+}
+
+.team-students-online-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.team-students-online-list .student-item {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.team-students-online-list .student-item:not(:first-of-type) {
+    margin-top: 5px;
+}
+
+.team-students-online-list .indicator {
+    margin-right: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.team-students-online-list .student-status {
+    display: inline-flex;
+    color: var(--tumaet-ui-muted-color);
+}
+
+.team-students-online-list .student-name {
+    max-width: 190px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    color: var(--tumaet-ui-muted-color);
+}
+
+.team-students-online-list .student-status,
+.team-students-online-list .student-name {
+    transition: 0.1s color ease-out;
+}
+
+.team-students-online-list .online .student-status,
+.team-students-online-list .online .student-name {
+    transition: 0.05s color ease-in;
+}
+
+.team-students-online-list .online .student-status {
+    color: var(--tumaet-ui-state-success);
+}
+
+.team-students-online-list .online .student-name {
+    color: var(--tumaet-ui-text-color);
+}
+
+.team-students-online-list .student-last-action-trigger {
+    margin: -1px 0;
+    opacity: 0.25;
+    background: none;
+    border: none;
+}
+
+.team-students-online-list .student-last-action-trigger:hover {
+    opacity: 0.75;
+}
+
+.team-students-online-list .student-last-action-trigger:focus {
+    opacity: 1;
+    outline: none;
+}
+
+.typing-indicator {
+    display: flex;
+    width: 18px;
+    opacity: 0.6;
+}
+
+.typing-indicator > div {
+    width: 6px;
+    height: 6px;
+    border-radius: 100%;
+    animation: bounce-delay 1.4s infinite ease-in-out both;
+    background: var(--tumaet-ui-text-color);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .typing-indicator > div {
+        animation: none;
+    }
+}
+
+.typing-indicator .bounce1 {
+    animation-delay: -0.32s;
+}
+
+.typing-indicator .bounce2 {
+    animation-delay: -0.16s;
+}
+
+@keyframes bounce-delay {
+    0%,
+    80%,
+    100% {
+        transform: scale(0);
+    }
+
+    40% {
+        transform: scale(1);
+    }
+}

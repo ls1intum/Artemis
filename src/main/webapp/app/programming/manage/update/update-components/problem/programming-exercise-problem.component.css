@@ -1,0 +1,23 @@
+.textarea-counter-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.textarea-with-counter {
+    padding-bottom: 1.75rem;
+}
+
+.textarea-char-count {
+    position: absolute;
+    bottom: 0.5rem;
+    right: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--tumaet-ui-muted-color);
+    pointer-events: none;
+    line-height: 1;
+}
+
+/* Close to the maximum length. A class of its own: the colour above would win over a layered utility class. */
+.textarea-char-count--near-limit {
+    color: var(--danger);
+}

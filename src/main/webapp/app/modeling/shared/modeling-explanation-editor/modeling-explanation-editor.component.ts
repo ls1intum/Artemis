@@ -10,7 +10,7 @@ let nextExplanationEditorId = 0;
 @Component({
     selector: 'jhi-modeling-explanation-editor',
     templateUrl: './modeling-explanation-editor.component.html',
-    styleUrls: ['./modeling-explanation-editor.component.scss'],
+    styleUrls: ['./modeling-explanation-editor.component.css'],
     imports: [FormsModule, ArtemisTranslatePipe, TextFieldModule, ModelingExplanationSurfaceComponent],
 })
 export class ModelingExplanationEditorComponent {

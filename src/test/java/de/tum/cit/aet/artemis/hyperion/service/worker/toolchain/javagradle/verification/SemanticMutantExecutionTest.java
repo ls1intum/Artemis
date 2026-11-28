@@ -59,7 +59,10 @@ class SemanticMutantExecutionTest {
     void rechecksEveryRetainedMutantWhenOnlyTheFirstFourAreKilled() {
         List<SemanticMutant> retained = IntStream.rangeClosed(1, 6).mapToObj(index -> new SemanticMutant("R" + index, PATH, ORIGINAL, MUTANT_SOURCE, COUNTEREXAMPLE)).toList();
         AtomicInteger builds = new AtomicInteger();
-        List<SemanticMutantOutcome> outcomes = SemanticMutantExecution.recheck(Map.of(PATH, ORIGINAL), retained, (_, _) -> {
+        List<SemanticMutantOutcome> outcomes = SemanticMutantExecution.recheck(Map.of(PATH, ORIGINAL), retained, (mutant, _) -> {
+            if (mutant == null) {
+                return new BuildSummary(1, 0, 0, false, List.of("graded"), List.of(), List.of(), "");
+            }
             boolean killed = builds.incrementAndGet() <= 4;
             return new BuildSummary(1, killed ? 1 : 0, killed ? 1 : 0, false, List.of("graded"), killed ? List.of("graded") : List.of(), List.of(), "");
         });
@@ -67,6 +70,25 @@ class SemanticMutantExecutionTest {
         assertThat(outcomes).extracting(SemanticMutantOutcome::mutant).containsExactlyElementsOf(retained);
         assertThat(outcomes.subList(0, 4)).extracting(SemanticMutantOutcome::disposition).containsOnly(Disposition.KILLED_BY_GRADED_SUITE);
         assertThat(outcomes.subList(4, 6)).extracting(SemanticMutantOutcome::disposition).containsExactly(Disposition.SURVIVED_GRADED_SUITE, Disposition.SURVIVED_GRADED_SUITE);
+    }
+
+    @Test
+    void evaluatesEveryAdmittedProposal() {
+        List<SemanticMutant> proposals = IntStream
+                .rangeClosed(1,
+                        6)
+                .mapToObj(index -> new SemanticMutant("R" + index, PATH, ORIGINAL, MUTANT_SOURCE, new ContractWitness("R" + index, "globalChoice" + index,
+                        "@Test void globalChoice" + index + "() { assertEquals(1, new Scheduler().choose()); }", "chooses only within the first batch")))
+                .toList();
+        AtomicInteger builds = new AtomicInteger();
+
+        List<SemanticMutantOutcome> outcomes = SemanticMutantExecution.evaluate(TESTS, Map.of(PATH, ORIGINAL), proposals, (_, _) -> {
+            builds.incrementAndGet();
+            return new BuildSummary(0, 0, 1, false, List.of(), List.of(), List.of(), "compilation failed");
+        });
+
+        assertThat(outcomes).extracting(SemanticMutantOutcome::mutant).containsExactlyElementsOf(proposals);
+        assertThat(builds).hasValue(6);
     }
 
     @Test
@@ -127,10 +149,10 @@ class SemanticMutantExecutionTest {
     @Test
     void ordinaryRecheckRequiresAnExecutedFailingTestRatherThanACompileFailure() {
         AtomicInteger killedRestores = new AtomicInteger();
-        assertThat(verifier().checkSemanticMutants(sandbox(reports(List.of("globalChoice"), List.of("globalChoice"))), "session", javaExercise(), Map.of(PATH, ORIGINAL),
-                SeededStructuralTests.EMPTY, List.of(MUTANT), killedRestores::incrementAndGet)).singleElement().extracting(SemanticMutantOutcome::disposition)
-                .isEqualTo(Disposition.KILLED_BY_GRADED_SUITE);
-        assertThat(killedRestores).hasValue(2);
+        assertThat(verifier().checkSemanticMutants(sandbox(reports(List.of("globalChoice"), List.of()), reports(List.of("globalChoice"), List.of("globalChoice"))), "session",
+                javaExercise(), Map.of(PATH, ORIGINAL), SeededStructuralTests.EMPTY, List.of(MUTANT), killedRestores::incrementAndGet)).singleElement()
+                .extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.KILLED_BY_GRADED_SUITE);
+        assertThat(killedRestores).hasValue(4);
 
         AtomicInteger compileFailureRestores = new AtomicInteger();
         assertThat(verifier().checkSemanticMutants(sandbox(reports(List.of(), List.of())), "session", javaExercise(), Map.of(PATH, ORIGINAL), SeededStructuralTests.EMPTY,
@@ -140,9 +162,21 @@ class SemanticMutantExecutionTest {
 
     @Test
     void anAdaptedOrRenamedFailingTestKillsTheProvenMutant() {
-        assertThat(verifier().checkSemanticMutants(sandbox(reports(List.of("strongerRenamedTest"), List.of("strongerRenamedTest"))), "session", javaExercise(),
+        assertThat(verifier().checkSemanticMutants(
+                sandbox(reports(List.of("strongerRenamedTest"), List.of()), reports(List.of("strongerRenamedTest"), List.of("strongerRenamedTest"))), "session", javaExercise(),
                 Map.of(PATH, ORIGINAL), SeededStructuralTests.EMPTY, List.of(MUTANT), () -> {
                 })).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.KILLED_BY_GRADED_SUITE);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { true, false })
+    void aMissingBaselineTestMakesTheMutantRecheckInconclusive(boolean remainingTestFails) {
+        List<SemanticMutantOutcome> outcomes = SemanticMutantExecution.recheck(Map.of(PATH, ORIGINAL), List.of(MUTANT),
+                (mutant, _) -> mutant == null ? new BuildSummary(2, 0, 0, false, List.of("first", "second"), List.of(), List.of(), "")
+                        : new BuildSummary(1, remainingTestFails ? 1 : 0, remainingTestFails ? 1 : 0, false, List.of("first"), remainingTestFails ? List.of("first") : List.of(),
+                                List.of(), ""));
+
+        assertThat(outcomes).singleElement().extracting(SemanticMutantOutcome::disposition).isEqualTo(Disposition.INCONCLUSIVE);
     }
 
     @Test
@@ -237,7 +271,9 @@ class SemanticMutantExecutionTest {
                 if (overlay.containsKey("tests/test/example/HyperionContractWitnessProbeTest.java")) {
                     assertThat(overlay).containsKey("tests/SecurityPolicy.yaml");
                     assertThat(overlay.get("tests/SecurityPolicy.yaml")).contains("    - \"example.HyperionContractWitnessProbeTest\"");
-                    assertThat(AresSecurityPolicy.onlyTestClassesChanged(TESTS.get("SecurityPolicy.yaml"), overlay.get("tests/SecurityPolicy.yaml"))).isTrue();
+                    // Everything but the test-class list stays as seeded.
+                    assertThat(AresSecurityPolicy.derive(overlay.get("tests/SecurityPolicy.yaml"), Map.of(), Map.of(), null))
+                            .isEqualTo(AresSecurityPolicy.derive(TESTS.get("SecurityPolicy.yaml"), Map.of(), Map.of(), null));
                 }
             }
             return null;

@@ -1,39 +1,33 @@
-<div class="form-group">
-    <select
-        [attr.aria-label]="'accessibility.theiaImage' | artemisTranslate"
+<div class="mb-4">
+    <tumaet-ui-select
+        [ariaLabel]="'accessibility.theiaImage' | artemisTranslate"
         #select="ngModel"
         required
-        class="form-select"
+        class="w-full"
+        [options]="theiaImageOptions()"
+        optionLabel="label"
+        optionValue="value"
+        [emptyMessage]="'artemisApp.programmingExercise.theiaImage.noImageAvailable' | artemisTranslate"
+        [placeholder]="theiaImageOptions().length ? undefined : ('artemisApp.programmingExercise.theiaImage.noImageAvailable' | artemisTranslate)"
         [ngModel]="programmingExercise().buildConfig?.theiaImage"
         (ngModelChange)="onTheiaImageChange($event)"
         name="theiaImage"
-        id="field_theiaImage"
-    >
-        @for (item of theiaImages() | keyvalue; track item) {
-            <option [value]="item.value">
-                {{ item.key }}
-            </option>
-        } @empty {
-            <option [value]="undefined" disabled>
-                <div jhiTranslate="artemisApp.programmingExercise.theiaImage.noImageAvailable"></div>
-            </option>
-        }
-    </select>
+        inputId="field_theiaImage"
+    />
 </div>
-<div class="form-group">
-    <label class="label-narrow" for="field_onlineIdeExperienceLevel" jhiTranslate="artemisApp.programmingExercise.onlineIdeExperienceLevel.title"></label>
+<div class="mb-4">
+    <label class="inline-block mb-[0.1rem]" for="field_onlineIdeExperienceLevel" jhiTranslate="artemisApp.programmingExercise.onlineIdeExperienceLevel.title"></label>
     <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.onlineIdeExperienceLevel.description" />
-    <select
-        class="form-select"
+    <tumaet-ui-select
+        class="w-full"
+        [options]="experienceLevelOptions()"
+        [placeholder]="experienceLevelOptions()[0].label"
+        optionLabel="label"
+        optionValue="value"
         [ngModel]="programmingExercise().buildConfig?.onlineIdeExperienceLevel"
         (ngModelChange)="onExperienceLevelChange($event)"
         name="onlineIdeExperienceLevel"
-        id="field_onlineIdeExperienceLevel"
+        inputId="field_onlineIdeExperienceLevel"
         data-testid="online-ide-experience-level"
-    >
-        <option [ngValue]="undefined" jhiTranslate="artemisApp.programmingExercise.onlineIdeExperienceLevel.notSet"></option>
-        @for (level of experienceLevels; track level) {
-            <option [ngValue]="level" [jhiTranslate]="'artemisApp.programmingExercise.onlineIdeExperienceLevel.levels.' + level"></option>
-        }
-    </select>
+    />
 </div>

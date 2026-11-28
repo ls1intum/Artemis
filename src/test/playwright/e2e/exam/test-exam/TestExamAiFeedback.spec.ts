@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import { test } from '../../../support/fixtures';
 import { admin, studentOne, studentTwo } from '../../../support/users';
 import { SEED_COURSES } from '../../../support/seedData';
-import { ExerciseType } from '../../../support/constants';
+import { ExamMode, ExerciseType } from '../../../support/constants';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 
 const course = { id: SEED_COURSES.testExam.id } as any;
@@ -33,7 +33,7 @@ test.describe('Test exam AI feedback requests', { tag: '@slow' }, () => {
         await login(admin);
         exam = await examAPIRequests.createExam({
             course,
-            testExam: true,
+            examMode: ExamMode.TEST,
             startDate: dayjs().subtract(1, 'day'),
             visibleDate: dayjs().subtract(2, 'days'),
             examMaxPoints: 10,

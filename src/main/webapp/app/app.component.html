@@ -1,11 +1,5 @@
 <jhi-alert-overlay />
-<div
-    id="page-wrapper"
-    class="page-wrapper"
-    [ngClass]="{ 'no-padding': isShownViaLti() }"
-    [style.overflow-y]="!isTestRunExam() && isExamStarted() ? 'hidden' : 'auto'"
-    cdkScrollable
->
+<div id="page-wrapper" class="page-wrapper" [ngClass]="{ 'p-0!': isShownViaLti() }" [style.overflow-y]="!isTestRunExam() && isExamStarted() ? 'hidden' : 'auto'" cdkScrollable>
     @if (showPageRibbon()) {
         <jhi-page-ribbon />
     }
@@ -16,7 +10,7 @@
     }
     @if (showSkeleton()) {
         <div>
-            <div [ngClass]="{ 'module-bg page-content-card p-3 rounded rounded-3': usesModuleBackground() }">
+            <div [ngClass]="{ 'bg-(--module-bg) page-content-card p-4! rounded-sm': usesModuleBackground() }">
                 <router-outlet />
             </div>
         </div>
@@ -32,7 +26,9 @@
         }
     }
     <!-- Global Search Modal -->
-    @if (globalSearchEnabled() && showSkeleton() && !isShownViaLti() && (!isExamStarted() || isTestRunExam())) {
-        <jhi-global-search-modal />
+    @if (globalSearchEnabled() && isAuthenticated() && showSkeleton() && !isShownViaLti() && (!isExamStarted() || isTestRunExam())) {
+        @defer {
+            <jhi-global-search-modal />
+        }
     }
 </div>

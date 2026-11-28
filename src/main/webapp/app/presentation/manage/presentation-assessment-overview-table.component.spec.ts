@@ -1,15 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { DialogService } from 'primeng/dynamicdialog';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { User } from 'app/account/user/user.model';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { PresentationAssessmentOverviewTableComponent } from 'app/presentation/manage/presentation-assessment-overview-table.component';
 import { PresentationStudentTableRow } from 'app/presentation/manage/presentation-assessment-management.helper';
-import { PresentationAssessment, PresentationAssessmentMode } from 'app/presentation/shared/entities/presentation-assessment.model';
+import { PresentationAssessment, PresentationAssessmentMode, PresentationGradingMethod } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { provideArtemisTumAetUiTranslator } from 'app/shared-ui/tum-aet-ui-integration/artemis-tumaet-ui-translator';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('PresentationAssessmentOverviewTableComponent', () => {
@@ -49,7 +47,7 @@ describe('PresentationAssessmentOverviewTableComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [PresentationAssessmentOverviewTableComponent],
-            providers: [provideArtemisTumAetUiTranslator(), { provide: TranslateService, useClass: MockTranslateService }, { provide: DialogService, useClass: MockDialogService }],
+            providers: [provideArtemisTumAetUiTranslator(), { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PresentationAssessmentOverviewTableComponent);
@@ -70,6 +68,20 @@ describe('PresentationAssessmentOverviewTableComponent', () => {
         const [standalone, linked] = bodyRows();
         expect(standalone.textContent).toContain('12 / 20');
         expect(linked.textContent).toContain('7 / 10');
+    });
+
+    it('should show the result as the grading method of the row presentation expresses it', () => {
+        const passFailPresentation = { ...standalonePresentation, gradingMethod: PresentationGradingMethod.PASS_FAIL, maxPoints: undefined };
+        render([createRow({ presentationAssessment: passFailPresentation, instance: { id: 10, passed: true } })]);
+
+        expect(query('[data-testid="instance-result"]')?.textContent).toContain('artemisApp.presentationAssessment.result.passed');
+    });
+
+    it('should not sort by the result, which cannot be compared across grading methods', () => {
+        render([createRow()]);
+
+        expect(query('th[tumAetUiSortableColumn="resultPoints"]')).toBeNull();
+        expect(element().querySelectorAll('th[tumAetUiSortableColumn]')).toHaveLength(3);
     });
 
     it('should tag rows by whether the presentation is linked to an exercise', () => {

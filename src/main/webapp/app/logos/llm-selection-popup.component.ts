@@ -1,6 +1,8 @@
+import { AiModeSelectorComponent } from './ai-mode-selector.component';
 import { Component, OnDestroy, OnInit, inject, output, signal } from '@angular/core';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -10,12 +12,11 @@ import { LLMModalResult, LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/a
 @Component({
     selector: 'jhi-llm-selection-modal',
     templateUrl: './llm-selection-popup.component.html',
-    styleUrls: ['./llm-selection-popup.component.scss'],
-    imports: [TranslateDirective],
+    styleUrls: ['./llm-selection-popup.component.css'],
+    imports: [TranslateDirective, AiModeSelectorComponent, TumAetUiDialogComponent, ArtemisTranslatePipe],
 })
 export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     private modalService = inject(LLMSelectionModalService);
-    protected themeService = inject(ThemeService);
     private profileService = inject(ProfileService);
     private router = inject(Router);
 
@@ -53,6 +54,20 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
         this.close();
     }
 
+    selectMode(choice: LLMSelectionDecision): void {
+        switch (choice) {
+            case LLMSelectionDecision.CLOUD_AI:
+                this.selectCloud();
+                break;
+            case LLMSelectionDecision.LOCAL_AI:
+                this.selectLocal();
+                break;
+            case LLMSelectionDecision.NO_AI:
+                this.selectNone();
+                break;
+        }
+    }
+
     selectCloud(): void {
         this.choice.emit(LLMSelectionDecision.CLOUD_AI);
         this.modalService.emitChoice(LLMSelectionDecision.CLOUD_AI);
@@ -71,8 +86,9 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
         this.close();
     }
 
-    onBackdropClick(event: MouseEvent): void {
-        if (event.target === event.currentTarget) {
+    /** Escape and a click on the backdrop close the dialog itself; the popup answers that as a dismissal. */
+    onVisibleChange(visible: boolean): void {
+        if (!visible && this.isVisible()) {
             this.dismiss();
         }
     }
@@ -84,6 +100,5 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
         this.close();
     }
 
-    protected readonly Theme = Theme;
     protected readonly LLMSelectionDecision = LLMSelectionDecision;
 }

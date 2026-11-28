@@ -16,7 +16,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-short-answer-question-statistic',
     templateUrl: './short-answer-question-statistic.component.html',
     providers: [QuizStatisticUtil, ShortAnswerQuestionUtil],
-    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', './short-answer-question-statistic.component.scss'],
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.css', './short-answer-question-statistic.component.css'],
     imports: [QuestionStatisticsChartComponent, TranslateDirective, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
 export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent {

@@ -4,7 +4,7 @@ import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { Subject } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
@@ -540,6 +540,17 @@ describe('ExerciseMetadataSyncService', () => {
         // dayjs('invalid') produces an actually invalid dayjs; dayjs(undefined) returns the current date (valid)
         expect(metadataValuesEqual(dayjs('invalid'), dayjs('invalid'))).toBe(true);
         expect(metadataValuesEqual(dayjs('invalid'), undefined)).toBe(true);
+    });
+
+    it('compares build configs with a build time window by their dates', () => {
+        const buildConfigWith = (start: string, end: string) => {
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.buildConfig!.advancedSettings = { buildTimeWindow: { start: dayjs(start), end: dayjs(end) } };
+            return exercise.buildConfig;
+        };
+
+        expect(metadataValuesEqual(buildConfigWith('2026-10-01T10:00:00Z', '2026-10-01T12:00:00Z'), buildConfigWith('2026-10-01T10:00:00Z', '2026-10-01T12:00:00Z'))).toBe(true);
+        expect(metadataValuesEqual(buildConfigWith('2026-10-01T10:00:00Z', '2026-10-01T12:00:00Z'), buildConfigWith('2026-10-01T10:00:00Z', '2026-10-01T13:00:00Z'))).toBe(false);
     });
 
     it('compares grading criteria arrays in order-independent fashion', () => {

@@ -8,13 +8,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { vi } from 'vitest';
 
 describe('GitDiffReportModalComponent', () => {
     let comp: GitDiffReportModalComponent;
     let fixture: ComponentFixture<GitDiffReportModalComponent>;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
 
     beforeEach(() => {
         const mockDialogRef = {
@@ -24,8 +24,8 @@ describe('GitDiffReportModalComponent', () => {
         TestBed.configureTestingModule({
             imports: [MockComponent(GitDiffReportComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
-                { provide: DynamicDialogRef, useValue: mockDialogRef },
-                { provide: DynamicDialogConfig, useValue: { data: {} } },
+                { provide: TumAetUiDialogRef, useValue: mockDialogRef },
+                { provide: TumAetUiDialogConfig, useValue: { data: {} } },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
@@ -33,7 +33,7 @@ describe('GitDiffReportModalComponent', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(GitDiffReportModalComponent);
         comp = fixture.componentInstance;
-        dialogRef = TestBed.inject(DynamicDialogRef);
+        dialogRef = TestBed.inject(TumAetUiDialogRef);
     });
 
     afterEach(() => {

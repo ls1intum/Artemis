@@ -17,8 +17,9 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPoli
  * The entity hierarchy is polymorphic via Jackson's {@code @JsonTypeInfo(property = "type")} with the subtype ids
  * {@code lock_repository} and {@code submission_penalty}. Records get no such discriminator for free, so {@code type}
  * is an explicit component carrying exactly those two literals — the client compares them literally
- * ({@code submission-policy.model.ts}) and the update form rebuilds its request body from
- * {@code (id, active, submissionLimit, exceedingPenalty, type)}.
+ * ({@code submission-policy.model.ts}) and the policy form of the grading page rebuilds its request body from
+ * {@code (id, active, submissionLimit, exceedingPenalty, type)}. The exercise update does not apply a policy sent with it, see {@code ProgrammingExerciseUpdateResource};
+ * only the submission-policy endpoints change a policy.
  * <p>
  * The annotation is {@code NON_EMPTY} even though this record also serves as a request body: {@code exceedingPenalty}
  * exists only on {@link SubmissionPenaltyPolicy}, so under {@code ALWAYS} a lock policy would emit an
@@ -72,7 +73,7 @@ public record SubmissionPolicyDTO(@Nullable Long id, String type, Integer submis
 
     /**
      * Returns the same policy without the row id, for payloads that are written to a file and read back by another
-     * instance. {@link #toEntity()} carries the id through for the update path, so an exported id would make the
+     * instance. {@link #toEntity()} carries the id through when a policy is updated, so an exported id would make the
      * importing instance save onto the exported exercise's policy row.
      *
      * @return a copy of this DTO with a {@code null} id
@@ -84,7 +85,7 @@ public record SubmissionPolicyDTO(@Nullable Long id, String type, Integer submis
     /**
      * Builds the matching {@link SubmissionPolicy} subclass from this DTO. The id is copied through so that a policy
      * loaded from the database and sent back keeps its identity — an id-less transient policy would insert a second
-     * {@code submission_policy} row on the update path. The back-reference to the programming exercise is never set.
+     * {@code submission_policy} row when a policy is updated. The back-reference to the programming exercise is never set.
      *
      * @return the policy entity described by this DTO
      */

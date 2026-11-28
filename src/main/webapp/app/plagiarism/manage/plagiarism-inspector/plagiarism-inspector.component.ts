@@ -12,12 +12,17 @@ import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOpti
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronRight, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { Range } from 'app/foundation/util/utils';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DialogModule } from 'primeng/dialog';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { Subscription } from 'rxjs';
 import { PlagiarismResultDTO, PlagiarismResultStatsDTO } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
@@ -38,19 +43,21 @@ export type PlagiarismCheckState = {
 
 @Component({
     selector: 'jhi-plagiarism-inspector',
-    styleUrls: ['./plagiarism-inspector.component.scss'],
+    styleUrls: ['./plagiarism-inspector.component.css'],
     templateUrl: './plagiarism-inspector.component.html',
     imports: [
         FaIconComponent,
         TranslateDirective,
         FeatureToggleDirective,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
-        NgbDropdownButtonItem,
-        NgbDropdownItem,
-        NgbTooltip,
-        DialogModule,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiDialogComponent,
+        TumAetUiInputDirective,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiProgressSpinnerComponent,
+        TumAetUiTooltipDirective,
         FormsModule,
         PlagiarismSidebarComponent,
         PlagiarismDetailsComponent,
@@ -161,6 +168,7 @@ export class PlagiarismInspectorComponent implements OnInit, OnDestroy {
     faQuestionCircle = faQuestionCircle;
     faExclamationTriangle = faExclamationTriangle;
     faChevronRight = faChevronRight;
+    faChevronDown = faChevronDown;
     private plagiarismWebsocketSubscription?: Subscription;
 
     ngOnInit() {

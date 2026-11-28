@@ -1,33 +1,29 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseScoresExportButtonComponent } from 'app/exercise/exercise-scores/export-button/exercise-scores-export-button.component';
-import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
 import { ResultService } from 'app/exercise/result/result.service';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
+import type { ResultWithPointsPerGradingCriterion } from 'app/openapi/model/result-with-points-per-grading-criterion';
+import type { ParticipationForExport } from 'app/openapi/model/participation-for-export';
+import type { Feedback as FeedbackResponse } from 'app/openapi/model/feedback';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { Team } from 'app/exercise/shared/entities/team/team.model';
-import { User } from 'app/account/user/user.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 
 describe('ExerciseScoresExportButtonComponent', () => {
     let component: ExerciseScoresExportButtonComponent;
     let fixture: ComponentFixture<ExerciseScoresExportButtonComponent>;
     let resultService: ResultService;
+    let httpMock: HttpTestingController;
 
     const course1 = new Course();
     course1.id = 1;
@@ -57,39 +53,17 @@ describe('ExerciseScoresExportButtonComponent', () => {
     exercise2.shortName = undefined;
     exercise2.maxPoints = 200;
 
-    const participation1 = setupParticipation('studentA', 'Student A', true);
-    const participation2 = setupParticipation('studentB', 'Student B', true);
+    const resultWithPoints1: ResultWithPointsPerGradingCriterion = {
+        result: { id: 1, score: 1, submission: { id: 1, participation: setupParticipation('studentA', 'Student A', true) } },
+        totalPoints: 2,
+        pointsPerCriterion: { '1': 2.0, '3': 10.0 },
+    };
 
-    const result1 = new Result();
-    result1.id = 1;
-    result1.score = 1;
-    const submission1 = new TextSubmission();
-    submission1.results = [result1];
-    result1.submission = submission1;
-    submission1.participation = participation1;
-    participation1.submissions = [submission1];
-
-    const resultWithPoints1 = new ResultWithPointsPerGradingCriterion();
-    resultWithPoints1.result = result1;
-    resultWithPoints1.totalPoints = 2;
-    resultWithPoints1.pointsPerCriterion = new Map([
-        [1, 2.0],
-        [3, 10.0],
-    ]);
-
-    const result2 = new Result();
-    result2.id = 2;
-    result2.score = 2;
-    const submission2 = new TextSubmission();
-    submission2.results = [result2];
-    result2.submission = submission2;
-    submission2.participation = participation2;
-    participation2.submissions = [submission2];
-
-    const resultWithPoints2 = new ResultWithPointsPerGradingCriterion();
-    resultWithPoints2.result = result2;
-    resultWithPoints2.totalPoints = 4;
-    resultWithPoints2.pointsPerCriterion = new Map();
+    const resultWithPoints2: ResultWithPointsPerGradingCriterion = {
+        result: { id: 2, score: 2, submission: { id: 2, participation: setupParticipation('studentB', 'Student B', true) } },
+        totalPoints: 4,
+        pointsPerCriterion: {},
+    };
 
     const expectedColumnsWithCriteria = ['Name', 'Username', 'Score', 'Points', 'Criterion 1', 'Unnamed Criterion 1', 'Unnamed Criterion 2', 'Repo Link'];
     const expectedRowsWithCriteria = [
@@ -163,30 +137,66 @@ describe('ExerciseScoresExportButtonComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ExerciseScoresExportButtonComponent],
-            providers: [MockProvider(AlertService), { provide: ResultService, useClass: MockResultService }, { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                MockProvider(AlertService),
+                { provide: ResultService, useClass: MockResultService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ExerciseScoresExportButtonComponent);
         component = fixture.componentInstance;
         resultService = TestBed.inject(ResultService);
+        httpMock = TestBed.inject(HttpTestingController);
     });
 
-    beforeEach(() => {
+    afterEach(() => {
+        httpMock.verify();
         vi.restoreAllMocks();
+    });
+
+    const flushResults = (exerciseId: number, body: ResultWithPointsPerGradingCriterion[]) => {
+        const request = httpMock.expectOne({ method: 'GET', url: `/api/assessment/exercises/${exerciseId}/results-with-points-per-criterion?withSubmissions=false` });
+        request.flush(body);
+        return request;
+    };
+
+    it.each([
+        [0, false, false],
+        [1, true, false],
+        [2, true, true],
+    ] as const)('selects result export option %s from the nested dropdown', async (index, withTestCases, withFeedback) => {
+        fixture.componentRef.setInput('exercise', exercise1);
+        fixture.componentRef.setInput('inDropdown', true);
+        const exportResults = vi.spyOn(component, 'exportResults').mockImplementation(() => {});
+        fixture.detectChanges();
+        const trigger: HTMLButtonElement = fixture.nativeElement.querySelector('#export-results-dropdown');
+        trigger.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const options = document.querySelectorAll<HTMLButtonElement>('[role="menuitem"]');
+        expect(options).toHaveLength(3);
+        expect(trigger.getAttribute('aria-expanded')).toBe('true');
+        options[index].click();
+        fixture.detectChanges();
+        expect(exportResults).toHaveBeenCalledExactlyOnceWith(withTestCases, withFeedback);
+        expect(document.querySelector('[role="menu"]')).toBeNull();
     });
 
     it('should not start the export if the exercise has no results', () => {
         // GIVEN
         const exportCSVStub = vi.spyOn(resultService, 'triggerDownloadCSV');
-        const getResultsStub = vi.spyOn(resultService, 'getResultsWithPointsPerGradingCriterion').mockReturnValue(of(new HttpResponse({ body: [] })));
         fixture.componentRef.setInput('exercise', exercise1);
 
         // WHEN
         component.exportResults(false, false);
+        flushResults(1, []);
         fixture.changeDetectorRef.detectChanges();
 
         // THEN
-        expect(getResultsStub).toHaveBeenCalledOnce();
         expect(exportCSVStub).not.toHaveBeenCalled();
     });
 
@@ -200,27 +210,17 @@ describe('ExerciseScoresExportButtonComponent', () => {
         exerciseTeam.shortName = 'ex1';
         exerciseTeam.maxPoints = 200;
 
-        const team = new Team();
-        team.name = 'Testteam 01';
-        team.shortName = 'tt01';
-        team.students = createStudentsForTeam(4);
-
-        const teamParticipation = setupParticipation(team.shortName, team.name, false);
-        teamParticipation.team = team;
-
-        const teamResult = new Result();
-        teamResult.id = 3;
-        teamResult.score = 50;
-        const teamSubmission = new TextSubmission();
-        teamSubmission.results = [teamResult];
-        teamResult.submission = teamSubmission;
-        teamSubmission.participation = teamParticipation;
-        teamParticipation.submissions = [teamSubmission];
-
-        const teamResultWithPoints = new ResultWithPointsPerGradingCriterion();
-        teamResultWithPoints.result = teamResult;
-        teamResultWithPoints.totalPoints = 100;
-        teamResultWithPoints.pointsPerCriterion = new Map();
+        const teamParticipation: ParticipationForExport = {
+            id: 7,
+            participantName: 'Testteam 01',
+            participantIdentifier: 'tt01',
+            team: { id: 1, name: 'Testteam 01', shortName: 'tt01', students: createStudentsForTeam(4) },
+        };
+        const teamResultWithPoints: ResultWithPointsPerGradingCriterion = {
+            result: { id: 3, score: 50, submission: { id: 3, participation: teamParticipation } },
+            totalPoints: 100,
+            pointsPerCriterion: {},
+        };
 
         const expectedTeamColumns = ['Team Name', 'Team Short Name', 'Score', 'Points', 'Students'];
         const expectedRow = {
@@ -238,33 +238,29 @@ describe('ExerciseScoresExportButtonComponent', () => {
         // GIVEN
         // @ts-ignore (stubbing a private method)
         const exportAsCsvStub = vi.spyOn(ExerciseScoresExportButtonComponent, 'exportAsCsv').mockImplementation();
-        const getResultsStub = vi
-            .spyOn(resultService, 'getResultsWithPointsPerGradingCriterion')
-            .mockReturnValue(of(new HttpResponse({ body: [resultWithPoints1, resultWithPoints2] })));
         fixture.componentRef.setInput('exercises', [exercise1, exercise2]);
 
         // WHEN
         component.exportResults(false, false);
+        flushResults(1, [resultWithPoints1, resultWithPoints2]);
+        flushResults(2, [resultWithPoints1, resultWithPoints2]);
         fixture.changeDetectorRef.detectChanges();
 
         // THEN
-        expect(getResultsStub).toHaveBeenCalledTimes(2);
         expect(exportAsCsvStub).toHaveBeenCalledTimes(2);
         expect(exportAsCsvStub).toHaveBeenNthCalledWith(1, 'ex1-results-scores', expectedColumnsWithCriteria, expectedRowsWithCriteria);
         expect(exportAsCsvStub).toHaveBeenNthCalledWith(2, 'Exercise_title_with_spaces-results-scores', expectedColumnsNoCriteria, expectedRowsNoCriteria);
     });
 
     it('should export results with test cases', () => {
-        const resultWithPointsAndTestCases = Object.assign({}, resultWithPoints2);
+        const resultWithPointsAndTestCases = withFeedbacks(resultWithPoints2);
 
-        resultWithPointsAndTestCases.result.feedbacks = createFeedbacks();
         testCsvExport(exercise2, [resultWithPointsAndTestCases], 'Exercise_title_with_spaces-results-scores', expectedColumnsWithTestCases, expectedRowsWithTestCases, true);
     });
 
     it('should export results with test cases and feedback', () => {
-        const resultWithPointsAndTestCases = Object.assign({}, resultWithPoints2);
+        const resultWithPointsAndTestCases = withFeedbacks(resultWithPoints2);
 
-        resultWithPointsAndTestCases.result.feedbacks = createFeedbacks();
         testCsvExport(
             exercise2,
             [resultWithPointsAndTestCases],
@@ -288,15 +284,14 @@ describe('ExerciseScoresExportButtonComponent', () => {
         // GIVEN
         // @ts-ignore (stubbing a private method)
         const exportAsCsvStub = vi.spyOn(ExerciseScoresExportButtonComponent, 'exportAsCsv').mockImplementation();
-        const getResultsStub = vi.spyOn(resultService, 'getResultsWithPointsPerGradingCriterion').mockReturnValue(of(new HttpResponse({ body: results })));
         fixture.componentRef.setInput('exercise', exercise);
 
         // WHEN
         component.exportResults(withTestCases, withFeedback);
+        flushResults(exercise.id!, results);
         fixture.changeDetectorRef.detectChanges();
 
         // THEN
-        expect(getResultsStub).toHaveBeenCalledOnce();
         expect(exportAsCsvStub).toHaveBeenCalledOnce();
         if (withFeedback) {
             expect(exportAsCsvStub).toHaveBeenCalledWith(expectedCsvFilename, expectedCsvColumns, expectedCsvRows, ',');
@@ -305,60 +300,29 @@ describe('ExerciseScoresExportButtonComponent', () => {
         }
     }
 
-    function setupParticipation(studentLogin: string, studentName: string, isProgramming: boolean): StudentParticipation {
-        const participation = new StudentParticipation();
-        const submission = new TextSubmission();
-        submission.results = [];
-        submission.participation = participation;
-        participation.submissions = [submission];
-        participation.participantIdentifier = studentLogin;
-        participation.participantName = studentName;
-        if (isProgramming) {
-            (participation as ProgrammingExerciseStudentParticipation).repositoryUri = `https://www.artemis.local/${studentLogin}`;
-        }
-
-        return participation;
+    function setupParticipation(studentLogin: string, studentName: string, isProgramming: boolean): ParticipationForExport {
+        return {
+            participantIdentifier: studentLogin,
+            participantName: studentName,
+            repositoryUri: isProgramming ? `https://www.artemis.local/${studentLogin}` : undefined,
+        };
     }
 
-    function createStudentsForTeam(count: number): User[] {
-        const users: User[] = [];
-        for (let i = 1; i <= count; ++i) {
-            const user = new User();
-            user.name = `Student ${i}`;
-            user.login = `student${i}`;
-            users.push(user);
-        }
-        return users;
+    function createStudentsForTeam(count: number) {
+        return Array.from({ length: count }, (_, index) => ({ id: index + 1, login: `student${index + 1}`, name: `Student ${index + 1}` }));
     }
 
-    function createFeedbacks(): Feedback[] {
-        const feedbacks: Feedback[] = [];
+    function withFeedbacks(resultWithPoints: ResultWithPointsPerGradingCriterion): ResultWithPointsPerGradingCriterion {
+        return { ...resultWithPoints, result: { ...resultWithPoints.result, feedbacks: createFeedbacks() } };
+    }
 
-        const feedback1 = new Feedback();
-        feedback1.testCase = { testName: 'TestName1' };
-        feedback1.positive = true;
-        feedback1.type = FeedbackType.AUTOMATIC;
-
-        const feedback2 = new Feedback();
-        feedback2.testCase = { testName: 'TestName2' };
-        feedback2.positive = false;
-        feedback2.detailText = 'Detailed text with \nnewlines and \nsymbols ;.\'~"';
-        feedback2.type = FeedbackType.AUTOMATIC;
-
-        const feedback3 = new Feedback();
-        feedback3.testCase = {}; // no test case name -> fallback "Test 3"
-        feedback3.positive = false;
-        feedback3.type = FeedbackType.AUTOMATIC;
-        // no detail text -> generic 'Failed' fallback
-
-        const feedback4 = new Feedback();
-        feedback4.text = 'File src/test/exercise/Main.java at line 123';
-        feedback4.positive = false;
-        feedback4.detailText = 'This is a manual feedback';
-        feedback4.type = FeedbackType.MANUAL;
-
-        feedbacks.push(feedback1, feedback2, feedback3, feedback4);
-
-        return feedbacks;
+    function createFeedbacks(): FeedbackResponse[] {
+        return [
+            { testCase: { testName: 'TestName1' }, positive: true, type: 'AUTOMATIC' },
+            { testCase: { testName: 'TestName2' }, positive: false, detailText: 'Detailed text with \nnewlines and \nsymbols ;.\'~"', type: 'AUTOMATIC' },
+            // no test case name -> fallback "Test 3", no detail text -> generic 'Failed' fallback
+            { testCase: {}, positive: false, type: 'AUTOMATIC' },
+            { text: 'File src/test/exercise/Main.java at line 123', positive: false, detailText: 'This is a manual feedback', type: 'MANUAL' },
+        ];
     }
 });

@@ -1,9 +1,9 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
-import { MockModule, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -14,7 +14,7 @@ describe('CompetencyRings', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockModule(NgbTooltipModule), CompetencyRingsComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [MockDirective(TumAetUiTooltipDirective), CompetencyRingsComponent, MockPipe(ArtemisTranslatePipe)],
             declarations: [],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();

@@ -15,7 +15,6 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
     selector: 'jhi-tutorial-edit-container',
     imports: [TutorialCreateOrEditComponent, LoadingIndicatorOverlayComponent],
     templateUrl: './tutorial-edit-container.component.html',
-    styleUrl: './tutorial-edit-container.component.scss',
 })
 export class TutorialEditContainerComponent {
     private destroyRef = inject(DestroyRef);

@@ -9,7 +9,7 @@ import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/featur
 import { ExerciseImportDialogData } from 'app/exercise/import/exercise-import.component';
 import { importFromFileNavigation } from 'app/exercise/import/import-from-file-navigation';
 import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
-import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 
 @Component({
     selector: 'jhi-exercise-import-button',

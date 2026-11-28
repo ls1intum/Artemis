@@ -1,7 +1,7 @@
 import { TranslateService } from '@ngx-translate/core';
 import { Service, inject, signal } from '@angular/core';
 import { Subscription, firstValueFrom } from 'rxjs';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import dayjs from 'dayjs/esm';
 import isEqual from 'lodash-es/isEqual';
 

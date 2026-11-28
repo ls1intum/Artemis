@@ -19,14 +19,14 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { onTextEditorTab } from 'app/foundation/util/text.utils';
 
 @Component({
     selector: 'jhi-text-editor-exam',
     templateUrl: './text-exam-submission.component.html',
     providers: [{ provide: ExamSubmissionComponent, useExisting: TextExamSubmissionComponent }],
-    styleUrls: ['./text-exam-submission.component.scss'],
+    styleUrls: ['./text-exam-submission.component.css'],
     imports: [
         TranslateDirective,
         ExamExerciseHeaderComponent,

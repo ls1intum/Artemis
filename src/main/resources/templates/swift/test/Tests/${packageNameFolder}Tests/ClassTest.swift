@@ -1,44 +1,24 @@
-import XCTest
+import Testing
 
-class ClassTest: XCTestCase {
+@Suite struct ClassTest {
 
-    static var allTests = [
-        ("testClassContext", testClassContext),
-        ("testClassPolicy", testClassPolicy),
-        ("testClassSortStrategy", testClassSortStrategy),
-    ]
-
-    /// This is the setUp() instance method. It is called before each test method begins.
-    override func setUp() {
-        super.setUp()
-        continueAfterFailure = false
+    @Test func testClassContext() {
+        checkClassExists("Context")
     }
 
-    func testClassContext() {
-        print("-> Testcase: testClassContext")
-        let className = "Context"
-        if classFromString(className) == nil {
-            XCTFailClassNotFoundFor(className)
+    @Test func testClassPolicy() {
+        checkClassExists("Policy")
+    }
+
+    @Test func testClassSortStrategy() {
+        checkClassExists("SortStrategy")
+    }
+
+    /// Test that the file of the class exists and declares a type with the name of the class
+    private func checkClassExists(_ className: String) {
+        guard getSourceFileStructure(for: className)?.types[className] != nil else {
+            Issue.record("\(className).swift is not implemented!")
+            return
         }
-    }
-
-    func testClassPolicy() {
-        print("-> Testcase: testClassPolicy")
-        let className = "Policy"
-        if classFromString(className) == nil {
-            XCTFailClassNotFoundFor(className)
-        }
-    }
-
-    func testClassSortStrategy() {
-        print("-> Testcase: testClassSortStrategy")
-        let className = "SortStrategy"
-        if getClassSourceFileFor(className) == nil {
-            XCTFailClassNotFoundFor(className)
-        }
-    }
-
-    func XCTFailClassNotFoundFor(_ className: String) {
-        XCTFail("\(className).swift is not implemented!")
     }
 }

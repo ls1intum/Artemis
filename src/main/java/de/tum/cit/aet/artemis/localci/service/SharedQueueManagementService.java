@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryAddedEvent;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryListener;
@@ -57,6 +58,13 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 public class SharedQueueManagementService {
 
     private static final Logger log = LoggerFactory.getLogger(SharedQueueManagementService.class);
+
+    /**
+     * The properties of a build job the finished build jobs can be sorted by.
+     */
+    private static final Set<String> SORTABLE_FINISHED_BUILD_JOB_PROPERTIES = Set.of("id", "buildJobId", "name", "participationId", "exerciseId", "courseId", "buildAgentAddress",
+            "buildSubmissionDate", "buildStartDate", "buildCompletionDate", "repositoryType", "repositoryName", "commitHash", "retryCount", "priority", "triggeredByPushTo",
+            "buildStatus");
 
     private final BuildJobRepository buildJobRepository;
 
@@ -219,6 +227,35 @@ public class SharedQueueManagementService {
         }
     }
 
+    /**
+     * Cancel a build job of the given course by removing it from the queue or stopping the build process.
+     * <p>
+     * The course is compared with the job that is actually cancelled, not with an earlier look at the queue: a job that is handed over from the queue to an agent is in neither
+     * of them for a moment, and a job of another course is never cancelled here.
+     *
+     * @param buildJobId id of the build job to cancel
+     * @param courseId   id of the course the job has to belong to
+     */
+    public void cancelBuildJobOfCourse(String buildJobId, long courseId) {
+        List<BuildJobQueueItem> toRemove = distributedDataAccessService.getQueuedJobs().stream().filter(job -> Objects.equals(job.id(), buildJobId) && job.courseId() == courseId)
+                .toList();
+        if (!toRemove.isEmpty()) {
+            distributedDataAccessService.getDistributedBuildJobQueue().removeAll(toRemove);
+            // A job that an agent took from the queue before its removal is in the processing jobs now. It is stopped below and finishes through the agent, so its status is
+            // not changed here.
+            List<BuildJobQueueItem> removed = toRemove.stream().filter(job -> distributedDataAccessService.getDistributedProcessingJobs().get(job.id()) == null).toList();
+            if (!removed.isEmpty()) {
+                updateCancelledQueuedBuildJobsStatus(removed);
+            }
+        }
+        // An agent may have taken the job from the queue between the look at the queue and its removal, so the processing jobs are checked after the removal as well.
+        // The id of a job always belongs to the same course, so the job that is removed here is the one that has been compared
+        BuildJobQueueItem processingJob = distributedDataAccessService.getDistributedProcessingJobs().get(buildJobId);
+        if (processingJob != null && processingJob.courseId() == courseId && distributedDataAccessService.getDistributedProcessingJobs().remove(buildJobId) != null) {
+            triggerBuildJobCancellation(buildJobId);
+        }
+    }
+
     private void updateCancelledQueuedBuildJobsStatus(List<BuildJobQueueItem> queuedJobs) {
         for (BuildJobQueueItem queuedJob : queuedJobs) {
             buildJobRepository.updateBuildJobStatus(queuedJob.id(), BuildStatus.CANCELLED);
@@ -366,7 +403,16 @@ public class SharedQueueManagementService {
         Duration buildDurationLower = search.buildDurationLower() == null ? null : Duration.ofSeconds(search.buildDurationLower());
         Duration buildDurationUpper = search.buildDurationUpper() == null ? null : Duration.ofSeconds(search.buildDurationUpper());
 
-        var sortOptions = Sort.by(search.pageable().getSortedColumn());
+        if (search.pageable() == null) {
+            throw new BadRequestAlertException("The paging and sorting parameters are missing", "BuildJob", "invalidSortedColumn");
+        }
+        String sortedColumn = search.pageable().getSortedColumn();
+        // The address of the build agent is only shown in the administration, so a course cannot sort by it
+        boolean allowed = sortedColumn != null && SORTABLE_FINISHED_BUILD_JOB_PROPERTIES.contains(sortedColumn) && !(courseId != null && "buildAgentAddress".equals(sortedColumn));
+        if (!allowed) {
+            throw new BadRequestAlertException("Finished build jobs cannot be sorted by this column", "BuildJob", "invalidSortedColumn");
+        }
+        var sortOptions = Sort.by(sortedColumn);
         sortOptions = search.pageable().getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
         var pageRequest = PageRequest.of(search.pageable().getPage() - 1, search.pageable().getPageSize(), sortOptions);
         long start = System.nanoTime();

@@ -3,7 +3,7 @@
         <div class="question-options question-card-header">
             <button
                 type="button"
-                class="btn question-collapse"
+                class="question-collapse text-(--body-color)"
                 (click)="isQuestionCollapsed = !isQuestionCollapsed"
                 [attr.aria-expanded]="!isQuestionCollapsed"
                 [attr.aria-controls]="'collapseQuestion' + questionIndex()"
@@ -13,7 +13,7 @@
             <div class="question-title">
                 <input
                     [attr.aria-label]="'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate"
-                    pInputText
+                    tumAetUiInput
                     data-testid="drag-and-drop-question-title"
                     [(ngModel)]="question().title"
                     (ngModelChange)="questionUpdated.emit()"
@@ -59,7 +59,7 @@
         <div class="question-card-header-reevaluation">
             <button
                 type="button"
-                class="btn question-collapse"
+                class="question-collapse text-(--body-color)"
                 (click)="isQuestionCollapsed = !isQuestionCollapsed"
                 [attr.aria-expanded]="!isQuestionCollapsed"
                 [attr.aria-controls]="'collapseQuestion' + questionIndex()"
@@ -68,23 +68,26 @@
             </button>
             <div class="question-reevaluation-title">
                 <input
-                    pInputText
+                    tumAetUiInput
                     [(ngModel)]="question().title"
                     (ngModelChange)="questionUpdated.emit()"
                     placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                     attr.aria-label="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
                 />
                 <button
-                    class="btn btn-outline-secondary"
+                    tumAetUiButton
+                    variant="outlined"
+                    severity="secondary"
                     type="button"
                     (click)="resetQuestionTitle()"
-                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestionTitle' | artemisTranslate"
+                    [tumAetUiTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestionTitle' | artemisTranslate"
+                    [attr.aria-label]="'artemisApp.quizExercise.re-evaluate.resetQuestionTitle' | artemisTranslate"
                 >
                     <fa-icon [icon]="faUndo" />
                 </button>
             </div>
             <div class="question-type">
-                <h3 class="mb-0"><span class="badge bg-warning align-text-top" style="width: 60px">DnD</span></h3>
+                <span class="question-type-badge question-type-badge--dnd">DnD</span>
             </div>
             <div
                 jhi-question-reevaluation-actions
@@ -95,48 +98,47 @@
             ></div>
         </div>
     }
-    <div class="question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex() }}">
+    <div class="question-card-body" [hidden]="isQuestionCollapsed" id="collapseQuestion{{ questionIndex() }}">
         @if (!reEvaluationInProgress()) {
             <div class="question-options">
-                <div class="form-group">
-                    <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
-                    <p-select [options]="scoringTypeOptions()" [(ngModel)]="question().scoringType" (ngModelChange)="questionUpdated.emit()" appendTo="body" />
+                <div class="flex items-center [&>*:not(input):not(button):not(select):not(textarea)]:mx-1">
+                    <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix shrink-0"></span>
+                    <tumaet-ui-select
+                        [options]="scoringTypeOptions()"
+                        optionLabel="label"
+                        optionValue="value"
+                        [ariaLabel]="'artemisApp.quizQuestion.scoringType' | artemisTranslate"
+                        [(ngModel)]="question().scoringType"
+                        (ngModelChange)="questionUpdated.emit()"
+                    />
                     <jhi-quiz-scoring-info-modal />
                 </div>
-                <div class="form-group">
-                    <div class="d-flex align-items-center gap-2">
-                        <p-checkbox
-                            inputId="{{ 'cbRandomizeOrderDnD' + questionIndex() }}"
-                            [(ngModel)]="question().randomizeOrder"
-                            [binary]="true"
-                            (onChange)="questionUpdated.emit()"
-                        />
+                <div class="flex items-center [&>*:not(input):not(button):not(select):not(textarea)]:mx-1">
+                    <div class="flex items-center gap-2">
+                        <tumaet-ui-checkbox inputId="{{ 'cbRandomizeOrderDnD' + questionIndex() }}" [(ngModel)]="question().randomizeOrder" (changed)="questionUpdated.emit()" />
                         <label for="{{ 'cbRandomizeOrderDnD' + questionIndex() }}" jhiTranslate="artemisApp.dragAndDropQuestion.randomizeOrder"></label>
                     </div>
                 </div>
             </div>
         }
         @if (reEvaluationInProgress()) {
-            <div class="question-options row align-items-center" style="width: 100%">
-                <div class="col-12 col-md-4">
-                    <div class="form-group">
-                        <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
-                        <select
-                            [attr.aria-label]="'artemisApp.quizQuestion.scoringType' | artemisTranslate"
-                            class="form-select"
+            <div class="question-options question-options--row m-0 w-full flex-wrap! items-center">
+                <div class="w-full px-3 md:w-1/3">
+                    <div class="mx-[5px] mb-[15px] flex items-center [&>*:not(input):not(button):not(select):not(textarea)]:mx-1">
+                        <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix shrink-0"></span>
+                        <tumaet-ui-select
+                            [options]="scoringTypeOptions()"
+                            optionLabel="label"
+                            optionValue="value"
+                            [ariaLabel]="'artemisApp.quizQuestion.scoringType' | artemisTranslate"
                             [(ngModel)]="question().scoringType"
                             (ngModelChange)="questionUpdated.emit()"
-                            title="scoring type"
-                        >
-                            <option value="ALL_OR_NOTHING" jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></option>
-                            <option value="PROPORTIONAL_WITH_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></option>
-                            <option value="PROPORTIONAL_WITHOUT_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></option>
-                        </select>
+                        />
                         <jhi-quiz-scoring-info-modal />
                     </div>
                 </div>
-                <div class="col-12 col-md-2">
-                    <div class="form-group">
+                <div class="w-full px-3 md:w-1/6">
+                    <div class="mx-[5px] mb-[15px] flex items-center [&>*:not(input):not(button):not(select):not(textarea)]:mx-1">
                         <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
                         <jhi-points-input
                             [ariaLabel]="'artemisApp.quizQuestion.score' | artemisTranslate"
@@ -147,34 +149,31 @@
                         />
                     </div>
                 </div>
-                <div class="col-12 col-md-3">
-                    <div class="form-group">
-                        <div class="form-check custom-control custom-checkbox">
-                            <input
-                                type="checkbox"
-                                id="{{ 'cbRandomizeOrderDnD' + questionIndex() }}"
-                                [(ngModel)]="question().randomizeOrder"
-                                class="form-check-input custom-control-input"
-                            />
-                            <label
-                                class="form-check-label custom-control-label"
-                                for="{{ 'cbRandomizeOrderDnD' + questionIndex() }}"
-                                jhiTranslate="artemisApp.dragAndDropQuestion.randomizeOrder"
-                            ></label>
+                <div class="w-full px-3 md:w-1/4">
+                    <div class="mx-[5px] mb-[15px] flex items-center [&>*:not(input):not(button):not(select):not(textarea)]:mx-1">
+                        <div class="flex items-center gap-2">
+                            <tumaet-ui-checkbox inputId="{{ 'cbRandomizeOrderDnD' + questionIndex() }}" [(ngModel)]="question().randomizeOrder" />
+                            <label for="{{ 'cbRandomizeOrderDnD' + questionIndex() }}" jhiTranslate="artemisApp.dragAndDropQuestion.randomizeOrder"></label>
                         </div>
                     </div>
                 </div>
-                <div class="col-12 col-md-3 d-flex align-items-center gap-2">
+                <div class="flex w-full items-center gap-2 px-3 md:w-1/4">
                     <button
                         type="button"
-                        class="btn btn-outline-secondary invalid-button w-auto ms-auto"
+                        tumAetUiButton
+                        variant="outlined"
+                        severity="secondary"
+                        class="invalid-button w-auto! ms-auto"
                         [hidden]="!!question().invalid"
                         (click)="question().invalid = true"
                         jhiTranslate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
                     ></button>
                     <button
                         type="button"
-                        class="btn btn-outline-secondary invalid-button w-auto ms-auto"
+                        tumAetUiButton
+                        variant="outlined"
+                        severity="secondary"
+                        class="invalid-button w-auto! ms-auto"
                         [hidden]="!question().invalid"
                         [disabled]="!!question().invalid"
                         jhiTranslate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
@@ -182,7 +181,7 @@
                     <div
                         id="delete-button"
                         [attr.aria-label]="'global.action.delete' | artemisTranslate"
-                        class="delete-button flex-shrink-0"
+                        class="delete-button shrink-0"
                         (click)="deleteQuestion()"
                         #keyboardAction180
                         role="button"
@@ -211,8 +210,8 @@
                 </div>
             } @else {
                 <div class="markupEditorArea">
-                    <div class="question-content row">
-                        <div class="col-10 col-lg-11">
+                    <div class="question-content flex flex-wrap!">
+                        <div class="w-5/6 lg:w-11/12">
                             <!-- TODO: Fix file upload    -->
                             <jhi-markdown-editor-monaco
                                 #markdownEditor
@@ -225,13 +224,16 @@
                                 class="h-auto"
                             />
                         </div>
-                        <div class="col-2 col-lg-1">
-                            <span class="input-group-btn" style="vertical-align: top">
+                        <div class="w-1/6 lg:w-1/12">
+                            <span class="align-top">
                                 <button
-                                    class="btn btn-outline-secondary"
+                                    tumAetUiButton
+                                    variant="outlined"
+                                    severity="secondary"
                                     type="button"
                                     (click)="resetQuestionText()"
-                                    [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestionText' | artemisTranslate"
+                                    [tumAetUiTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestionText' | artemisTranslate"
+                                    [attr.aria-label]="'artemisApp.quizExercise.re-evaluate.resetQuestionText' | artemisTranslate"
                                 >
                                     <fa-icon [icon]="faUndo" />
                                 </button>
@@ -244,23 +246,30 @@
         <hr />
         <!--    TODO: Fix the background change for reevaluation -->
         @if (!reEvaluationInProgress()) {
-            <div class="question-options row d-flex justify-content-start">
-                <div class="input-group col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
-                    <div class="input-group-prepend">
-                        <button type="button" class="btn btn-outline-secondary" data-testid="background-file-input-button" (click)="backgroundFileInput.click()">
+            <div class="question-options question-options--row m-0 flex-wrap! justify-start!">
+                <div class="drag-item-file flex w-full items-stretch md:w-2/3 lg:w-7/12">
+                    <div>
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            variant="outlined"
+                            severity="secondary"
+                            data-testid="background-file-input-button"
+                            (click)="backgroundFileInput.click()"
+                        >
                             <fa-icon [icon]="faPlus" />
                             @if (!reEvaluationInProgress()) {
-                                <span jhiTranslate="artemisApp.dragAndDropQuestion.selectBackgroundPicture" class="no-flex-shrink"></span>
+                                <span jhiTranslate="artemisApp.dragAndDropQuestion.selectBackgroundPicture" class="shrink-0"></span>
                             }
                             @if (reEvaluationInProgress()) {
-                                <span jhiTranslate="artemisApp.dragAndDropQuestion.changeBackgroundPicture" class="no-flex-shrink"></span>
+                                <span jhiTranslate="artemisApp.dragAndDropQuestion.changeBackgroundPicture" class="shrink-0"></span>
                             }
                         </button>
                     </div>
                     <input #backgroundFileInput id="backgroundFileInput{{ questionIndex() }}" type="file" accept="image/*" [hidden]="true" (change)="setBackgroundFile($event)" />
                 </div>
                 @if (reEvaluationInProgress()) {
-                    <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetBackground()">
+                    <button tumAetUiButton variant="outlined" severity="secondary" size="large" type="button" (click)="resetBackground()">
                         <fa-icon [icon]="faUndo" />
                     </button>
                 }
@@ -277,7 +286,7 @@
             </div>
         }
         <div cdkDropListGroup>
-            <div class="row">
+            <div>
                 <div class="background-area">
                     <jhi-image
                         #backgroundImage
@@ -556,7 +565,7 @@
                             @if (reEvaluationInProgress()) {
                                 <div class="dimensions">
                                     @if (dragItem.invalid) {
-                                        <span style="color: red" jhiTranslate="artemisApp.quizQuestion.invalid"></span>
+                                        <span class="text-state-danger" jhiTranslate="artemisApp.quizQuestion.invalid"></span>
                                     }
                                 </div>
                             }
@@ -585,7 +594,7 @@
                             </div>
                             <div *cdkDragPlaceholder></div>
                             <ng-template #preview>
-                                <div style="border: 1px solid; background: #fafafa; padding: 4px 2px 2px 2px">
+                                <div class="border border-(--border-color) bg-(--tumaet-ui-highlight-background) px-0.5 pb-0.5 pt-1">
                                     <div title="Move">
                                         <fa-icon [icon]="faBars" size="lg" />
                                     </div>
@@ -613,9 +622,9 @@
         </div>
         <!--    TODO: Fix the item input for reevaluation -->
         @if (!reEvaluationInProgress()) {
-            <div class="question-options row d-flex justify-content-start">
-                <div class="col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
-                    <button type="button" class="btn btn-outline-secondary me-2" (click)="dragItemFileInput.click()">
+            <div class="question-options question-options--row m-0 flex-wrap! justify-start!">
+                <div class="drag-item-file w-full md:w-2/3 lg:w-7/12">
+                    <button type="button" tumAetUiButton variant="outlined" severity="secondary" class="me-2" (click)="dragItemFileInput.click()">
                         <fa-icon [icon]="faPlus" />
                         @if (reEvaluationInProgress()) {
                             <span jhiTranslate="artemisApp.dragAndDropQuestion.changeDragItemPicture"></span>
@@ -625,15 +634,17 @@
                         }
                     </button>
                     <input #dragItemFileInput id="dragItemFileInput{{ questionIndex() }}" type="file" accept="image/*" [hidden]="true" (change)="createImageDragItem($event)" />
-                    <button type="button" class="btn btn-outline-secondary me-2" data-testid="add-text-drag-item" (click)="addTextDragItem()">
+                    <button type="button" tumAetUiButton variant="outlined" severity="secondary" class="me-2" data-testid="add-text-drag-item" (click)="addTextDragItem()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
                     </button>
                     <button
                         type="button"
-                        class="btn btn-outline-secondary"
+                        tumAetUiButton
+                        variant="outlined"
+                        severity="secondary"
                         id="crop-drag-item"
-                        [ngbTooltip]="'artemisApp.dragAndDropQuestion.cutImagesFromDropLocationTip' | artemisTranslate"
+                        [tumAetUiTooltip]="'artemisApp.dragAndDropQuestion.cutImagesFromDropLocationTip' | artemisTranslate"
                         (click)="getImagesFromDropLocations()"
                     >
                         <fa-icon [icon]="faScissors" />
@@ -645,7 +656,7 @@
         @if (!reEvaluationInProgress()) {
             <hr />
             <div class="question-options">
-                <div ngbTooltip="{{ 'artemisApp.dragAndDropQuestion.disabledPreviewTooltip' | artemisTranslate }}" [disableTooltip]="!!question().backgroundFilePath">
+                <div [tumAetUiTooltip]="question().backgroundFilePath ? undefined : ('artemisApp.dragAndDropQuestion.disabledPreviewTooltip' | artemisTranslate)">
                     <button type="button" tumAetUiButton size="small" severity="success" variant="outlined" [disabled]="!question().backgroundFilePath" (click)="togglePreview()">
                         <fa-icon [icon]="faEye" />
                         <span jhiTranslate="entity.action.preview"></span>

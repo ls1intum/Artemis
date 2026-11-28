@@ -1,18 +1,16 @@
 import { TranslateService } from '@ngx-translate/core';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiDialogRef,
-    TumAetUiDialogService,
-    TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 import { ExampleSubmissionImportComponent } from 'app/exercise/example-submission/example-submission-import/example-submission-import.component';
@@ -45,6 +43,7 @@ import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/del
 export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private exampleSubmissionService = inject(ExampleSubmissionService);
+    private exampleSubmissionApi = inject(ExampleSubmissionApi);
     private activatedRoute = inject(ActivatedRoute);
     private dialogService = inject(TumAetUiDialogService);
     private readonly translateService = inject(TranslateService);
@@ -98,7 +97,7 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
     deleteExampleSubmission(index: number) {
         const exercise = this.exercise();
         const submissionId = exercise.exampleSubmissions![index].id!;
-        this.exampleSubmissionService.delete(submissionId).subscribe({
+        this.exampleSubmissionApi.deleteExampleSubmission(submissionId).subscribe({
             next: () => {
                 exercise.exampleSubmissions!.splice(index, 1);
                 // Re-set the same reference so the signal notifies consumers; `equal: () => false` makes that emit.
@@ -159,7 +158,7 @@ export class ExampleSubmissionsComponent implements OnInit, OnDestroy {
             if (!selectedSubmission) {
                 return;
             }
-            this.exampleSubmissionService.import(selectedSubmission.id!, this.exercise().id!).subscribe({
+            this.exampleSubmissionApi.importExampleSubmission(this.exercise().id!, selectedSubmission.id!).subscribe({
                 next: () => {
                     this.alertService.success('artemisApp.exampleSubmission.submitSuccessful');
                     location.reload();

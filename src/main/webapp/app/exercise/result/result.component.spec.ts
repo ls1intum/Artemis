@@ -1,4 +1,4 @@
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { expect, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ResultComponent } from 'app/exercise/result/result.component';
@@ -31,7 +31,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { faCheckCircle } from '@fortawesome/free-regular-svg-icons';
 
 const mockExercise: Exercise = {

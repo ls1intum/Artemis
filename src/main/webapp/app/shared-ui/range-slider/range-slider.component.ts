@@ -17,7 +17,7 @@ const SLIDER_THUMB_LABEL_POSITION_ADJUSTMENT_FACTOR = 0.97;
 @Component({
     selector: 'jhi-range-slider',
     templateUrl: './range-slider.component.html',
-    styleUrls: ['./range-slider.component.scss'],
+    styleUrls: ['./range-slider.component.css'],
     imports: [FormsModule, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
