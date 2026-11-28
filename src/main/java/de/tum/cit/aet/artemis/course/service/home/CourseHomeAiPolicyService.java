@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
@@ -30,23 +31,27 @@ public class CourseHomeAiPolicyService {
         this.client = client;
     }
 
-    /**
-     * Checks whether current consent permits this explicitly configured provider.
-     *
-     * @param userId the student identifier
-     * @return true when fresh consent allows the configured provider location
-     */
+    record Selection(AiSelectionDecision decision, String preset) {
+    }
+
     public boolean canGenerate(long userId) {
+        return selection(userId).isPresent();
+    }
+
+    /** Reads the current preference and returns its configured route, if available. */
+    Optional<Selection> selection(long userId) {
         if (client.isEmpty() || !properties.isConfigured()) {
-            return false;
+            return Optional.empty();
         }
-        de.tum.cit.aet.artemis.core.domain.AiSelectionDecision decision;
         try {
-            decision = preferences.findDecision(userId);
+            var decision = preferences.findDecision(userId);
+            if (decision == null) {
+                return Optional.empty();
+            }
+            return properties.presetFor(decision).map(preset -> new Selection(decision, preset));
         }
-        catch (org.springframework.dao.DataAccessException ex) {
-            return false;
+        catch (DataAccessException ex) {
+            return Optional.empty();
         }
-        return decision == AiSelectionDecision.CLOUD_AI || (decision == AiSelectionDecision.LOCAL_AI && properties.providerLocation().equals("LOCAL"));
     }
 }

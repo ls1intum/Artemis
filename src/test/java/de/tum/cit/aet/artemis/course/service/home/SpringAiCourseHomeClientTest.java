@@ -55,11 +55,11 @@ class SpringAiCourseHomeClientTest {
             release.await();
             return response();
         });
-        try (var client = new SpringAiCourseHomeClient(model, PRESET, new SimpleMeterRegistry())) {
+        try (var client = new SpringAiCourseHomeClient(Map.of("welcome", new SpringAiCourseHomeClient.Model(model, PRESET)), new SimpleMeterRegistry())) {
             for (int i = 0; i < 4; i++)
-                client.generate(input);
+                client.generate("welcome", input);
             assertThat(entered.await(10, TimeUnit.SECONDS)).isTrue();
-            var rejected = client.generate(input);
+            var rejected = client.generate("welcome", input);
             assertThat(rejected).isCompletedWithValue(Optional.empty());
         }
         finally {
@@ -75,9 +75,9 @@ class SpringAiCourseHomeClientTest {
             release.await();
             return response();
         });
-        try (var client = new SpringAiCourseHomeClient(model, PRESET, new SimpleMeterRegistry())) {
+        try (var client = new SpringAiCourseHomeClient(Map.of("welcome", new SpringAiCourseHomeClient.Model(model, PRESET)), new SimpleMeterRegistry())) {
             assertThat(SpringAiCourseHomeClient.TIMEOUT).isEqualTo(Duration.ofSeconds(3));
-            assertThat(client.generate(input)).succeedsWithin(Duration.ofSeconds(8)).isEqualTo(Optional.empty());
+            assertThat(client.generate("welcome", input)).succeedsWithin(Duration.ofSeconds(8)).isEqualTo(Optional.empty());
         }
         finally {
             release.countDown();
@@ -108,8 +108,8 @@ class SpringAiCourseHomeClientTest {
                 Duration.ofSeconds(300), 3, null, null, null, List.of());
         var llmClientService = new LlmClientService(new LlmProperties(Map.of("local", endpoint), Map.of("welcome", PRESET), null), new JsonMapper(), ObservationRegistry.NOOP,
                 new SimpleMeterRegistry(), List.of());
-        try (var client = new SpringAiCourseHomeClient(new CourseHomeAiProperties(true, "LOCAL", "welcome"), llmClientService, new SimpleMeterRegistry())) {
-            var result = client.generate(input);
+        try (var client = new SpringAiCourseHomeClient(new CourseHomeAiProperties(true, "LOCAL", "welcome", null, null), llmClientService, new SimpleMeterRegistry())) {
+            var result = client.generate("welcome", input);
             assertThat(received.await(10, TimeUnit.SECONDS)).isTrue();
             assertThat(result).succeedsWithin(Duration.ofSeconds(8)).isEqualTo(Optional.empty());
             assertThat(calls).hasValue(1);
@@ -122,12 +122,20 @@ class SpringAiCourseHomeClientTest {
     }
 
     @Test
-    void successfulOutputIsReturned() {
-        var model = model();
-        when(model.call(any(Prompt.class))).thenReturn(response());
-        try (var client = new SpringAiCourseHomeClient(model, PRESET, new SimpleMeterRegistry())) {
-            assertThat(client.generate(input)).succeedsWithin(Duration.ofSeconds(8)).isEqualTo(Optional.of("Keep exploring one manageable step."));
+    void dispatchesOnlyToTheRequestedPreset() {
+        var local = model();
+        var cloud = model();
+        when(local.call(any(Prompt.class))).thenReturn(response());
+        when(cloud.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(AssistantMessage.builder().content("Build on your progress.").build()))));
+        Map<String, SpringAiCourseHomeClient.Model> models = Map.of("local", new SpringAiCourseHomeClient.Model(local, PRESET), "cloud",
+                new SpringAiCourseHomeClient.Model(cloud, PRESET));
+        try (var client = new SpringAiCourseHomeClient(models, new SimpleMeterRegistry())) {
+            assertThat(client.generate("local", input)).succeedsWithin(Duration.ofSeconds(8)).isEqualTo(Optional.of("Keep exploring one manageable step."));
+            assertThat(client.generate("cloud", input)).succeedsWithin(Duration.ofSeconds(8)).isEqualTo(Optional.of("Build on your progress."));
+            assertThat(client.generate("missing", input)).isCompletedWithValue(Optional.empty());
         }
+        verify(local).call(any(Prompt.class));
+        verify(cloud).call(any(Prompt.class));
     }
 
     @Test
@@ -135,8 +143,8 @@ class SpringAiCourseHomeClientTest {
         var model = model();
         when(model.call(any(Prompt.class))).thenReturn(response());
         var preset = new LlmProperties.Preset("local", "m", LlmProperties.Api.CHAT_COMPLETIONS, null, null, null, null, 100, null, null, null);
-        try (var client = new SpringAiCourseHomeClient(model, preset, new SimpleMeterRegistry())) {
-            assertThat(client.generate(input)).succeedsWithin(Duration.ofSeconds(8));
+        try (var client = new SpringAiCourseHomeClient(Map.of("welcome", new SpringAiCourseHomeClient.Model(model, preset)), new SimpleMeterRegistry())) {
+            assertThat(client.generate("welcome", input)).succeedsWithin(Duration.ofSeconds(8));
         }
         var prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(model).call(prompt.capture());
@@ -150,14 +158,14 @@ class SpringAiCourseHomeClientTest {
     void emptyModelChoicesProduceFallbackInsteadOfThrowing() {
         var model = model();
         when(model.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of()));
-        try (var client = new SpringAiCourseHomeClient(model, PRESET, new SimpleMeterRegistry())) {
-            assertThat(client.generate(input)).succeedsWithin(Duration.ofSeconds(8)).isEqualTo(Optional.empty());
+        try (var client = new SpringAiCourseHomeClient(Map.of("welcome", new SpringAiCourseHomeClient.Model(model, PRESET)), new SimpleMeterRegistry())) {
+            assertThat(client.generate("welcome", input)).succeedsWithin(Duration.ofSeconds(8)).isEqualTo(Optional.empty());
         }
     }
 
     @Test
     void incompleteConfigurationCannotConstructATransport() {
-        assertThatThrownBy(() -> new SpringAiCourseHomeClient(new CourseHomeAiProperties(false, null, null), mock(LlmClientService.class), new SimpleMeterRegistry()))
+        assertThatThrownBy(() -> new SpringAiCourseHomeClient(new CourseHomeAiProperties(false, null, null, null, null), mock(LlmClientService.class), new SimpleMeterRegistry()))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("configuration is incomplete");
     }
 
