@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular';
+import { TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ActivatedRoute, RouterLink, RouterLinkActive } from '@angular/router';

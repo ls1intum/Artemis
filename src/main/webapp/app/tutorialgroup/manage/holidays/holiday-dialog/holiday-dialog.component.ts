@@ -1,14 +1,12 @@
 import { ChangeDetectionStrategy, Component, afterRenderEffect, computed, effect, inject, input, model, output, signal, untracked, viewChild } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiDatePickerComponent,
-    TumAetUiFormFieldComponent,
-    TumAetUiInputDirective,
-    TumAetUiMessageComponent,
-    TumAetUiPopoverComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiPopoverComponent } from '@tumaet/ui-angular/popover';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';

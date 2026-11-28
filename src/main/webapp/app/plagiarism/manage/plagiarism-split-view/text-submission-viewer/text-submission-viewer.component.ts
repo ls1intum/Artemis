@@ -1,4 +1,5 @@
-import { TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { EditorViewingPurpose } from 'app/exercise/shared/exercise-submission.interface';
 import { Component, ViewEncapsulation, effect, inject, input, signal, untracked } from '@angular/core';
@@ -27,7 +28,7 @@ type FilesWithType = { [p: string]: FileType };
 
 @Component({
     selector: 'jhi-text-submission-viewer',
-    styleUrls: ['./text-submission-viewer.component.scss'],
+    styleUrls: ['./text-submission-viewer.component.css'],
     templateUrl: './text-submission-viewer.component.html',
     encapsulation: ViewEncapsulation.None,
     imports: [TumAetUiButtonDirective, TumAetUiProgressSpinnerComponent, SplitPaneHeaderComponent, FaIconComponent, TranslateDirective, NgClass, ArtemisTranslatePipe],

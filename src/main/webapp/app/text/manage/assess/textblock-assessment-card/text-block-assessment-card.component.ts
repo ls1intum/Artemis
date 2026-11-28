@@ -15,7 +15,7 @@ type OptionalTextBlockRef = TextBlockRef | undefined;
 @Component({
     selector: 'jhi-text-block-assessment-card',
     templateUrl: './text-block-assessment-card.component.html',
-    styleUrls: ['./text-block-assessment-card.component.scss'],
+    styleUrls: ['./text-block-assessment-card.component.css'],
     imports: [TextBlockFeedbackEditorComponent, GradingInstructionUsageWarningComponent],
 })
 export class TextBlockAssessmentCardComponent {

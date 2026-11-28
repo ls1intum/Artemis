@@ -12,7 +12,7 @@ import { ProgrammingExerciseResetOptions, ProgrammingExerciseService } from 'app
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';

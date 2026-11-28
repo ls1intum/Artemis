@@ -320,6 +320,16 @@ public class LocalVCRepositoryUri extends VcsRepositoryUri {
     }
 
     /**
+     * Whether the slug is exactly the project key, a hyphen and {@link #getRepositoryTypeOrUserName()}. The type or user name is derived from the slug by dropping a
+     * "practice-" marker and a run of digits after the project key, so for a slug that is not of this form it names another repository than the one the slug locates.
+     *
+     * @return true if the slug has no marker or digits that the derived name leaves out
+     */
+    public boolean isSlugCanonical() {
+        return repositorySlug.toLowerCase(Locale.ROOT).equals(projectKey.toLowerCase(Locale.ROOT) + "-" + repositoryTypeOrUserName);
+    }
+
+    /**
      * Computes and returns the full path to the repository stored within the local version control system.
      * This path is constructed using the base path of the local VC system, combined with the project key and repository slug.
      * The result is a Path object that represents the directory where the repository is stored or should be stored locally.

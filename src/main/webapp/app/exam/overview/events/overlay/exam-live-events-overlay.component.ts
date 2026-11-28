@@ -9,7 +9,7 @@ import {
     ProblemStatementUpdateEvent,
 } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { USER_DISPLAY_RELEVANT_EVENTS, USER_DISPLAY_RELEVANT_EVENTS_REOPEN } from 'app/exam/overview/events/exam-live-events.constants';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

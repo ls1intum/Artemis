@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, injec
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TumAetUiButtonComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ConfirmEmailChangeResponse, ConfirmEmailChangeService } from './confirm-email-change.service';

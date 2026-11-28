@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, output, signal } from '@angular/core';
-import { TumAetUiFormFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';

@@ -4,7 +4,9 @@ import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { IrisLogoButtonComponent } from 'app/iris/overview/iris-logo-button/iris-logo-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 

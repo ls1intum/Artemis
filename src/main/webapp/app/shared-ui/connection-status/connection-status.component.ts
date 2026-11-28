@@ -5,12 +5,12 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 
 @Component({
     selector: 'jhi-connection-status',
     templateUrl: './connection-status.component.html',
-    styleUrls: ['./connection-status.component.scss'],
+    styleUrls: ['./connection-status.component.css'],
     imports: [NgClass, FaIconComponent, TranslateDirective, TumAetUiTagComponent],
 })
 export class JhiConnectionStatusComponent implements OnInit, OnDestroy {

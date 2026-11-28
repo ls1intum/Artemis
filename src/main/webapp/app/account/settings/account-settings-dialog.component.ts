@@ -9,7 +9,11 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { PendingEmailChangeDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
 import { EMAIL_ALLOWED_DEBOUNCE_MS, EMAIL_ALLOWED_TIMEOUT_MS, EMAIL_ALLOWED_URL, EmailAllowedResponse, emailAllowedRequestContext } from 'app/account/shared/email-allowed';
 import { EMAIL_NOT_ALLOWED_ERROR_KEY } from 'app/foundation/constants/error.constants';
-import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 
 /** Error keys of the server that are shown as their own message. All other failures show a generic message. */
 const EMAIL_CHANGE_ERROR_KEYS = [EMAIL_NOT_ALLOWED_ERROR_KEY, 'emailChangeUnavailable', 'emailChangeRequestedTooRecently', 'emailChangeDailyLimitReached', 'noPendingEmailChange'];

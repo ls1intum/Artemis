@@ -2,7 +2,7 @@ import { Component, OnDestroy, inject } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
 import { CloseCircleComponent } from 'app/shared-ui/close-circle/close-circle.component';
@@ -10,7 +10,7 @@ import { CloseCircleComponent } from 'app/shared-ui/close-circle/close-circle.co
 @Component({
     selector: 'jhi-alert-overlay',
     templateUrl: './alert-overlay.component.html',
-    styleUrls: ['./alert-overlay.component.scss'],
+    styleUrls: ['./alert-overlay.component.css'],
     imports: [FaIconComponent, TranslateDirective, NgClass, CloseCircleComponent, TumAetUiButtonDirective],
 })
 export class AlertOverlayComponent implements OnDestroy {

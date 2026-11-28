@@ -7,7 +7,7 @@ import { TreeViewItemComponent } from 'app/programming/shared/code-editor/treevi
 @Component({
     selector: 'treeview',
     templateUrl: './tree-view.component.html',
-    styleUrls: ['./tree-view.component.scss'],
+    styleUrls: ['./tree-view.component.css'],
     imports: [FormsModule, TreeViewItemComponent],
 })
 export class TreeViewComponent<T> {

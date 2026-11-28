@@ -7,7 +7,9 @@ import { CompetencyFormControlsWithViewed } from 'app/atlas/manage/generate-comp
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
-import { TumAetUiCheckboxComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';

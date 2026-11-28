@@ -17,8 +17,8 @@ const read = (path) => readFileSync(resolve(webapp, path), 'utf8');
  */
 describe('regions that have to stay flexible', () => {
     it('lets the communication search grow past the contract height', () => {
-        const scss = read('app/communication/shared/conversation-global-search/conversation-global-search.component.scss');
-        const container = scss.match(/\.tag-input-container\s*\{([\s\S]*?)\n\}/);
+        const css = read('app/communication/shared/conversation-global-search/conversation-global-search.component.css');
+        const container = css.match(/\.tag-input-container\s*\{([\s\S]*?)\n\}/);
         expect(container, '.tag-input-container is not defined in the conversation search').toBeTruthy();
         // The search sits in a page top bar and wraps a tag per selected conversation and author. A fixed height
         // leaves every wrapped row outside the bar.
@@ -27,17 +27,17 @@ describe('regions that have to stay flexible', () => {
     });
 
     it('sizes both panes of the communication row from the row', () => {
-        const scss = read('app/communication/shared/course-conversations/course-conversations.component.scss');
-        const override = scss.match(/([^\n{]*)\{\s*\n\s*height:\s*auto;/);
-        expect(override, 'the message row no longer overrides `dynamic-content-height`').toBeTruthy();
+        const css = read('app/communication/shared/course-conversations/course-conversations.component.css');
+        const override = css.match(/([^\n{]*)\{\s*\n\s*height:\s*auto;/);
+        expect(override, 'the message row no longer overrides the content height of the page').toBeTruthy();
         // Scoping this to one pane leaves its sibling — the open answer thread — on the viewport-derived height, which
         // disagrees with the row it sits in, so the thread ends short of the divider above the footer or runs past it.
         expect(override[1], 'scope the override to the row so the open thread is covered as well').toContain('.communication-message-row');
     });
 
     it('lets a title bar shrink its action group', () => {
-        const scss = read('app/course/shared/course-title-bar/course-title-bar.component.scss');
-        const actions = scss.match(/\.title-bar-actions\s*\{([\s\S]*?)\n {4}\}/);
+        const css = read('app/course/shared/course-title-bar/course-title-bar.component.css');
+        const actions = css.match(/\.title-bar-actions\s*\{([\s\S]*?)\n\}/);
         expect(actions, '.title-bar-actions is not defined in the course title bar').toBeTruthy();
         // The automatic minimum (`auto`) is what has to go: with it the wrapper keeps its content width, and a page
         // whose controls could give way (the calendar filter and its chips) pushes the row past the bar instead.

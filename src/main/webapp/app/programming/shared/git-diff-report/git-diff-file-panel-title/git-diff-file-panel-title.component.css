@@ -1,0 +1,9 @@
+.file-path-with-badge {
+    display: flex;
+    align-items: center;
+    column-gap: 5px;
+}
+
+.file-path-with-badge .file-status-tag {
+    margin-top: 2px;
+}

@@ -22,9 +22,11 @@ import {
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { TranslateService } from '@ngx-translate/core';
-import { MODULE_FEATURE_DEIMOS, MODULE_FEATURE_PLAGIARISM, MODULE_FEATURE_SHARING, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_DEIMOS, MODULE_FEATURE_PLAGIARISM, PROFILE_JENKINS, PROFILE_LOCALCI } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -67,8 +69,8 @@ import { getBuildTimeWindow } from 'app/programming/shared/utils/build-time-wind
 import { DeimosService } from 'app/programming/shared/services/deimos.service';
 import { DeimosDateRangeModalComponent, DeimosDateRangeSelection } from 'app/shared/deimos/deimos-date-range-modal.component';
 import { Observable, Subject, Subscription, forkJoin, from, of } from 'rxjs';
-import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
-import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
+import { catchError, mergeMap, switchMap, tap } from 'rxjs/operators';
+import { PROGRAMMING_EXERCISE_EXPORT_ACTION } from 'app/programming/api/programming-exercise-extensions';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AtlasOrchestrationTriggerComponent } from 'app/atlas/manage/orchestration-trigger/atlas-orchestration-trigger.component';
 import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
@@ -80,7 +82,7 @@ import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 @Component({
     selector: 'jhi-programming-exercise-detail',
     templateUrl: './programming-exercise-detail.component.html',
-    styleUrls: ['./programming-exercise-detail.component.scss'],
+    styleUrls: ['./programming-exercise-detail.component.css'],
     imports: [
         HyperionRunLinkComponent,
         TranslateDirective,
@@ -126,7 +128,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
     private consistencyCheckService = inject(ConsistencyCheckService);
-    private sharingService = inject(ProgrammingExerciseSharingService);
+    private readonly externalExport = inject(PROGRAMMING_EXERCISE_EXPORT_ACTION, { optional: true });
     private featureToggleService = inject(FeatureToggleService);
     private destroyRef = inject(DestroyRef);
     private readonly isAlive = trackAlive(this.destroyRef);
@@ -198,7 +200,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly localCIEnabled = signal(true);
     readonly plagiarismEnabled = signal(false);
 
-    readonly isExportToSharingEnabled = signal(false);
+    readonly exportAction = toSignal(this.externalExport ?? of(undefined));
 
     isAdmin = false;
     readonly isBuildPlanEditable = signal(false);
@@ -218,7 +220,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
 
     private templateAndSolutionParticipationSubscription?: Subscription;
     private exerciseStatisticsSubscription?: Subscription;
-    private sharingEnabledSubscription?: Subscription;
     private diffFetchSubscription?: Subscription;
 
     private dialogErrorSource = new Subject<string>();
@@ -237,7 +238,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         // REMOVE_IN_ARTEMIS_11 (Jenkins): drop the PROFILE_JENKINS operand below
         this.isBuildPlanEditable.set(this.profileService.isProfileActive(PROFILE_JENKINS) || this.profileService.isProfileActive(PROFILE_LOCALCI));
-        this.isExportToSharingEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_SHARING));
         // Get route data directly from snapshot - no subscription needed
         const programmingExercise = this.activatedRoute.snapshot.data?.programmingExercise;
         if (programmingExercise) {
@@ -246,33 +246,12 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.resumeRunningDeletion();
             }
         }
-
-        this.subscribeToSharingStatus();
-    }
-
-    /**
-     * Subscribes to the sharing service to check if exercise export to sharing is enabled.
-     * Updates isExportToSharingEnabled based on the service response, defaulting to false on errors.
-     */
-    private subscribeToSharingStatus(): void {
-        this.sharingEnabledSubscription = this.sharingService
-            .isSharingEnabled()
-            .pipe(
-                map((response) => response ?? false),
-                catchError(() => {
-                    return of(false);
-                }),
-            )
-            .subscribe((isEnabled) => {
-                this.isExportToSharingEnabled.set(isEnabled);
-            });
     }
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
         this.templateAndSolutionParticipationSubscription?.unsubscribe();
         this.exerciseStatisticsSubscription?.unsubscribe();
-        this.sharingEnabledSubscription?.unsubscribe();
         this.diffFetchSubscription?.unsubscribe();
     }
 
@@ -742,28 +721,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.alertService.success('artemisApp.programmingExercise.export.successMessageExercise');
             },
             error: () => this.alertService.error('error.exportFailed'),
-        });
-    }
-
-    /** Preserves the sharing redirect workflow while presenting it as a menu command. */
-    exportExerciseToSharing(): void {
-        const exerciseId = this.programmingExercise().id;
-        if (exerciseId === undefined) {
-            return;
-        }
-        this.sharingService.exportProgrammingExerciseToSharing(exerciseId, window.location.href).subscribe({
-            next: (response) => {
-                if (response.body) {
-                    window.location.href = response.body;
-                } else {
-                    this.alertService.error('artemisApp.programmingExercise.sharing.error.noRedirect');
-                }
-            },
-            error: (errorResponse) => {
-                this.alertService.error('artemisApp.programmingExercise.sharing.error.export', {
-                    message: errorResponse?.error?.message || errorResponse?.error || 'Unknown error',
-                });
-            },
         });
     }
 

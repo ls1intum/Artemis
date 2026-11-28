@@ -4,14 +4,12 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 
 import { Thread, ThreadState } from '../../metrics.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiDialogComponent,
-    TumAetUiInputDirective,
-    TumAetUiSelectButtonComponent,
-    TumAetUiTableDirective,
-    TumAetUiTagComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 type ThreadStateFilter = ThreadState | 'ALL';
 
 interface ThreadStateFilterOption {

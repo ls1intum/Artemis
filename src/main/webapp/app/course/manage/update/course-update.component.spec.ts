@@ -41,7 +41,7 @@ import { FileService } from 'app/foundation/service/file.service';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
-import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 
 // Stub the orchestrator-defaults fetch globally so the course-update form's ngOnInit never issues a
 // real HTTP request when Atlas is active — otherwise the HttpTestingController.verify() blocks would

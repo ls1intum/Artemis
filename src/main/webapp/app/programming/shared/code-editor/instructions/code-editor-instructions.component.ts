@@ -6,7 +6,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 
 @Component({
     selector: 'jhi-code-editor-instructions',
-    styleUrls: ['./code-editor-instructions.scss'],
+    styleUrls: ['./code-editor-instructions.css'],
     templateUrl: './code-editor-instructions.component.html',
     imports: [FaIconComponent, TranslateDirective],
 })

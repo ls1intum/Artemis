@@ -13,7 +13,10 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 
 import { PasswordStrengthBarComponent } from '../password/password-strength-bar.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 
 /**
  * Type definition for the user registration form controls.

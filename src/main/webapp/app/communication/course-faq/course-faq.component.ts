@@ -19,12 +19,14 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
 
 @Component({
     selector: 'jhi-course-faq',
     templateUrl: './course-faq.component.html',
-    styleUrl: '../../course/overview/course-overview/course-overview.scss',
+    styleUrl: '../../course/overview/course-overview/course-overview.css',
     encapsulation: ViewEncapsulation.None,
     imports: [
         CourseTitleBarActionsDirective,

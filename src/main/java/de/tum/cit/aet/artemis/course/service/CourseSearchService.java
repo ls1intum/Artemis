@@ -28,7 +28,7 @@ public class CourseSearchService {
     }
 
     /**
-     * Search for users of all user groups by login or name in course
+     * Search the members of a course, with any course role, by login or name
      *
      * @param course     Course in which to search students
      * @param nameOfUser Login or name by which to search students

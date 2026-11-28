@@ -45,15 +45,12 @@ import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/instructor-submission-state/programming-exercise-instructor-submission-state.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiDatePickerComponent,
-    TumAetUiInputDirective,
-    TumAetUiPopoverComponent,
-    TumAetUiPopoverTriggerDirective,
-    TumAetUiTagComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/instructor/programming-exercise-instructor-trigger-build-button.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
@@ -270,7 +267,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly tableOptions = computed<TableViewOptions>(() => ({
         dataKey: 'participationId',
         searchSize: 'small',
-        searchFullWidth: true,
         striped: true,
         fill: true,
         showSearch: false,

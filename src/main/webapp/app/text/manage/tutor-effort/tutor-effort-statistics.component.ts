@@ -14,7 +14,9 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { PlagiarismAndTutorEffortDirective } from 'app/plagiarism/manage/plagiarism-run-details/plagiarism-and-tutor-effort.directive';
-import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiButtonDirective, TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig } from '@tumaet/ui-angular/chart';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 
 interface TutorEffortRange {
     minimumTimeSpent: number;
@@ -24,7 +26,7 @@ interface TutorEffortRange {
 @Component({
     selector: 'jhi-text-exercise-tutor-effort-statistics',
     templateUrl: './tutor-effort-statistics.component.html',
-    styleUrls: ['./tutor-effort-statistics.component.scss'],
+    styleUrls: ['./tutor-effort-statistics.component.css'],
     imports: [TranslateDirective, FaIconComponent, HelpIconComponent, TumAetUiBarChartComponent, TumAetUiTableDirective, ArtemisTranslatePipe, TumAetUiButtonDirective],
 })
 export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDirective implements OnInit {
