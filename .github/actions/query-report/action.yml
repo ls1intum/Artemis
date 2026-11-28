@@ -28,20 +28,32 @@ runs:
       uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
       with:
         script: |
-          // The keys of the latest develop run's findings: lets the report mark what this PR adds.
+          // demo: compare against pinned runs of this setup without the demo's changes
           const fs = require('fs');
           fs.rmSync('query-baseline.zip', { force: true });  // self-hosted workspaces persist between runs
-          const { data } = await github.rest.actions.listArtifactsForRepo({ owner: context.repo.owner, repo: context.repo.repo, name: 'Query Baseline', per_page: 50 });
-          const latest = data.artifacts
-            .filter((a) => !a.expired && a.workflow_run && a.workflow_run.head_branch === 'develop')
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-          if (!latest) {
-            core.info('No develop baseline available yet; the report will not classify findings as new.');
-            return;
+          for (const [index, id] of [15014182923, 15013616982].entries()) {
+            const zip = await github.rest.actions.downloadArtifact({ owner: context.repo.owner, repo: context.repo.repo, artifact_id: id, archive_format: 'zip' });
+            fs.writeFileSync(`demo-baseline-${index}.zip`, Buffer.from(zip.data));
           }
-          const zip = await github.rest.actions.downloadArtifact({ owner: context.repo.owner, repo: context.repo.repo, artifact_id: latest.id, archive_format: 'zip' });
-          fs.writeFileSync('query-baseline.zip', Buffer.from(zip.data));
-          core.info(`Using baseline artifact ${latest.id} from ${latest.created_at}`);
+
+    - name: Combine the pinned demo baselines
+      if: ${{ !cancelled() && inputs.compare-with-develop == 'true' }}
+      continue-on-error: true
+      shell: bash
+      # demo: the keys of all pinned runs, with Git requests under one route as the collector now reports them
+      run: |
+        python3 - <<'PY'
+        import glob, json, re, zipfile
+        repeated, static, generated = set(), set(), []
+        for name in sorted(glob.glob('demo-baseline-*.zip')):
+            with zipfile.ZipFile(name) as archive:
+                run = json.loads(archive.read('query-keys.json'))
+            repeated.update(re.sub(r'^([^|]*\|\S+ )/git/[^/|]+/[^/|]+\.git', r'\1/git/{projectKey}/{repository}.git', key) for key in run['repeatedQueries'])
+            static.update(run['static'])
+            generated.append(run['generatedAt'])
+        with zipfile.ZipFile('query-baseline.zip', 'w') as archive:
+            archive.writestr('query-keys.json', json.dumps({'repeatedQueries': sorted(repeated), 'static': sorted(static), 'generatedAt': max(generated)}))
+        PY
 
     - name: Collect the report
       if: ${{ !cancelled() }}
