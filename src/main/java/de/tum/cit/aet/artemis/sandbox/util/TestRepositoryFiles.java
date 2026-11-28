@@ -45,20 +45,20 @@ public final class TestRepositoryFiles {
     /** Name of the policy file at the root of the exercise-tests repository, as referenced by the template test classes. */
     public static final String POLICY_FILE_NAME = "SecurityPolicy.yaml";
 
-    private static final String GRADLE_BUILD_FILE = "build.gradle";
+    static final String GRADLE_BUILD_FILE = "build.gradle";
 
-    private static final String MAVEN_BUILD_FILE = "pom.xml";
+    static final String MAVEN_BUILD_FILE = "pom.xml";
 
     private static final Pattern WINDOWS_DRIVE = Pattern.compile("[A-Za-z]:");
 
     /** Directories that never contain test sources of the exercise, wherever they appear. */
-    private static final Set<String> IGNORED_DIRECTORIES = Set.of(".git", ".gradle", ".idea", "node_modules");
+    static final Set<String> IGNORED_DIRECTORIES = Set.of(".git", ".gradle", ".idea", "node_modules");
 
     /**
      * Build output directories. They are only skipped next to a build file, i.e. at the root of a (sub)project, so a source package that happens to be
      * called {@code build} or {@code target} is still scanned.
      */
-    private static final Set<String> BUILD_OUTPUT_DIRECTORIES = Set.of("build", "target");
+    static final Set<String> BUILD_OUTPUT_DIRECTORIES = Set.of("build", "target");
 
     private static final Set<String> BUILD_FILES = Set.of(GRADLE_BUILD_FILE, "build.gradle.kts", MAVEN_BUILD_FILE);
 
@@ -155,7 +155,7 @@ public final class TestRepositoryFiles {
      * The test classes are the relevant top-level types of the sources, see {@link AresTestSources.TypeDeclaration#isRelevant()}, and every class that
      * extends one of them, because it inherits its tests. Such a subclass must then carry its own annotation as well.
      */
-    private static List<AresTestSources.TypeDeclaration> testClasses(List<AresTestSources.Summary> summaries) {
+    static List<AresTestSources.TypeDeclaration> testClasses(List<AresTestSources.Summary> summaries) {
         List<AresTestSources.TypeDeclaration> allTypes = summaries.stream().flatMap(summary -> summary.topLevelTypes().stream()).toList();
         Set<String> allTypeNames = allTypes.stream().map(AresTestSources.TypeDeclaration::qualifiedName).collect(Collectors.toSet());
         Set<String> testClassNames = new HashSet<>();
@@ -246,11 +246,24 @@ public final class TestRepositoryFiles {
     }
 
     /**
-     * Decides which files are scanned as Java sources of a committed tree.
+     * @param javaSources the Java sources of a repository by their path relative to its root
+     * @return for every test class with an evaluable {@code @Policy} annotation whether it is switched on, by the fully qualified name of the class
+     */
+    public static Map<String, Boolean> annotationStates(Map<String, String> javaSources) {
+        Map<String, Boolean> states = new TreeMap<>();
+        javaSources.forEach((path, source) -> AresTestSources.relevantType(AresTestSources.analyze(path, source))
+                .filter(type -> type.policies().size() == 1 && type.policies().getFirst().isEvaluable())
+                .ifPresent(type -> states.put(type.qualifiedName(), type.policies().getFirst().isActivated())));
+        return states;
+    }
+
+    /**
+     * Decides which files are scanned as Java sources. Both the scan of a checkout and the scan of a committed tree use it, so both see the same sources.
      *
      * @param path   a regular file of the repository, relative to its root, with forward slashes
      * @param isFile whether a path, relative to the root, is a regular file of the repository
-     * @return whether the path is a Java file outside the tool and build output directories
+     * @return whether the path is a Java file outside the tool and build output directories, i.e. one that {@link TestRepositoryCheckout#setPolicyAnnotationsActive} would also
+     *         rewrite
      */
     public static boolean isJavaSourcePath(String path, Predicate<String> isFile) {
         if (!path.endsWith(".java")) {
@@ -286,7 +299,7 @@ public final class TestRepositoryFiles {
      * @return the build tool whose build file pins an Ares version; a Gradle build that assigns the version decides it, so if Artemis cannot read its pins,
      *         e.g. pins of different versions, there is none, as the pin of a POM next to it neither tells nor changes the version the Gradle build uses
      */
-    private static Optional<BuildTool> detectBuildTool(@Nullable String gradleBuild, @Nullable String mavenPom) {
+    static Optional<BuildTool> detectBuildTool(@Nullable String gradleBuild, @Nullable String mavenPom) {
         if (gradleAssignsAresVersion(gradleBuild)) {
             return BuildFileSyntax.aresVersionPins(gradleBuild, BuildTool.GRADLE).isEmpty() ? Optional.empty() : Optional.of(BuildTool.GRADLE);
         }

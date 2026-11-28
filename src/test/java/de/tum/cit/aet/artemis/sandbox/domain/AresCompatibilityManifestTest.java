@@ -84,6 +84,7 @@ class AresCompatibilityManifestTest {
 
     @Test
     void theVerifiedVersionAcceptsEveryFieldItsSchemaAccepts() {
+        assertThat(SecurityPolicySchema.isValid(FULL_POLICY)).isTrue();
         assertThat(manifest.check(SecurityPolicySchema.VERIFIED_ARES_VERSION, FULL_POLICY)).isEqualTo(CompatibilityCheck.COMPATIBLE);
     }
 
@@ -109,6 +110,8 @@ class AresCompatibilityManifestTest {
         assertThat(check.verdict()).isEqualTo(CompatibilityVerdict.INCOMPATIBLE);
         assertThat(check.unsupportedFields()).containsExactly("regardingTheSupervisedCode.theFollowingTestBehaviorIsConfigured.regardingStrictTimeouts");
         assertThat(check.unsupportedFormatVersion()).isNull();
+        // Ares 2.2.1 itself refuses the same policy.
+        assertThat(SecurityPolicySchema.isValid(policy)).isFalse();
     }
 
     @Test

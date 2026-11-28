@@ -21,6 +21,49 @@ class AresTestSourcesTest {
     }
 
     @Test
+    void aMethodMarkerRegistersTheSandboxAndMakesTheTypeATestClass() {
+        AresTestSources.Summary summary = analyze("package de.example;\n" + JUPITER_IMPORT + """
+                class Helper {
+                }
+
+                class SortingTest {
+
+                    @PublicTest
+                    void sorts() {
+                    }
+                }
+                """);
+
+        assertThat(summary.problems()).isEmpty();
+        assertThat(AresTestSources.relevantType(summary)).hasValueSatisfying(type -> {
+            assertThat(type.qualifiedName()).isEqualTo("de.example.SortingTest");
+            assertThat(type.registersSandbox()).isTrue();
+            assertThat(type.containsTests()).isTrue();
+        });
+    }
+
+    @Test
+    void aClassMarkerAloneRegistersTheSandboxWithoutTests() {
+        AresTestSources.Summary summary = analyze("package de.example;\n\n@de.tum.cit.ase.ares.api.jupiter.Public\nclass SortingTest {\n}\n");
+
+        assertThat(AresTestSources.relevantType(summary)).hasValueSatisfying(type -> {
+            assertThat(type.registersSandbox()).isTrue();
+            assertThat(type.containsTests()).isFalse();
+        });
+    }
+
+    @Test
+    void aPolicyAloneMakesATypeRelevant() {
+        AresTestSources.Summary summary = analyze("package de.example;\n\n@de.tum.cit.ase.ares.api.Policy(\"SecurityPolicy.yaml\")\nclass SortingTest {\n}\n");
+
+        assertThat(AresTestSources.relevantType(summary)).hasValueSatisfying(type -> {
+            assertThat(type.policies()).hasSize(1);
+            assertThat(type.registersSandbox()).isFalse();
+            assertThat(type.containsTests()).isFalse();
+        });
+    }
+
+    @Test
     void aFileWithoutPackageNamesItsTypesWithoutOne() {
         AresTestSources.Summary summary = analyze("class SortingTest extends de.example.BaseTest {\n\n    @org.junit.jupiter.api.Test\n    void sorts() {\n    }\n}\n");
 
@@ -35,6 +78,13 @@ class AresTestSourcesTest {
         AresTestSources.Summary summary = analyze("package de.example;\n\nimport java.util.List;\nimport de.base.BaseTest;\n\nclass SortingTest extends BaseTest {\n}\n");
 
         assertThat(summary.topLevelTypes()).singleElement().satisfies(type -> assertThat(type.superclass()).containsExactly("de.base.BaseTest"));
+    }
+
+    @Test
+    void aBodyThatIsNeverClosedRunsToTheEndOfTheFile() {
+        AresTestSources.Summary summary = analyze("package de.example;\n\nclass SortingTest {\n\n    @org.junit.jupiter.api.Test\n    void sorts() {\n    }\n");
+
+        assertThat(AresTestSources.relevantType(summary)).hasValueSatisfying(type -> assertThat(type.containsTests()).isTrue());
     }
 
     @Test
@@ -57,6 +107,14 @@ class AresTestSourcesTest {
             "class SortingTest {\n\n    static class Inner {\n\n        @org.junit.jupiter.api.Test\n        void sorts() {\n        }\n\n        @org.junit.jupiter.api.Test\n        void sortsAgain() {\n        }\n    }\n}\n" })
     void testsAndMarkersInANestedTypeOrOutsideATypeAreUnsupported(String body) {
         assertThat(analyze("package de.example;\n" + JUPITER_IMPORT + "\n" + body).problems()).containsExactly(UnsupportedReasonType.TESTS_IN_NESTED_TYPE);
+    }
+
+    @Test
+    void aJUnitMarkerOutsideAnyTypeIsNoTest() {
+        AresTestSources.Summary summary = analyze("package de.example;\n\nclass SortingTest {\n}\n\n@org.junit.jupiter.api.Test\n");
+
+        assertThat(summary.problems()).isEmpty();
+        assertThat(AresTestSources.relevantType(summary)).isEmpty();
     }
 
     @ParameterizedTest
