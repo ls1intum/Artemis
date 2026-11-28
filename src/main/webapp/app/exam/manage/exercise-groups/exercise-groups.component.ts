@@ -1,5 +1,7 @@
 import { importFromFileNavigation } from 'app/exercise/import/import-from-file-navigation';
-import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiPanelComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -40,7 +42,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-exercise-groups',
     templateUrl: './exercise-groups.component.html',
-    styleUrls: ['./exercise-groups.component.scss'],
+    styleUrls: ['./exercise-groups.component.css'],
     imports: [
         TranslateDirective,
         FaIconComponent,

@@ -1,5 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiDialogComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { LectureDraft, LectureDraftState } from 'app/lecture/manage/lecture-series-create/lecture-series-create.component';
 import { Dayjs } from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,7 +14,7 @@ import { isFirstDateAfterOrEqualSecond } from 'app/foundation/util/date.utils';
     selector: 'jhi-lecture-series-draft-edit-modal',
     imports: [TumAetUiDialogComponent, TumAetUiInputDirective, TumAetUiDatePickerComponent, TumAetUiButtonDirective, TranslateDirective],
     templateUrl: './lecture-series-draft-edit-modal.component.html',
-    styleUrl: './lecture-series-draft-edit-modal.component.scss',
+    styleUrl: './lecture-series-draft-edit-modal.component.css',
 })
 export class LectureSeriesDraftEditModalComponent {
     private translateService = inject(TranslateService);

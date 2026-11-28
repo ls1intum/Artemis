@@ -10,7 +10,7 @@ import { ConversationDTO } from 'app/communication/shared/entities/conversation/
 import { PostingEditType } from '../communication.util';
 import { MessageEditorComponent } from 'app/communication/message-editor/message-editor.component';
 import { canEditMessageVisually } from 'app/communication/message-editor/message-editor-conversion';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect-to-iris-button/redirect-to-iris-button.component';
 

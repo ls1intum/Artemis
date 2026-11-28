@@ -3,7 +3,7 @@ import { vi } from 'vitest';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { HyperionRunHeaderComponent } from './hyperion-run-header.component';
 
 describe('HyperionRunHeaderComponent', () => {

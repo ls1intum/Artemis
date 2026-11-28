@@ -51,7 +51,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExamMode;
  * @param courseName                     the course name shown on the exam cover
  * @param exampleSolutionPublicationDate the date example solutions are published
  * @param examSummaryPublicationDate     the date the submission overview becomes visible to students
- * @param course                         the slim course projection (id, title, testCourse, group names)
+ * @param course                         the slim course projection (id, title, testCourse)
  * @param channelName                    the exam's communication channel name (plain / edit path only; {@code null} elsewhere)
  * @param examArchivePath                the archive path; the archive button reads it (after a re-fetch) to enable download / cleanup
  */

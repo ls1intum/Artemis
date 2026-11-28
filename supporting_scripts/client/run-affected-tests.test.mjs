@@ -10,7 +10,7 @@ const directories = [];
 const app = 'src/main/webapp/app';
 const component = `${app}/lecture/widget/widget.component.ts`;
 const template = `${app}/lecture/widget/widget.component.html`;
-const stylesheet = `${app}/lecture/widget/widget.component.scss`;
+const stylesheet = `${app}/lecture/widget/widget.component.css`;
 const change = (file, status = 'M') => ({ status, paths: [file] });
 
 function fixture(files = {}) {
@@ -50,9 +50,9 @@ for (const file of [
 test('expands shared component templates and styles to the source rather than the entire shared module', async () => {
     const source = `${app}/shared-ui/widget/widget.component.ts`;
     const html = `${app}/shared-ui/widget/widget.component.html`;
-    const css = `${app}/shared-ui/widget/widget.component.scss`;
+    const css = `${app}/shared-ui/widget/widget.component.css`;
     const context = fixture({
-        [source]: "@Component({ templateUrl: './widget.component.html', styleUrl: './widget.component.scss' }) class Widget {}",
+        [source]: "@Component({ templateUrl: './widget.component.html', styleUrl: './widget.component.css' }) class Widget {}",
         [html]: '<span>changed</span>',
         [css]: ':host { display: block; }',
     });
@@ -82,16 +82,16 @@ test('adds every template owner so Vitest can find indirect consumers and shared
     assert.deepEqual(plan.sources, [another, component].sort());
 });
 
-test('follows Sass partials, forwards, root load paths and cycles to every component owner', async () => {
-    const partial = `${app}/lecture/styles/_colors.scss`;
-    const barrel = `${app}/lecture/styles/_index.scss`;
+test('follows CSS imports, also through a chain and a cycle, to every component owner', async () => {
+    const colors = `${app}/lecture/styles/colors.css`;
+    const shared = `${app}/lecture/styles/shared.css`;
     const context = fixture({
-        [component]: "@Component({ styleUrls: ['./widget.component.scss'] }) class Widget {}",
-        [stylesheet]: "@use '../styles';",
-        [partial]: "@use 'index'; $color: red;",
-        [barrel]: "@forward 'src/main/webapp/app/lecture/styles/colors';",
+        [component]: "@Component({ styleUrls: ['./widget.component.css'] }) class Widget {}",
+        [stylesheet]: "@import '../styles/shared.css';\n@import '@vscode/codicons/dist/codicon.css';",
+        [shared]: "@import url('./colors.css');",
+        [colors]: "@import './shared.css';\n:root { --color: red; }",
     });
-    const plan = await planTests({ ...context, changes: [change(partial)] });
+    const plan = await planTests({ ...context, changes: [change(colors)] });
     assert.equal(plan.mode, 'affected');
     assert.deepEqual(plan.sources, [component]);
 });
@@ -123,8 +123,8 @@ test('recognizes aliased Angular Component imports when expanding template owner
 test('includes resource consumers using the same root aliases as the Vitest configuration', async () => {
     const aliasConsumer = `${app}/lecture/alias-consumer.ts`;
     const context = fixture({
-        [component]: "@Component({ styleUrl: './widget.component.scss' }) class Widget {}",
-        [aliasConsumer]: "import '/src/main/webapp/app/lecture/widget/widget.component.scss?inline';",
+        [component]: "@Component({ styleUrl: './widget.component.css' }) class Widget {}",
+        [aliasConsumer]: "import '/src/main/webapp/app/lecture/widget/widget.component.css?inline';",
         [stylesheet]: ':host { display: block; }',
     });
     const plan = await planTests({ ...context, changes: [change(stylesheet)] });
@@ -135,18 +135,14 @@ test('includes resource consumers using the same root aliases as the Vitest conf
 for (const files of [
     { [template]: '<p>orphan</p>' },
     { [template]: '<p>dynamic</p>', [component]: '@Component({ templateUrl: getTemplate() }) class Widget {}' },
-    { [stylesheet]: '@use "#{theme}";', [component]: "@Component({ styleUrl: './widget.component.scss' }) class Widget {}" },
-    { [stylesheet]: '@import $theme;', [component]: "@Component({ styleUrl: './widget.component.scss' }) class Widget {}" },
-    { [stylesheet]: '@import url(other.css);', [component]: "@Component({ styleUrl: './widget.component.scss' }) class Widget {}" },
-    { [stylesheet]: "@import './other.scss'", [component]: "@Component({ styleUrl: './widget.component.scss' }) class Widget {}" },
-    { [stylesheet]: '@include meta.load-css($theme);', [component]: "@Component({ styleUrl: './widget.component.scss' }) class Widget {}" },
+    { [stylesheet]: '@import url(other.css);', [component]: "@Component({ styleUrl: './widget.component.css' }) class Widget {}" },
     { [template]: '<p>spread</p>', [component]: "@Component({ ...metadata, templateUrl: './widget.component.html' }) class Widget {}" },
 ]) {
     test(`falls back to the full suite when resource ownership is uncertain: ${Object.values(files)[0]}`, async () => {
         const context = fixture(files);
         const plan = await planTests({ ...context, changes: [change(Object.keys(files)[0])] });
         assert.equal(plan.mode, 'full');
-        assert.match(plan.reason, /resource|Sass|metadata/i);
+        assert.match(plan.reason, /resource|stylesheet|metadata/i);
     });
 }
 
@@ -170,7 +166,7 @@ for (const file of [
     `${app}/core/environments/environment.ts`,
     `${app}/openapi/model.ts`,
     `${app}/app.config.ts`,
-    'src/main/webapp/content/scss/_variables.scss',
+    'src/main/webapp/content/css/themes/light.css',
     'src/main/webapp/i18n/en/global.json',
     `${app}/lecture/widget/unknown.wasm`,
     'supporting_scripts/client/prebuild.mjs',

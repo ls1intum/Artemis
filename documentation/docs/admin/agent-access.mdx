@@ -2,7 +2,7 @@
 id: agent-access
 title: Agent Access
 sidebar_label: Agent Access
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-25
 ---
 
 import Callout from '../../src/components/Callout/Callout';
@@ -59,9 +59,14 @@ Four rules hold whatever the configuration:
 - **No grades, exams or student data.** None of the scopes covers them.
 
 The scopes are `courses:read`, `competencies:read`, `competencies:write`, `announcements:post`,
-`exercises:draft`, `programming:draft` and `lectures:write`. Posting an announcement, creating a lecture and creating or
+`exercises:draft`, `programming:draft`, `programming:repositories` and `lectures:write`. Posting an announcement, creating a lecture and creating or
 changing competencies are the actions whose result students see at once: a lecture is listed with its title and
 description as soon as it exists, because a lecture has no release date of its own, and competencies have no draft state.
+The scope `programming:repositories` lets a token be the password of git over HTTPS (user name: the login of the owner) for the template,
+solution, tests and auxiliary repositories of exercises that the owner may edit. It never opens repositories of students or of exams, and
+a push is accepted only while the exercise is unpublished and has no participations. Git requests with a token are written to the same audit
+log as the REST requests, with the repository and whether it was allowed, and to the VCS access log with the mechanism
+`AGENT_ACCESS_TOKEN`.
 A token also stops working when its owner's credentials change, for example after a password reset.
 
 ### Inspect and revoke the tokens of a user
@@ -76,6 +81,12 @@ an external system such as LDAP or SAML, because Artemis does not see that chang
 With agent access enabled, Artemis also serves the Model Context Protocol at `/api/core/agent/mcp`. It answers every request with
 one JSON document and keeps no session, so it needs nothing beyond the setting above and works behind a load balancer without
 sticky sessions. It accepts only personal access tokens.
+
+It speaks revision 2026-07-28 of the protocol and no earlier one. A client that is too old to speak it gets HTTP 400 with an error
+that names the version to use, so the instructor sees why the connection fails and updates the agent. The protocol asks a server to
+reject a request whose `Origin` header names another site, and the endpoint does: a browser page can reach it only from the
+address in `server.url`, and agents send no `Origin`. A reverse proxy must therefore pass `Origin` and the headers `MCP-Protocol-Version`,
+`Mcp-Method` and `Mcp-Name` on unchanged.
 
 Each tool of the endpoint calls the REST API of the same server over the loopback interface, with the token of the request. It
 therefore needs the server to be reachable on its own port from itself, which is the normal case, and its calls appear in the audit

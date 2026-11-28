@@ -7,7 +7,7 @@ let nextGroupId = 0;
 @Component({
     selector: 'jhi-ai-mode-selector',
     templateUrl: './ai-mode-selector.component.html',
-    styleUrl: './ai-mode-selector.component.scss',
+    styleUrl: './ai-mode-selector.component.css',
     imports: [TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

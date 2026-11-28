@@ -3,7 +3,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { TumAetUiButtonDirective, TumAetUiPopoverComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiPopoverComponent } from '@tumaet/ui-angular/popover';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-create-button/exercise-create-button.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -31,7 +32,7 @@ interface ExerciseModalRow {
         ArtemisTranslatePipe,
     ],
     templateUrl: './add-exercise-popover.component.html',
-    styleUrls: ['./add-exercise-popover.component.scss'],
+    styleUrls: ['./add-exercise-popover.component.css'],
     exportAs: 'addExercisePopover',
 })
 export class AddExercisePopoverComponent {

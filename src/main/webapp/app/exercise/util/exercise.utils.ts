@@ -4,7 +4,7 @@ import { InitializationState, Participation } from 'app/exercise/shared/entities
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Observable, from, of } from 'rxjs';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import type { ExerciseServicable, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
 import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
@@ -236,7 +236,8 @@ export const getPositiveAndCappedTotalScore = (totalScore: number, maxPoints: nu
         totalScore = maxPoints;
     }
 
-    return +totalScore.toFixed(2);
+    // Points have up to three decimal places, so rounding to two can exceed the maximum again (10.006 becomes 10.01) and the server rejects such a score
+    return Math.min(+totalScore.toFixed(2), maxPoints);
 };
 
 export const getTotalMaxPoints = (exercise?: Exercise): number => {

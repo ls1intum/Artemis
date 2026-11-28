@@ -1,8 +1,8 @@
 import { Service } from '@angular/core';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { parseJson } from 'app/foundation/util/json.util';
 import { getPositiveAndCappedTotalScore } from 'app/exercise/util/exercise.utils';
+import { GradingInstructionWithCriterionTitle, withoutCriterionTitle } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 
 /** Score of a complete assessment, broken down the way it is presented to and saved for a tutor. */
 export interface AssessmentScore {
@@ -29,7 +29,7 @@ export class StructuredGradingCriterionService {
         event.preventDefault();
         try {
             const data = (event as DragEvent).dataTransfer!.getData('text/plain');
-            const instruction = parseJson<GradingInstruction>(data);
+            const instruction = withoutCriterionTitle(parseJson<GradingInstructionWithCriterionTitle>(data));
             feedback.gradingInstruction = instruction;
             feedback.credits = instruction.credits;
         } catch (err) {

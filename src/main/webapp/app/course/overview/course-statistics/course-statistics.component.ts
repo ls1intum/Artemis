@@ -33,16 +33,12 @@ import { CourseCompetencyService } from 'app/atlas/shared/services/course-compet
 import { CourseCompetency, CourseCompetencyType, getMastery, getProgress } from 'app/atlas/shared/entities/competency.model';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { hasSubmittedForStatistics } from './course-statistics.utils';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiDoughnutChartComponent,
-    TumAetUiDoughnutChartConfig,
-    TumAetUiMessageComponent,
-    TumAetUiProgressBarComponent,
-    TumAetUiTableDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular/chart';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiProgressBarComponent } from '@tumaet/ui-angular/progress-bar';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 
 const QUIZ_EXERCISE_COLOR = 'var(--statistics-score-quiz-color)';
 const PROGRAMMING_EXERCISE_COLOR = 'var(--statistics-score-programming-color)';
@@ -57,7 +53,7 @@ interface YourOverallPointsEntry extends ChartSeriesEntry {
 @Component({
     selector: 'jhi-course-statistics',
     templateUrl: './course-statistics.component.html',
-    styleUrl: './course-statistics.component.scss',
+    styleUrl: './course-statistics.component.css',
     imports: [
         FaIconComponent,
         TranslateDirective,

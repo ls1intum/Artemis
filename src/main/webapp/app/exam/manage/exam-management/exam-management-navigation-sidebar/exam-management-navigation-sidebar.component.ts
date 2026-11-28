@@ -14,12 +14,13 @@ import { SidebarSubpageItem } from 'app/exam/manage/exam-management/exam-managem
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiPanelComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 @Component({
     selector: 'jhi-exam-management-navigation-sidebar',
     templateUrl: './exam-management-navigation-sidebar.component.html',
-    styleUrls: ['./exam-management-navigation-sidebar.component.scss'],
+    styleUrls: ['./exam-management-navigation-sidebar.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         CourseTitleBarTitleComponent,

@@ -11,7 +11,7 @@ import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback
 @Component({
     selector: 'jhi-text-result',
     templateUrl: './text-result.component.html',
-    styleUrls: ['./text-result.component.scss'],
+    styleUrls: ['./text-result.component.css'],
     imports: [NgClass, UnifiedFeedbackComponent],
 })
 export class TextResultComponent {

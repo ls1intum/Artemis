@@ -1,4 +1,4 @@
-import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { Location, NgClass, NgTemplateOutlet } from '@angular/common';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
@@ -86,7 +86,7 @@ export type Table = 'testCases' | 'codeAnalysis';
 @Component({
     selector: 'jhi-programming-exercise-configure-grading',
     templateUrl: './programming-exercise-configure-grading.component.html',
-    styleUrls: ['./programming-exercise-configure-grading.scss'],
+    styleUrls: ['./programming-exercise-configure-grading.css'],
     encapsulation: ViewEncapsulation.None,
     providers: [ProgrammingExerciseTaskService],
     imports: [

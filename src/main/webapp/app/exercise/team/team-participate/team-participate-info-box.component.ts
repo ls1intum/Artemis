@@ -8,7 +8,7 @@ import { TeamStudentsOnlineListComponent } from './team-students-online-list.com
 @Component({
     selector: 'jhi-team-participate-info-box',
     templateUrl: './team-participate-info-box.component.html',
-    styleUrls: ['./team-participate-info-box.component.scss'],
+    styleUrls: ['./team-participate-info-box.component.css'],
     imports: [JhiConnectionStatusComponent, TeamStudentsOnlineListComponent],
 })
 export class TeamParticipateInfoBoxComponent {

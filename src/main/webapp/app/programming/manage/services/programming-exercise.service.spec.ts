@@ -1,3 +1,4 @@
+import { convertProgrammingExerciseResponseDatesFromServer, toProgrammingExerciseSetupPayload } from 'app/programming/api/programming-exercise-payload';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -552,7 +553,7 @@ describe('ProgrammingExercise Service', () => {
         };
         const response = new HttpResponse<ProgrammingExercise>({ body: returnedFromService });
 
-        const converted = ProgrammingExerciseService.convertProgrammingExerciseResponseDatesFromServer(response);
+        const converted = convertProgrammingExerciseResponseDatesFromServer(response);
 
         const window = converted.body!.buildConfig!.advancedSettings!.buildTimeWindow!;
         expect(dayjs.isDayjs(window.start)).toBe(true);
@@ -572,13 +573,13 @@ describe('ProgrammingExercise Service', () => {
         req.flush(exercise);
     });
 
-    it('should test convertDataFromClient method', () => {
+    it('should preserve template and solution participations in the setup payload', () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs();
         exercise.templateParticipation = new TemplateProgrammingExerciseParticipation();
         exercise.solutionParticipation = new SolutionProgrammingExerciseParticipation();
 
-        const convertedExercise = service.convertDataFromClient(exercise);
+        const convertedExercise = toProgrammingExerciseSetupPayload(exercise);
 
         expect(convertedExercise).toBeDefined();
         expect(convertedExercise.templateParticipation).toBeDefined();
@@ -596,11 +597,11 @@ describe('ProgrammingExercise Service', () => {
         // A circular structure would make JSON.stringify throw before the request is even sent.
         expect(() => JSON.stringify(exercise.competencyLinks)).toThrow(/circular/i);
 
-        const convertedExercise = service.convertDataFromClient(exercise);
+        const convertedExercise = toProgrammingExerciseSetupPayload(exercise);
 
         expect(convertedExercise.competencyLinks).toHaveLength(1);
         const convertedLink = convertedExercise.competencyLinks![0];
-        // convertDataFromClient deep-clones the exercise, so the competency is an equal copy, not the same reference.
+        // The setup payload deep-clones the exercise, so the competency is an equal copy, not the same reference.
         expect(convertedLink.competency).toEqual(competency);
         expect(convertedLink.weight).toBe(42);
         expect(convertedLink).not.toHaveProperty('exercise');

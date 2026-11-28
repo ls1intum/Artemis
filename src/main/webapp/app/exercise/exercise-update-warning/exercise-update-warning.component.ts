@@ -1,17 +1,17 @@
-import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { Component, inject, input, signal } from '@angular/core';
 import { faBan, faCheck, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-exercise-update-warning',
     templateUrl: './exercise-update-warning.component.html',
-    styleUrls: ['./exercise-update-warning.component.scss'],
+    styleUrls: ['./exercise-update-warning.component.css'],
     imports: [TumAetUiCheckboxComponent, TumAetUiButtonDirective, TranslateDirective, FormsModule, FaIconComponent],
 })
 export class ExerciseUpdateWarningComponent {
