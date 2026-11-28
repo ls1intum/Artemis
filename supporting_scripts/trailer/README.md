@@ -11,7 +11,9 @@ has a student and/or an instructor cut. The programming exercise module has both
 
 The documentation embeds them from `documentation/docs/student/exercises/assets/programming/trailer-student.mp4`
 and `documentation/docs/instructor/exercises/assets/programming/trailer-instructor.mp4`, the default output
-paths of the script. They are encoded at about 5 MB each so that they stay small in the Git history.
+paths of the script. The communication module (`storyboards/communication.py`) has a student and an instructor cut
+as well, built only from documentation screenshots; its videos are in `documentation/docs/student/assets/communication`
+and `documentation/docs/instructor/communication-support/assets/communication`. They are encoded at about 5 MB each so that they stay small in the Git history.
 
 The trailers use the screenshots in `documentation/docs/`, so they change when the screenshots are updated.
 The student cut also has three motion graphics drawn by the script (push with test results, scores over
