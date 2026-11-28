@@ -27,7 +27,8 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subject, of, throwError } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
-import { TumAetUiConfirmationService, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 describe('GradingInstructionsDetailsComponent', () => {
     let component: GradingInstructionsDetailsComponent;

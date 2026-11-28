@@ -17,7 +17,8 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { UserService } from 'app/account/user/shared/user.service';
-import { TumAetUiButtonDirective, TumAetUiCardComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
 
 @Component({
     selector: 'jhi-ai-experience-settings',

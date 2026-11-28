@@ -2,7 +2,8 @@ import { Directive, ElementRef, HostListener, OnDestroy, OnInit, Renderer2, inje
 import { ProgrammingExerciseResetDialogComponent } from 'app/programming/manage/reset/dialog/programming-exercise-reset-dialog.component';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { TumAetUiDialogRef, TumAetUiDialogService, tumAetUiButtonClasses } from '@tumaet/ui-angular';
+import { tumAetUiButtonClasses } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 
 @Directive({ selector: '[jhiProgrammingExerciseResetButton]' })
 export class ProgrammingExerciseResetButtonDirective implements OnInit, OnDestroy {

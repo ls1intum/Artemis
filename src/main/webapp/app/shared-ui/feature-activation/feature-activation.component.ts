@@ -1,7 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { TumAetUiCardComponent } from '@tumaet/ui-angular';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 
