@@ -1,4 +1,6 @@
-import { TumAetUiButtonDirective, TumAetUiButtonSeverity, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiButtonSeverity } from '@tumaet/ui-angular/button';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, ElementRef, Injector, OnDestroy, afterNextRender, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { IconDefinition, faCheckCircle, faCircle, faDownload, faExpand, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';

@@ -63,6 +63,8 @@ describe('TumLiveUploadComponent', () => {
 
         expect(transferSpy).toHaveBeenCalledWith('/upload-a', expect.any(File));
         expect(component.transferProgress()).toBe(40);
+        expect(query('tum-live-upload')?.textContent).toContain('40%');
+        expect(query('tum-live-upload')?.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('40');
         expect(query('tum-live-upload-cancel')).not.toBeNull();
 
         transfer.next({ type: 'done' });
@@ -72,6 +74,20 @@ describe('TumLiveUploadComponent', () => {
 
         expect(component.transferProgress()).toBeUndefined();
         expect(query('tum-live-upload-discard')).not.toBeNull();
+    });
+
+    it('shows an accepted upload when the editor is reopened before conversion progress is available', () => {
+        const pendingRef = 'reference-a-0000';
+        render({ connected: true, pendingRef, transferAccepted: true });
+
+        expect(query('tum-live-upload')?.textContent).toContain('artemisApp.tumLiveUpload.uploaded');
+        expect(query('tum-live-upload')?.querySelector('[role="progressbar"]')).toBeNull();
+
+        state.next({ connected: true, pendingRef, transferAccepted: true, converting: true, progress: 42 });
+        fixture.detectChanges();
+
+        expect(query('tum-live-upload')?.textContent).toContain('artemisApp.tumLiveUpload.processing');
+        expect(query('tum-live-upload')?.querySelector('[role="progressbar"]')?.getAttribute('aria-valuenow')).toBe('42');
     });
 
     it('takes the initial file and starts once before the first status response', () => {
@@ -113,7 +129,7 @@ describe('TumLiveUploadComponent', () => {
         expect(discard).not.toHaveBeenCalled();
     });
 
-    it('recognises conversion after a lost acceptance response without asking to upload the file again', () => {
+    it.each([{ transferAccepted: true }, { converting: true }])('recovers a lost transfer response from server state %j', (confirmation) => {
         const ref = 'reference-a-0000';
         render({ connected: true });
         vi.spyOn(service, 'start').mockReturnValue(of({ ref, uploadUrl: '/transfer' }));
@@ -122,25 +138,36 @@ describe('TumLiveUploadComponent', () => {
         chooseFile();
 
         component.upload();
-        state.next({ connected: true, pendingRef: ref, converting: true });
+        state.next({ connected: true, pendingRef: ref, ...confirmation });
         expect(component.uncertainRef()).toBeUndefined();
         expect(component.file()).toBeUndefined();
         expect(component.pendingRef()).toBe(ref);
         expect(discard).not.toHaveBeenCalled();
     });
 
-    it('discards the upload when its transfer fails', () => {
+    it.each([413, 500])('reads the server state after HTTP %i without discarding the upload', (status) => {
+        const ref = 'reference-a-0000';
         render({ connected: true });
-        vi.spyOn(service, 'start').mockReturnValue(of({ ref: 'reference-a-0000', uploadUrl: '/upload-a' }));
-        vi.spyOn(service, 'transfer').mockReturnValue(throwError(() => new TumLiveTransferError('HTTP 413', 413)));
-        const discardSpy = vi.spyOn(service, 'discard').mockReturnValue(of(undefined));
+        vi.spyOn(service, 'start').mockReturnValue(of({ ref, uploadUrl: '/upload-a' }));
+        vi.spyOn(service, 'transfer').mockReturnValue(throwError(() => new TumLiveTransferError(`HTTP ${status}`, status)));
+        const discardSpy = vi.spyOn(service, 'discard');
         chooseFile();
 
         component.upload();
+        const currentState = status === 413 ? { connected: true, pendingRef: ref } : { connected: true };
+        state.next(currentState);
         fixture.detectChanges();
 
-        expect(discardSpy).toHaveBeenCalledWith(7, 'reference-a-0000');
-        expect(component.transferError()?.message).toBe('HTTP 413');
+        expect(service.getState).toHaveBeenCalledTimes(2);
+        expect(discardSpy).not.toHaveBeenCalled();
+        expect(component.transferError()?.status).toBe(status);
+        expect(component.file()?.name).toBe('lecture.mp4');
+        if (status === 413) {
+            // A proxy can reject the request before it reaches Artemis. Its reservation can still be discarded explicitly.
+            expect(query('tum-live-upload-discard')).not.toBeNull();
+        } else {
+            expect(query('tum-live-upload-start')).not.toBeNull();
+        }
     });
 
     it('keeps a pending upload when another request is already transferring it', () => {

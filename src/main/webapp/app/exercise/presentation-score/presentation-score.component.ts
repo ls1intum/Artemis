@@ -1,4 +1,5 @@
-import { TumAetUiCheckboxComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { Component, DoCheck, OnDestroy, inject, input } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';

@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiRadioButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiRadioButtonComponent } from '@tumaet/ui-angular/radio-button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { InitialCommitAuthor, InitialCommitAuthorMode } from 'app/course/shared/entities/course-configuration.model';

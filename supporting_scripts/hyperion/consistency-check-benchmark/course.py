@@ -6,7 +6,7 @@ from typing import Dict
 import requests
 import urllib3
 from logging_config import logging
-from utils import COURSE_NAME, SPECIAL_CHARACTER_REGEX, SERVER_URL, IS_LOCAL_COURSE
+from utils import COURSE_NAME, SPECIAL_CHARACTER_REGEX, SERVER_URL
 from utils import login_as_admin
 
 def __parse_course_name_to_short_name() -> str:
@@ -52,11 +52,6 @@ def create_course_request(session: requests.Session) -> requests.Response:
         "id": None,
         "title": COURSE_NAME,
         "shortName": course_short_name,
-        "customizeGroupNames": False,
-        "studentGroupName": None,
-        "teachingAssistantGroupName": None,
-        "editorGroupName": None,
-        "instructorGroupName": None,
         "courseInformationSharingMessagingCodeOfConduct": None,
         "semester": None,
         "testCourse": None,
@@ -80,13 +75,6 @@ def create_course_request(session: requests.Session) -> requests.Response:
         "courseInformationSharingConfiguration": "COMMUNICATION_AND_MESSAGING",
         "enrollmentEnabled": False
     }
-
-    if IS_LOCAL_COURSE:
-        default_course["customizeGroupNames"] = True
-        default_course["studentGroupName"] = "students"
-        default_course["teachingAssistantGroupName"] = "tutors"
-        default_course["editorGroupName"] = "editors"
-        default_course["instructorGroupName"] = "instructors"
 
     fields = {
         "course": ('blob.json', json.dumps(default_course), 'application/json')

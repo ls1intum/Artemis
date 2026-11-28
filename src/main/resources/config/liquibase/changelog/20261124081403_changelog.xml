@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Spring AI 2.1 deprecated its chat memory for removal in 3.0.0 in favor of session memory. The Atlas chat agent keeps its conversations in
+         the tables of JdbcSessionRepository now. Their names are those of Spring AI, in upper case, because its SQL names them so and MySQL compares
+         table names case-sensitively on Linux; PostgreSQL and H2 fold them to their own case. The columns are those of its schema-<database>.sql.
+         The text columns hold the JSON of an event and the text of a chat message: free-form by nature, like spring_ai_chat_memory.content before. -->
+    <changeSet id="20261124081403-01-create-spring-ai-session-tables" author="krusche">
+        <createTable tableName="AI_SESSION">
+            <column name="id" type="varchar(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_ai_session"/>
+            </column>
+            <column name="created_at" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="expires_at" type="datetime(6)"/>
+            <column name="metadata" type="clob">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_version" type="bigint" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="idx_ai_session_expires_at" tableName="AI_SESSION">
+            <column name="expires_at"/>
+        </createIndex>
+
+        <!-- One row per session and indexed attribute name, by default the principal name. Artemis sets no principal, but the repository reads and
+             writes this table whenever it creates or deletes a session. -->
+        <createTable tableName="AI_SESSION_INDEX">
+            <column name="session_id" type="varchar(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_ai_session_index"/>
+            </column>
+            <column name="attr_name" type="varchar(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_ai_session_index"/>
+            </column>
+            <column name="attr_value" type="varchar(512)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="AI_SESSION_INDEX" baseColumnNames="session_id" constraintName="fk_ai_session_index_session"
+                                 referencedTableName="AI_SESSION" referencedColumnNames="id" onDelete="CASCADE"/>
+        <createIndex indexName="idx_ai_session_index_name_value" tableName="AI_SESSION_INDEX">
+            <column name="attr_name"/>
+            <column name="attr_value"/>
+        </createIndex>
+
+        <createTable tableName="AI_SESSION_EVENT">
+            <column name="seq" type="bigint" autoIncrement="true">
+                <constraints nullable="false" unique="true" uniqueConstraintName="uq_ai_session_event_seq"/>
+            </column>
+            <column name="id" type="varchar(255)">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_ai_session_event"/>
+            </column>
+            <column name="session_id" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timestamp" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_type" type="varchar(64)" defaultValue="MESSAGE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="message_type" type="varchar(20)"/>
+            <column name="message_content" type="clob"/>
+            <column name="payload" type="clob">
+                <constraints nullable="false"/>
+            </column>
+            <column name="synthetic" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metadata" type="clob">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="AI_SESSION_EVENT" baseColumnNames="session_id" constraintName="fk_ai_session_event_session"
+                                 referencedTableName="AI_SESSION" referencedColumnNames="id" onDelete="CASCADE"/>
+        <createIndex indexName="idx_ai_session_event_session_seq" tableName="AI_SESSION_EVENT">
+            <column name="session_id"/>
+            <column name="seq"/>
+        </createIndex>
+        <!-- The newest compaction boundary of a session, on every read of the active view -->
+        <createIndex indexName="idx_ai_session_event_session_type_seq" tableName="AI_SESSION_EVENT">
+            <column name="session_id"/>
+            <column name="event_type"/>
+            <column name="seq"/>
+        </createIndex>
+        <rollback>
+            <dropTable tableName="AI_SESSION_EVENT"/>
+            <dropTable tableName="AI_SESSION_INDEX"/>
+            <dropTable tableName="AI_SESSION"/>
+        </rollback>
+    </changeSet>
+
+    <!-- The conversations of spring_ai_chat_memory move to the new tables, one session per conversation id and one message event per row, in the order of
+         the old sequence. A message event without parts reads back as a message with its text, which is all the old table held. SYSTEM and TOOL rows are
+         left behind: the session service refuses a system message, and a tool result is no part of the conversation that a user reads. The old table stays, so that the previous release
+         still finds it after a rollback; a later release drops it. The sessions get a far expiry, as SpringAIConfiguration does for new ones. H2 is only
+         used for local and development databases without a conversation history, as in 20260611220000_changelog.xml. -->
+    <changeSet id="20261124081403-02-copy-chat-memory-to-sessions-postgresql" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
+        </preConditions>
+        <sql>
+            INSERT INTO AI_SESSION (id, created_at, expires_at, metadata, event_version)
+            SELECT conversation_id, MIN(timestamp), MIN(timestamp) + INTERVAL '3650 days', '{}', COUNT(*)
+            FROM spring_ai_chat_memory
+            WHERE type IN ('USER', 'ASSISTANT')
+            GROUP BY conversation_id
+        </sql>
+        <sql>
+            INSERT INTO AI_SESSION_EVENT (id, session_id, timestamp, event_type, message_type, message_content, payload, synthetic, metadata)
+            SELECT CAST(gen_random_uuid() AS varchar(255)), conversation_id, timestamp, 'MESSAGE', type, content, '{}', FALSE, '{}'
+            FROM spring_ai_chat_memory
+            WHERE type IN ('USER', 'ASSISTANT')
+            ORDER BY conversation_id, sequence_id, id
+        </sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20261124081403-03-copy-chat-memory-to-sessions-mysql" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="mysql"/>
+        </preConditions>
+        <sql>
+            INSERT INTO AI_SESSION (id, created_at, expires_at, metadata, event_version)
+            SELECT conversation_id, MIN(`timestamp`), DATE_ADD(MIN(`timestamp`), INTERVAL 3650 DAY), '{}', COUNT(*)
+            FROM spring_ai_chat_memory
+            WHERE type IN ('USER', 'ASSISTANT')
+            GROUP BY conversation_id
+        </sql>
+        <sql>
+            INSERT INTO AI_SESSION_EVENT (id, session_id, `timestamp`, event_type, message_type, message_content, payload, synthetic, metadata)
+            SELECT UUID(), conversation_id, `timestamp`, 'MESSAGE', type, content, '{}', FALSE, '{}'
+            FROM spring_ai_chat_memory
+            WHERE type IN ('USER', 'ASSISTANT')
+            ORDER BY conversation_id, sequence_id, id
+        </sql>
+        <rollback/>
+    </changeSet>
+</databaseChangeLog>

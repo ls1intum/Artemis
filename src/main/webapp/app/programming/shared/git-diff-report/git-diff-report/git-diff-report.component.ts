@@ -8,7 +8,8 @@ import { GitDiffFileComponent } from 'app/programming/shared/git-diff-report/git
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { RepositoryDiffInformation } from 'app/programming/shared/utils/diff.utils';
 
 @Component({

@@ -7,7 +7,6 @@
             "courseToImport": "Kurs für Aufgaben Import",
             "noExercisesFound": "Keine importierten Aufgaben gefunden!",
             "exerciseToImport": "Bitte wähle die zu importierende Aufgabe aus",
-            "loginAsInstructorOrEditor": "Bitte melde dich als Instruktor oder Editor an!",
             "coursesLoading": "Kurse werden geladen, bitte ein wenig Geduld",
             "error": {
                 "loadingStatus": "Sharing Profile ist nicht aktiv!",
@@ -19,8 +18,12 @@
                 "noImportedExercises": "Keine importierten Aufgaben gefunden",
                 "loadingCourses": "Fehler beim Laden der Kurse",
                 "loadingBasket": "Fehler beim Laden des Imports",
-                "atLeastEditorNeeded": "Du musst mindestens Editorrechte haben! Bitte melde dich entsprechend an."
-            }
+                "export": "Kann Aufgabe nicht exportieren: {{ message }}",
+                "noRedirect": "Die Austauschplattform hat keinen Exportlink zurückgegeben.",
+                "loadingDetails": "Die Aufgabendetails konnten nicht von der Austauschplattform geladen werden: {{message}}"
+            },
+            "import": "Programmieraufgabe aus der Austauschplattform importieren",
+            "export": "Exportieren in die Austauschplattform"
         }
     },
     "health": {

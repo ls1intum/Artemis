@@ -37,5 +37,12 @@ public enum AuthenticationMechanism {
      * A build agent used the token of the build job it is currently processing, which is valid only for the
      * repositories of that job and only while the job is running
      */
-    BUILD_JOB_TOKEN
+    BUILD_JOB_TOKEN,
+
+    /**
+     * A coding agent used the personal access token of an instructor or editor, which opens only the template, solution, tests and auxiliary
+     * repositories of exercises in the courses of its owner, and lets it push only while an exercise is still a draft. Appended at the end,
+     * because the access log stores the position of a mechanism.
+     */
+    AGENT_ACCESS_TOKEN
 }

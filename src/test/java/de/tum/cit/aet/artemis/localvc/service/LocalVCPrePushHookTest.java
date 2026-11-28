@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localvc.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.CommitBuilder;
@@ -33,6 +35,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 
 /**
  * Unit tests for the checks Artemis runs before it accepts a push.
@@ -242,6 +245,66 @@ class LocalVCPrePushHookTest {
         run(forcePush);
 
         assertThat(forcePush.getResult()).as("an instructor who may force push is let through").isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+    }
+
+    private void useHookOfPersonalAccessToken() {
+        User owner = new User();
+        owner.setId(1L);
+        owner.setLogin("ge12abc");
+        hook = new LocalVCPrePushHook(localVCServletService, owner, new GitOperationAudit(), () -> AuthenticationMechanism.AGENT_ACCESS_TOKEN);
+    }
+
+    @Test
+    void onPreReceive_aPersonalAccessTokenCannotForcePushEvenWhenItsOwnerCan() throws Exception {
+        // A bare repository keeps nothing from which a rewritten history could be restored, so a token never gets this permission, whatever its owner may do.
+        ObjectId firstCommit = commitWithRegularFile("Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8));
+        ObjectId rewrittenCommit = commitWithRegularFile("Main.java", "class Main { int rewritten; }".getBytes(StandardCharsets.UTF_8));
+        pointDefaultBranchAt(firstCommit);
+        useHookOfPersonalAccessToken();
+        ReceiveCommand forcePush = new ReceiveCommand(firstCommit, rewrittenCommit, DEFAULT_REF, ReceiveCommand.Type.UPDATE_NONFASTFORWARD);
+
+        run(forcePush);
+
+        assertThat(forcePush.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(forcePush.getMessage()).isEqualTo("A personal access token cannot force push.");
+        verify(localVCServletService, never()).isUserAllowedToForcePush(any(), any());
+        verify(localVCServletService, never()).examineAgentPush(any(), any(), any());
+    }
+
+    @Test
+    void onPreReceive_aPersonalAccessTokenPushIsRefusedWhenTheExerciseWasReleasedMeanwhile() throws Exception {
+        useHookOfPersonalAccessToken();
+        when(localVCServletService.examineAgentPush(any(), any(), any())).thenReturn(Optional.of("It is visible to students."));
+        ReceiveCommand command = receive(commitWithRegularFile("Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8)), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(command.getMessage()).isEqualTo("It is visible to students.");
+    }
+
+    @Test
+    void onPreReceive_aPersonalAccessTokenPushOfADraftIsLetThrough() throws Exception {
+        useHookOfPersonalAccessToken();
+        when(localVCServletService.examineAgentPush(any(), any(), any())).thenReturn(Optional.empty());
+        ReceiveCommand command = receive(commitWithRegularFile("Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8)), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+        verify(localVCServletService).examineAgentPush(any(), any(), eq(command));
+    }
+
+    @Test
+    void onPreReceive_aPersonalAccessTokenPushIsRefusedWhenTheExerciseCannotBeExamined() throws Exception {
+        useHookOfPersonalAccessToken();
+        when(localVCServletService.examineAgentPush(any(), any(), any())).thenThrow(new IllegalStateException("exercise vanished"));
+        ReceiveCommand command = receive(commitWithRegularFile("Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8)), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(command.getMessage()).isEqualTo("An error occurred while checking the permissions of the token.");
     }
 
     @Test

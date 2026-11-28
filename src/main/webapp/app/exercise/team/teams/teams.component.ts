@@ -15,7 +15,7 @@ import { TeamUpdateButtonComponent } from '../team-update-dialog/team-update-but
 import { TeamDeleteButtonComponent } from '../team-update-dialog/team-delete-button.component';
 import { TeamStudentsListComponent } from '../team-participate/team-students-list.component';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
-import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 

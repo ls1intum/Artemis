@@ -20,7 +20,11 @@ import { parseJson } from 'app/foundation/util/json.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { createApollonLabels } from 'app/modeling/shared/modeling-editor/apollon-labels';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TumAetUiButtonDirective, TumAetUiDialogService, TumAetUiInputDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 type ApollonEditorHostElement = HTMLElement & { __apollonEditor?: ApollonEditor };
 
