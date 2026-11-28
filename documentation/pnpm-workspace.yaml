@@ -59,7 +59,7 @@ overrides:
   # skips escaping after a closed script or style element). Both are fixed from 8.1.1 only, with no patched 7.x release.
   # Reached through cheerio and hast-util-raw, whose ranges stop at 7.x. Build-time HTML processing only, never served.
   parse5: '8.1.1'
-  postcss: '8.5.32'
+  postcss: '8.5.34'
   # CVE-2026-9358 (DoS through uncontrolled AST recursion). Two majors are reachable
   # in the docs tree, so both lines are pinned to their patched release.
   'postcss-selector-parser@6': '6.1.5'
