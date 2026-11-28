@@ -1,4 +1,5 @@
-import { TumAetUiDialogRef, TumAetUiDialogService, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';

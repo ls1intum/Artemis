@@ -222,8 +222,10 @@ For programming exercises, use [Export student repositories in bulk](#export-stu
 levels of detail — **Without test cases**, **With test cases**, and **With test cases and feedback**, which adds a copy
 of the feedback given for each failed test. Every other exercise type produces the plain file directly.
 
-The file is assembled in your browser from the data already on the page, so it contains exactly the participations the
-page shows.
+The export always covers the whole exercise, whatever page, search or filter the table shows. It contains the latest
+grade-relevant result of each participation. Unrated results, for example of late submissions, are not exported, and
+participations without a grade-relevant result are left out. A programming participation is also left out while the
+result of its newest submission from before the due date is still pending.
 
 ### Export participant names
 

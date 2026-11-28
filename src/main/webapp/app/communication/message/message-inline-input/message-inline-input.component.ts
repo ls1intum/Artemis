@@ -13,7 +13,7 @@ import { Subscription } from 'rxjs';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 
 @Component({
     selector: 'jhi-message-inline-input',

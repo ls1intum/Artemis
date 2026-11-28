@@ -151,8 +151,8 @@ describe('ProgrammingExerciseLanguageComponent', () => {
             expect(getSequentialTestRunsCheckbox().disabled).toBe(true);
         });
 
-        it('should be disabled when importing from the sharing platform', async () => {
-            await setUp({ isImportFromSharing: true });
+        it('should be disabled when using an external import', async () => {
+            await setUp({ isExternalImport: true });
             expect(getSequentialTestRunsCheckbox().disabled).toBe(true);
         });
     });
@@ -188,7 +188,7 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         it.each([
             ['importing an existing exercise', { isImportFromExistingExercise: true }],
             ['importing from a file', { isImportFromFile: true }],
-            ['importing from the sharing platform', { isImportFromSharing: true }],
+            ['using an external import', { isExternalImport: true }],
         ])('should be disabled when %s', async (_description, configOverrides) => {
             await setUp(configOverrides);
             expect(getLanguageSelect().disabled).toBe(true);
@@ -230,19 +230,19 @@ describe('ProgrammingExerciseLanguageComponent', () => {
         it.each([
             ['importing an existing exercise', { isImportFromExistingExercise: true }],
             ['importing from a file', { isImportFromFile: true }],
-            ['importing from the sharing platform', { isImportFromSharing: true }],
+            ['using an external import', { isExternalImport: true }],
         ])('should be disabled when %s', (_description, configOverrides) => {
             setUp(configOverrides);
             expect(getProjectTypeButtons()).toHaveLength(2);
             expect(getProjectTypeButtons().every((button) => button.disabled)).toBe(true);
         });
 
-        it('should not offer the with dependencies option when importing from the sharing platform', () => {
+        it('should not offer the with dependencies option when using an external import', () => {
             const isEditFieldDisplayedRecord = { programmingLanguage: true, projectType: true, withExemplaryDependency: true, packageName: true };
             fixture.componentRef.setInput('isEditFieldDisplayedRecord', isEditFieldDisplayedRecord);
             setUp({});
             expect(fixture.nativeElement.querySelector('#field_with_dependencies')).not.toBeNull();
-            setUp({ isImportFromSharing: true });
+            setUp({ isExternalImport: true });
             expect(fixture.nativeElement.querySelector('#field_with_dependencies')).toBeNull();
         });
     });

@@ -6,7 +6,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TumAetUiTableSortEvent } from '@tumaet/ui-angular';
+import { TumAetUiTableSortEvent } from '@tumaet/ui-angular/table-directive';
 
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 import { LtiConfigurationComponent } from 'app/admin/lti-configuration/lti-configuration.component';

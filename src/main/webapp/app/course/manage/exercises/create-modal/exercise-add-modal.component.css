@@ -58,6 +58,12 @@
     overflow: hidden;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .exercise-card {
+        transition: none;
+    }
+}
+
 .exercise-card::before {
     content: '';
     position: absolute;

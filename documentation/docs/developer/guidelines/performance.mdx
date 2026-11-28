@@ -298,6 +298,8 @@ List<Exercise> findExercisesWithSubmissions(@Param("courseId") Long courseId);
 
 Be cautious: fetching too many relationships at once can lead to large result sets and degraded performance.
 
+CI points out repeated queries on pull requests, see the [query report](../query-report.mdx).
+
 ## Optimal Use of Left Join Fetch
 
 ### Balance Between Queries

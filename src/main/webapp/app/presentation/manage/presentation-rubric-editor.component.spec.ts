@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { PresentationRubricEditorComponent } from 'app/presentation/manage/presentation-rubric-editor.component';
