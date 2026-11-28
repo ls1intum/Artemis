@@ -15,15 +15,11 @@ import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCardComponent,
-    TumAetUiEmptyStateComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
+import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular/empty-state';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ActivatedRoute } from '@angular/router';

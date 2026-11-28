@@ -1,5 +1,6 @@
 import { Component, input, output, signal } from '@angular/core';
-import { type TumAetUiInputSize, TumAetUiSearchFieldComponent } from '@tumaet/ui-angular';
+import { type TumAetUiInputSize } from '@tumaet/ui-angular/input';
+import { TumAetUiSearchFieldComponent } from '@tumaet/ui-angular/search-field';
 
 @Component({
     selector: 'jhi-search-filter',

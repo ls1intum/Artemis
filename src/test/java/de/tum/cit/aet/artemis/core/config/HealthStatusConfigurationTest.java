@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.boot.context.properties.source.ConfigurationPropertySources;
 import org.springframework.boot.env.YamlPropertySourceLoader;
-import org.springframework.boot.health.actuate.endpoint.SimpleHttpCodeStatusMapper;
-import org.springframework.boot.health.actuate.endpoint.SimpleStatusAggregator;
+import org.springframework.boot.health.actuate.endpoint.HttpCodeStatusMapper;
+import org.springframework.boot.health.actuate.endpoint.StatusAggregator;
 import org.springframework.boot.health.autoconfigure.actuate.endpoint.HealthProperties;
 import org.springframework.boot.health.contributor.Status;
 import org.springframework.core.env.MutablePropertySources;
@@ -30,9 +30,9 @@ class HealthStatusConfigurationTest {
     // The test classpath has an application.yml of its own that shadows the one of the application, so the application's file is read from the sources.
     private static final Resource MAIN_APPLICATION_YML = new FileSystemResource("src/main/resources/config/application.yml");
 
-    private static SimpleStatusAggregator aggregator;
+    private static StatusAggregator aggregator;
 
-    private static SimpleHttpCodeStatusMapper httpMapper;
+    private static HttpCodeStatusMapper httpMapper;
 
     @BeforeAll
     static void loadConfiguredStatusHandling() throws IOException {
@@ -41,8 +41,8 @@ class HealthStatusConfigurationTest {
             sources.addLast(source);
         }
         HealthProperties.Status status = new Binder(ConfigurationPropertySources.from(sources)).bind("management.endpoint.health.status", HealthProperties.Status.class).get();
-        aggregator = new SimpleStatusAggregator(status.getOrder());
-        httpMapper = new SimpleHttpCodeStatusMapper(status.getHttpMapping());
+        aggregator = StatusAggregator.of(status.getOrder());
+        httpMapper = HttpCodeStatusMapper.of(status.getHttpMapping());
     }
 
     @Test

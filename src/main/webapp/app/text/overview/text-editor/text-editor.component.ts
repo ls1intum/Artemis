@@ -20,7 +20,7 @@ import { EditorViewingPurpose, ExerciseSubmission } from 'app/exercise/shared/ex
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { AssessmentSubmissionPanelComponent } from 'app/assessment/manage/assessment-submission-panel/assessment-submission-panel.component';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';

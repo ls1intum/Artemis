@@ -2,7 +2,7 @@ import { Component, input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { TumAetUiSplitterComponent } from '@tumaet/ui-angular';
+import { TumAetUiSplitterComponent } from '@tumaet/ui-angular/splitter';
 import { FeedbackSplitComponent } from 'app/exercise/feedback-bottom-panel/feedback-split.component';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { of } from 'rxjs';

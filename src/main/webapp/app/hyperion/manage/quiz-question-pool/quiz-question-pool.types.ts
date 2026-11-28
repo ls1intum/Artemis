@@ -104,6 +104,12 @@ export interface PoolLectureUnitGroup {
     units: PoolLectureUnit[];
 }
 
+/** A competency the create-quiz dialog offers. */
+export interface CompetencyOption {
+    id: number;
+    title: string;
+}
+
 export interface PoolSettings {
     poolGenerationEnabled: boolean;
     singleChoiceQuestionsPerLectureUnit: number;
@@ -159,6 +165,9 @@ export interface PoolQuestionView {
     verdicts: PoolVerdictView[];
     scorePercent: number;
     expanded: boolean;
+    /** Whether the question or one of its options carries an explanation. */
+    hasExplanations: boolean;
+    explanationsShown: boolean;
     busy: boolean;
     reviewSeverity: 'success' | 'secondary' | 'contrast';
     reviewLabelKey: string;
@@ -186,4 +195,29 @@ export interface PoolQuestionQuery {
     flagged?: boolean;
     page: number;
     size: number;
+}
+
+/** What to draw from the pool for a new quiz; absent lecture units, types or difficulties mean all of them. */
+export interface PoolSelectionRequest {
+    competencyIds: number[];
+    lectureUnitIds?: number[];
+    count: number;
+    questionTypes?: GeneratedQuestionType[];
+    difficulties?: PoolDifficulty[];
+}
+
+/** The outcome of one draw; questions holds fewer than requested when the pool held fewer eligible ones. */
+export interface PoolSelection {
+    questions: PoolQuestion[];
+    requested: number;
+    competencyIdsWithoutQuestions: number[];
+}
+
+/** How many questions a draw may take from one cell of the pool: approved, judged, with current material. */
+export interface PoolSelectionCandidate {
+    competencyId: number;
+    lectureUnitId: number;
+    questionType: GeneratedQuestionType;
+    difficulty: PoolDifficulty;
+    count: number;
 }

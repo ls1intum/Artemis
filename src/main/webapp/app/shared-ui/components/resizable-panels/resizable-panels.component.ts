@@ -21,14 +21,8 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgTemplateOutlet } from '@angular/common';
 import { CdkScrollable } from '@angular/cdk/scrolling';
-import {
-    TumAetUiSplitterComponent,
-    TumAetUiTabComponent,
-    TumAetUiTabListComponent,
-    TumAetUiTabPanelComponent,
-    TumAetUiTabPanelsComponent,
-    TumAetUiTabsComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiSplitterComponent } from '@tumaet/ui-angular/splitter';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabPanelComponent, TumAetUiTabPanelsComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular/tabs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { parseJson } from 'app/foundation/util/json.util';
