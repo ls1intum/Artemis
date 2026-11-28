@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
@@ -146,11 +147,11 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationIndependentTest
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckSubmissionAllowance_testExamNotStartedIsRejected() {
-        exam.setTestExam(true);
+        exam.setExamMode(ExamMode.TEST);
         exam.setStartDate(ZonedDateTime.now().minusMinutes(90));
         examRepository.save(exam);
         // the service reads the exam through the exercise, so it has to be a test exam there as well
-        exercise.getExerciseGroup().getExam().setTestExam(true);
+        exercise.getExerciseGroup().getExam().setExamMode(ExamMode.TEST);
         // the working time of a test exam counts from the moment the student started it, so there is no end date yet
         assertThat(studentExam.getStartedDate()).isNull();
 

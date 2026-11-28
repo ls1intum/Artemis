@@ -2,7 +2,7 @@
 id: course-configuration
 title: Course Configuration
 sidebar_label: Course Configuration
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-08
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -34,12 +34,12 @@ enrollment.
 **Title** is the course name everywhere it appears — the dashboard, course headers, notifications. **Color** sets the
 accent used throughout the course, which is what lets a student tell two courses apart at a glance.
 
-**Short Name** is the identifier: 3 to 7 letters and digits, used in URLs, repository names and group names.
+**Short Name** is the identifier: 3 to 24 letters and digits, starting with a letter, used in repository names.
 
 <Callout variant={CalloutVariant.warning}>
 
-  The short name cannot be changed after the course is created. Everything named after it — every repository, every
-  group — keeps that name for the life of the course.
+  The short name cannot be changed after the course is created. Everything named after it, such as every repository,
+  keeps that name for the life of the course.
 
 </Callout>
 
@@ -75,6 +75,34 @@ grade-relevant and the data is deleted sooner, a year by default.
 **Data-retention hold** suspends that deletion entirely. Turn it on while an objection or legal proceeding about the
 course is pending, because a pending proceeding extends the retention period by law: a course on hold is never warned
 about, and never included in, the automatic deletion of old student data. Turn it off once the matter is settled.
+
+### Author of the First Commit
+
+Artemis creates the first commit of a repository itself, and **Author of the first commit** decides who is shown as
+its author, for example in the commit history of the repository:
+
+- **The user who creates the exercise** is the default and the behavior of every course that never changed this
+  setting. Nothing is rewritten: a repository keeps the author it was created with. A student repository keeps the
+  author of the first commit of the template repository. That author can differ from the creator of the exercise if
+  the course used another option when the exercise was created or imported.
+- **The Artemis placeholder** uses the name and email address that the server configures as `artemis.git.name` and
+  `artemis.git.email`, so no person appears as the author.
+- **A name and email address of your choice** uses an identity you enter, for example a course team. Students see this
+  address in the commit history, so use one that you are happy to show them. The name may have up to 100 characters and
+  the address up to 254. A name must not contain `<` or `>` or line breaks, and the address must be a valid email address.
+
+The setting applies to these repositories, after you saved it:
+
+- the template, solution and test repository of a programming exercise that you create from scratch or import from a
+  file. A file import carries no history, so its first commit is the import itself;
+- the repository of every student, for each repository that Artemis creates from then on. This includes the exercises
+  that existed before you chose, and exercises that were imported from another exercise. A student repository starts
+  with one commit that copies the template, and the setting decides its author.
+
+It does not change repositories that already exist, and it does not rewrite history. An exercise that you import from
+another exercise keeps the history of its source, so its template, solution and test repository keep the author of the
+first commit they were copied with. The auxiliary repositories keep their author as well. The setting is part of the
+form of an existing course. It is not shown while a course is created, so it starts with the default.
 
 ## Exercises and Grading
 
@@ -187,3 +215,23 @@ Both switches cover text, modeling and programming exercises, but a programming 
 semi-automatically, with manual assessment enabled alongside the tests. There is no per-exercise switch: every
 exercise in the course follows these two, as far as its type supports them. See
 [AI-Assisted Feedback](/instructor/assessment-grading/ai-feedback) for the details.
+
+## Deleting a Course
+
+Administrators delete a course on its **Settings** page. The confirmation dialog first lists what the deletion removes
+with the course, such as users, exercises, exams, lectures, student work, posts and builds, and asks you to type the
+course title.
+
+The deletion runs in the background. After you confirm, a progress dialog shows the current step and how far the
+deletion is. Large courses with many student repositories can take several minutes, and the request no longer has to
+wait for them, so it does not time out. If you reload the page while the deletion runs, the progress dialog opens again.
+When the deletion is completed, close the dialog to return to your courses. While a deletion, an archive or a reset of
+the course is running, no other one of these can be started for it.
+
+## Student Home
+
+Students enter a course on [Home](/student/getting-started/courses#course-home). Use **Student Home: learning approach** to explain how students should approach this course, what learning through practice or discussion means here, and how to ask for support. This optional field accepts up to 2,000 characters. Clearing and saving it removes the guidance.
+
+The guidance appears on a student's first Home visit. When [AI welcomes](/admin/course-home-ai) are configured and the student permits AI, it also informs contextual encouragement. Home otherwise uses deterministic messages. The teaching team is derived from active course instructors, editors and tutors, using their public names and profile pictures.
+
+Home links to existing exercises, lectures, announcements, FAQs and communication threads. It respects publication dates, individual deadlines and course feature availability. Its progress counts submitted available tasks, counting interchangeable variants once; it does not claim that submissions establish mastery.

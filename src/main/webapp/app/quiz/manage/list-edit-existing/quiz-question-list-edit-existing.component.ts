@@ -1,10 +1,12 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, effect, inject, input, output, signal } from '@angular/core';
+import { orderBy } from 'lodash-es';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/quiz/manage/confirm-import-invalid-questions-modal/quiz-confirm-import-invalid-questions-modal.component';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
+import { ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -23,7 +25,14 @@ import { FormsModule } from '@angular/forms';
 import { FileService } from 'app/foundation/service/file.service';
 import { parseJson } from 'app/foundation/util/json.util';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogComponent, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { QuizQuestionPreviewComponent } from 'app/quiz/manage/quiz-question-preview/quiz-question-preview.component';
 
@@ -37,7 +46,7 @@ export enum State {
     selector: 'jhi-quiz-question-list-edit-existing',
     templateUrl: './quiz-question-list-edit-existing.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    styleUrls: ['../../shared/quiz.scss'],
+    styleUrls: ['../../shared/quiz.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         TranslateDirective,
@@ -46,13 +55,20 @@ export enum State {
         ArtemisTranslatePipe,
         TumAetUiButtonDirective,
         TumAetUiButtonComponent,
+        TumAetUiCheckboxComponent,
         TumAetUiDialogComponent,
+        TumAetUiInputDirective,
+        TumAetUiSelectComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
         TumAetUiTooltipDirective,
         QuizQuestionPreviewComponent,
     ],
 })
 export class QuizQuestionListEditExistingComponent {
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
+    private translateService = inject(TranslateService);
     private fileService = inject(FileService);
     private courseManagementService = inject(CourseManagementService);
     private examManagementService = inject(ExamManagementService);
@@ -79,6 +95,17 @@ export class QuizQuestionListEditExistingComponent {
     readonly exams = signal<Exam[]>([]);
     readonly allExistingQuestions = signal<QuizQuestion[]>([]);
     readonly existingQuestions = signal<QuizQuestion[]>([]);
+    readonly sortField = signal('');
+    readonly sortOrder = signal(1);
+    readonly sortedQuestions = computed(() => {
+        const field = this.sortField();
+        if (!field) {
+            // Keep the order returned by the server until the user picks a column.
+            return this.existingQuestions();
+        }
+        const key = (question: QuizQuestion): string => String((field === 'exercise' ? question.exercise?.title : question[field as 'title' | 'type']) ?? '').toLowerCase();
+        return orderBy(this.existingQuestions(), [key], [this.sortOrder() === 1 ? 'asc' : 'desc']);
+    });
     searchQueryText?: string;
     dndFilterEnabled = true;
     mcqFilterEnabled = true;
@@ -88,6 +115,11 @@ export class QuizQuestionListEditExistingComponent {
     readonly previewVisible = signal(false);
     readonly previewQuestion = signal<QuizQuestion | undefined>(undefined);
     protected readonly faEye = faEye;
+
+    onSort(event: TumAetUiTableSortEvent): void {
+        this.sortField.set(event.field);
+        this.sortOrder.set(event.order);
+    }
 
     constructor() {
         effect(() => {
@@ -306,27 +338,24 @@ export class QuizQuestionListEditExistingComponent {
         const validQuizQuestions = quizQuestions.filter((quizQuestion) => !invalidQuizQuestionMap[quizQuestion.id!]);
         const invalidQuizQuestions = quizQuestions.filter((quizQuestion) => invalidQuizQuestionMap[quizQuestion.id!]);
         if (invalidQuizQuestions.length > 0) {
-            const ref = this.dialogService.open(QuizConfirmImportInvalidQuestionsModalComponent, {
-                width: '50rem',
-                breakpoints: {
-                    '850px': '95vw',
+            const ref = this.dialogService.open<QuizConfirmImportInvalidQuestionsModalComponent, boolean, { invalidFlaggedQuestions: ValidationReason[] }>(
+                QuizConfirmImportInvalidQuestionsModalComponent,
+                {
+                    size: 'medium',
+                    closeOnEscape: true,
+                    dismissableMask: true,
+                    showHeader: false,
+                    ariaLabel: this.translateService.instant('artemisApp.quizExercise.importWarningShort'),
+                    data: {
+                        invalidFlaggedQuestions: invalidQuizQuestions.map((question, index) => {
+                            return {
+                                translateKey: 'artemisApp.quizExercise.invalidReasons.questionHasInvalidFlaggedElements',
+                                translateValues: { index: index + 1 },
+                            };
+                        }),
+                    },
                 },
-                modal: true,
-                closable: true,
-                closeOnEscape: true,
-                dismissableMask: true,
-                draggable: false,
-                resizable: false,
-                showHeader: false,
-                data: {
-                    invalidFlaggedQuestions: invalidQuizQuestions.map((question, index) => {
-                        return {
-                            translateKey: 'artemisApp.quizExercise.invalidReasons.questionHasInvalidFlaggedElements',
-                            translateValues: { index: index + 1 },
-                        };
-                    }),
-                },
-            });
+            );
             ref?.onClose.subscribe(async (confirmed: boolean | undefined) => {
                 if (confirmed) {
                     const newQuizQuestions = validQuizQuestions.concat(invalidQuizQuestions);

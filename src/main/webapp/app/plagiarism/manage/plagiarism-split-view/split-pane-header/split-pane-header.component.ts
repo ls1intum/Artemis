@@ -2,8 +2,6 @@ import { Component, OnDestroy, OnInit, effect, input, output, signal, untracked 
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
 import { Subject, Subscription } from 'rxjs';
 import { PlagiarismFileElement } from 'app/plagiarism/shared/entities/PlagiarismFileElement';
-import { NgbDropdown, NgbDropdownItem } from '@ng-bootstrap/ng-bootstrap';
-import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -19,8 +17,8 @@ export type FileWithHasMatch = {
 @Component({
     selector: 'jhi-split-pane-header',
     templateUrl: './split-pane-header.component.html',
-    styleUrls: ['./split-pane-header.component.scss'],
-    imports: [NgbDropdown, NgClass, FaIconComponent, NgbDropdownItem, TranslateDirective, ArtemisTranslatePipe],
+    styleUrls: ['./split-pane-header.component.css'],
+    imports: [FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class SplitPaneHeaderComponent implements OnInit, OnDestroy {
     readonly files = input<FileWithHasMatch[]>([]);

@@ -1,0 +1,22 @@
+# Values that make the chart render, for supporting_scripts/check_helm_chart.sh. None of them is a secret or a real host: the passwords are
+# a repeated word, and the JWT secret is the base64 form of zero bytes, so that no secret scanner mistakes them for a credential.
+artemis:
+  config:
+    serverUrl: https://artemis.example.org
+    admin:
+      password: exampleexampleexample
+    jwtBase64Secret: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+    operator:
+      name: Example operator
+      adminName: Example administrator
+      universityName: Example university
+postgresql:
+  auth:
+    password: exampleexampleexample
+registry:
+  password: exampleexampleexample
+broker:
+  auth:
+    password: exampleexampleexample
+gateway:
+  enabled: false

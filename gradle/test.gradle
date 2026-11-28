@@ -6,6 +6,10 @@ import java.time.Duration
 // Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
 tasks.withType(Test).configureEach {
 
+    // Tests depend on Docker, Testcontainers and images that Gradle does not see as inputs, and CI reads the
+    // console log of every run (failed tests, server starts), so a test result must never come from the build cache.
+    outputs.cacheIf("tests always run") { false }
+
     // Hard backstop against a hung test/deadlock. On timeout the build fails as `failure`, not the
     // opaque `cancelled` a GitHub job-timeout produces, so the merge gate shows a real failure. A global
     // JUnit per-method timeout is deliberately NOT used: SAME_THREAD cannot interrupt a deadlock, and

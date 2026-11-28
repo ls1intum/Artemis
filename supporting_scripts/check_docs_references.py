@@ -109,7 +109,10 @@ CLASS_ALLOWLIST: dict[str, str] = {
 # Names of settings that are not Artemis server properties although they start with the same word.
 # An entry that ends with a dot also covers the keys below it, because the keys below a map are chosen by the administrator.
 PROPERTY_ALLOWLIST: dict[str, str] = {
-    "artemis.llm.model-costs.": "the keys below model-costs are model names that the administrator chooses",
+    "artemis.atlas.orchestrator.max-atlasml-calls-per-run": "the AtlasML upgrade note explicitly tells administrators to remove this retired strict-binding setting",
+    "artemis.llm.model-costs": "the LLM configuration page tells administrators to remove this retired setting",
+    "artemis.llm.endpoints.": "the keys below endpoints are endpoint names that the administrator chooses",
+    "artemis.llm.presets.": "the keys below presets are preset names that the administrator chooses",
 }
 
 # Pages about another product than the Artemis web client. Their labels are texts of that product.
@@ -667,8 +670,8 @@ def self_test() -> None:
     assert len(found) == 3 and "NoSuchThingService" in found[0] and "noSuchMethod" in found[1] and "getCache" in found[2], found
     assert not unknown_classes(REPO_ROOT / page, "`PerNodeCacheEvictionService` `Course` `artemis.yml`\n", index), "known names must pass"
 
-    found = unknown_configuration(REPO_ROOT / page, "`artemis.no-such.property` `ARTEMIS_NOSUCH_PROPERTY` `artemis.deimos.llm.timeout-seconds` `artemis.example.com`\n"
-                                  "```yaml\nartemis:\n  deimos:\n    llm:\n      no-such-key: 1\n      timeout-seconds: 90\n```\n", index)
+    found = unknown_configuration(REPO_ROOT / page, "`artemis.no-such.property` `ARTEMIS_NOSUCH_PROPERTY` `artemis.weaviate.embedding.query-timeout` `artemis.example.com`\n"
+                                  "```yaml\nartemis:\n  weaviate:\n    embedding:\n      no-such-key: 1\n      query-timeout: 3s\n```\n", index)
     assert len(found) == 3, found
     assert any("no-such.property" in f for f in found) and any("ARTEMIS_NOSUCH" in f for f in found) and any("no-such-key" in f for f in found), found
 

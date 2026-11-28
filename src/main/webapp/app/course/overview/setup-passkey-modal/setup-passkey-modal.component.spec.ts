@@ -18,7 +18,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { User } from 'app/account/user/user.model';
 import { MODULE_FEATURE_PASSKEY } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 
 describe('SetupPasskeyModalComponent', () => {

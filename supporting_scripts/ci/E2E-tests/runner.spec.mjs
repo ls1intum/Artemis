@@ -174,11 +174,14 @@ function executeContainer({ exit = 0, pullExit = 0, reporter = false, evidence =
     writeFileSync(join(root, '.successful'), 'stale');
     writeFileSync(join(root, 'evidence'), evidence);
     cpSync(join(repository, 'supporting_scripts/ci/E2E-tests/execute.sh'), join(root, 'execute.sh'));
+    cpSync(join(repository, 'supporting_scripts/ci/pull-through-registry-proxy.sh'), join(root, 'supporting_scripts/ci/pull-through-registry-proxy.sh'));
     writeFileSync(join(root, 'supporting_scripts/ci/E2E-tests/verify-image-revision.sh'), '#!/bin/sh\nexit 0\n');
     writeFileSync(
         join(root, 'bin/docker'),
         `#!/bin/sh
+# The stack lists a ghcr.io image, which the pull helper fetches directly, so no test needs the registry proxy.
 case " $* " in
+  *" config --images "*) echo ghcr.io/example/stack:1; exit 0 ;;
   *" pull "*) exit ${pullExit} ;;
 esac
 ${reporter ? 'touch ../../src/test/playwright/test-reports/.reporter-failed' : ''}
@@ -210,7 +213,8 @@ test('does not retain success evidence after an unsuccessful container run', () 
 
 test('stops when pulling the test images fails', () => {
     const result = executeContainer({ pullExit: 7 });
-    assert.equal(result.status, 7, result.stdout + result.stderr);
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.match(result.stdout, /Could not pull images::ghcr\.io\/example\/stack:1/);
     assert.equal(existsSync(join(result.root, '.successful')), false);
     assert.match(readFileSync(join(result.root, 'output'), 'utf8'), /infrastructure_failed=true/);
 });

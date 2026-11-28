@@ -6,14 +6,11 @@ import { Subject, Subscription, concatMap, filter, tap } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiDatePickerComponent,
-    TumAetUiInputDirective,
-    TumAetUiListComponent,
-    TumAetUiListItemDirective,
-    TumAetUiRadioButtonComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular/list';
+import { TumAetUiRadioButtonComponent } from '@tumaet/ui-angular/radio-button';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { getOS } from 'app/foundation/util/os-detector.util';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
@@ -25,7 +22,7 @@ import { SshUserSettingsService } from 'app/account/user/settings/credentials/ss
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './ssh-user-settings-key-details.component.html',
-    styleUrls: ['../../../user-settings.scss', '../ssh-user-settings.component.scss'],
+    styleUrls: ['../../../user-settings.css', '../ssh-user-settings.component.css'],
     imports: [
         TranslateDirective,
         DocumentationLinkComponent,
@@ -48,7 +45,9 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
 
     readonly documentationType: DocumentationType = 'SshSetup';
     readonly invalidKeyFormat = 'invalidKeyFormat';
-    readonly keyAlreadyExists = 'keyAlreadyExists';
+    readonly keyNotAccepted = 'keyNotAccepted';
+    readonly keyExpiryDateInPast = 'keyExpiryDateInPast';
+    readonly tooManyKeys = 'tooManyKeys';
     readonly keyLabelTooLong = 'keyLabelTooLong';
 
     protected readonly faEdit = faEdit;
@@ -147,7 +146,7 @@ export class SshUserSettingsKeyDetailsComponent implements OnInit, OnDestroy {
             },
             error: (error) => {
                 const errorKey = error.error.errorKey;
-                if ([this.invalidKeyFormat, this.keyAlreadyExists, this.keyLabelTooLong].indexOf(errorKey) > -1) {
+                if ([this.invalidKeyFormat, this.keyNotAccepted, this.keyLabelTooLong, this.keyExpiryDateInPast, this.tooManyKeys].indexOf(errorKey) > -1) {
                     this.alertService.error(`artemisApp.userSettings.sshSettingsPage.${errorKey}`);
                 } else {
                     this.alertService.error('artemisApp.userSettings.sshSettingsPage.saveFailure');

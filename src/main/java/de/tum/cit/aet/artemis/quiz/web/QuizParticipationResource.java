@@ -99,6 +99,10 @@ public class QuizParticipationResource {
         log.debug("REST request to start quiz exercise participation : {}", exerciseId);
         QuizExercise exercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
 
+        if (exercise.isExamExercise()) {
+            throw new BadRequestAlertException("The participation in a quiz of an exam is started through the exam", "quizExercise", "examQuizNotStartable");
+        }
+
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             throw new AccessForbiddenException("Students cannot start an exercise before the release date");
         }
@@ -114,8 +118,9 @@ public class QuizParticipationResource {
         var result = resultRepository.findFirstBySubmissionParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(new Result());
         QuizSubmission submission;
         if (result.getId() == null) {
-            // Load the live submission of the participation
-            submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().findFirst().orElseThrow();
+            // Load the live submission of the participation: the oldest one, which is the one every other request of the student works on
+            submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().min(Comparator.comparing(QuizSubmission::getId))
+                    .orElseThrow();
         }
         else {
             // Load the actual submission of the result
@@ -203,7 +208,9 @@ public class QuizParticipationResource {
                 submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
             }
             else {
-                submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participationId).stream().findFirst().orElseThrow();
+                // The oldest submission, like in every other request of the student
+                submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participationId).stream().min(Comparator.comparing(QuizSubmission::getId))
+                        .orElseThrow();
             }
         }
 

@@ -1,0 +1,21 @@
+<div jhi-build-job-search class="flex min-w-0 items-center gap-2" [(searchTerm)]="searchTerm" (searchRequested)="searchRequested.emit()"></div>
+<tumaet-ui-button data-testid="refresh-builds" size="small" severity="secondary" (clicked)="refreshRequested.emit()" [ariaLabel]="'metrics.refresh.button' | artemisTranslate">
+    <fa-icon [icon]="faSync" />
+    <span class="hidden md:inline" jhiTranslate="metrics.refresh.button"></span>
+</tumaet-ui-button>
+@if (loading()) {
+    <span data-testid="builds-loading" class="text-muted-color text-sm" jhiTranslate="artemisApp.buildQueue.filter.search.loading"></span>
+}
+<span class="flex-1"></span>
+<tumaet-ui-button
+    data-testid="filter-builds"
+    size="small"
+    [severity]="appliedFilterCount() ? 'success' : 'secondary'"
+    (clicked)="filterRequested.emit()"
+    [ariaLabel]="'artemisApp.buildQueue.filter.open' | artemisTranslate: { num: appliedFilterCount() }"
+>
+    <fa-icon [icon]="faFilter" />
+    <span class="hidden md:inline">
+        <span jhiTranslate="artemisApp.buildQueue.filter.open" [translateValues]="{ num: appliedFilterCount() }"></span>
+    </span>
+</tumaet-ui-button>

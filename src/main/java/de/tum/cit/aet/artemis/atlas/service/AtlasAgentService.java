@@ -14,10 +14,9 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
+import org.springframework.ai.session.SessionService;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
@@ -64,9 +63,7 @@ public class AtlasAgentService {
 
     private static final Pattern PLAN_MARKER_PATTERN = Pattern.compile("%%ARTEMIS_PLAN:([A-Z_]+)(?::exerciseId=(\\d+))?(?::exerciseTitle=([^%]*))?%%");
 
-    private final ChatClient chatClient;
-
-    private final ChatMemory chatMemory;
+    private final SessionService sessionService;
 
     private final AtlasAgentDelegationService delegationService;
 
@@ -92,14 +89,13 @@ public class AtlasAgentService {
 
     private final AtlasAgentPreviewService previewService;
 
-    public AtlasAgentService(@Nullable ChatClient chatClient, @Nullable ChatMemory chatMemory, AtlasAgentDelegationService delegationService,
+    public AtlasAgentService(@Nullable SessionService sessionService, AtlasAgentDelegationService delegationService,
             @Qualifier("mainAgentToolCallbackProvider") AtlasToolSurface mainAgentToolCallbackProvider,
             @Qualifier("competencyExpertToolCallbackProvider") AtlasToolSurface competencyExpertToolCallbackProvider,
             @Qualifier("competencyMapperToolCallbackProvider") AtlasToolSurface competencyMapperToolCallbackProvider,
             @Qualifier("exerciseMapperToolCallbackProvider") AtlasToolSurface exerciseMapperToolCallbackProvider, ExecutionPlanStateManagerService executionPlanStateManagerService,
             AtlasAgentSessionCacheService atlasAgentSessionCacheService, AtlasAgentPreviewService previewService) {
-        this.chatClient = chatClient;
-        this.chatMemory = chatMemory;
+        this.sessionService = sessionService;
         this.delegationService = delegationService;
         this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider.provider();
         this.competencyExpertToolCallbackProvider = competencyExpertToolCallbackProvider.provider();
@@ -121,10 +117,6 @@ public class AtlasAgentService {
      * @return result containing the AI response and competency modification flag
      */
     public AtlasAgentChatResponseDTO processChatMessage(String message, Long courseId, String sessionId) {
-        if (chatClient == null) {
-            return new AtlasAgentChatResponseDTO("Atlas Agent is not available. Please contact your administrator.", ZonedDateTime.now(), false, null, null, null, null);
-        }
-
         try {
             CompetencyExpertToolsService.setCurrentSessionId(sessionId);
             AtlasAgentToolsService.setCurrentCourseId(courseId);
@@ -171,10 +163,7 @@ public class AtlasAgentService {
             BatchRelationPreviewResponseDTO batchRelationPreview = CompetencyMappingToolsService.getBatchRelationPreview();
             RelationGraphPreviewDTO relationGraphPreview = CompetencyMappingToolsService.getRelationGraphPreview();
 
-            ExerciseCompetencyMappingDTO exerciseMappingPreview = ExerciseMappingToolsService.getExerciseMappingPreview();
-            if (exerciseMappingPreview == null) {
-                exerciseMappingPreview = atlasAgentSessionCacheService.getCachedExerciseMappingPreview(sessionId);
-            }
+            ExerciseCompetencyMappingDTO exerciseMappingPreview = getAvailableExerciseMappingPreview(sessionId);
 
             List<CompetencyRelationPreviewDTO> relationPreviews = previewService.convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
             RelationGraphPreviewDTO graphForDto = relationGraphPreview;
@@ -186,9 +175,8 @@ public class AtlasAgentService {
                     response != null ? response.length() : 0);
 
             // Store preview data in Hazelcast cache (keyed by assistant message index) instead of embedding markers in chat memory.
-            // The current response was already added to chat memory by Spring AI's MessageChatMemoryAdvisor,
-            // so the index of the current response = count - 1.
-            if (hasPreviewData) {
+            // Delegation has already stored a nonblank response, so its index is count - 1.
+            if (hasPreviewData && replyIsPersisted(response)) {
                 int assistantIndex = countAssistantMessages(sessionId) - 1;
                 log.debug("processChatMessage: storing preview at assistantIndex={}", assistantIndex);
                 if (assistantIndex >= 0) {
@@ -306,7 +294,7 @@ public class AtlasAgentService {
      * @return true if the service is ready, false otherwise
      */
     public boolean isAvailable() {
-        return chatClient != null && chatMemory != null;
+        return sessionService != null;
     }
 
     /**
@@ -318,10 +306,10 @@ public class AtlasAgentService {
      */
     public List<AtlasAgentHistoryMessageDTO> getConversationHistoryAsDTO(String sessionId) {
         try {
-            if (chatMemory == null) {
+            if (sessionService == null) {
                 return List.of();
             }
-            List<Message> messages = chatMemory.get(sessionId);
+            List<Message> messages = AtlasChatSessions.conversation(sessionService, sessionId);
 
             if (messages.isEmpty()) {
                 return List.of();
@@ -397,7 +385,7 @@ public class AtlasAgentService {
         }
 
         // Store preview data in cache for history reconstruction
-        if (!previews.isEmpty()) {
+        if (!previews.isEmpty() && replyIsPersisted(creationResponse)) {
             int assistantIndex = countAssistantMessages(sessionId) - 1;
             if (assistantIndex >= 0) {
                 atlasAgentSessionCacheService.storePreviewForMessage(sessionId, assistantIndex, new AtlasAgentSessionCacheService.MessagePreviewData(previews, null, null, null));
@@ -446,7 +434,7 @@ public class AtlasAgentService {
         List<CompetencyRelationPreviewDTO> relationPreviews = previewService.convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
 
         // Store preview data in cache for history reconstruction
-        if (relationPreviews != null && !relationPreviews.isEmpty()) {
+        if (relationPreviews != null && !relationPreviews.isEmpty() && replyIsPersisted(creationResponse)) {
             int assistantIndex = countAssistantMessages(sessionId) - 1;
             if (assistantIndex >= 0) {
                 atlasAgentSessionCacheService.storePreviewForMessage(sessionId, assistantIndex,
@@ -583,11 +571,7 @@ public class AtlasAgentService {
                 return new AtlasAgentChatResponseDTO(combinedResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, relationPreviews, graphPreview, null);
             }
             case EXERCISE_MAPPER -> {
-                // Fall back to Hazelcast when ThreadLocal is empty (cross-node execution)
-                ExerciseCompetencyMappingDTO exercisePreview = ExerciseMappingToolsService.getExerciseMappingPreview();
-                if (exercisePreview == null) {
-                    exercisePreview = atlasAgentSessionCacheService.getCachedExerciseMappingPreview(sessionId);
-                }
+                ExerciseCompetencyMappingDTO exercisePreview = getAvailableExerciseMappingPreview(sessionId);
                 log.info("delegateToNextStepAgent: EXERCISE_MAPPER produced exercisePreview={}", exercisePreview != null);
                 previewService.addAssistantMessageToMemory(sessionId, combinedResponse);
                 if (exercisePreview != null) {
@@ -601,6 +585,20 @@ public class AtlasAgentService {
                 return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, null, null, null);
             }
         }
+    }
+
+    /**
+     * Retrieves the latest usable mapping preview, avoiding both retained and cached data after a failed replacement.
+     *
+     * @param sessionId the session whose cached preview can be used when no local preview exists
+     * @return the available preview, or null while the latest attempt remains unsuccessful
+     */
+    private ExerciseCompetencyMappingDTO getAvailableExerciseMappingPreview(String sessionId) {
+        if (ExerciseMappingToolsService.hasRejectedExerciseMappingPreview()) {
+            return null;
+        }
+        ExerciseCompetencyMappingDTO preview = ExerciseMappingToolsService.getExerciseMappingPreview();
+        return preview != null ? preview : atlasAgentSessionCacheService.getCachedExerciseMappingPreview(sessionId);
     }
 
     /**
@@ -721,38 +719,56 @@ public class AtlasAgentService {
      */
     private String getActionInstructionForAgent(ExecutionPlanStateManagerService.NextStepContext nextStep) {
         return switch (nextStep.agentType()) {
-            case COMPETENCY_MAPPER -> "Suggest relation mappings between the competencies from the previous step. "
-                    + "Call getCourseCompetencies first to get the competency IDs, then call suggestRelationMappingsUsingML or "
-                    + "use previewRelationMappings to suggest appropriate relations (ASSUMES, EXTENDS, MATCHES) between them. " + "Set viewOnly=false for the preview.";
+            case COMPETENCY_MAPPER ->
+                "Suggest relation mappings between the competencies from the previous step. " + "Call getCourseCompetencies first to get the competency IDs, then "
+                        + "use previewRelationMappings to suggest appropriate relations (ASSUMES, EXTENDS, MATCHES) between them. " + "Set viewOnly=false for the preview.";
             case EXERCISE_MAPPER -> buildExerciseMapperInstruction(nextStep.exerciseId(), nextStep.exerciseTitle());
             case COMPETENCY_EXPERT -> "Create or update competencies as described in the original user request. " + "Use the context from previous steps if available.";
         };
     }
 
+    /**
+     * Builds the plan-continuation brief, requiring a learning-content read before suggestions and weights are chosen.
+     *
+     * @param exerciseId    the exercise selected in the plan, if available
+     * @param exerciseTitle the plan's exercise title, if available
+     * @return mapping instructions with exercise context or a selection fallback
+     */
     private String buildExerciseMapperInstruction(@Nullable Long exerciseId, @Nullable String exerciseTitle) {
         if (exerciseId != null && exerciseTitle != null && !exerciseTitle.isBlank()) {
             return "Map the competencies from the previous step to the exercise below. " + "EXERCISE_ID: " + exerciseId + " | EXERCISE_TITLE: " + exerciseTitle + ". "
-                    + "Call getCourseCompetencies to get competency IDs, then call " + "previewExerciseCompetencyMapping with viewOnly=false to show the interactive preview. "
+                    + "Call getExerciseContent to inspect its learning content and getCourseCompetencies to get competency IDs before choosing suggested flags and weights. Then call "
+                    + "previewExerciseCompetencyMapping with viewOnly=false to show the interactive preview. "
                     + "Do NOT ask the user how they want to adjust mappings - the preview UI is interactive and handles that.";
         }
         // Fallback if exercise was not embedded in the plan marker (should not happen in normal flow)
-        return "Map the competencies from the previous step to exercises in the course. " + "Call getCourseCompetencies to get competency IDs, then call "
+        return "Map the competencies from the previous step to exercises in the course. "
+                + "Call getExerciseContent for the selected exercise and getCourseCompetencies to get competency IDs before choosing suggested flags and weights. Then call "
                 + "previewExerciseCompetencyMapping with viewOnly=false to show the interactive preview. "
                 + "Do NOT ask the user how they want to adjust mappings - the preview UI is interactive and handles that.";
     }
 
     /**
-     * Counts the number of assistant messages currently in chat memory for the given session.
-     * Used to determine the index for storing preview data in the preview history cache.
+     * Whether delegation stored a reply in the session. Blank replies have no preview index.
+     *
+     * @param reply the text of the reply of the agent
+     * @return true if delegation stored the reply
+     */
+    private static boolean replyIsPersisted(@Nullable String reply) {
+        return reply != null && !reply.isBlank();
+    }
+
+    /**
+     * Counts the assistant messages in the session for indexing the preview history.
      *
      * @param sessionId the session ID
      * @return the count of assistant messages
      */
     private int countAssistantMessages(String sessionId) {
-        if (chatMemory == null) {
+        if (sessionService == null) {
             return 0;
         }
-        List<Message> messages = chatMemory.get(sessionId);
+        List<Message> messages = AtlasChatSessions.conversation(sessionService, sessionId);
         return (int) messages.stream().filter(m -> m.getMessageType() == MessageType.ASSISTANT).count();
     }
 

@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.hyperion.config;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.jspecify.annotations.Nullable;
@@ -10,15 +12,35 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
+import de.tum.cit.aet.artemis.core.config.llm.LlmPresetAssignment;
+import de.tum.cit.aet.artemis.core.config.llm.LlmPresetAssignments;
+
 /** Bound generation defaults and administrator-defined effort profiles under {@code artemis.hyperion.agent}. */
 @Lazy
 @Configuration
 @Conditional(HyperionExerciseGenerationEnabled.class)
 @ConfigurationProperties(prefix = "artemis.hyperion.agent")
-public class HyperionAgentProperties {
+public class HyperionAgentProperties implements LlmPresetAssignments {
 
-    /** Hard cap on model turns for one attempt of a run. Bounds an attempt, not the whole run. */
+    static final String KEY = "artemis.hyperion.agent";
+
+    /** Hard cap on authoring turns shared by all stages and repairs of a run. */
     private int maxTurns = 60;
+
+    /**
+     * The LLM preset that takes over a stalled repair once per run, for at most one work block. Empty disables the handoff; a profile may set its own. Like {@link #llmPreset},
+     * it must exist under {@code artemis.llm.presets} on core and every worker.
+     */
+    @Nullable
+    private String repairLlmPreset;
+
+    public @Nullable String getRepairLlmPreset() {
+        return repairLlmPreset;
+    }
+
+    public void setRepairLlmPreset(@Nullable String repairLlmPreset) {
+        this.repairLlmPreset = repairLlmPreset;
+    }
 
     /**
      * Wall-clock deadline for one run. Also the basis of the budget reservation TTL and the staged authoring budget.
@@ -54,14 +76,48 @@ public class HyperionAgentProperties {
     /** {@code CONTINUOUS} or {@code FRESH}; validated where it is parsed, so an invalid value fails startup rather than the first run. */
     private String stagedContext = "CONTINUOUS";
 
-    /** The model's usable context window in tokens; a profile that pins a model may pin this too. */
+    /** The model's usable context window in tokens; a profile with its own preset may set this too. */
     private int contextWindowTokens = 128_000;
 
     /** Name of the profile used when a request names none. Empty means the top-level values above are used directly. */
     private String defaultProfile = "";
 
+    /** The LLM preset of runs without a profile and of profiles without their own preset. */
+    @Nullable
+    private String llmPreset;
+
     /** Selectable effort profiles by name; empty (the shipped default) means the feature is inert and every request runs the top-level configuration. */
     private Map<String, EffortProfileProperties> profiles = new LinkedHashMap<>();
+
+    @Nullable
+    public String getLlmPreset() {
+        return llmPreset;
+    }
+
+    public void setLlmPreset(@Nullable String llmPreset) {
+        this.llmPreset = llmPreset;
+    }
+
+    /**
+     * Exercise generation retries and accounts for every provider call on its own, so its presets must not retry in the SDK.
+     */
+    @Override
+    public List<LlmPresetAssignment> llmPresetAssignments() {
+        List<LlmPresetAssignment> assignments = new ArrayList<>();
+        assignments.add(LlmPresetAssignment.ofSingle(KEY + ".llm-preset", llmPreset, LlmPresetAssignment.Usage.CHAT).withoutRetries());
+        addOptional(assignments, KEY + ".repair-llm-preset", repairLlmPreset);
+        profiles.forEach((name, profile) -> {
+            addOptional(assignments, KEY + ".profiles." + name + ".llm-preset", profile.getLlmPreset());
+            addOptional(assignments, KEY + ".profiles." + name + ".repair-llm-preset", profile.getRepairLlmPreset());
+        });
+        return List.copyOf(assignments);
+    }
+
+    private static void addOptional(List<LlmPresetAssignment> assignments, String key, @Nullable String preset) {
+        if (preset != null && !preset.isBlank()) {
+            assignments.add(LlmPresetAssignment.ofSingle(key, preset, LlmPresetAssignment.Usage.CHAT).withoutRetries());
+        }
+    }
 
     public int getMaxTurns() {
         return maxTurns;
@@ -150,23 +206,21 @@ public class HyperionAgentProperties {
         @Nullable
         private String label;
 
+        /** The LLM preset of this profile; the agent's {@code llm-preset} applies when unset. */
         @Nullable
-        private String model;
+        private String llmPreset;
 
+        /** The repair LLM preset of this profile; the agent's {@code repair-llm-preset} applies when unset. */
         @Nullable
-        private Double temperature;
+        private String repairLlmPreset;
 
-        @Nullable
-        private Double topP;
+        public @Nullable String getRepairLlmPreset() {
+            return repairLlmPreset;
+        }
 
-        @Nullable
-        private String reasoningEffort;
-
-        @Nullable
-        private String verbosity;
-
-        @Nullable
-        private Integer maxCompletionTokens;
+        public void setRepairLlmPreset(@Nullable String repairLlmPreset) {
+            this.repairLlmPreset = repairLlmPreset;
+        }
 
         @Nullable
         private Integer maxTurns;
@@ -196,57 +250,12 @@ public class HyperionAgentProperties {
         }
 
         @Nullable
-        public String getModel() {
-            return model;
+        public String getLlmPreset() {
+            return llmPreset;
         }
 
-        public void setModel(@Nullable String model) {
-            this.model = model;
-        }
-
-        @Nullable
-        public Double getTemperature() {
-            return temperature;
-        }
-
-        public void setTemperature(@Nullable Double temperature) {
-            this.temperature = temperature;
-        }
-
-        @Nullable
-        public Double getTopP() {
-            return topP;
-        }
-
-        public void setTopP(@Nullable Double topP) {
-            this.topP = topP;
-        }
-
-        @Nullable
-        public String getReasoningEffort() {
-            return reasoningEffort;
-        }
-
-        public void setReasoningEffort(@Nullable String reasoningEffort) {
-            this.reasoningEffort = reasoningEffort;
-        }
-
-        @Nullable
-        public String getVerbosity() {
-            return verbosity;
-        }
-
-        public void setVerbosity(@Nullable String verbosity) {
-            this.verbosity = verbosity;
-        }
-
-        @Nullable
-        public Integer getMaxCompletionTokens() {
-            return maxCompletionTokens;
-        }
-
-        public void setMaxCompletionTokens(@Nullable Integer maxCompletionTokens) {
-            this.maxCompletionTokens = maxCompletionTokens;
+        public void setLlmPreset(@Nullable String llmPreset) {
+            this.llmPreset = llmPreset;
         }
 
         @Nullable
@@ -301,13 +310,6 @@ public class HyperionAgentProperties {
 
         public void setContextWindowTokens(@Nullable Integer contextWindowTokens) {
             this.contextWindowTokens = contextWindowTokens;
-        }
-
-        /**
-         * @return {@code true} when this profile sets any provider-facing value, which is what decides whether a run needs its own prebuilt provider options
-         */
-        public boolean overridesProviderOptions() {
-            return model != null || temperature != null || topP != null || reasoningEffort != null || verbosity != null || maxCompletionTokens != null;
         }
     }
 }

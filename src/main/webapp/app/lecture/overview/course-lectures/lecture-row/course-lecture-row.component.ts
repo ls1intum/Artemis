@@ -1,4 +1,4 @@
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/course/shared/entities/course.model';

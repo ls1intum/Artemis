@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 export type CourseTutorialGroupDetailSessionStatusChipVariant = 'REGULAR' | 'CANCELLED' | 'RESCHEDULED' | 'RELOCATED';

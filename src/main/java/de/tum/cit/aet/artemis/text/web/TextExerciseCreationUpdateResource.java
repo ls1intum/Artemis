@@ -25,10 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.service.GradingCriteriaMapper;
-import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
@@ -96,8 +94,6 @@ public class TextExerciseCreationUpdateResource {
 
     private final Optional<SlideApi> slideApi;
 
-    private final Optional<AtlasMLApi> atlasMLApi;
-
     private final TextExerciseRepository textExerciseRepository;
 
     private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
@@ -120,9 +116,9 @@ public class TextExerciseCreationUpdateResource {
             CourseService courseService, ParticipationRepository participationRepository, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyApi> competencyApi,
-            Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi, CompetencyExerciseLinkService competencyExerciseLinkService,
-            ExerciseVariantGroupService exerciseVariantGroupService, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
-            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository, ExerciseConfigurationService exerciseConfigurationService) {
+            Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService, ExerciseVariantGroupService exerciseVariantGroupService,
+            TeamAssignmentConfigRepository teamAssignmentConfigRepository, PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository,
+            ExerciseConfigurationService exerciseConfigurationService) {
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.exerciseConfigurationService = exerciseConfigurationService;
@@ -139,7 +135,6 @@ public class TextExerciseCreationUpdateResource {
         this.competencyProgressApi = competencyProgressApi;
         this.competencyApi = competencyApi;
         this.slideApi = slideApi;
-        this.atlasMLApi = atlasMLApi;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
         this.exerciseVariantGroupService = exerciseVariantGroupService;
     }
@@ -218,9 +213,6 @@ public class TextExerciseCreationUpdateResource {
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(textExercise);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
-        // Notify AtlasML about the new text exercise
-        notifyAtlasML(result, OperationTypeDTO.UPDATE, "text exercise creation");
-
         exerciseVersionService.createExerciseVersion(result);
 
         return ResponseEntity.created(new URI("/api/text/text-exercises/" + result.getId())).body(TextExerciseResponseDTO.of(result));
@@ -231,7 +223,7 @@ public class TextExerciseCreationUpdateResource {
      *
      * @param updateTextExerciseDTO the textExercise DTO to update
      * @param notificationText      about the text exercise update that should be
-     *                                  displayed for the student group
+     *                                  displayed for the students
      * @return the ResponseEntity with status 200 (OK) and with body the updated
      *         textExercise, or with status 400 (Bad Request) if the textExercise is not valid, or
      *         with status 500 (Internal Server Error) if the textExercise couldn't be updated
@@ -324,9 +316,6 @@ public class TextExerciseCreationUpdateResource {
         slideApi.ifPresent(api -> api.handleDueDateChange(oldDueDate, persistedExercise));
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, persistedExercise));
-
-        // Notify AtlasML about the text exercise update
-        atlasMLApi.ifPresent(api -> api.notifyExerciseUpdated(persistedExercise));
 
         exerciseVersionService.createExerciseVersion(persistedExercise);
 
@@ -506,20 +495,5 @@ public class TextExerciseCreationUpdateResource {
             exerciseGroup.setId(dto.exerciseGroupId());
             exercise.setExerciseGroup(exerciseGroup);
         }
-    }
-
-    /**
-     * Helper method to notify AtlasML about text exercise changes with consistent
-     * error handling.
-     */
-    private void notifyAtlasML(TextExercise exercise, OperationTypeDTO operationType, String operationDescription) {
-        atlasMLApi.ifPresent(api -> {
-            try {
-                api.saveExerciseWithCompetencies(exercise, operationType);
-            }
-            catch (Exception e) {
-                log.warn("Failed to notify AtlasML about {}: {}", operationDescription, e.getMessage());
-            }
-        });
     }
 }

@@ -1,31 +1,42 @@
-import { Component, effect, inject, input, signal, untracked } from '@angular/core';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { Component, effect, inject, input, output, signal, untracked } from '@angular/core';
 
 import { FeedbackAffectedStudentDTO, FeedbackAnalysisService, FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 @Component({
     selector: 'jhi-affected-students-modal',
     templateUrl: './feedback-affected-students-modal.component.html',
-    imports: [CodeButtonComponent, TranslateDirective],
+    imports: [
+        CodeButtonComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        TumAetUiDialogComponent,
+        TumAetUiProgressSpinnerComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+    ],
     providers: [FeedbackAnalysisService],
 })
 export class AffectedStudentsModalComponent {
-    activeModal = inject(NgbActiveModal);
     feedbackService = inject(FeedbackAnalysisService);
     alertService = inject(AlertService);
 
     courseId = input.required<number>();
     exerciseId = input.required<number>();
     feedbackDetail = input.required<FeedbackDetail>();
+    /** Emits once the dialog was closed, so the host can remove it. */
+    closed = output<void>();
     readonly participation = signal<FeedbackAffectedStudentDTO[]>([]);
     readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.affectedStudentsModal';
 
-    readonly faSpinner = faSpinner;
     protected readonly RepositoryType = RepositoryType;
     readonly isLoading = signal<boolean>(false);
 
@@ -47,6 +58,12 @@ export class AffectedStudentsModalComponent {
             this.alertService.error(this.TRANSLATION_BASE + '.error');
         } finally {
             this.isLoading.set(false);
+        }
+    }
+
+    protected onVisibleChange(visible: boolean): void {
+        if (!visible) {
+            this.closed.emit();
         }
     }
 }

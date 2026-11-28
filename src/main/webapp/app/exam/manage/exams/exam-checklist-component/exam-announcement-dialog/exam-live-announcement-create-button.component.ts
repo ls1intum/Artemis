@@ -1,18 +1,19 @@
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-modal.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exam-live-announcement-create-button',
     templateUrl: './exam-live-announcement-create-button.component.html',
-    imports: [FaIconComponent, TranslateDirective, TumAetUiButtonDirective, ExamLiveAnnouncementCreateModalComponent],
+    imports: [FaIconComponent, TranslateDirective, TumAetUiButtonDirective, ExamLiveAnnouncementCreateModalComponent, ArtemisTranslatePipe],
 })
 export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDestroy {
     alertService = inject(AlertService);

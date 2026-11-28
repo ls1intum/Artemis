@@ -7,6 +7,7 @@
             "no": "Nein",
             "you": "Du",
             "emptyList": "Keine Elemente verfügbar",
+            "noEntriesYet": "Noch keine Einträge vorhanden",
             "serverNotReachable": "Server ist nicht erreichbar",
             "filterOptions": "Optionen filtern",
             "noMatchingOptions": "Keine passenden Optionen",
@@ -25,7 +26,8 @@
             "enabled": "Aktiviert",
             "disabled": "Deaktiviert",
             "resizePanels": "Bereichsgröße ändern",
-            "selectAllRows": "Alle Zeilen auswählen"
+            "selectAllRows": "Alle Zeilen auswählen",
+            "unknownPerson": "Unbekannte Person"
         },
         "weekdays": {
             "monday": "Montag",
@@ -106,7 +108,7 @@
                     "file-upload": "Datei-Upload-Aufgabe",
                     "exercise": "Aufgabe",
                     "exam": "Klausur",
-                    "test-exam": "Testklausur",
+                    "test-exam": "Übungsklausur",
                     "lecture": "Vorlesung",
                     "lecture-unit": "Vorlesungseinheit",
                     "faq": "FAQ",
@@ -322,6 +324,7 @@
                     "notifications": "Mitteilungen",
                     "examRooms": "Prüfungsräume",
                     "dependencies": "Abhängigkeiten",
+                    "science": "Science",
                     "irisDashboard": "Iris Dashboard",
                     "courseIngestionDashboard": "Index-Dashboard"
                 },
@@ -369,7 +372,7 @@
             "confirmpassword.placeholder": "Bestätige dein neues Passwort",
             "email": "E-Mail-Adresse",
             "email.placeholder": "E-Mail-Adresse",
-            "email.pattern": "Bitte nutze eine E-Mail nach folgendem Muster:",
+            "email.pattern": "Erlaubte E-Mail-Adressen:",
             "cancel": "Abbruch",
             "confirm": "Bestätigen",
             "refresh": "Aktualisieren",
@@ -411,7 +414,7 @@
                     "invalid": "Deine E-Mail-Adresse ist ungültig.",
                     "minlength": "Deine E-Mail-Adresse muss mindestens 5 Zeichen lang sein",
                     "maxlength": "Deine E-Mail-Adresse darf nicht länger als 100 Zeichen sein",
-                    "pattern": "Deine E-Mail-Adresse entspricht nicht dem geforderten Muster."
+                    "notAllowed": "Diese E-Mail-Adresse ist nicht erlaubt."
                 }
             }
         },
@@ -422,8 +425,8 @@
             "dev": "Development",
             "test": "Testserver"
         },
-        "item-count": "Zeige {{first}} bis {{second}} von {{total}} Einträgen",
         "paginator": {
+            "compactReport": "{{first}}–{{second}} von {{total}}",
             "ariaLabel": "Seitennavigation",
             "first": "Erste Seite",
             "previous": "Vorherige Seite",
@@ -471,6 +474,7 @@
         "quickActions": "Schnellzugriff",
         "controlCenter": "Kontrollzentrum",
         "action": {
+            "deleteAll": "Alle löschen",
             "add": "Hinzufügen",
             "create": "Erstellen",
             "addblob": "Blob hinzufügen",
@@ -564,7 +568,10 @@
             "value": "Wert"
         },
         "delete": {
-            "title": "Löschen bestätigen"
+            "title": "Löschen bestätigen",
+            "summary": {
+                "largeCountWarning": "Es werden sehr viele Daten gelöscht. Bitte prüfe die folgenden Zahlen sorgfältig, bevor du bestätigst."
+            }
         },
         "unlink": {
             "title": "Trennen bestätigen"

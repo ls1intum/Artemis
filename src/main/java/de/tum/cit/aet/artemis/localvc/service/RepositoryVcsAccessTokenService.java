@@ -164,9 +164,9 @@ public class RepositoryVcsAccessTokenService {
     /**
      * Asynchronously provisions the repository tokens for a staff user that just joined a course (see {@link #ensureTokensForStaffUserInCourse}).
      * <p>
-     * Used on the staff-join request path (adding a tutor/editor/instructor to a course group) so the client does not block while tokens for potentially many programming exercises
-     * are created. The clone-dialog lazy fallback covers the brief window before the eager tokens exist, so a delayed (or failed) async run never blocks a staff member from
-     * cloning.
+     * Used on the staff-join request path (giving a user the tutor, editor or instructor role in a course) so the client does not block while tokens for potentially many
+     * programming exercises are created. The clone-dialog lazy fallback covers the brief window before the eager tokens exist, so a delayed (or failed) async run never blocks a
+     * staff member from cloning.
      *
      * @param user   the staff user that just joined the course
      * @param course the course the user joined
@@ -282,11 +282,11 @@ public class RepositoryVcsAccessTokenService {
     /**
      * Asynchronously removes the staff member's repository tokens for the course when they are no longer staff (see {@link #deleteForUserInCourseIfNoLongerStaff}).
      * <p>
-     * Used on the staff-leave request path (removing a tutor/editor/instructor from a course group) so the client does not block on token cleanup. Running this asynchronously is
-     * safe even though a token then lingers for a brief moment: authorization is re-checked on every git operation, so a leftover token for a user that is no longer staff is
-     * rejected anyway.
+     * Used on the staff-leave request path (removing the tutor, editor or instructor role of a user in a course) so the client does not block on token cleanup. Running this
+     * asynchronously is safe even though a token then lingers for a brief moment: authorization is re-checked on every git operation, so a leftover token for a user that is no
+     * longer staff is rejected anyway.
      *
-     * @param user   the user that was removed from a course group
+     * @param user   the user whose course role was removed
      * @param course the course the user was removed from
      */
     @Async
@@ -296,13 +296,13 @@ public class RepositoryVcsAccessTokenService {
 
     /**
      * Removes the repository tokens a user owns for the (non-exam) programming exercises of the given course, but only if the user is no longer at least a tutor in that course.
-     * This protects users that hold more than one staff role (e.g. an instructor that was only removed from the editor group keeps their tokens).
+     * This protects users that hold more than one staff role (e.g. an instructor who only lost the editor role keeps their tokens).
      * <p>
      * Tokens for exam programming exercises are not removed here. This is safe because a token never grants access on its own: authorization (at least tutor / editor in the
      * course)
      * is re-checked on every git operation, so a leftover token for a user that is no longer staff is rejected anyway.
      *
-     * @param user   the user that was removed from a course group
+     * @param user   the user whose course role was removed
      * @param course the course the user was removed from
      */
     public void deleteForUserInCourseIfNoLongerStaff(User user, Course course) {

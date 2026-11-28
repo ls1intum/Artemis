@@ -43,7 +43,7 @@ describe('ConnectionWarning', () => {
         fixture.detectChanges();
 
         expect(component.disconnected()).toBe(false);
-        expect(component.popover.isOpen()).toBe(false);
+        expect(component.isOpen()).toBe(false);
 
         const warningDiv = fixture.debugElement.query(By.css('.connection-warning'));
         expect(warningDiv).not.toBeNull();
@@ -58,7 +58,7 @@ describe('ConnectionWarning', () => {
 
         vi.advanceTimersByTime(300);
         fixture.detectChanges();
-        expect(component.popover.isOpen()).toBe(true);
+        expect(component.isOpen()).toBe(true);
         expect(warningDiv.nativeElement.getAttribute('aria-expanded')).toBe('true');
 
         subject.next(new ConnectionState(true, true));
@@ -67,7 +67,7 @@ describe('ConnectionWarning', () => {
         vi.advanceTimersByTime(100);
         fixture.detectChanges();
         expect(component.disconnected()).toBe(false);
-        expect(component.popover.isOpen()).toBe(false);
+        expect(component.isOpen()).toBe(false);
         expect(warningDiv.nativeElement.getAttribute('aria-expanded')).toBe('false');
         expect(warningDiv.classes['disconnected']).not.toBeTruthy();
     });
@@ -77,9 +77,9 @@ describe('ConnectionWarning', () => {
         subject.next(new ConnectionState(false, true));
         vi.advanceTimersByTime(300);
         fixture.detectChanges();
-        expect(component.popover.isOpen()).toBe(true);
+        expect(component.isOpen()).toBe(true);
 
-        component.popover.close();
+        component.close();
         vi.advanceTimersByTime(300);
         subject.next(new ConnectionState(false, true));
         subject.next(new ConnectionState(false, true));
@@ -87,13 +87,13 @@ describe('ConnectionWarning', () => {
         fixture.detectChanges();
 
         expect(component.disconnected()).toBe(true);
-        expect(component.popover.isOpen()).toBe(false);
+        expect(component.isOpen()).toBe(false);
 
         // The indicator still lets the user inspect the warning manually.
         const warning = fixture.nativeElement.querySelector('[role="button"]') as HTMLElement;
         warning.click();
         fixture.detectChanges();
-        expect(component.popover.isOpen()).toBe(true);
+        expect(component.isOpen()).toBe(true);
     });
 
     it('should not reopen after manually opening and dismissing a pending warning', () => {
@@ -104,13 +104,13 @@ describe('ConnectionWarning', () => {
         warning.click();
         vi.advanceTimersByTime(100);
         fixture.detectChanges();
-        expect(component.popover.isOpen()).toBe(true);
+        expect(component.isOpen()).toBe(true);
         warning.click();
         vi.advanceTimersByTime(1000);
         fixture.detectChanges();
 
         expect(component.disconnected()).toBe(true);
-        expect(component.popover.isOpen()).toBe(false);
+        expect(component.isOpen()).toBe(false);
     });
 
     it('should warn again when the connection drops after a recovery', () => {
@@ -118,7 +118,7 @@ describe('ConnectionWarning', () => {
         subject.next(new ConnectionState(false, true));
         vi.advanceTimersByTime(300);
         fixture.detectChanges();
-        component.popover.close();
+        component.close();
         vi.advanceTimersByTime(300);
 
         subject.next(new ConnectionState(true, true));
@@ -127,7 +127,7 @@ describe('ConnectionWarning', () => {
         fixture.detectChanges();
 
         expect(component.disconnected()).toBe(true);
-        expect(component.popover.isOpen()).toBe(true);
+        expect(component.isOpen()).toBe(true);
     });
 
     it('should cancel the pending warning when reconnecting before it opens', () => {
@@ -140,7 +140,7 @@ describe('ConnectionWarning', () => {
         fixture.detectChanges();
 
         expect(component.disconnected()).toBe(false);
-        expect(component.popover.isOpen()).toBe(false);
+        expect(component.isOpen()).toBe(false);
     });
 
     it('should clear the pending warning when destroyed', () => {
@@ -162,7 +162,22 @@ describe('ConnectionWarning', () => {
         fixture.detectChanges();
 
         expect(component.disconnected()).toBe(false);
-        expect(component.popover.isOpen()).toBe(false);
+        expect(component.isOpen()).toBe(false);
+    });
+
+    it('should render the warning as an alert panel that leaves the page interactive and remove it on close', () => {
+        fixture.detectChanges();
+        subject.next(new ConnectionState(false, true));
+        vi.advanceTimersByTime(300);
+        fixture.detectChanges();
+
+        const panel = document.querySelector('[data-testid="connection-warning-panel"]');
+        expect(panel).not.toBeNull();
+        expect(panel!.getAttribute('role')).toBe('alert');
+        expect(document.querySelector('.cdk-overlay-backdrop')).toBeNull();
+
+        component.close();
+        expect(document.querySelector('[data-testid="connection-warning-panel"]')).toBeNull();
     });
 
     it('should expose the popover state after keyboard toggles', () => {
@@ -172,13 +187,13 @@ describe('ConnectionWarning', () => {
 
         warning.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
         fixture.detectChanges();
-        expect(component.popover.isOpen()).toBe(true);
+        expect(component.isOpen()).toBe(true);
         expect(warning.getAttribute('aria-expanded')).toBe('true');
 
         warning.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
         vi.advanceTimersByTime(100);
         fixture.detectChanges();
-        expect(component.popover.isOpen()).toBe(false);
+        expect(component.isOpen()).toBe(false);
         expect(warning.getAttribute('aria-expanded')).toBe('false');
     });
 });

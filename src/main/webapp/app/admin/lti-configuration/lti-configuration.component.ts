@@ -12,25 +12,17 @@ import { combineLatest } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiMessageComponent,
-    TumAetUiPaginatorComponent,
-    TumAetUiTabComponent,
-    TumAetUiTabListComponent,
-    TumAetUiTabPanelComponent,
-    TumAetUiTabPanelsComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-    TumAetUiTabsComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabPanelComponent, TumAetUiTabPanelsComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular/tabs';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 
 /**
@@ -42,6 +34,7 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
     templateUrl: './lti-configuration.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
+        TumAetUiTableLayoutComponent,
         FormsModule,
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -56,7 +49,6 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
         RouterLink,
         FaIconComponent,
         DeleteButtonDirective,
-        ItemCountComponent,
         TumAetUiPaginatorComponent,
         TumAetUiTableDirective,
         TumAetUiTableSortableColumnComponent,

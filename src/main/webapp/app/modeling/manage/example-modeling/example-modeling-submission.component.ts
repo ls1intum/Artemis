@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, signal, viewChild } from '@angular
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { UMLModel, importDiagram } from '@tumaet/apollon';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
@@ -33,12 +33,15 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
+import { TutorParticipationApi } from 'app/openapi/api/tutor-participation-api';
+import { toExampleSubmission, toExampleSubmissionRequest } from 'app/assessment/shared/util/example-submission-request.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ModelingEditorTopLeftDirective } from 'app/modeling/shared/modeling-editor/modeling-editor-top-left.directive';
 import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-workspace/assessment-workspace.component';
-import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -55,7 +58,7 @@ interface AssessmentSave {
 @Component({
     selector: 'jhi-example-modeling-submission',
     templateUrl: './example-modeling-submission.component.html',
-    styleUrls: ['./example-modeling-submission.component.scss'],
+    styleUrls: ['./example-modeling-submission.component.css'],
     imports: [
         TranslateDirective,
         FormsModule,
@@ -79,9 +82,9 @@ interface AssessmentSave {
 })
 export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarker {
     private exerciseService = inject(ExerciseService);
-    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private exampleSubmissionApi = inject(ExampleSubmissionApi);
     private modelingAssessmentService = inject(ModelingAssessmentService);
-    private tutorParticipationService = inject(TutorParticipationService);
+    private tutorParticipationApi = inject(TutorParticipationApi);
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private alertService = inject(AlertService);
     private route = inject(ActivatedRoute);
@@ -215,9 +218,9 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         if (this.isNewSubmission()) {
             this.exampleSubmission.set(new ExampleSubmission());
         } else {
-            const exampleSubmissionSource$ = this.exampleSubmissionService.get(this.exampleSubmissionId).pipe(
-                tap((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                    const exampleSubmission = exampleSubmissionResponse.body!;
+            const exampleSubmissionSource$ = this.exampleSubmissionApi.getExampleSubmission(this.exampleSubmissionId).pipe(
+                tap((exampleSubmissionResponse) => {
+                    const exampleSubmission = toExampleSubmission(exampleSubmissionResponse);
                     this.exampleSubmission.set(exampleSubmission);
                     if (exampleSubmission.submission) {
                         this.modelingSubmission = exampleSubmission.submission;
@@ -303,11 +306,11 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         exampleSubmission.assessmentExplanation = assessment.assessmentExplanation;
         exampleSubmission.usedForTutorial = assessment.usedForTutorial;
         const request = creating
-            ? this.exampleSubmissionService.create(exampleSubmission, this.exerciseId)
-            : this.exampleSubmissionService.update(exampleSubmission, this.exerciseId);
+            ? this.exampleSubmissionApi.createExampleSubmission(this.exerciseId, toExampleSubmissionRequest(exampleSubmission))
+            : this.exampleSubmissionApi.updateExampleSubmission(this.exerciseId, toExampleSubmissionRequest(exampleSubmission));
         return request.pipe(
             tap((response) => {
-                this.acceptSavedSubmission(response.body!);
+                this.acceptSavedSubmission(toExampleSubmission(response));
                 this.isNewSubmission.set(false);
                 this.alertService.success('artemisApp.modelingEditor.saveSuccessful');
                 if (creating) {
@@ -384,13 +387,19 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
             return EMPTY;
         }
+        if (!this.modelingAssessmentService.isFeedbackTextValid(assessment.feedbacks)) {
+            this.alertService.error('artemisApp.modelingAssessmentEditor.messages.feedbackTextTooLong');
+            return EMPTY;
+        }
         const current = this.exampleSubmission();
         let metadataSave: Observable<unknown> = of(undefined);
         if (assessment.assessmentExplanation !== current.assessmentExplanation || assessment.usedForTutorial !== !!current.usedForTutorial) {
             const updated = deepClone(current);
             updated.assessmentExplanation = assessment.assessmentExplanation;
             updated.usedForTutorial = assessment.usedForTutorial;
-            metadataSave = this.exampleSubmissionService.update(updated, this.exerciseId).pipe(tap((response) => this.acceptSavedSubmission(response.body!)));
+            metadataSave = this.exampleSubmissionApi
+                .updateExampleSubmission(this.exerciseId, toExampleSubmissionRequest(updated))
+                .pipe(tap((response) => this.acceptSavedSubmission(toExampleSubmission(response))));
         }
         return metadataSave.pipe(
             concatMap(() => this.modelingAssessmentService.saveExampleAssessment(deepClone(assessment.feedbacks), this.exampleSubmissionId)),
@@ -472,7 +481,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         delete result.submission;
         getLatestSubmissionResult(exampleSubmission.submission)!.feedbacks = this.assessments();
 
-        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationService, this.alertService, this);
+        const command = new ExampleSubmissionAssessCommand(this.tutorParticipationApi, this.alertService, this);
         command.assessExampleSubmission(exampleSubmission, this.exerciseId);
     }
 
@@ -525,7 +534,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     }
 
     readAndUnderstood() {
-        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission(), this.exerciseId).subscribe(() => {
+        this.tutorParticipationApi.assessExampleSubmissionForTutorParticipation(this.exerciseId, toExampleSubmissionRequest(this.exampleSubmission())).subscribe(() => {
             this.alertService.success('artemisApp.exampleSubmission.readSuccessfully');
             void this.back();
         });

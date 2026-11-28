@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.course.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -11,8 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
@@ -24,6 +27,9 @@ import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
 import de.tum.cit.aet.artemis.communication.service.FaqService;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.course.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -59,7 +65,7 @@ public class CourseDeletionService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseDeletionService.class);
 
-    private static final int TOTAL_DELETE_STEPS = 14;
+    public static final int TOTAL_DELETE_STEPS = 14;
 
     private final ExerciseDeletionService exerciseDeletionService;
 
@@ -119,6 +125,8 @@ public class CourseDeletionService {
 
     private final Optional<GocastBindingApi> gocastBindingApi;
 
+    private final FileService fileService;
+
     public CourseDeletionService(ExerciseDeletionService exerciseDeletionService, ExerciseRepository exerciseRepository, Optional<LectureApi> lectureApi,
             Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamDeletionApi> examDeletionApi, Optional<ExamRepositoryApi> examRepositoryApi,
             GradingScaleRepository gradingScaleRepository, Optional<CompetencyRelationApi> competencyRelationApi, Optional<PrerequisitesApi> prerequisitesApi,
@@ -130,7 +138,7 @@ public class CourseDeletionService {
             LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, LLMTokenUsageRequestRepository llmTokenUsageRequestRepository,
             CourseOperationProgressService progressService, CourseAdminService courseAdminService, ParticipationRepository participationRepository,
             SubmissionRepository submissionRepository, Optional<SearchableEntityWeaviateService> searchableEntityWeaviateServiceOptional,
-            Optional<GocastBindingApi> gocastBindingApi) {
+            Optional<GocastBindingApi> gocastBindingApi, FileService fileService) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.exerciseRepository = exerciseRepository;
         this.lectureApi = lectureApi;
@@ -160,6 +168,7 @@ public class CourseDeletionService {
         this.submissionRepository = submissionRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateServiceOptional;
         this.gocastBindingApi = gocastBindingApi;
+        this.fileService = fileService;
     }
 
     /**
@@ -178,19 +187,41 @@ public class CourseDeletionService {
      * </ul>
      * Progress is reported via WebSocket for real-time UI updates using weighted progress
      * that accounts for the complexity of each operation (e.g., programming exercises take longer).
+     * <p>
+     * The deletion runs in the background. The caller takes the claim with {@link #startDeletion(long)} in its request, so a conflicting operation is refused there,
+     * and hands it over. The claim is released when the deletion ended, however it ended. The result is only reported as progress.
+     *
+     * @param courseId       the ID of the course to be deleted
+     * @param courseIcon     the stored icon of the course, which is scheduled for deletion once the course is gone, or null if there is none
+     * @param operationClaim the claim acquired by {@link #startDeletion(long)} before crossing the asynchronous boundary
+     * @param administrator  the administrator who requested the deletion, with the authorities loaded, on whose behalf the background deletion runs
+     */
+    @Async("entityDeletionExecutor")
+    public void deleteAsync(long courseId, String courseIcon, CourseOperationClaim operationClaim, User administrator) {
+        // The worker thread has no caller to inherit an authentication from, but the services behind the deletion resolve the acting user from it, for example to audit the
+        // deletion of the exams. The administrator was checked and audited in the request, and keeps acting as before the deletion ran in the background.
+        SecurityUtils.runAs(administrator, () -> deleteClaimed(courseId, courseIcon, operationClaim));
+    }
+
+    /**
+     * Claims the deletion of the course and announces it. This is done in the request of the administrator, so that another running operation on the course is refused with
+     * a conflict before anything is deleted.
      *
      * @param courseId the ID of the course to be deleted
+     * @return the claim that has to be handed to {@link #deleteAsync(long, String, CourseOperationClaim, User)}, which releases it
      */
-    public void delete(long courseId) {
+    public CourseOperationClaim startDeletion(long courseId) {
+        return progressService.startOperation(courseId, CourseOperationType.DELETE, "Deleting exercises", TOTAL_DELETE_STEPS, ZonedDateTime.now(ZoneId.systemDefault()));
+    }
+
+    private void deleteClaimed(long courseId, String courseIcon, CourseOperationClaim operationClaim) {
         log.debug("Request to delete Course with id: {}", courseId);
-        ZonedDateTime startedAt = ZonedDateTime.now();
         int stepsCompleted = 0;
         int failed = 0;
 
         double totalWeight = 0;
         double completedWeight = 0;
-
-        CourseOperationClaim operationClaim = progressService.startOperation(courseId, CourseOperationType.DELETE, "Deleting exercises", TOTAL_DELETE_STEPS, startedAt);
+        boolean finished = false;
 
         try {
             // Calculate weighted progress based on course content
@@ -302,16 +333,42 @@ public class CourseDeletionService {
             stepsCompleted++;
 
             progressService.completeOperation(operationClaim, TOTAL_DELETE_STEPS, failed);
+            finished = true;
             log.debug("Successfully deleted course with id {}.", courseId);
+            scheduleIconDeletion(courseIcon);
         }
         catch (Exception e) {
+            // There is no caller to pass the exception to, the instructors learn about it from the progress.
             log.error("Failed to delete course {}", courseId, e);
             progressService.failOperation(operationClaim, "Deletion failed", stepsCompleted, TOTAL_DELETE_STEPS, failed, e.getMessage(),
                     calculateProgressPercent(completedWeight, totalWeight));
-            throw e;
+            finished = true;
         }
         finally {
-            progressService.releaseOperationClaim(operationClaim);
+            try {
+                if (!finished) {
+                    // The deletion ended with an Error, which is not caught here and goes on after the cleanup. The clients still have to learn that it failed.
+                    log.error("The deletion of course {} ended abnormally", courseId);
+                    progressService.failOperation(operationClaim, "Deletion failed", stepsCompleted, TOTAL_DELETE_STEPS, failed, "The deletion ended unexpectedly",
+                            calculateProgressPercent(completedWeight, totalWeight));
+                }
+            }
+            finally {
+                progressService.releaseOperationClaim(operationClaim);
+            }
+        }
+    }
+
+    private void scheduleIconDeletion(String courseIcon) {
+        if (courseIcon == null) {
+            return;
+        }
+        try {
+            fileService.schedulePathForDeletion(new FileSystemLocation.CourseIcon(courseIcon).path(), 0);
+        }
+        catch (RuntimeException e) {
+            // The course is gone and reported as deleted, a file that stays behind must not turn that into a failed deletion.
+            log.warn("Could not schedule the icon {} of a deleted course for deletion", courseIcon, e);
         }
     }
 

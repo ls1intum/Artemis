@@ -127,7 +127,7 @@ public class SubmissionService {
      *
      * @param exercise    the exercise for which a submission should be saved
      * @param submission  the submission that should be saved
-     * @param currentUser the current user with groups and authorities
+     * @param currentUser the current user
      */
     public void checkSubmissionAllowanceElseThrow(Exercise exercise, Submission submission, User currentUser) {
         // The exercise was loaded from the database by the caller, so its course is a persisted entity and not something
@@ -425,7 +425,7 @@ public class SubmissionService {
      * @param newResult the result to copy the typed feedback to
      * @param oldResult the result to copy the typed feedback from
      */
-    protected void copyTypedFeedbackToResult(Result newResult, Result oldResult) {
+    public void copyTypedFeedbackToResult(Result newResult, Result oldResult) {
         if (oldResult == null || oldResult.getId() == null) {
             return;
         }

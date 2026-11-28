@@ -2,12 +2,12 @@ import { Component, computed, input, output, signal } from '@angular/core';
 import { IconProp, SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 @Component({
     selector: 'jhi-confirm-icon',
     templateUrl: './confirm-icon.component.html',
-    styleUrl: './confirm-icon.component.scss',
+    styleUrl: './confirm-icon.component.css',
     imports: [FaIconComponent, TumAetUiTooltipDirective],
     host: { '[class.confirm-icon-fill-parent]': 'fillParent()' },
 })

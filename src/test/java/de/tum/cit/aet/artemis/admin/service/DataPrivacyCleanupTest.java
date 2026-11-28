@@ -345,7 +345,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         course.setCourseConfiguration(configuration);
         course = courseUtilService.saveWithConfigurations(course);
         long courseId = course.getId();
-        // so getInstructors() finds an eligible instructor: enrollment is a course role, not a group name
+        // so getInstructors() finds an eligible instructor: enrollment is a course role
         userUtilService.enrollUserInCourse(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), course, CourseRole.INSTRUCTOR);
         TextExercise textExercise = course.getExercises().stream().filter(TextExercise.class::isInstance).map(TextExercise.class::cast).findFirst().orElseThrow();
         long textExerciseId = textExercise.getId();
@@ -546,7 +546,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
 
     private User enrolledUser(String login, Instant lastLoginDate) {
         User user = userUtilService.createAndSaveUser(login);
-        // enrollment is a course role now, so a plain group name would no longer make the user count as enrolled
+        // only a course role makes the user count as enrolled
         userUtilService.enrollUserInCourse(user, courseUtilService.createCourse(), CourseRole.STUDENT);
         userActivityService.recordLogin(user.getLogin(), lastLoginDate);
         return user;

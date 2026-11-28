@@ -5,7 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
-import { TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
+import { TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular/chart';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -25,7 +25,7 @@ import { filter, switchMap } from 'rxjs';
 @Component({
     selector: 'jhi-overview-course-card',
     templateUrl: './course-card.component.html',
-    styleUrls: ['course-card.scss'],
+    styleUrls: ['course-card.css'],
     imports: [CourseCardHeaderComponent, TumAetUiDoughnutChartComponent, NgClass, TranslateDirective, RouterLink, FontAwesomeModule],
 })
 export class CourseCardComponent {

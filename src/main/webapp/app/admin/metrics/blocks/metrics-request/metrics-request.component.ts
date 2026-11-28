@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { HttpServerRequests } from 'app/admin/metrics/metrics.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiProgressBarComponent, TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiProgressBarComponent } from '@tumaet/ui-angular/progress-bar';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { DecimalPipe, KeyValuePipe } from '@angular/common';
 import { filterNaN, toPercentage } from 'app/admin/metrics/filterNaN-util';
 

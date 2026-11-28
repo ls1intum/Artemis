@@ -1,4 +1,5 @@
-import { TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
@@ -29,7 +30,9 @@ import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial
 import { FormsModule } from '@angular/forms';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
-import { TumAetUiButtonDirective, TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular/chart';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupDetailSessionStatusIndicatorComponent } from 'app/tutorialgroup/shared/tutorial-group-detail-session-status-indicator/tutorial-group-detail-session-status-indicator.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -37,7 +40,8 @@ import { OneToOneChatService } from 'app/communication/conversations/service/one
 import { AlertService } from 'app/foundation/service/alert.service';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import {
     TutorialSessionCreateOrEditModalComponent,
     UpdateTutorialGroupSessionData,
@@ -104,6 +108,7 @@ export enum TutorialGroupDetailAccessLevel {
     selector: 'jhi-tutorial-group-detail',
     imports: [
         TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
         ProfilePictureComponent,
         FaIconComponent,
         TranslateDirective,
@@ -121,7 +126,7 @@ export enum TutorialGroupDetailAccessLevel {
     ],
     providers: [TumAetUiConfirmationService],
     templateUrl: './tutorial-group-detail.component.html',
-    styleUrl: './tutorial-group-detail.component.scss',
+    styleUrl: './tutorial-group-detail.component.css',
 })
 export class TutorialGroupDetailComponent {
     protected readonly currentTutorialLectureId = inject(LectureService).currentTutorialLectureId;

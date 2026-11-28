@@ -146,7 +146,7 @@ class PyrisCallbackTokenServiceTest {
 
     @Test
     void rejectsAWrongOrMissingAudience() {
-        assertThat(service.verify(validClaims().audience().single("artemis").signWith(callbackKey, Jwts.SIG.HS512).compact())).isEmpty();
+        assertThat(service.verify(validClaims().audience().clear().add("artemis").and().signWith(callbackKey, Jwts.SIG.HS512).compact())).isEmpty();
         Instant now = Instant.now();
         String withoutAudience = Jwts.builder().issuer(PyrisCallbackTokenService.ISSUER).subject(RUN_ID).claim(PyrisCallbackTokenService.JOB_TYPE_CLAIM, "chat")
                 .expiration(Date.from(now.plusSeconds(300))).signWith(callbackKey, Jwts.SIG.HS512).compact();

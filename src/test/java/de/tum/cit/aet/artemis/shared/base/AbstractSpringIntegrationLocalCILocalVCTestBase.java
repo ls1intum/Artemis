@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolModelService;
 import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionPresenceService;
@@ -187,9 +188,13 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     @MockitoSpyBean
     protected PyrisFaqApi pyrisFaqApi;
 
-    // we explicitly want a mock here, as we don't want to test the actual chat model calls and avoid any autoconfiguration or instantiation of Spring AI internals
+    // every LLM preset answers through this mock (see MockChatModelLlmConfiguration), so no test reaches a provider
     @MockitoBean
     protected ChatModel azureOpenAiChatModel;
+
+    // the quiz question pool reaches its models only through this service, never through the chat model above; tests route it there explicitly
+    @MockitoBean
+    protected HyperionQuizQuestionPoolModelService quizQuestionPoolModelService;
 
     protected URI localVCBaseUri;
 
@@ -265,7 +270,8 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     protected void resetSpyBeans() {
         Mockito.reset(gitServiceSpy, bareGitRepositoryServiceSpy, continuousIntegrationService, localCITriggerService, resourceLoaderService, programmingMessagingService,
                 competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, irisSessionPresenceService, pyrisPipelineService, pyrisEventService,
-                ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel, repositoryVcsAccessTokenService, fallbackBuildLogEntryService);
+                ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel, quizQuestionPoolModelService, repositoryVcsAccessTokenService,
+                fallbackBuildLogEntryService);
         buildAgentConfigurationOverrides.reset();
         // Preserve startup answers while discarding calls recorded by scheduled and build threads.
         Mockito.clearInvocations(buildAgentConfiguration);

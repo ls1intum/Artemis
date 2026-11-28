@@ -1,32 +1,81 @@
-<span class="relative inline-block">
-    <select
-        class="[&_option]:text-text [&_optgroup]:text-text h-10.5 appearance-none rounded-md border border-border bg-(--tumaet-ui-control-background) py-2 ps-3 pe-9 text-sm"
-        [ngModel]="activeFilter()"
-        (ngModelChange)="filterChange.emit($event ?? allValue())"
-        [attr.aria-label]="filterLabelKey() | artemisTranslate"
-        [class.text-state-success]="isFiltered()"
-    >
-        <option [ngValue]="allValue()">{{ filterLabelKey() | artemisTranslate }}</option>
-        @if (groupedFilters(); as groups) {
-            @for (group of groups; track $index) {
-                @if (group.labelKey) {
-                    <optgroup [label]="group.labelKey | artemisTranslate">
-                        @for (filter of group.items; track filter) {
-                            <option [ngValue]="filter">{{ translationPrefix() + filter | artemisTranslate }}</option>
+<!-- One button in the 40px toolbar of the table. The groups are in the popover, stacked, so the toolbar keeps its height on every screen. -->
+<button
+    type="button"
+    tumAetUiButton
+    size="small"
+    severity="secondary"
+    variant="outlined"
+    data-testid="filter-dropdown-button"
+    [tumAetUiPopoverTrigger]="filterPopover"
+    [attr.aria-label]="('artemisApp.exercise.filter' | artemisTranslate) + (activeFilters().length ? ' (' + activeFilters().length + ')' : '')"
+>
+    <fa-icon [icon]="faFilter" />
+    <span class="hidden md:inline" jhiTranslate="artemisApp.exercise.filter"></span>
+    @if (activeFilters().length) {
+        <!-- inline-flex, so that the host is as high as its 20px tag and not as the 24px line of the button text, which would make the button higher than the search field. -->
+        <tumaet-ui-tag class="inline-flex" size="sm" severity="info" [rounded]="true" [value]="'' + activeFilters().length" data-testid="filter-dropdown-count" />
+    }
+</button>
+<tumaet-ui-popover class="contents" #filterPopover alignment="end" [ariaLabel]="'artemisApp.exercise.filter' | artemisTranslate">
+    <!-- The popover is the labelled dialog, so the content is not named a second time. -->
+    <!-- Capped by the viewport (the panel padding, border and margin are the 4rem) and scrolling, so that every group and Reset stay reachable on a short window. The width
+         is capped too, because overflow-y: auto clips horizontally. -->
+    <div class="flex max-h-[calc(100dvh-4rem)] w-72 max-w-[calc(100vw-4rem)] flex-col gap-4 overflow-y-auto" data-testid="filter-dropdown-content">
+        @for (group of groups(); track group.labelKey) {
+            @if (group.items.length > 1) {
+                <!-- A segmented group is a group of its own (the button group), so the wrapper only names the checkbox lists once. -->
+                <div class="flex flex-col gap-2" [attr.role]="group.segmented ? null : 'group'" [attr.aria-labelledby]="group.segmented ? null : groupIdPrefix + $index">
+                    <span class="text-sm font-semibold" [id]="groupIdPrefix + $index">{{ group.labelKey | artemisTranslate }}</span>
+                    @if (group.segmented) {
+                        <tumaet-ui-button-group [attr.aria-labelledby]="groupIdPrefix + $index">
+                            @for (option of segmentedOptions(group); track option.value) {
+                                <tumaet-ui-button
+                                    size="small"
+                                    variant="text"
+                                    [severity]="(option.value === allValue ? group.selected.length === 0 : group.selected.includes(option.value)) ? 'primary' : 'secondary'"
+                                    [ariaPressed]="option.value === allValue ? group.selected.length === 0 : group.selected.includes(option.value)"
+                                    (clicked)="toggleGroupOption(group, option.value)"
+                                    >{{ option.label }}</tumaet-ui-button
+                                >
+                            }
+                        </tumaet-ui-button-group>
+                    } @else {
+                        @for (item of group.items; track item) {
+                            <div class="inline-flex items-center gap-2 text-sm text-color">
+                                <tumaet-ui-checkbox
+                                    [inputId]="checkboxIdPrefix + item"
+                                    [checked]="group.selected.includes(item)"
+                                    (changed)="toggleItem(group, item, $event.checked)"
+                                />
+                                <label [for]="checkboxIdPrefix + item">{{ 'artemisApp.exercise.show' + item | artemisTranslate }}</label>
+                            </div>
                         }
-                    </optgroup>
-                } @else {
-                    @for (filter of group.items; track filter) {
-                        <option [ngValue]="filter">{{ translationPrefix() + filter | artemisTranslate }}</option>
                     }
-                }
-            }
-        } @else {
-            @for (filter of filters(); track filter) {
-                <option [ngValue]="filter">{{ translationPrefix() + filter | artemisTranslate }}</option>
+                </div>
             }
         }
-    </select>
-    <!-- The native chevron sits high and tight against the edge, so it is drawn here, centered on the select. -->
-    <fa-icon [icon]="faChevronDown" class="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs text-text-secondary" />
-</span>
+        @for (group of checkboxGroups(); track group.labelKey) {
+            <div class="inline-flex shrink-0 items-center gap-2 text-sm text-color">
+                <tumaet-ui-checkbox
+                    [inputId]="checkboxIdPrefix + group.items[0]"
+                    [checked]="group.selected.length > 0"
+                    (changed)="updateGroup(group, $event.checked ? group.items : [])"
+                />
+                <label [for]="checkboxIdPrefix + group.items[0]">{{ 'artemisApp.exercise.show' + group.items[0] | artemisTranslate }}</label>
+            </div>
+        }
+        <button
+            type="button"
+            tumAetUiButton
+            variant="text"
+            size="small"
+            class="self-start aria-disabled:opacity-60"
+            data-testid="filter-dropdown-reset"
+            [attr.aria-disabled]="!activeFilters().length"
+            [tumAetUiTooltip]="activeFilters().length ? '' : ('artemisApp.participation.resetDisabled' | artemisTranslate)"
+            (click)="activeFilters().length && filterChange.emit([])"
+        >
+            {{ 'artemisApp.assessment.dashboard.resetFilter' | artemisTranslate }}
+        </button>
+    </div>
+</tumaet-ui-popover>

@@ -1,5 +1,5 @@
 <tumaet-ui-dialog [header]="titleTranslationKey() | artemisTranslate" [(visible)]="visible" [dismissableMask]="true" size="small">
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-6">
         <tumaet-ui-message severity="warn">
             <span jhiTranslate="artemisApp.deimos.modal.costWarning"></span>
         </tumaet-ui-message>
@@ -33,7 +33,13 @@
             <small id="deimos-order-error" class="text-state-danger" role="alert" jhiTranslate="artemisApp.deimos.modal.validation.order"></small>
         }
         @if (isWindowTooLarge()) {
-            <small id="deimos-window-error" class="text-state-danger" role="alert" jhiTranslate="artemisApp.deimos.modal.validation.window"></small>
+            <small
+                id="deimos-window-error"
+                class="text-state-danger"
+                role="alert"
+                jhiTranslate="artemisApp.deimos.modal.validation.window"
+                [translateValues]="{ maxWindowDays: maxWindowDays }"
+            ></small>
         }
     </div>
 

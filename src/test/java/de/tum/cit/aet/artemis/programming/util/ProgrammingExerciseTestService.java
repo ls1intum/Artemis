@@ -2322,6 +2322,7 @@ public class ProgrammingExerciseTestService {
         // Add a new student to the team
         User newStudent = userUtilService.generateAndSaveActivatedUsers(userPrefix + "new-student", Set.of(new Authority(Role.STUDENT.getAuthority())), 1).getFirst();
         newStudent = userRepo.save(newStudent);
+        userUtilService.enrollUserInCourse(newStudent, course, CourseRole.STUDENT);
         team.addStudents(newStudent);
 
         // Start participation with original team

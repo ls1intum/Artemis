@@ -4,12 +4,18 @@ import static de.tum.cit.aet.artemis.account.domain.User.IRIS_BOT_LOGIN;
 import static de.tum.cit.aet.artemis.account.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import jakarta.servlet.http.Cookie;
@@ -19,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -27,6 +34,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.AopTestUtils;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.LinkedMultiValueMap;
 
 import tools.jackson.core.type.TypeReference;
@@ -38,6 +47,10 @@ import de.tum.cit.aet.artemis.account.security.ArtemisInternalAuthenticationProv
 import de.tum.cit.aet.artemis.account.service.user.PasswordService;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
+import de.tum.cit.aet.artemis.admin.service.RateLimitConfigurationService;
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
+import de.tum.cit.aet.artemis.core.config.RateLimitConfig;
+import de.tum.cit.aet.artemis.core.config.RateLimitingProperties;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
@@ -45,6 +58,8 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVCTest;
@@ -52,6 +67,9 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalV
 class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCTest {
 
     private static final String TEST_PREFIX = "internalauth";
+
+    @Autowired
+    private ApplicationContext applicationContext;
 
     @Autowired
     private PasswordService passwordService;
@@ -134,6 +152,71 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(TEST_PREFIX + "nosuchuser", "any-password"), HttpStatus.UNAUTHORIZED, browserHeaders());
     }
 
+    /**
+     * The wrong passwords of one login name are counted whatever the client address: once its budget is used up, further logins for it are answered with 429, also with the
+     * correct password and with another spelling of the name, while other accounts are not affected.
+     */
+    @Test
+    @WithAnonymousUser
+    void testFailedLoginsOfOneAccountAreThrottled() throws Exception {
+        var properties = new RateLimitingProperties();
+        properties.setEnabled(true);
+        properties.setFailedLoginRequestsPerMinute(2);
+        var features = mock(FeatureToggleService.class);
+        when(features.isFeatureEnabled(Feature.RateLimit)).thenReturn(true);
+        var limiter = new RateLimitService(new RateLimitConfig().localRateLimitProxyManager(), new RateLimitConfigurationService(properties), features);
+        Object resource = AopTestUtils.getUltimateTargetObject(applicationContext.getBean("publicUserJwtResource"));
+        Object originalLimiter = ReflectionTestUtils.getField(resource, "rateLimitService");
+        try {
+            ReflectionTestUtils.setField(resource, "rateLimitService", limiter);
+
+            request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(USERNAME, "wrong-password-1"), HttpStatus.UNAUTHORIZED, browserHeaders());
+            request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(USERNAME.toUpperCase(Locale.ROOT), "wrong-password-2"), HttpStatus.UNAUTHORIZED,
+                    browserHeaders());
+            request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(USERNAME, USER_PASSWORD), HttpStatus.TOO_MANY_REQUESTS, browserHeaders());
+
+            request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(TEST_PREFIX + "another-user", "wrong-password"), HttpStatus.UNAUTHORIZED, browserHeaders());
+        }
+        finally {
+            ReflectionTestUtils.setField(resource, "rateLimitService", originalLimiter);
+        }
+    }
+
+    /**
+     * A login that fails after the credentials were accepted gives the reserved token back once. Giving it back twice would restore a token that an earlier wrong password used.
+     */
+    @Test
+    @WithAnonymousUser
+    void testAFailureAfterTheCredentialsWereAcceptedGivesTheReservedTokenBackOnlyOnce() throws Exception {
+        var properties = new RateLimitingProperties();
+        properties.setEnabled(true);
+        properties.setFailedLoginRequestsPerMinute(2);
+        var features = mock(FeatureToggleService.class);
+        when(features.isFeatureEnabled(Feature.RateLimit)).thenReturn(true);
+        var limiter = new RateLimitService(new RateLimitConfig().localRateLimitProxyManager(), new RateLimitConfigurationService(properties), features);
+        var failingCookieService = mock(JWTCookieService.class);
+        doThrow(new IllegalStateException("cookie failed")).when(failingCookieService).buildLoginCookie(anyBoolean(), any());
+        Object resource = AopTestUtils.getUltimateTargetObject(applicationContext.getBean("publicUserJwtResource"));
+        Object originalLimiter = ReflectionTestUtils.getField(resource, "rateLimitService");
+        Object originalCookieService = ReflectionTestUtils.getField(resource, "jwtCookieService");
+        try {
+            ReflectionTestUtils.setField(resource, "rateLimitService", limiter);
+
+            request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(USERNAME, "wrong-password-1"), HttpStatus.UNAUTHORIZED, browserHeaders());
+            ReflectionTestUtils.setField(resource, "jwtCookieService", failingCookieService);
+            request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(USERNAME, USER_PASSWORD), HttpStatus.INTERNAL_SERVER_ERROR, browserHeaders());
+            ReflectionTestUtils.setField(resource, "jwtCookieService", originalCookieService);
+
+            // One wrong password was counted, so exactly one more is allowed
+            request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(USERNAME, "wrong-password-2"), HttpStatus.UNAUTHORIZED, browserHeaders());
+            request.postWithoutResponseBody("/api/core/public/authenticate", loginVM(USERNAME, "wrong-password-3"), HttpStatus.TOO_MANY_REQUESTS, browserHeaders());
+        }
+        finally {
+            ReflectionTestUtils.setField(resource, "rateLimitService", originalLimiter);
+            ReflectionTestUtils.setField(resource, "jwtCookieService", originalCookieService);
+        }
+    }
+
     @Test
     @WithAnonymousUser
     void testWrongPasswordIsRefusedRatherThanCausingAServerError() throws Exception {
@@ -208,7 +291,53 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
         var responseBody = JsonObjectMapper.get().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
         });
-        assertThat(tokenProvider.validateTokenForAuthority(responseBody.get("access_token").toString(), null)).isTrue();
+        assertThat(responseBody).doesNotContainKey("access_token");
+    }
+
+    @Test
+    @WithAnonymousUser
+    void testJWTAuthenticationReturnsTheTokenInTheBodyOnlyWhenRequested() throws Exception {
+        LoginVM loginVM = new LoginVM();
+        loginVM.setUsername(USERNAME);
+        loginVM.setPassword(USER_PASSWORD);
+        loginVM.setRememberMe(true);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate?returnToken=true", loginVM, HttpStatus.OK, httpHeaders);
+        AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
+
+        var responseBody = JsonObjectMapper.get().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
+        });
+        String accessToken = responseBody.get("access_token").toString();
+        assertThat(tokenProvider.validateTokenForAuthority(accessToken, null)).isTrue();
+        assertThat(tokenProvider.getAuthentication(accessToken).getName()).isEqualTo(USERNAME);
+        assertThat(accessToken).isEqualTo(response.getCookie("jwt").getValue());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void testJWTAuthenticationWithToolReturnsTheToolTokenInTheBody() throws Exception {
+        LoginVM loginVM = new LoginVM();
+        loginVM.setUsername(USERNAME);
+        loginVM.setPassword(USER_PASSWORD);
+        loginVM.setRememberMe(true);
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+
+        // Tools such as Scorpio sign in with the tool parameter only and read the token from the body
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/core/public/authenticate?tool=" + ToolTokenType.SCORPIO, loginVM, HttpStatus.OK, httpHeaders);
+
+        var responseBody = JsonObjectMapper.get().readValue(response.getContentAsString(), new TypeReference<Map<String, Object>>() {
+        });
+        assertThat(responseBody).containsKey("access_token");
+        String token = responseBody.get("access_token").toString();
+        assertThat(tokenProvider.validateTokenForAuthority(token, null)).isTrue();
+        assertThat(tokenProvider.getAuthentication(token).getName()).isEqualTo(USERNAME);
+        assertThat(token).isEqualTo(response.getCookie("jwt").getValue());
+        assertThat(tokenProvider.getClaim(token, "tools", String.class).split(",")).contains(ToolTokenType.SCORPIO.toString());
     }
 
     /**
@@ -279,8 +408,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUser_internalAuth_successful() throws Exception {
-        // Note: ManagedUserVM no longer carries group strings (UserDTO dropped groups in Phase 6);
-        // the admin update API does not modify user_groups — course membership is via user_course_role.
+        // The admin update API does not modify course memberships, which are stored in user_course_role.
         final var managedUserVM = new ManagedUserVM(student);
         managedUserVM.setPassword("12345678");
 

@@ -1,5 +1,5 @@
 <div *titleBarTitle class="flex items-center">
-    <h5 class="mb-0!" data-testid="exercise-groups-title">
+    <h5 class="mb-0" data-testid="exercise-groups-title">
         <span><span jhiTranslate="artemisApp.examManagement.exerciseGroups"></span> ({{ exerciseGroupCount() }})</span>
     </h5>
 </div>
@@ -28,7 +28,7 @@
     }
 </ng-template>
 
-<div class="flex flex-col gap-3">
+<div class="flex flex-col gap-4">
     @for (exerciseGroup of exerciseGroups(); track exerciseGroup.id; let i = $index) {
         <div id="{{ 'group-' + exerciseGroup.id }}">
             <tumaet-ui-panel [toggleable]="true" [toggleAriaLabel]="exerciseGroup.title">
@@ -36,7 +36,7 @@
                     <div class="flex flex-col">
                         <button
                             type="button"
-                            class="group-move border-0 p-0 bg-transparent leading-none"
+                            class="group-move border-0 p-0 bg-transparent"
                             [disabled]="i === 0 || orderSavePending()"
                             [attr.aria-label]="'artemisApp.examManagement.exerciseGroup.moveUp' | artemisTranslate"
                             (click)="moveUp(i)"
@@ -45,7 +45,7 @@
                         </button>
                         <button
                             type="button"
-                            class="group-move border-0 p-0 bg-transparent leading-none"
+                            class="group-move border-0 p-0 bg-transparent"
                             [disabled]="i >= exerciseGroupCount() - 1 || orderSavePending()"
                             [attr.aria-label]="'artemisApp.examManagement.exerciseGroup.moveDown' | artemisTranslate"
                             (click)="moveDown(i)"
@@ -78,11 +78,12 @@
                             [connectedDropLists]="dropListIds()"
                             (groupChange)="onTableGroupChange($event)"
                             (exerciseDeleted)="removeExercise($event.id!, exerciseGroup.id!)"
+                            (exerciseDeletionOutcomeUnknown)="reloadExerciseGroups()"
                         />
                     }
                 }
 
-                <div class="flex items-center justify-between flex-wrap gap-2 mt-3">
+                <div class="flex items-center justify-between flex-wrap gap-2 mt-4">
                     <div class="flex items-center flex-wrap gap-2">
                         @if (course()?.isAtLeastEditor) {
                             <tumaet-ui-button size="small" [attr.data-testid]="'add-exercise-button'" (clicked)="openTypePicker(exerciseGroup.id!, 'create')">
@@ -109,9 +110,9 @@
             </tumaet-ui-panel>
         </div>
     } @empty {
-        <div class="text-center py-5 text-muted-color">
-            <fa-icon [icon]="faLayerGroup" size="2x" class="mb-3" aria-hidden="true" />
-            <p class="mb-2!" jhiTranslate="artemisApp.examManagement.exerciseGroup.noExerciseGroups"></p>
+        <div class="text-center py-12 text-muted-color">
+            <fa-icon [icon]="faLayerGroup" size="2x" class="mb-4" aria-hidden="true" />
+            <p class="mb-2" jhiTranslate="artemisApp.examManagement.exerciseGroup.noExerciseGroups"></p>
             @if (course()?.isAtLeastEditor) {
                 <tumaet-ui-button size="small" id="create-first-group" (clicked)="openCreateGroupModal()">
                     <fa-icon [icon]="faPlus" />
@@ -152,6 +153,8 @@
     [(visible)]="deleteGroupVisible"
     [entityTitle]="groupToDelete()?.title || ''"
     [deleteQuestion]="deleteGroupQuestion()"
+    entitySummaryTitle="artemisApp.examManagement.exerciseGroup.delete.summary.title"
+    [fetchCategorizedEntitySummary]="deleteGroupSummary()"
     deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
     [additionalChecks]="deleteGroupChecks()"
     [dialogError]="dialogError"

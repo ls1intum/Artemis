@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
@@ -74,6 +75,9 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "assessmentcomplaintintegration";
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private ComplaintRepository complaintRepo;
@@ -166,7 +170,8 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         // participant_score -> result foreign keys are ON DELETE SET NULL and ParticipationDeletionService bulk
         // deletes any re-created scores after the results are gone), so the delete must succeed without draining
         // the scheduler first. This test deliberately does not drain, to keep exercising that race path.
-        request.delete("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.OK);
+        request.delete("/api/modeling/modeling-exercises/" + modelingExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(modelingExercise.getId());
     }
 
     @Test
@@ -328,6 +333,71 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("complaint is not saved").isNotPresent();
         Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is false").isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2")
+    void submitComplaintAboutForeignCourseResult_isNotFound() throws Exception {
+        // The result belongs to student1. Even inside the valid complaint window, a different enrolled student must not
+        // be able to tell that it exists: the ownership check answers 404 before the time window check (400) runs.
+        exerciseUtilService.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
+        exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
+        modelingAssessment.setCompletionDate(modelingExercise.getDueDate().minusDays(1));
+        resultRepository.save(modelingAssessment);
+
+        request.post("/api/assessment/complaints", complaintRequest, HttpStatus.NOT_FOUND);
+
+        assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("no complaint is saved for a foreign result").isNotPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void submitComplaintAboutMissingResult_isNotFound() throws Exception {
+        // A result that does not exist and a foreign result must be indistinguishable: both answer 404.
+        var missingResultComplaint = new ComplaintRequestDTO(modelingAssessment.getId() + 100_000L, "This is not fair", ComplaintType.COMPLAINT, Optional.empty());
+
+        request.post("/api/assessment/complaints", missingResultComplaint, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2")
+    void submitComplaintAboutForeignResultWithExistingComplaint_isNotFound() throws Exception {
+        // A complaint already exists for student1's result. A foreign student must still get 404, not the 400
+        // "complaintexists", so the response does not reveal that the result exists.
+        complaintRepo.save(complaint);
+
+        request.post("/api/assessment/complaints", complaintRequest, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2")
+    void submitComplaintAboutForeignResultWithWrongComponent_isNotFound() throws Exception {
+        // Sending an examId for a course result would otherwise yield the 400 "wrong component". The ownership check
+        // runs first, so a foreign student gets 404 and cannot learn the result's exercise type either.
+        final Exam exam = ExamFactory.generateExam(course);
+        examTestRepository.save(exam);
+        var wrongComponentComplaint = new ComplaintRequestDTO(modelingAssessment.getId(), "This is not fair", ComplaintType.COMPLAINT, Optional.of(exam.getId()));
+
+        request.post("/api/assessment/complaints", wrongComponentComplaint, HttpStatus.NOT_FOUND);
+
+        assertThat(complaintRepo.findByResultId(modelingAssessment.getId())).as("no complaint is saved for a foreign result").isNotPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2")
+    void submitComplaintAboutForeignExamResult_isNotFound() throws Exception {
+        // A foreign exam result (filed with its examId) previously answered 403; it must now answer 404 like a missing
+        // result, so existence cannot be probed through the exam branch either.
+        final TextExercise examExercise = examUtilService.addEnrolledCourseExamWithReviewDatesExerciseGroupWithOneTextExercise(TEST_PREFIX);
+        final long examId = examExercise.getExerciseGroup().getExam().getId();
+        final TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
+        final TextSubmission savedSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
+        final var examExerciseComplaint = new ComplaintRequestDTO(savedSubmission.getLatestResult().getId(), "This is not fair", ComplaintType.COMPLAINT, Optional.of(examId));
+
+        request.post("/api/assessment/complaints", examExerciseComplaint, HttpStatus.NOT_FOUND);
+
+        assertThat(complaintRepo.findByResultId(savedSubmission.getLatestResult().getId())).as("no complaint is saved for a foreign exam result").isNotPresent();
     }
 
     @Test

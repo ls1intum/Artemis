@@ -3,8 +3,12 @@ import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-com
 import { CompetencyRelationDTO, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
-
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseCompetencyRelationFormComponent } from 'app/atlas/manage/course-competency-relation-form/course-competency-relation-form.component';
 import { CourseCompetenciesRelationGraphComponent } from '../course-competencies-relation-graph/course-competencies-relation-graph.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -16,17 +20,26 @@ export interface CourseCompetenciesRelationModalData {
 
 @Component({
     selector: 'jhi-course-competencies-relation-modal',
-    imports: [CourseCompetenciesRelationGraphComponent, CourseCompetencyRelationFormComponent, TranslateDirective],
+    imports: [
+        CourseCompetenciesRelationGraphComponent,
+        CourseCompetencyRelationFormComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FaIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiProgressSpinnerComponent,
+    ],
     templateUrl: './course-competencies-relation-modal.component.html',
-    styleUrl: './course-competencies-relation-modal.component.scss',
 })
 export class CourseCompetenciesRelationModalComponent {
     private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
     private readonly alertService = inject(AlertService);
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
+    private readonly dialogRef = inject(TumAetUiDialogRef);
+    private readonly dialogConfig = inject<TumAetUiDialogConfig<CourseCompetenciesRelationModalData>>(TumAetUiDialogConfig, { optional: true });
 
     private readonly courseCompetencyRelationFormComponent = viewChild.required(CourseCompetencyRelationFormComponent);
+
+    protected readonly closeIcon = faXmark;
 
     readonly courseId = signal<number>(0);
     readonly courseCompetencies = signal<CourseCompetency[]>([]);
@@ -37,7 +50,7 @@ export class CourseCompetenciesRelationModalComponent {
     readonly relations = signal<CompetencyRelationDTO[]>([]);
 
     constructor() {
-        const data = this.dialogConfig?.data as CourseCompetenciesRelationModalData | undefined;
+        const data = this.dialogConfig?.data;
         if (!data) {
             // Fail closed: without a payload we have no course context, so keep safe defaults and skip loading relations.
             return;

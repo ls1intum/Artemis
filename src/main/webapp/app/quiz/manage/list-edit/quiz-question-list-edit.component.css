@@ -1,0 +1,325 @@
+.edit-quiz .section-card {
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    background: var(--overview-card-bg, var(--brighter-body-bg));
+}
+
+.edit-quiz .section-card--questions {
+    --section-color: var(--purple);
+    --section-bg-start: color-mix(in srgb, var(--section-color) 6%, transparent);
+}
+
+.edit-quiz .section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(135deg, var(--section-bg-start, color-mix(in srgb, var(--primary) 4%, transparent)) 0%, transparent 100%);
+}
+
+.edit-quiz .section-header-icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: var(--white);
+    background: var(--section-color, var(--primary));
+    box-shadow: 0 3px 8px color-mix(in srgb, black 15%, transparent);
+}
+
+.edit-quiz .section-header-text {
+    flex: 1;
+}
+
+.edit-quiz .section-header-text h4 {
+    margin: 0 0 0.15rem;
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+.edit-quiz .section-header-text p {
+    margin: 0;
+    color: var(--text-body-secondary);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.edit-quiz .section-header-action {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--overview-card-nested-bg, var(--body-bg));
+    color: var(--body-color);
+    font-weight: 500;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+    flex-shrink: 0;
+}
+
+.edit-quiz .section-header-action:hover,
+.edit-quiz .section-header-action.active {
+    background: color-mix(in srgb, var(--body-color) 8%, transparent);
+    box-shadow: 0 2px 8px color-mix(in srgb, black 6%, transparent);
+}
+
+.edit-quiz .section-body {
+    padding: 1.25rem 1.5rem;
+}
+
+.edit-quiz .add-question-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--text-body-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+        border-color 0.2s ease,
+        color 0.2s ease,
+        background 0.2s ease,
+        flex 0.2s ease;
+}
+
+.edit-quiz .add-question-btn:hover,
+.edit-quiz .add-question-btn.active {
+    border-color: var(--section-color, var(--primary));
+    color: var(--section-color, var(--primary));
+    background: var(--section-bg-start, color-mix(in srgb, var(--primary) 4%, transparent));
+}
+
+.edit-quiz .add-question-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-top: 1rem;
+}
+
+.edit-quiz .add-question-actions .add-question-btn {
+    flex: 1;
+}
+
+.edit-quiz .question {
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    background: var(--body-bg);
+}
+
+.edit-quiz .question:first-of-type {
+    margin-top: 1rem;
+}
+
+/** css style for child components start **/
+.edit-quiz .question .question-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.85rem;
+    background: var(--overview-card-nested-bg);
+    border-bottom: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+.edit-quiz .question .question-collapse {
+    flex-shrink: 0;
+    width: 2rem;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--text-body-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-quiz .question .question-collapse:hover {
+    color: var(--body-color);
+}
+
+.edit-quiz .question .question-title {
+    flex: 1;
+    min-width: 8rem;
+}
+
+.edit-quiz .question .question-title input {
+    width: 100%;
+}
+
+.edit-quiz .question .question-score {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.edit-quiz .question .question-score .score-input {
+    width: 5rem;
+}
+
+.edit-quiz .question .question-type {
+    flex-shrink: 0;
+}
+
+.edit-quiz .question .question-card-header-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+@media (max-width: 699px) {
+    .edit-quiz .question .question-card-header-inputs {
+        flex: 100%;
+    }
+}
+
+.edit-quiz .question .mc-question,
+.edit-quiz .question .dnd-question,
+.edit-quiz .question .sa-question {
+    width: 100%;
+    box-sizing: border-box;
+    border: none;
+    margin-bottom: 0;
+    padding: 0;
+}
+
+.edit-quiz .question .question-card-body,
+.edit-quiz .question .preview-mc-question,
+.edit-quiz .question .preview-dnd-question,
+.edit-quiz .question .preview-sa-question {
+    padding: 1.25rem;
+    background: var(--overview-card-bg);
+}
+
+.edit-quiz .question .question-card-body .invalid-button {
+    width: 100%;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.edit-quiz .question .question-action-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+}
+
+.edit-quiz .question .question-action-btn fa-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-quiz .question .question-action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.edit-quiz .question .question-card-body .question-options:not(.question-options--row) {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.edit-quiz .question .delete-button,
+.edit-quiz .question .duplicate-button {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 4px;
+}
+
+.edit-quiz .question .delete-button:hover {
+    color: var(--danger);
+}
+
+.edit-quiz .question .duplicate-button:hover {
+    color: var(--primary);
+}
+
+.edit-quiz .question .markupEditorArea {
+    margin: 0 4px;
+}
+
+.edit-quiz .question .markupEditorArea .toolbar {
+    margin: 4px 0;
+}
+
+.edit-quiz .question .question-content {
+    display: flex;
+    flex-flow: column;
+}
+
+.edit-quiz .question .question-content > * {
+    height: 350px;
+}
+
+/** css style for child components end **/
+.edit-quiz .existing-question-container {
+    flex-direction: column;
+    max-width: 1600px;
+    margin: auto;
+}
+
+.edit-quiz .existing-question-select-course {
+    display: flex;
+    align-items: center;
+    padding-bottom: 10px;
+}
+
+.edit-quiz .existing-question-filter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding: 10px;
+}
+
+.edit-quiz .existing-question-filter .search-query {
+    flex: 1;
+    margin-bottom: 10px;
+}
+
+.edit-quiz .existing-question-filter .checkboxes {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    margin: 0 10px 10px 0;
+}
+
+.edit-quiz .existing-question-filter button {
+    margin-bottom: 10px;
+}
+
+@media (max-width: 699px) {
+    .edit-quiz .existing-question-filter .checkboxes {
+        margin: 10px 0;
+        width: 100%;
+    }
+}

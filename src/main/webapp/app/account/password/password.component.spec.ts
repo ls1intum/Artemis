@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CredentialRevocationConfirmationService } from 'app/account/shared/credential-revocation-confirmation.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
 import { provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';

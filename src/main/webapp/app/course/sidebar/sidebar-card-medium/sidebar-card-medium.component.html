@@ -1,7 +1,7 @@
 @if (sidebarType() === 'inExam') {
     <div
         id="test-sidebar-card-medium"
-        class="pointer item-border rounded-3 col-12 px-1 pt-2 pb-1 highlight-card bg-module hover-effect"
+        class="cursor-pointer item-border rounded-sm w-full shrink-0 px-1 pt-2 pb-1 highlight-card bg-module hover-effect"
         [ngClass]="{ 'bg-selected border-selected': itemSelected() }"
         (click)="onExamCardClicked()"
         [attr.aria-current]="itemSelected() ? true : null"
@@ -15,14 +15,14 @@
         <jhi-sidebar-card-item [groupKey]="groupKey()" [sidebarType]="sidebarType()" [sidebarItem]="sidebarItem()" />
     </div>
 } @else {
-    <div class="item-border rounded-3 col-12">
+    <div class="item-border rounded-sm w-full shrink-0">
         <div
             id="test-sidebar-card-medium"
-            class="flex rounded-3 col-12 border-s-5 highlight-card bg-module hover-effect"
+            class="flex rounded-sm w-full shrink-0 border-s-5 highlight-card bg-module hover-effect"
             [ngClass]="{
-                'border-success': sidebarItem()?.difficulty === DifficultyLevel.EASY,
-                'border-warning': sidebarItem()?.difficulty === DifficultyLevel.MEDIUM,
-                'border-danger': sidebarItem()?.difficulty === DifficultyLevel.HARD,
+                'border-state-success': sidebarItem()?.difficulty === DifficultyLevel.EASY,
+                'border-state-warning': sidebarItem()?.difficulty === DifficultyLevel.MEDIUM,
+                'border-state-danger': sidebarItem()?.difficulty === DifficultyLevel.HARD,
                 'border-variant-group': isVariantGroup(),
                 'border-module': !sidebarItem()?.difficulty && !isVariantGroup(),
                 'bg-group-selected': containsActiveVariant(),
@@ -31,7 +31,7 @@
             [routerLinkActiveOptions]="{ exact: !!sidebarItem().routerLink }"
         >
             <a
-                class="block min-w-0 flex-1 px-1 py-2 text-inherit! no-underline! focus-visible:outline-2 focus-visible:outline-offset-2"
+                class="block min-w-0 flex-1 px-1 py-2 text-inherit no-underline! focus-visible:outline-2 focus-visible:outline-offset-2"
                 [routerLink]="
                     sidebarItem().routerLink
                         ? sidebarItem().routerLink

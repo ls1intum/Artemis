@@ -213,6 +213,7 @@ Type a list marker (`-`, `*`, `+`, `1.` or `1)`) followed by a space to start a 
 At the beginning or end of a quote or code block, use the up or down arrow key to move to normal text outside it.
 
 Use the toolbar to format selected text or add a link. Bare hostnames such as `example.org` become HTTPS links; explicit relative destinations stay relative. Select the link toolbar button again to close its popup. Select an existing link to change its text or destination.
+To link text without the toolbar, select it and paste a web address starting with `http://` or `https://`.
 **Remove link** keeps the text and removes its destination.
 Keep references such as `#123` outside links; link text and destinations containing numeric message references are rejected.
 Select text to change its formatting, or choose a format at the cursor to apply it to the text you type next.
@@ -327,13 +328,14 @@ It also highlights the correct answer for other students that have a similar pro
 
 ### Forward Messages
 
-Users can forward any message to another conversation within the same course. In the forward message dialog, they can add
-additional content using the input field. At the top of the dialog, users can search for channels or users by typing into
-the input bar and selecting from the auto-suggestions. They can select multiple conversations at once to forward the message
-to several destinations simultaneously. Recipients can read the forwarded message even if they cannot access the original
-conversation. They can also forward the received message onward within the same course. Forwarding shares that message,
-including its author, but does not share the rest of the original conversation or its replies. Users who also have access
-to the original conversation can navigate to the original message by clicking the *View Conversation* button.
+Users can forward any message to another conversation within the same course. In the forward message dialog, they can
+add additional content using the input field. At the top of the dialog, users can search for channels, group chats or
+users by typing into the input bar and selecting from the auto-suggestions. Announcement channels cannot be selected.
+They can select multiple conversations at once to forward the message to several destinations simultaneously. Recipients
+can read the forwarded message even if they cannot access the original conversation. They can also forward the received
+message onward within the same course. Forwarding shares that message, including its author, but does not share the rest
+of the original conversation or its replies. Users who also have access to the original conversation can navigate to the
+original message by clicking the *View Conversation* button.
 
 Forward Message Dialog
 
@@ -349,8 +351,16 @@ Users can save messages and access them later from the Saved Messages section in
 organized into three categories: *In Progress*, *Completed*, and *Archived*. Messages initially appear in the *In Progress*
 section and can be marked as done to move them to *Completed*, or archived to move them to the *Archived* section.
 Clicking on a saved message navigates the user directly to its exact location within the conversation.
+To remove a message from the saved messages, click **Remove bookmark** on it, either in the Saved Messages section or in
+its conversation.
 
 <Image src={saveMessagesImg} alt={"save-messages"} size={ImageSize.large} />
+
+### Mark Messages as Unread
+
+To come back to a message later, users can hover over it or right-click it and select **Mark as unread**. The
+conversation then counts this message and all newer ones as unread again, apart from the user's own messages. The option
+is available for messages of other users, not for own messages and not for replies in a thread.
 
 ### Expand Thread to Full-Screen
 

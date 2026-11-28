@@ -1,12 +1,14 @@
 package de.tum.cit.aet.artemis.videosource.service;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -19,11 +21,14 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.util.UriUtils;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.cit.aet.artemis.videosource.config.GocastConfiguration.GocastSettings;
 import de.tum.cit.aet.artemis.videosource.config.GocastEnabled;
+import de.tum.cit.aet.artemis.videosource.dto.GocastRecordingDTO;
+import de.tum.cit.aet.artemis.videosource.dto.GocastUploadTargetDTO;
 import de.tum.cit.aet.artemis.videosource.dto.GocastVerifiedCourseDTO;
 
 @Service
@@ -32,6 +37,10 @@ import de.tum.cit.aet.artemis.videosource.dto.GocastVerifiedCourseDTO;
 public class GocastConnectorService {
 
     private static final long MAX_UNSIGNED_INT = 4_294_967_295L;
+
+    private static final Pattern EXTERNAL_REF = Pattern.compile("[A-Za-z0-9_-]{16,64}");
+
+    private static final Pattern UPLOAD_PATH = Pattern.compile("/api/v2/integration/uploads/[A-Za-z0-9_-]{43}");
 
     private static final Set<String> VISIBILITIES = Set.of("public", "hidden", "loggedin", "enrolled");
 
@@ -136,14 +145,14 @@ public class GocastConnectorService {
     }
 
     /**
-     * Reads the signed combined playlist of one lecture of the course behind the exact saved grant. GoCast refuses lectures outside that course, private and
-     * deleted ones with 404.
+     * Reads the conversion state and the signed combined playlist of one lecture of the course behind the exact saved grant. GoCast refuses lectures outside that
+     * course, private ones it did not upload, and deleted ones with 404.
      *
      * @param grantId  the GoCast grant identifier
      * @param streamId the GoCast lecture identifier
-     * @return the playlist URL, valid for seven hours, or empty while the lecture has no recording. A bearer credential: never log it.
+     * @return the recording state
      */
-    public Optional<String> getRecordingPlaylist(long grantId, long streamId) {
+    public GocastRecordingDTO getRecording(long grantId, long streamId) {
         requireId(grantId, "grantId");
         requireId(streamId, "streamId");
         WireRecording response = execute("Could not read the TUM.Live recording",
@@ -151,13 +160,79 @@ public class GocastConnectorService {
         if (response == null) {
             throw invalidResponse("TUM.Live recording data is invalid");
         }
-        if (!StringUtils.hasText(response.playlistUrl())) {
-            return Optional.empty();
-        }
-        if (!isHttpUrl(response.playlistUrl())) {
+        String playlistUrl = StringUtils.hasText(response.playlistUrl()) ? response.playlistUrl() : null;
+        if (playlistUrl != null && !isHttpUrl(playlistUrl)) {
             throw invalidResponse("TUM.Live recording data is invalid");
         }
-        return Optional.of(response.playlistUrl());
+        return new GocastRecordingDTO(playlistUrl, response.converting(), response.progress(), response.failed(), response.failed() ? response.error() : null);
+    }
+
+    /**
+     * Reads the signed combined playlist of one lecture of the course behind the exact saved grant.
+     *
+     * @param grantId  the GoCast grant identifier
+     * @param streamId the GoCast lecture identifier
+     * @return the playlist URL, valid for seven hours, or empty while the lecture has no recording. A bearer credential: never log it.
+     */
+    public Optional<String> getRecordingPlaylist(long grantId, long streamId) {
+        return Optional.ofNullable(getRecording(grantId, streamId).playlistUrl());
+    }
+
+    /**
+     * Creates the TUM.Live lecture for one upload, or renews the upload URL of a reference whose upload has not started.
+     *
+     * @param grantId     the GoCast grant identifier
+     * @param externalRef the reference Artemis chose for this upload
+     * @param title       the lecture's title in TUM.Live
+     * @return the lecture and the absolute upload URL on TUM.Live
+     */
+    public GocastUploadTargetDTO createUpload(long grantId, String externalRef, String title) {
+        requireId(grantId, "grantId");
+        requireReference(externalRef);
+        WireUpload response = execute("Could not create the TUM.Live upload",
+                () -> restClient.post().uri("/integration/grants/{grantId}/uploads", grantId).body(new CreateUploadRequest(externalRef, title)).retrieve().body(WireUpload.class));
+        if (response == null || !isId(response.streamId()) || response.uploadPath() == null || !UPLOAD_PATH.matcher(response.uploadPath()).matches()) {
+            throw invalidResponse("TUM.Live upload data is invalid");
+        }
+        return new GocastUploadTargetDTO(response.streamId(), webBaseUri.resolve(response.uploadPath()).toString());
+    }
+
+    /**
+     * Deletes the TUM.Live lecture of an upload and closes its reference. Repeating it succeeds, also for a reference TUM.Live never saw.
+     *
+     * @param grantId     the GoCast grant identifier
+     * @param externalRef the upload's reference
+     */
+    public void deleteUpload(long grantId, String externalRef) {
+        requireId(grantId, "grantId");
+        requireReference(externalRef);
+        execute("Could not delete the TUM.Live recording", () -> {
+            var response = restClient.delete().uri("/integration/grants/{grantId}/uploads/{externalRef}", grantId, externalRef).retrieve().toBodilessEntity();
+            // Only a success confirms the deletion; a redirect, which is not followed, would otherwise drop the cleanup unconfirmed.
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new GocastIntegrationException("Could not delete the TUM.Live recording", response.getStatusCode());
+            }
+            return Boolean.TRUE;
+        });
+    }
+
+    /**
+     * The TUM.Live watch page of a lecture, in the form Artemis resolves as a TUM Live video. It shows only the video ({@code video_only=1}), like a TUM.Live
+     * link an editor enters, so the unit's edit form accepts it.
+     *
+     * @param courseSlug the TUM.Live course slug
+     * @param streamId   the TUM.Live lecture
+     * @return the watch page URL
+     */
+    public String watchUrl(String courseSlug, long streamId) {
+        requireId(streamId, "streamId");
+        return webBaseUri.resolve("/w/" + UriUtils.encodePathSegment(courseSlug, StandardCharsets.UTF_8) + "/" + streamId + "?video_only=1").toString();
+    }
+
+    private static void requireReference(String externalRef) {
+        if (externalRef == null || !EXTERNAL_REF.matcher(externalRef).matches()) {
+            throw new IllegalArgumentException("externalRef must be 16 to 64 characters of A-Z, a-z, 0-9, - and _");
+        }
     }
 
     private static boolean isHttpUrl(String value) {
@@ -266,11 +341,23 @@ public class GocastConnectorService {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record WireRecording(String playlistUrl) {
+    private record WireRecording(String playlistUrl, boolean converting, int progress, boolean failed, String error) {
 
         @Override
         public String toString() {
-            return "WireRecording[playlistUrl=[REDACTED]]";
+            return "WireRecording[playlistUrl=[REDACTED], converting=" + converting + ", progress=" + progress + ", failed=" + failed + "]";
+        }
+    }
+
+    private record CreateUploadRequest(String externalRef, String title) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record WireUpload(long streamId, String uploadPath) {
+
+        @Override
+        public String toString() {
+            return "WireUpload[streamId=" + streamId + ", uploadPath=[REDACTED]]";
         }
     }
 }
