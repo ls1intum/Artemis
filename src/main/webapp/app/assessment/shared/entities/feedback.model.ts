@@ -102,11 +102,23 @@ export class Feedback implements BaseEntity {
         this.credits = 0;
     }
 
+    /** Automatic programming feedback can represent a test even when the result has no linked test case. */
     public static isTestCaseFeedback(feedback: Feedback): boolean {
-        if (feedback.type !== FeedbackType.AUTOMATIC) {
-            return false;
+        return (
+            feedback.type === FeedbackType.AUTOMATIC &&
+            !Feedback.isSubmissionPolicyFeedback(feedback) &&
+            !Feedback.isStaticCodeAnalysisFeedback(feedback) &&
+            !Feedback.isFeedbackSuggestion(feedback) &&
+            !Feedback.isNonGradedFeedbackSuggestion(feedback)
+        );
+    }
+
+    /** Older results may only carry the credits. An explicit outcome also covers zero-point passes and partial credit on failures. */
+    public static testCasePassed(feedback: Pick<Feedback, 'positive' | 'credits'>): boolean | undefined {
+        if (feedback.positive !== undefined) {
+            return feedback.positive;
         }
-        return !!feedback.testCase;
+        return feedback.credits === undefined ? undefined : feedback.credits > 0;
     }
 
     public static isStaticCodeAnalysisFeedback(that: Feedback): boolean {

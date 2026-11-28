@@ -237,11 +237,11 @@ export class ExerciseService {
         const isQuiz = exerciseType === ExerciseType.QUIZ;
 
         return summaryCategories([
+            summaryCategory(`${prefix}.category.regenerateExams`, [summaryItem(`${prefix}.numberOfStudentExams`, dto.numberOfStudentExams)]),
             summaryCategory(`${prefix}.category.studentWork`, [
                 summaryItem(`${prefix}.numberOfStudentParticipations`, dto.numberOfStudentParticipations),
                 summaryItem(`${prefix}.numberOfTeams`, dto.numberOfTeams),
                 summaryItem(`${prefix}.numberOfSubmissions`, dto.numberOfSubmissions),
-                summaryItem(`${prefix}.numberOfStudentExams`, dto.numberOfStudentExams),
             ]),
             summaryCategory(`${prefix}.category.assessment`, [
                 summaryItem(`${prefix}.numberOfResults`, dto.numberOfResults),

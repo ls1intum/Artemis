@@ -28,6 +28,7 @@
                 "summary": {
                     "title": "What will be deleted",
                     "category": {
+                        "regenerateExams": "Before the exam starts, regenerate individual exams and prepare the exercises again.",
                         "studentWork": "Student work",
                         "assessment": "Assessment",
                         "plagiarism": "Plagiarism checks",
@@ -38,7 +39,7 @@
                     "numberOfStudentParticipations": "Student participations",
                     "numberOfTeams": "Teams",
                     "numberOfSubmissions": "Submissions",
-                    "numberOfStudentExams": "Student exams containing this exercise",
+                    "numberOfStudentExams": "Individual exams that will lose this exercise",
                     "numberOfResults": "Results",
                     "numberOfAssessments": "Manual assessments",
                     "numberOfComplaints": "Complaints and feedback requests",

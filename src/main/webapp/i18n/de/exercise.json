@@ -28,6 +28,7 @@
                 "summary": {
                     "title": "Was gelöscht wird",
                     "category": {
+                        "regenerateExams": "Generiere die individuellen Klausuren vor Klausurbeginn erneut und bereite anschließend den Aufgabenstart vor.",
                         "studentWork": "Studierendenleistungen",
                         "assessment": "Bewertung",
                         "plagiarism": "Plagiatsprüfungen",
@@ -38,7 +39,7 @@
                     "numberOfStudentParticipations": "Teilnahmen von Studierenden",
                     "numberOfTeams": "Teams",
                     "numberOfSubmissions": "Abgaben",
-                    "numberOfStudentExams": "Klausuren von Studierenden, die diese Aufgabe enthalten",
+                    "numberOfStudentExams": "Individuelle Klausuren, aus denen diese Aufgabe entfernt wird",
                     "numberOfResults": "Ergebnisse",
                     "numberOfAssessments": "Manuelle Bewertungen",
                     "numberOfComplaints": "Beschwerden und Feedback-Anfragen",

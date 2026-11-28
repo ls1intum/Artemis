@@ -40,6 +40,22 @@ describe('UnreferencedFeedbackComponent', () => {
         sgiService = TestBed.inject(StructuredGradingCriterionService);
     });
 
+    it('shows the overall score with only diagram feedback and after its removal', () => {
+        const translate = vi.spyOn(TestBed.inject(TranslateService), 'instant');
+        fixture.componentRef.setInput('maxPoints', 10);
+        fixture.componentRef.setInput('allFeedbacks', [{ type: FeedbackType.MANUAL, reference: 'Class:1', credits: 3 }]);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('dl')).toBeTruthy();
+        expect(translate).toHaveBeenCalledWith('artemisApp.assessment.detail.pointsOfShort', { points: 3, maxPoints: 10 });
+
+        fixture.componentRef.setInput('allFeedbacks', []);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('dl')).toBeTruthy();
+        expect(translate).toHaveBeenCalledWith('artemisApp.assessment.detail.pointsOfShort', { points: 0, maxPoints: 10 });
+    });
+
     it('should validate feedback', () => {
         comp.validateFeedback();
         expect(comp.assessmentsAreValid).toBe(false);

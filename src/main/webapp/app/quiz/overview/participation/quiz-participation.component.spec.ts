@@ -226,6 +226,67 @@ describe('QuizParticipationComponent - live mode', () => {
         else expect(alerts).not.toHaveBeenCalled();
     });
 
+    it.each([false, true])('keeps the latest drag-and-drop edit while its previous save is pending (final submit=%s)', (submit) => {
+        fixture.detectChanges();
+        component.remainingTimeSeconds.set(10);
+        const mapping = new DragAndDropMapping({ id: 11, invalid: false }, { id: 12, invalid: false });
+        const saveUrl = '/api/quiz/exercises/1/submissions/live?submit=false';
+        component.onDragAndDropMappingsChange(1, [mapping]);
+        const first = httpMock.expectOne(saveUrl);
+        expect(first.request.body.submittedAnswers).toContainEqual({
+            type: 'drag-and-drop',
+            quizQuestion: { id: 1 },
+            mappings: [{ dragItem: { id: 11 }, dropLocation: { id: 12 } }],
+        });
+
+        component.onDragAndDropMappingsChange(1, []);
+        component.triggerSave();
+        httpMock.expectNone(saveUrl);
+        expect(component.unsavedChanges()).toBe(true);
+        if (submit) {
+            component.submitExercise();
+        } else {
+            first.flush({ id: 7, submissionDate: now.toISOString() });
+        }
+
+        const latest = httpMock.expectOne('/api/quiz/exercises/1/submissions/live?submit=' + submit);
+        expect(latest.request.body.submittedAnswers).toContainEqual({ type: 'drag-and-drop', quizQuestion: { id: 1 }, mappings: [] });
+        expect(component.unsavedChanges()).toBe(true);
+        latest.flush({ id: 7, submitted: submit, submittedAnswers: [], submissionDate: now.toISOString() });
+        if (submit) {
+            // The server rejects an autosave arriving after the final submit.
+            const alerts = vi.spyOn(TestBed.inject(AlertService), 'addAlert');
+            first.flush({}, { status: 400, statusText: 'Already submitted' });
+            expect(alerts).not.toHaveBeenCalled();
+        }
+        expect(component.unsavedChanges()).toBe(false);
+    });
+
+    it.each([false, true])('sends a queued edit once when an older save fails after the deadline (latest save fails=%s)', (latestFails) => {
+        fixture.detectChanges();
+        const saveUrl = '/api/quiz/exercises/1/submissions/live?submit=false';
+        const mapping = new DragAndDropMapping({ id: 11, invalid: false }, { id: 12, invalid: false });
+        component.onDragAndDropMappingsChange(1, [mapping]);
+        const first = httpMock.expectOne(saveUrl);
+        component.onDragAndDropMappingsChange(1, []);
+        component.previousRunning = true;
+        component.remainingTimeSeconds.set(-1);
+        component.checkForQuizEnd();
+        httpMock.expectNone(saveUrl);
+
+        first.flush({}, { status: 503, statusText: 'Service Unavailable' });
+        const latest = httpMock.expectOne(saveUrl);
+        expect(latest.request.body.submittedAnswers).toContainEqual({ type: 'drag-and-drop', quizQuestion: { id: 1 }, mappings: [] });
+        expect(component.unsavedChanges()).toBe(true);
+        if (latestFails) {
+            latest.flush({}, { status: 503, statusText: 'Service Unavailable' });
+        } else {
+            latest.flush({ id: 7, submissionDate: now.toISOString() });
+        }
+        httpMock.expectNone(saveUrl);
+        expect(component.unsavedChanges()).toBe(latestFails);
+    });
+
     it('submits live answers and emits the confirmed submission once', () => {
         fixture.detectChanges();
         component.remainingTimeSeconds.set(10);
@@ -495,6 +556,26 @@ describe('QuizParticipationComponent - live mode', () => {
         expect(checkQuizEndSpy).toHaveBeenCalledTimes(20);
         expect(triggerSaveStub).toHaveBeenCalledOnce();
         vi.useRealTimers();
+    });
+
+    it.each([false, true])('reports success at the deadline only once the final autosave succeeds (failure=%s)', (failed) => {
+        fixture.detectChanges();
+        component.quizExercise().quizMode = QuizMode.BATCHED;
+        component.selectedAnswerOptions().set(2, [{ id: 1, invalid: false }]);
+        component.onSelectionChanged();
+        component.previousRunning = true;
+        component.remainingTimeSeconds.set(-1);
+        const alerts = vi.spyOn(TestBed.inject(AlertService), 'success');
+        component.checkForQuizEnd();
+        const save = httpMock.expectOne('/api/quiz/exercises/1/submissions/live?submit=false');
+        expect(alerts).not.toHaveBeenCalled();
+        if (failed) {
+            save.flush({}, { status: 503, statusText: 'Service Unavailable' });
+        } else {
+            save.flush({ submissionDate: now.toISOString() });
+        }
+        expect(alerts).toHaveBeenCalledTimes(failed ? 0 : 1);
+        expect(component.unsavedChanges()).toBe(failed);
     });
 
     it('should refresh quiz when called directly', () => {

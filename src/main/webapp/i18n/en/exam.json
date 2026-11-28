@@ -832,7 +832,7 @@
                     "numberCommunicationPosts": "Posts in the exam channel",
                     "numberAnswerPosts": "Replies in the exam channel",
                     "numberBuilds": "Build jobs",
-                    "numberStudentExamsOfGroup": "Student exams containing exercises of this group"
+                    "numberStudentExamsOfGroup": "Individual exams that will lose an exercise from this group"
                 }
             },
             "reset": {
@@ -998,6 +998,7 @@
             }
         },
         "studentExamDetail": {
+            "missingExercises": "This individual exam contains {{ actual }} of the {{ expected }} exercises configured for the exam.",
             "studentExam": "Student exam",
             "studentTestExam": "Student practice exam",
             "testRun": "Test Run",

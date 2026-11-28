@@ -59,6 +59,12 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
     examId = signal<number | undefined>(undefined);
     courseId = signal<number | undefined>(undefined);
     studentExam = signal<StudentExam | undefined>(undefined);
+    protected readonly missingExercises = computed(() => {
+        const studentExam = this.studentExam();
+        const expected = studentExam?.exam?.numberOfExercisesInExam;
+        const actual = studentExam?.exercises?.length ?? 0;
+        return !studentExam?.testRun && expected !== undefined && actual < expected ? { actual, expected } : undefined;
+    });
     achievedPointsPerExercise = signal<{ [exerciseId: number]: number } | undefined>(undefined);
     course = signal<Course | undefined>(undefined);
     student = signal<User | undefined>(undefined);

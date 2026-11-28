@@ -178,6 +178,19 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.achievedTotalPoints()).toBe(40);
     });
 
+    it.each([
+        { expected: 2, actual: 1, testRun: false, warn: true },
+        { expected: 1, actual: 0, testRun: false, warn: true },
+        { expected: 1, actual: 1, testRun: false, warn: false },
+        { expected: 2, actual: 1, testRun: true, warn: false },
+    ])('shows the missing exercise warning for $actual of $expected exercises (test run=$testRun)', ({ expected, actual, testRun, warn }) => {
+        exam.numberOfExercisesInExam = expected;
+        studentExam.testRun = testRun;
+        studentExam.exercises = actual ? [exercise] : undefined; // The detail response omits empty lists.
+        studentExamDetailComponentFixture.detectChanges();
+        expect(!!studentExamDetailComponentFixture.nativeElement.querySelector('[data-testid="missing-exercises-warning"]')).toBe(warn);
+    });
+
     it('should save working time', () => {
         const studentExamSpy = vi.spyOn(studentExamService, 'updateWorkingTime');
         studentExamDetailComponentFixture.detectChanges();

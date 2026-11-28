@@ -2,7 +2,7 @@
 id: assessment
 title: Assessment and Grading
 sidebar_label: Assessment and Grading
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -12,6 +12,8 @@ import Image, {ImageSize} from "../../../src/components/Image/Image";
 import assessmentDashboard from './assets/assessment/assessment-dashboard.png';
 import exerciseDashboard from './assets/assessment/exercise-dashboard.png';
 import gradingCriteria from './assets/assessment/grading-criteria.png';
+import modelingScorePreview from './assets/assessment/modeling-score-preview.png';
+import programmingScorePreview from './assets/assessment/programming-score-preview.png';
 import exampleSubmission from './assets/assessment/example-submission.png';
 import trainingInstructions from './assets/assessment/training-instructions.png';
 import complaintReview from './assets/assessment/complaint-review.png';
@@ -33,6 +35,15 @@ A reviewer does not pick a submission; they ask for the next one. Opening an ass
 two reviewers never mark the same work, and the lock is what creates the result the marks are written to. The reviewer
 then applies feedback and points and submits the assessment, or cancels it — which deletes the draft result and
 returns the submission to the queue.
+
+While grading a modeling submission, you can see the total even if every feedback item is attached to the diagram.
+
+<Image src={modelingScorePreview} alt="Modeling assessment showing 3 of 10 points with no general feedback" size={ImageSize.medium} />
+
+For a semi-automatic programming assessment, the preview counts the tests in the feedback details and updates the
+points as you apply manual grading instructions.
+
+<Image src={programmingScorePreview} alt="Programming assessment showing one of seven tests passed and three points after applying a two-point instruction" size={ImageSize.medium} />
 
 <Callout variant={CalloutVariant.info}>
 

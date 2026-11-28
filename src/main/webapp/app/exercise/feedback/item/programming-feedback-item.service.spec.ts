@@ -326,6 +326,12 @@ describe('ProgrammingFeedbackItemService', () => {
         expect(feedbackInGroup).toEqual(feedbacks[0]);
     });
 
+    it('groups a test with a deduction and no explicit outcome as failed', () => {
+        const feedback: Feedback = { testCase: { testName: 'test1' }, type: FeedbackType.AUTOMATIC, credits: -1 };
+        const groups = service.group(service.create([feedback], true), exercise);
+        expect(groups.map((group) => group.name)).toEqual(['wrong']);
+    });
+
     it('should handle automatic feedback with missing positive attribute', () => {
         const feedbacks: Feedback[] = [{ testCase: { testName: 'test1' }, type: FeedbackType.AUTOMATIC, credits: 2 }];
 

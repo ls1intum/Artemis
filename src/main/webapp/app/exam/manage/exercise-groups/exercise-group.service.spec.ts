@@ -57,9 +57,10 @@ describe('Exercise Group Service', () => {
 
         expect(httpClientGetSpy).toHaveBeenCalledWith('api/exam/courses/1/exams/2/exercise-groups/3/deletion-summary');
         expect(categories!.map((category) => category.titleKey)).toEqual([
+            'artemisApp.exercise.delete.summary.category.regenerateExams',
             'artemisApp.examManagement.delete.summary.category.structure',
             'artemisApp.examManagement.delete.summary.category.studentWork',
         ]);
-        expect(categories![1].items.find((item) => item.value === 600)?.highlight).toBe(true);
+        expect(categories![2].items.find((item) => item.value === 600)?.highlight).toBe(true);
     });
 });
