@@ -51,7 +51,7 @@ describe('ModelingExerciseResolver', () => {
     it('should resolve a ModelingExercise for a course and exercise group', () => {
         const dummyExerciseGroup = { id: 3 } as ExerciseGroup;
         const exerciseGroupService = TestBed.inject(ExerciseGroupService);
-        vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: dummyExerciseGroup })));
+        vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(dummyExerciseGroup));
 
         currentRoute.params = { courseId: '1', examId: '2', exerciseGroupId: '3' };
 

@@ -57,7 +57,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import * as ExamUtils from 'app/exam/overview/exam.utils';
 import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -294,7 +294,7 @@ describe('ExamResultSummaryComponent', () => {
 
     it('should load management grades through the existing instructor detail API', () => {
         fixture.componentRef.setInput('instructorView', true);
-        const management = vi.spyOn(TestBed.inject(StudentExamService), 'find').mockReturnValue(of(new HttpResponse({ body: { ...gradeInfo } })));
+        const management = vi.spyOn(TestBed.inject(StudentExamService), 'find').mockReturnValue(of({ ...gradeInfo }));
         const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
         fixture.detectChanges();
         expect(management).toHaveBeenCalledWith(1, studentExam.exam!.id, studentExam.id);
@@ -579,7 +579,7 @@ describe('ExamResultSummaryComponent', () => {
         fixture.componentRef.setInput('studentExam', { ...studentExamForTestExam, submitted: true });
         fixture.componentRef.setInput('instructorView', true);
         fixture.componentRef.setInput('managementGradeInfo', { ...gradeInfo, pendingExerciseIds: [programmingExercise.id!] });
-        vi.spyOn(TestBed.inject(StudentExamService), 'find').mockReturnValue(of(new HttpResponse({ body: { ...gradeInfo, pendingExerciseIds: [] } })));
+        vi.spyOn(TestBed.inject(StudentExamService), 'find').mockReturnValue(of({ ...gradeInfo, pendingExerciseIds: [] }));
         const owner = vi.spyOn(examParticipationService, 'loadStudentExamGradeInfoForSummary');
         fixture.detectChanges();
         await vi.advanceTimersByTimeAsync(2000);
@@ -1269,11 +1269,11 @@ describe.each([
 
     it('retains asynchronously loaded management scores in the real header', () => {
         const supplied = setScoredAttempt();
-        const response = new Subject<HttpResponse<StudentExamWithGradeDTO>>();
+        const response = new Subject<StudentExamWithGradeDTO>();
         vi.spyOn(TestBed.inject(StudentExamService), 'find').mockReturnValue(response);
         fixture.detectChanges();
         expect(component.exerciseInfos()[1].achievedPoints).toBeUndefined();
-        response.next(new HttpResponse({ body: supplied }));
+        response.next(supplied);
         fixture.detectChanges();
         expectEarnedScore();
         response.complete();

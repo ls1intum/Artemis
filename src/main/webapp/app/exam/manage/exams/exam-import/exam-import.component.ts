@@ -1,5 +1,5 @@
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, input, output, signal, viewChild } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
@@ -95,8 +95,7 @@ export class ExamImportComponent extends ImportComponent<Exam> {
      */
     openExerciseSelection(exam: Exam) {
         this.examManagementService.findWithExercisesAndWithoutCourseId(exam.id!).subscribe({
-            next: (examRes: HttpResponse<Exam>) => {
-                const loadedExam = examRes.body!;
+            next: (loadedExam: Exam) => {
                 this.exam.set(loadedExam);
                 this.isImportInSameCourse.set(loadedExam.course?.id === this.targetCourseId());
             },
@@ -128,10 +127,10 @@ export class ExamImportComponent extends ImportComponent<Exam> {
             const request$ = this.examManagementService.importExerciseGroup(this.targetCourseId()!, this.targetExamId()!, exerciseGroups, importId);
             this.examImportProgressDialog()
                 .runImport(importId, totalExercises, request$)
-                .then((response: HttpResponse<ExerciseGroupImportResultDTO>) => {
+                .then((result: ExerciseGroupImportResultDTO) => {
                     this.isImportingExercises.set(false);
                     // Close-Variant 2: Provide the component with all the exercise groups and exercises of the exam
-                    this.imported.emit(response.body?.exerciseGroups ?? []);
+                    this.imported.emit(result.exerciseGroups ?? []);
                 })
                 .catch((httpErrorResponse: HttpErrorResponse) => {
                     // Case: Server-Site Validation of the Programming Exercises failed

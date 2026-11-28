@@ -1,16 +1,15 @@
 import { AccountService } from 'app/core/auth/account.service';
-import { HttpResponse } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
-import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
+import type { ExamChecklist } from 'app/openapi/model/exam-checklist';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamApi } from 'app/openapi/api/exam-api';
 import { EMPTY, Observable } from 'rxjs';
-import { ExamConductionCounts } from 'app/exam/shared/entities/exam-conduction-counts.model';
-import { filter, map } from 'rxjs/operators';
+import type { ExamConductionCounts } from 'app/openapi/model/exam-conduction-counts';
+import { filter } from 'rxjs/operators';
 
 @Service()
 export class ExamChecklistService {
-    private examService = inject(ExamManagementService);
+    private examApi = inject(ExamApi);
     private accountService = inject(AccountService);
 
     /**
@@ -30,10 +29,8 @@ export class ExamChecklistService {
     getExamStatistics(exam: Exam): Observable<ExamChecklist> {
         const courseId = Number(exam.course!.id!);
         const audience = this.accountService.isAtLeastInstructorInCourseWithId(courseId) ? 'instructor' : 'tutor';
-        return this.examService.getExamStatistics(courseId, exam.id!, audience).pipe(
-            filter((res) => !!res.body),
-            map((examStatistics: HttpResponse<ExamChecklist>) => examStatistics.body!),
-        );
+        const statistics = audience === 'instructor' ? this.examApi.getExamStatisticsForInstructor(courseId, exam.id!) : this.examApi.getExamStatistics(courseId, exam.id!);
+        return statistics.pipe(filter((examStatistics) => !!examStatistics));
     }
 
     getExamConductionCounts(exam: Exam): Observable<ExamConductionCounts> {
@@ -41,7 +38,7 @@ export class ExamChecklistService {
         if (!this.accountService.isAtLeastInstructorInCourseWithId(courseId)) {
             return EMPTY;
         }
-        return this.examService.getExamConductionCounts(courseId, exam.id!);
+        return this.examApi.getExamConductionCounts(courseId, exam.id!);
     }
 
     /**

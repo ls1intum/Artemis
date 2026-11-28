@@ -25,6 +25,8 @@ import org.springframework.util.ClassUtils;
 
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
+import io.swagger.v3.core.converter.AnnotatedType;
+import io.swagger.v3.core.converter.ModelConverters;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.media.ObjectSchema;
 import io.swagger.v3.oas.models.media.Schema;
@@ -60,8 +62,28 @@ public class UnwrappedSchemaOpenApiCustomizer implements OpenApiCustomizer {
     @Override
     public void customise(OpenAPI openApi) {
         if (openApi.getComponents() != null && openApi.getComponents().getSchemas() != null) {
-            composeUnwrappedSchemas(openApi.getComponents().getSchemas(), unwrappedSchemaNames());
+            Map<String, Schema> schemas = openApi.getComponents().getSchemas();
+            describeEmbeddedSchemas(schemas, unwrappedTypes());
+            composeUnwrappedSchemas(schemas, unwrappedSchemaNames());
         }
+    }
+
+    /**
+     * Adds the schema of an embedded record marked {@link DescribedWhenUnwrapped}, which no endpoint refers to by itself. springdoc keeps
+     * only the schemas something references, so a record that exists only to be unwrapped, such as the counts two summaries share, is
+     * missing and nothing can be composed of it.
+     *
+     * @param schemas       the component schemas, changed in place
+     * @param parentByChild the embedded record by the name of the embedding schema, as {@link #unwrappedTypes()} returns it
+     */
+    @SuppressWarnings("rawtypes")
+    static void describeEmbeddedSchemas(Map<String, Schema> schemas, Map<String, Class<?>> parentByChild) {
+        parentByChild.forEach((childName, parentType) -> {
+            if (parentType.isAnnotationPresent(DescribedWhenUnwrapped.class) && schemas.containsKey(childName) && !schemas.containsKey(schemaName(parentType))) {
+                var resolved = ModelConverters.getInstance(true).resolveAsResolvedSchema(new AnnotatedType(parentType).resolveAsRef(true));
+                resolved.referencedSchemas.forEach(schemas::putIfAbsent);
+            }
+        });
     }
 
     /**
@@ -70,9 +92,20 @@ public class UnwrappedSchemaOpenApiCustomizer implements OpenApiCustomizer {
      * @return the name of the embedded schema by the name of the embedding schema
      */
     public static Map<String, String> unwrappedSchemaNames() {
+        Map<String, String> parentByChild = new TreeMap<>();
+        unwrappedTypes().forEach((childName, parentType) -> parentByChild.put(childName, schemaName(parentType)));
+        return parentByChild;
+    }
+
+    /**
+     * Finds the records that unwrap exactly one component, by the names swagger-core gives their schemas.
+     *
+     * @return the type of the embedded record by the name of the embedding schema
+     */
+    public static Map<String, Class<?>> unwrappedTypes() {
         var scanner = new ClassPathScanningCandidateComponentProvider(false);
         scanner.addIncludeFilter(new AssignableTypeFilter(Record.class));
-        Map<String, String> parentByChild = new TreeMap<>();
+        Map<String, Class<?>> parentByChild = new TreeMap<>();
         List<Class<?>> records = scanner.findCandidateComponents(ARTEMIS_PACKAGE).stream().map(BeanDefinition::getBeanClassName).filter(Objects::nonNull)
                 .<Class<?>>map(className -> ClassUtils.resolveClassName(className, UnwrappedSchemaOpenApiCustomizer.class.getClassLoader())).filter(Class::isRecord).toList();
         for (Class<?> type : records) {
@@ -82,7 +115,7 @@ public class UnwrappedSchemaOpenApiCustomizer implements OpenApiCustomizer {
                 return annotation != null && annotation.enabled() && annotation.prefix().isEmpty() && annotation.suffix().isEmpty();
             }).toList();
             if (unwrapped.size() == 1) {
-                parentByChild.put(schemaName(type), schemaName(unwrapped.getFirst().getType()));
+                parentByChild.put(schemaName(type), unwrapped.getFirst().getType());
             }
         }
         return parentByChild;

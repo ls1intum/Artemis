@@ -6,6 +6,7 @@ import { faBan, faThLarge } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { ExamRoomDistributionApi } from 'app/openapi/api/exam-room-distribution-api';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { SortingOrder } from 'app/foundation/pagination/pageable-table';
@@ -49,6 +50,7 @@ export interface RoomSuggestion {
 })
 export class StudentsRoomDistributionDialogComponent implements OnInit {
     private readonly studentsRoomDistributionService: StudentsRoomDistributionService = inject(StudentsRoomDistributionService);
+    private readonly examRoomDistributionApi = inject(ExamRoomDistributionApi);
     private readonly examManagementService = inject(ExamManagementService);
 
     readonly RESERVE_FACTOR_DEFAULT_PERCENTAGE: number = 10;
@@ -143,14 +145,12 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
     attemptDistributeAndCloseDialog(): void {
         const selectedRoomIds = this.selectedRooms().map((room) => room.id);
 
-        this.studentsRoomDistributionService
-            .distributeStudentsAcrossRooms(this.courseId(), this.exam().id!, selectedRoomIds, this.reserveFactor(), !this.allowNarrowLayouts())
-            .subscribe({
-                next: () => {
-                    this.closeDialog();
-                    this.onSave.emit();
-                },
-            });
+        this.examRoomDistributionApi.distributeRegisteredStudents(this.courseId(), this.exam().id!, selectedRoomIds, !this.allowNarrowLayouts(), this.reserveFactor()).subscribe({
+            next: () => {
+                this.closeDialog();
+                this.onSave.emit();
+            },
+        });
     }
 
     /**

@@ -629,8 +629,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                     } else {
                         if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
                             this.isExamMode.set(true);
-                            this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
-                                this.programmingExercise.exerciseGroup = res.body!;
+                            this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((exerciseGroup) => {
+                                this.programmingExercise.exerciseGroup = exerciseGroup;
                                 if (
                                     !params['exerciseId'] &&
                                     this.programmingExercise.exerciseGroup.exam?.course?.defaultProgrammingLanguage &&
@@ -830,8 +830,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         const courseId = params['courseId'];
         this.courseId.set(courseId);
         if (courseId && params['examId'] && params['exerciseGroupId']) {
-            this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
-                this.programmingExercise.exerciseGroup = res.body!;
+            this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((exerciseGroup) => {
+                this.programmingExercise.exerciseGroup = exerciseGroup;
                 // Set course to undefined if a normal exercise is imported
                 this.programmingExercise.course = undefined;
             });

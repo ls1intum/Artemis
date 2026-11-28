@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { isRealExam } from 'app/exam/overview/exam.utils';
+import { StudentExamApi } from 'app/openapi/api/student-exam-api';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
@@ -52,6 +53,7 @@ import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/cours
 export class StudentExamDetailComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private studentExamService = inject(StudentExamService);
+    private studentExamApi = inject(StudentExamApi);
     private alertService = inject(AlertService);
 
     confirmToggleVisible = signal(false);
@@ -110,12 +112,11 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
         this.isSavingWorkingTime.set(true);
         const studentExam = this.studentExam()!;
         this.studentExamService.updateWorkingTime(this.courseId()!, studentExam.exam!.id!, studentExam.id!, this.workingTimeSeconds()).subscribe({
-            next: (res) => {
+            next: (updatedStudentExam) => {
                 // The response only carries a slimmed-down nested `exam` (no startDate/gracePeriod) and omits `user`/
                 // `exercises`/`examSessions` entirely, so merge just the fields that can actually change (workingTime,
                 // submissionDate) into the already-loaded studentExam instead of replacing it wholesale. Replacing it
                 // would wipe fields the template and isExamOver()/individualEndDate() computeds still depend on.
-                const updatedStudentExam = res.body;
                 if (updatedStudentExam?.workingTime !== undefined) {
                     const updatedWorkingTime = updatedStudentExam.workingTime;
                     // The DTO carries the submission date as an ISO string; convert it so the merged exam keeps dayjs semantics.
@@ -259,10 +260,14 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
         this.isSaving.set(true);
         const studentExam = this.studentExam();
         if (studentExam?.exam && studentExam.exam.id) {
-            this.studentExamService.toggleSubmittedState(this.courseId()!, studentExam.exam.id, studentExam.id!, studentExam.submitted!).subscribe({
+            const toggled$ = studentExam.submitted
+                ? this.studentExamApi.unsubmitStudentExam(this.courseId()!, studentExam.exam.id, studentExam.id!)
+                : this.studentExamApi.toggleStudentExamToSubmitted(this.courseId()!, studentExam.exam.id, studentExam.id!);
+            toggled$.subscribe({
                 next: (res) => {
-                    if (res.body) {
-                        const updated = cloneWith(studentExam, { submissionDate: res.body.submissionDate, submitted: res.body.submitted });
+                    if (res) {
+                        // The submission date stays the string the server sent, as the old client left it; the template pipe reads it either way.
+                        const updated = cloneWith(studentExam, { submissionDate: res.submissionDate, submitted: res.submitted });
                         this.studentExam.set(updated);
                     }
                     this.alertService.success('artemisApp.studentExamDetail.toggleSuccessful');

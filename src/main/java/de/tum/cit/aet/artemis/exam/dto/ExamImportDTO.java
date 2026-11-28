@@ -11,28 +11,27 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
-import tools.jackson.databind.annotation.JsonDeserialize;
-
-import de.tum.cit.aet.artemis.core.config.StrictIntegerDeserializer;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 
 /**
  * DTO for importing exams with exercise groups and exercises.
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
+ * <p>
+ * The exam settings are the {@link ExamUpdateDTO} embedded with {@link JsonUnwrapped}, so they stay flat in the JSON. An {@code id} in the
+ * request is read and ignored: the import always creates a new exam.
+ *
+ * @param exam           the exam settings, validated with the constraints of {@link ExamUpdateDTO}
+ * @param courseId       the id of the course to import into
+ * @param exerciseGroups the exercise groups with the source exercises to copy
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamImportDTO(@NotNull String title, @NotNull ExamMode examMode, boolean examWithAttendanceCheck, @NotNull ZonedDateTime visibleDate,
-        @NotNull ZonedDateTime startDate, @NotNull ZonedDateTime endDate, @Nullable ZonedDateTime publishResultsDate, @Nullable ZonedDateTime examStudentReviewStart,
-        @Nullable ZonedDateTime examStudentReviewEnd, @Nullable Integer gracePeriod, int workingTime, @Nullable String startText, @Nullable String endText,
-        @Nullable String confirmationStartText, @Nullable String confirmationEndText, @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer examMaxPoints,
-        @Nullable Boolean randomizeExerciseOrder, @Nullable Integer numberOfExercisesInExam, @Nullable Integer numberOfCorrectionRoundsInExam, @Nullable String examiner,
-        @Nullable String moduleNumber, @Nullable String courseName, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable ZonedDateTime examSummaryPublicationDate,
-        @Nullable String channelName, @NotNull Long courseId, @Nullable List<@NotNull @Valid ExerciseGroupImportDTO> exerciseGroups) implements ExamSettingsDTO {
+public record ExamImportDTO(@JsonUnwrapped @NotNull @Valid ExamUpdateDTO exam, @NotNull Long courseId, @Nullable List<@NotNull @Valid ExerciseGroupImportDTO> exerciseGroups)
+        implements ExamSettingsDTO {
 
     /**
      * Creates an ExamImportDTO from an existing Exam entity.
@@ -48,11 +47,7 @@ public record ExamImportDTO(@NotNull String title, @NotNull ExamMode examMode, b
             exerciseGroupDTOs = exam.getExerciseGroups().stream().map(ExerciseGroupImportDTO::of).toList();
         }
 
-        return new ExamImportDTO(exam.getTitle(), exam.getExamMode(), exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate(),
-                exam.getPublishResultsDate(), exam.getExamStudentReviewStart(), exam.getExamStudentReviewEnd(), exam.getGracePeriod(), exam.getWorkingTime(), exam.getStartText(),
-                exam.getEndText(), exam.getConfirmationStartText(), exam.getConfirmationEndText(), exam.getExamMaxPoints(), exam.getRandomizeExerciseOrder(),
-                exam.getNumberOfExercisesInExam(), exam.getNumberOfCorrectionRoundsInExam(), exam.getExaminer(), exam.getModuleNumber(), exam.getCourseName(),
-                exam.getExampleSolutionPublicationDate(), exam.getExamSummaryPublicationDate(), exam.getChannelName(), courseId, exerciseGroupDTOs);
+        return new ExamImportDTO(ExamUpdateDTO.of(exam).withoutId(), courseId, exerciseGroupDTOs);
     }
 
     /**
@@ -62,20 +57,140 @@ public record ExamImportDTO(@NotNull String title, @NotNull ExamMode examMode, b
      * @return a new Exam entity with exercise groups
      */
     public Exam toEntity(Course course) {
-        Exam exam = new Exam();
-        exam.setExamMode(examMode);
-        applySettingsTo(exam);
-        exam.setCourse(course);
+        Exam entity = new Exam();
+        entity.setExamMode(exam.examMode());
+        applySettingsTo(entity);
+        entity.setCourse(course);
 
         // Add exercise groups with exercises
         if (exerciseGroups != null) {
             for (ExerciseGroupImportDTO groupDTO : exerciseGroups) {
                 ExerciseGroup group = groupDTO.toEntity();
-                exam.addExerciseGroup(group);
+                entity.addExerciseGroup(group);
             }
         }
 
-        return exam;
+        return entity;
+    }
+
+    @Override
+    public String title() {
+        return exam.title();
+    }
+
+    @Override
+    public boolean examWithAttendanceCheck() {
+        return exam.examWithAttendanceCheck();
+    }
+
+    @Override
+    public ZonedDateTime visibleDate() {
+        return exam.visibleDate();
+    }
+
+    @Override
+    public ZonedDateTime startDate() {
+        return exam.startDate();
+    }
+
+    @Override
+    public ZonedDateTime endDate() {
+        return exam.endDate();
+    }
+
+    @Override
+    public ZonedDateTime publishResultsDate() {
+        return exam.publishResultsDate();
+    }
+
+    @Override
+    public ZonedDateTime examStudentReviewStart() {
+        return exam.examStudentReviewStart();
+    }
+
+    @Override
+    public ZonedDateTime examStudentReviewEnd() {
+        return exam.examStudentReviewEnd();
+    }
+
+    @Override
+    public Integer gracePeriod() {
+        return exam.gracePeriod();
+    }
+
+    @Override
+    public int workingTime() {
+        return exam.workingTime();
+    }
+
+    @Override
+    public String startText() {
+        return exam.startText();
+    }
+
+    @Override
+    public String endText() {
+        return exam.endText();
+    }
+
+    @Override
+    public String confirmationStartText() {
+        return exam.confirmationStartText();
+    }
+
+    @Override
+    public String confirmationEndText() {
+        return exam.confirmationEndText();
+    }
+
+    @Override
+    public Integer examMaxPoints() {
+        return exam.examMaxPoints();
+    }
+
+    @Override
+    public Boolean randomizeExerciseOrder() {
+        return exam.randomizeExerciseOrder();
+    }
+
+    @Override
+    public Integer numberOfExercisesInExam() {
+        return exam.numberOfExercisesInExam();
+    }
+
+    @Override
+    public Integer numberOfCorrectionRoundsInExam() {
+        return exam.numberOfCorrectionRoundsInExam();
+    }
+
+    @Override
+    public String examiner() {
+        return exam.examiner();
+    }
+
+    @Override
+    public String moduleNumber() {
+        return exam.moduleNumber();
+    }
+
+    @Override
+    public String courseName() {
+        return exam.courseName();
+    }
+
+    @Override
+    public ZonedDateTime exampleSolutionPublicationDate() {
+        return exam.exampleSolutionPublicationDate();
+    }
+
+    @Override
+    public ZonedDateTime examSummaryPublicationDate() {
+        return exam.examSummaryPublicationDate();
+    }
+
+    @Override
+    public String channelName() {
+        return exam.channelName();
     }
 
     /**

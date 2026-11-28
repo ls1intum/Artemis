@@ -1,14 +1,14 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExamUserAttendanceCheckDTO } from 'app/exam/shared/entities/exam-users-attendance-check-dto.model';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ExamUserAttendanceCheck } from 'app/openapi/model/exam-user-attendance-check';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Subject, Subscription } from 'rxjs';
 import { ActivatedRoute, Data } from '@angular/router';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isRealExam } from 'app/exam/overview/exam.utils';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamUserApi } from 'app/openapi/api/exam-user-api';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { faCheck, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
@@ -43,7 +43,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
-    private examManagementService = inject(ExamManagementService);
+    private examUserApi = inject(ExamUserApi);
     private sortService = inject(SortService);
     private serverDateService = inject(ArtemisServerDateService);
 
@@ -54,7 +54,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     predicate = signal<string>('id');
     ascending = signal<boolean>(true);
     readonly isTestExam = signal(false);
-    allExamUsersAttendanceCheck = signal<ExamUserAttendanceCheckDTO[]>([]);
+    allExamUsersAttendanceCheck = signal<ExamUserAttendanceCheck[]>([]);
     readonly uncheckedCount = computed(() => this.allExamUsersAttendanceCheck().filter((user) => user.started && !user.attendanceChecked).length);
     readonly savingAttendance = signal<number | undefined>(undefined);
     readonly attendanceReloadFailed = signal(false);
@@ -99,9 +99,9 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     /** Refreshes server-derived attendance; edits remain blocked until the current records are recovered. */
     reloadAttendance() {
         this.isLoading.set(true);
-        this.examManagementService.verifyExamUserAttendance(this.courseId, this.exam.id!, true).subscribe({
-            next: (res: HttpResponse<ExamUserAttendanceCheckDTO[]>) => {
-                this.allExamUsersAttendanceCheck.set(res.body ?? []);
+        this.examUserApi.getAllWhoDidNotSign(this.courseId, this.exam.id!, true).subscribe({
+            next: (users: ExamUserAttendanceCheck[]) => {
+                this.allExamUsersAttendanceCheck.set(users ?? []);
                 // The server order may differ from the instructor's selected sort.
                 this.sortRows();
                 this.attendanceReloadFailed.set(false);
@@ -142,7 +142,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
         }
     }
 
-    attendanceSelection(examUser: ExamUserAttendanceCheckDTO): string {
+    attendanceSelection(examUser: ExamUserAttendanceCheck): string {
         const checks = [examUser.didCheckImage, examUser.didCheckName, examUser.didCheckLogin, examUser.didCheckRegistrationNumber];
         if (checks.every(Boolean)) {
             return 'true';
@@ -150,7 +150,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
         return checks.some(Boolean) ? '' : 'false';
     }
 
-    setAttendance(examUser: ExamUserAttendanceCheckDTO, value: string) {
+    setAttendance(examUser: ExamUserAttendanceCheck, value: string) {
         if (!this.hasExamEnded() || this.isTestExam() || !examUser.id || this.isLoading() || this.attendanceReloadFailed() || this.savingAttendance() !== undefined) {
             return;
         }
@@ -159,7 +159,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
         }
         const attended = value === 'true';
         this.savingAttendance.set(examUser.id);
-        this.examManagementService.updateAttendance(this.courseId, this.exam.id!, examUser.id, attended).subscribe({
+        this.examUserApi.updateAttendance(this.courseId, this.exam.id!, examUser.id, { attended }).subscribe({
             next: () => {
                 // Reload the confirmed identity checks and server-derived verification status.
                 this.reloadAttendance();

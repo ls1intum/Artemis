@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
@@ -32,7 +32,7 @@ describe('ExamImportProgressDialogComponent', () => {
     });
 
     it('should show live progress while the import is running', () => {
-        const request$ = new Subject<HttpResponse<ExamImportResultDTO>>();
+        const request$ = new Subject<ExamImportResultDTO>();
         component.runImport('import-1', 3, request$.asObservable());
 
         expect(examManagementService.subscribeToImportProgress).toHaveBeenCalledWith('import-1');
@@ -54,7 +54,7 @@ describe('ExamImportProgressDialogComponent', () => {
     });
 
     it('should show a success summary and resolve on dismiss when everything imported', async () => {
-        const request$ = new Subject<HttpResponse<ExamImportResultDTO>>();
+        const request$ = new Subject<ExamImportResultDTO>();
         const promise = component.runImport('import-2', 2, request$.asObservable());
 
         progress$.next({
@@ -65,7 +65,7 @@ describe('ExamImportProgressDialogComponent', () => {
             currentStatus: ExerciseImportStatus.IMPORTED,
         });
         // The (authoritative) HTTP response carries no skipped/incomplete lists (NON_EMPTY omits empty arrays)
-        request$.next(new HttpResponse({ status: 201, body: { exam: { id: 7 } as Exam } }));
+        request$.next({ exam: { id: 7 } as Exam });
         request$.complete();
 
         expect(component.ready()).toBeTruthy();
@@ -74,17 +74,17 @@ describe('ExamImportProgressDialogComponent', () => {
 
         component.onDismiss();
         const response = await promise;
-        expect(response.body?.exam?.id).toBe(7);
+        expect(response.exam?.id).toBe(7);
         expect(component.visible()).toBeFalsy();
     });
 
     it('should show correct counts from the caller total even when no websocket progress arrives', async () => {
         // The summary counts must not depend on websocket delivery: with no progress event at all, the caller-provided total
         // and the authoritative HTTP response still yield the right "all N imported" message.
-        const request$ = new Subject<HttpResponse<ExamImportResultDTO>>();
+        const request$ = new Subject<ExamImportResultDTO>();
         const promise = component.runImport('import-no-ws', 2, request$.asObservable());
 
-        request$.next(new HttpResponse({ status: 201, body: { exam: { id: 9 } as Exam } }));
+        request$.next({ exam: { id: 9 } as Exam });
         request$.complete();
 
         expect(component.ready()).toBeTruthy();
@@ -97,11 +97,11 @@ describe('ExamImportProgressDialogComponent', () => {
     });
 
     it('should list skipped and incomplete exercises from the (authoritative) HTTP response', async () => {
-        const request$ = new Subject<HttpResponse<ExamImportResultDTO>>();
+        const request$ = new Subject<ExamImportResultDTO>();
         const promise = component.runImport('import-3', 3, request$.asObservable());
 
         progress$.next({ state: ExamImportProgressState.RUNNING, totalExercises: 3, processedExercises: 0 });
-        request$.next(new HttpResponse({ status: 201, body: { exam: { id: 8 } as Exam, skippedExercises: ['Quiz 2'], incompleteExercises: ['Prog 1'] } }));
+        request$.next({ exam: { id: 8 } as Exam, skippedExercises: ['Quiz 2'], incompleteExercises: ['Prog 1'] });
         request$.complete();
 
         expect(component.ready()).toBeTruthy();
@@ -116,7 +116,7 @@ describe('ExamImportProgressDialogComponent', () => {
     });
 
     it('should reject without showing a summary when the request fails before any progress', async () => {
-        const request$ = new Subject<HttpResponse<ExamImportResultDTO>>();
+        const request$ = new Subject<ExamImportResultDTO>();
         const promise = component.runImport('import-4', 1, request$.asObservable());
         const error = new HttpErrorResponse({ status: 400, error: { errorKey: 'invalidKey' } });
 
@@ -130,14 +130,9 @@ describe('ExamImportProgressDialogComponent', () => {
     it('should render duplicate skipped/incomplete titles without a duplicate-track-key error', async () => {
         // Exercise titles are not unique (and "(unnamed exercise)" repeats). The @for loops must not track by title, or
         // rendering throws NG0955 (duplicated keys). This test renders the summary with duplicate titles.
-        const request$ = new Subject<HttpResponse<ExamImportResultDTO>>();
+        const request$ = new Subject<ExamImportResultDTO>();
         const promise = component.runImport('import-dup', 4, request$.asObservable());
-        request$.next(
-            new HttpResponse({
-                status: 201,
-                body: { exam: { id: 1 } as Exam, skippedExercises: ['(unnamed exercise)', '(unnamed exercise)'], incompleteExercises: ['Dup', 'Dup'] },
-            }),
-        );
+        request$.next({ exam: { id: 1 } as Exam, skippedExercises: ['(unnamed exercise)', '(unnamed exercise)'], incompleteExercises: ['Dup', 'Dup'] });
         request$.complete();
 
         expect(() => fixture.detectChanges()).not.toThrow();

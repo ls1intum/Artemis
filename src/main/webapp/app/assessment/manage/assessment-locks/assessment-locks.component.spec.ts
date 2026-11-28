@@ -148,9 +148,7 @@ describe('AssessmentLocksComponent', () => {
     });
     it('should load the locked submissions of an exam and show all of them', () => {
         const examService = TestBed.inject(ExamManagementService);
-        const examStub = vi
-            .spyOn(examService, 'findAllLockedSubmissionsOfExam')
-            .mockReturnValue(of(new HttpResponse<Submission[]>({ body: [modelingSubmission, fileUploadSubmission] })));
+        const examStub = vi.spyOn(examService, 'findAllLockedSubmissionsOfExam').mockReturnValue(of([modelingSubmission, fileUploadSubmission]));
         component.courseId.set(9437);
         component.examId = 42;
 

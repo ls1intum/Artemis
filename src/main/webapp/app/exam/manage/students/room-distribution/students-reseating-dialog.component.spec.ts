@@ -3,10 +3,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';
 import { RoomForDistributionDTO } from 'app/exam/manage/students/room-distribution/students-room-distribution.model';
 import { StudentsReseatingDialogComponent } from 'app/exam/manage/students/room-distribution/students-reseating-dialog.component';
+import { ExamRoomDistributionApi } from 'app/openapi/api/exam-room-distribution-api';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 import { MockStudentsRoomDistributionService } from 'test/helpers/mocks/service/mock-students-room-distribution.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -16,6 +18,7 @@ describe('StudentsReseatingDialogComponent', () => {
     let component: StudentsReseatingDialogComponent;
     let fixture: ComponentFixture<StudentsReseatingDialogComponent>;
     let service: StudentsRoomDistributionService;
+    let examRoomDistributionApi: ExamRoomDistributionApi;
 
     const course: Course = { id: 1 };
     const exam: Exam = { course, id: 2, title: 'Exam Title' };
@@ -48,6 +51,7 @@ describe('StudentsReseatingDialogComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: StudentsRoomDistributionService, useClass: MockStudentsRoomDistributionService },
+                MockProvider(ExamRoomDistributionApi, { getSeatsOfExamRoom: vi.fn().mockReturnValue(of({ seats: [] })), reseatStudent: vi.fn().mockReturnValue(of(undefined)) }),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(StudentsReseatingDialogComponent);
@@ -55,6 +59,7 @@ describe('StudentsReseatingDialogComponent', () => {
         fixture.componentRef.setInput('courseId', course.id);
         fixture.componentRef.setInput('exam', exam);
         service = TestBed.inject(StudentsRoomDistributionService);
+        examRoomDistributionApi = TestBed.inject(ExamRoomDistributionApi);
     });
 
     afterEach(() => {
@@ -103,7 +108,7 @@ describe('StudentsReseatingDialogComponent', () => {
         const userB = { ...examUser, id: 30, plannedRoom: rooms[1].roomNumber, plannedSeat: 'B2' };
 
         const loadUsedRoomsSpy = vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
-        const loadSeatsInSelectedRoomSpy = vi.spyOn(service, 'loadSeatsOfExamRoom');
+        const loadSeatsInSelectedRoomSpy = vi.spyOn(examRoomDistributionApi, 'getSeatsOfExamRoom');
 
         component.openDialog(userA);
         fixture.detectChanges();
@@ -123,7 +128,7 @@ describe('StudentsReseatingDialogComponent', () => {
 
     it('should call reseatStudent with correct values', () => {
         vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
-        const reseatSpy = vi.spyOn(service, 'reseatStudent').mockReturnValue(of());
+        const reseatSpy = vi.spyOn(examRoomDistributionApi, 'reseatStudent').mockReturnValue(of());
 
         component.openDialog(examUser);
         fixture.detectChanges();
@@ -132,12 +137,12 @@ describe('StudentsReseatingDialogComponent', () => {
         component.selectedSeat.set('20, 13');
         component['attemptReseatAndCloseDialogOnSuccess']();
 
-        expect(reseatSpy).toHaveBeenCalledExactlyOnceWith(component.courseId(), component.exam().id!, examUser.id, rooms[0].roomNumber, '20, 13');
+        expect(reseatSpy).toHaveBeenCalledExactlyOnceWith(component.courseId(), component.exam().id!, { examUserId: examUser.id, newRoom: rooms[0].roomNumber, newSeat: '20, 13' });
     });
 
     it('should show if location is known', () => {
         vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
-        vi.spyOn(service, 'loadSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'A3', 'A4'] }));
+        vi.spyOn(examRoomDistributionApi, 'getSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'A3', 'A4'] }));
 
         component.openDialog(examUser);
         fixture.detectChanges();
@@ -185,7 +190,7 @@ describe('StudentsReseatingDialogComponent', () => {
 
     it('should suggest the seats matching the search text', () => {
         vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
-        vi.spyOn(service, 'loadSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'B1', 'B2', '1, 2', '1, 3'] }));
+        vi.spyOn(examRoomDistributionApi, 'getSeatsOfExamRoom').mockReturnValue(of({ seats: ['A1', 'A2', 'B1', 'B2', '1, 2', '1, 3'] }));
 
         component.openDialog(examUser);
         fixture.detectChanges();

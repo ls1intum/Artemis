@@ -2,10 +2,10 @@ import { Component, computed, effect, inject, input, model, output, signal, untr
 import { Subscription } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { ExamUsersNotFoundDTO } from 'app/exam/shared/entities/exam-users-not-found-dto.model';
+import { ExamUserApi } from 'app/openapi/api/exam-user-api';
+import { ExamUsersNotFound } from 'app/openapi/model/exam-users-not-found';
 import { faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/foundation/util/global.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -23,7 +23,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 })
 export class StudentsUploadImagesDialogComponent {
     private alertService = inject(AlertService);
-    private examManagementService = inject(ExamManagementService);
+    private examUserApi = inject(ExamUserApi);
 
     readonly visible = model(false);
     readonly courseId = input.required<number>();
@@ -31,7 +31,7 @@ export class StudentsUploadImagesDialogComponent {
     /** Emitted when the user finishes after the images were saved, so the parent can reload the students. */
     readonly finished = output<void>();
 
-    notFoundUsers = signal<ExamUsersNotFoundDTO | undefined>(undefined);
+    notFoundUsers = signal<ExamUsersNotFound | undefined>(undefined);
     file = signal<File | undefined>(undefined);
 
     private uploadSubscription: Subscription | undefined;
@@ -97,13 +97,10 @@ export class StudentsUploadImagesDialogComponent {
         this.isParsing.set(true);
         const exam = this.exam();
         if (exam?.id) {
-            const formData: FormData = new FormData();
-            formData.append('file', this.file()!);
-
-            this.uploadSubscription = this.examManagementService.saveImages(this.courseId(), exam.id, formData).subscribe({
-                next: (res: HttpResponse<ExamUsersNotFoundDTO>) => {
+            this.uploadSubscription = this.examUserApi.saveUsersImages(this.courseId(), exam.id, this.file()!).subscribe({
+                next: (res: ExamUsersNotFound) => {
                     if (res) {
-                        this.notFoundUsers.set(res.body ?? undefined);
+                        this.notFoundUsers.set(res ?? undefined);
                         this.isParsing.set(false);
                         this.hasParsed.set(true);
                     }

@@ -3,7 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
@@ -26,7 +25,7 @@ describe('Exam Resolve', () => {
     afterEach(() => vi.restoreAllMocks());
 
     it('should fetch the exam if courseId and examId are given', async () => {
-        const findSpy = vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: { id: 1 } })));
+        const findSpy = vi.spyOn(examManagementService, 'find').mockReturnValue(of({ id: 1 }));
         const examObservable = resolve.resolve({
             params: {
                 courseId: 1,
@@ -68,7 +67,7 @@ describe('Exam Resolve', () => {
     });
 
     it('should fetch the exam for an import', async () => {
-        const findSpy = vi.spyOn(examManagementService, 'findWithExercisesAndWithoutCourseId').mockReturnValue(of(new HttpResponse({ status: 200, body: { id: 1 } })));
+        const findSpy = vi.spyOn(examManagementService, 'findWithExercisesAndWithoutCourseId').mockReturnValue(of({ id: 1 }));
         const examObservable = resolve.resolve({
             params: {
                 examId: 2,
@@ -107,8 +106,8 @@ describe('Student Exam Resolve', () => {
     afterEach(() => vi.restoreAllMocks());
 
     it('should fetch the student exam if courseId, examId and studentExamId are given', async () => {
-        const response = { status: 200, body: { maxPoints: 10, studentExam: { id: 1 } } as StudentExamWithGradeDTO };
-        const findSpy = vi.spyOn(studentExamService, 'find').mockReturnValue(of(new HttpResponse(response)));
+        const response = { maxPoints: 10, studentExam: { id: 1 } } as StudentExamWithGradeDTO;
+        const findSpy = vi.spyOn(studentExamService, 'find').mockReturnValue(of(response));
         const examObservable = resolve.resolve({
             params: {
                 courseId: 1,

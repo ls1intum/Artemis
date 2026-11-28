@@ -1,4 +1,4 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -99,7 +99,7 @@ describe('Exam Import Component', () => {
     });
 
     it('should correctly open the exercise selection', () => {
-        vi.spyOn(examManagementService, 'findWithExercisesAndWithoutCourseId').mockReturnValue(of(new HttpResponse({ body: exam1WithExercises })));
+        vi.spyOn(examManagementService, 'findWithExercisesAndWithoutCourseId').mockReturnValue(of(exam1WithExercises));
         component.openExerciseSelection(exam1);
         expect(component.exam()).toEqual(exam1WithExercises);
     });
@@ -139,25 +139,18 @@ describe('Exam Import Component', () => {
     });
 
     it('should perform import of exercise groups successfully', async () => {
-        const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(of(new HttpResponse({ status: 200, body: { exerciseGroups: [exerciseGroup1] } })));
+        const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(of({ exerciseGroups: [exerciseGroup1] }));
         const alertSpy = vi.spyOn(alertService, 'error');
 
         // The progress dialog resolves with the import result once the user dismisses it
-        await performImport(importSpy, { resolve: new HttpResponse({ status: 200, body: { exerciseGroups: [exerciseGroup1] } }) });
+        await performImport(importSpy, { resolve: { exerciseGroups: [exerciseGroup1] } });
         expect(alertSpy).not.toHaveBeenCalled();
         expect(importedSpy).toHaveBeenCalledOnce();
         expect(importedSpy).toHaveBeenCalledWith([exerciseGroup1]);
     });
 
     it('should trigger an alarm for a wrong user input', () => {
-        const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(
-            of(
-                new HttpResponse({
-                    status: 200,
-                    body: { exerciseGroups: [exerciseGroup1] },
-                }),
-            ),
-        );
+        const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(of({ exerciseGroups: [exerciseGroup1] }));
         const alertSpy = vi.spyOn(alertService, 'error');
 
         fixture.componentRef.setInput('subsequentExerciseGroupSelection', true);
@@ -222,7 +215,7 @@ describe('Exam Import Component', () => {
             fixture.detectChanges();
             await fixture.whenStable();
             vi.spyOn(examManagementService, 'generateImportId').mockReturnValue('test-import-id');
-            const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(of(new HttpResponse({ body: { exerciseGroups: [] } })));
+            const importSpy = vi.spyOn(examManagementService, 'importExerciseGroup').mockReturnValue(of({ exerciseGroups: [] }));
             const progressSpy = vi.spyOn(component.examImportProgressDialog(), 'runImport');
             const alertSpy = vi.spyOn(alertService, 'error');
             const warnSpy = vi.spyOn(console, 'warn');
@@ -278,7 +271,7 @@ describe('Exam Import Component', () => {
             }
 
             const correctedGroups = child.mapSelectedExercisesToExerciseGroups();
-            progressSpy.mockResolvedValueOnce(new HttpResponse({ body: { exerciseGroups: correctedGroups } }));
+            progressSpy.mockResolvedValueOnce({ exerciseGroups: correctedGroups });
             component.performImportOfExerciseGroups();
             await Promise.resolve();
             await Promise.resolve();
@@ -301,7 +294,7 @@ describe('Exam Import Component', () => {
      * Drives a group import: sets up the selection state, stubs the import id, and mocks the progress dialog's runImport
      * to either resolve with the given response (user dismissed the success summary) or reject with the given error.
      */
-    async function performImport(importSpy: ReturnType<typeof vi.spyOn>, outcome: { resolve?: HttpResponse<ExerciseGroupImportResultDTO>; reject?: unknown }): Promise<void> {
+    async function performImport(importSpy: ReturnType<typeof vi.spyOn>, outcome: { resolve?: ExerciseGroupImportResultDTO; reject?: unknown }): Promise<void> {
         component.exam.set(exam1WithExercises);
         fixture.componentRef.setInput('subsequentExerciseGroupSelection', true);
         fixture.componentRef.setInput('targetCourseId', 1);

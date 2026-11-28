@@ -5,7 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.room.LayoutStrategyType;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamRoomLayoutStrategyDTO(@NotNull String name, @NotNull LayoutStrategyType type, int capacity) {
+public record ExamRoomLayoutStrategyDTO(@NotNull String name, @NotNull LayoutStrategyType type, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) int capacity) {
 }

@@ -1,18 +1,16 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, map, tap } from 'rxjs';
+import { StudentExamApi } from 'app/openapi/api/student-exam-api';
+import type { StudentExam } from 'app/openapi/model/student-exam';
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { StudentExamDTO, StudentExamOrDTO } from 'app/exam/shared/entities/student-exam-dto.model';
-
-type EntityResponseType = HttpResponse<StudentExamDTO>;
+import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { StudentExamOrDTO } from 'app/exam/shared/entities/student-exam-dto.model';
 
 @Service()
 export class StudentExamService {
-    private http = inject(HttpClient);
+    private studentExamApi = inject(StudentExamApi);
     private accountService = inject(AccountService);
-
-    public resourceUrl = 'api/exam/courses';
 
     /**
      * Find a student exam on the server using a GET request.
@@ -20,10 +18,11 @@ export class StudentExamService {
      * @param examId The exam id.
      * @param studentExamId The id of the student exam to get.
      */
-    find(courseId: number, examId: number, studentExamId: number): Observable<HttpResponse<StudentExamWithGradeDTO>> {
-        return this.http
-            .get<StudentExamWithGradeDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}`, { observe: 'response' })
-            .pipe(tap((res: HttpResponse<StudentExamWithGradeDTO>) => this.processStudentExam(res?.body?.studentExam)));
+    find(courseId: number, examId: number, studentExamId: number): Observable<StudentExamWithGradeDTO> {
+        return this.studentExamApi.getStudentExam(courseId, examId, studentExamId).pipe(
+            map((studentExamWithGrade) => hydrate(new StudentExamWithGradeDTO(), studentExamWithGrade)),
+            tap((studentExamWithGrade) => this.processStudentExam(studentExamWithGrade.studentExam)),
+        );
     }
 
     /**
@@ -38,36 +37,13 @@ export class StudentExamService {
      * @param studentExamId The id of the student exam to get.
      * @param workingTime The working time in seconds.
      */
-    updateWorkingTime(courseId: number, examId: number, studentExamId: number, workingTime: number): Observable<EntityResponseType> {
-        return this.http
-            .patch<StudentExamDTO>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}/working-time`, workingTime, { observe: 'response' })
-            .pipe(tap((res: EntityResponseType) => this.processStudentExam(res?.body ?? undefined)));
+    updateWorkingTime(courseId: number, examId: number, studentExamId: number, workingTime: number): Observable<StudentExam> {
+        return this.studentExamApi.updateWorkingTime(courseId, examId, studentExamId, workingTime).pipe(tap((studentExam) => this.processStudentExam(studentExam)));
     }
 
-    /**
-     * Response contains only `id`, `submitted` and `submissionDate` (no `exam`, `user`, `exercises`, `examSessions`).
-     */
-    toggleSubmittedState(courseId: number, examId: number, studentExamId: number, unsubmit: boolean): Observable<EntityResponseType> {
-        const url = `${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/${studentExamId}/toggle-to-`;
-        if (unsubmit) {
-            return this.http.put<StudentExamDTO>(url + `unsubmitted`, {}, { observe: 'response' });
-        } else {
-            return this.http.put<StudentExamDTO>(url + `submitted`, {}, { observe: 'response' });
-        }
-    }
-
-    private processStudentExam(studentExam?: StudentExamOrDTO) {
+    private processStudentExam(studentExam?: StudentExamOrDTO | StudentExam) {
         if (studentExam?.exam?.course) {
             this.accountService.setAccessRightsForCourse(studentExam.exam.course);
         }
-    }
-
-    /**
-     * Get longest working time for the exam.
-     * @param courseId The course id.
-     * @param examId The exam id.
-     */
-    getLongestWorkingTimeForExam(courseId: number, examId: number): Observable<number> {
-        return this.http.get<number>(`${this.resourceUrl}/${courseId}/exams/${examId}/longest-working-time`);
     }
 }

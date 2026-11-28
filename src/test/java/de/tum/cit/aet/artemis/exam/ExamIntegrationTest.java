@@ -1719,7 +1719,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         ExamWithExerciseGroupsDTO returnedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "?withExerciseGroups=true", HttpStatus.OK,
                 ExamWithExerciseGroupsDTO.class);
 
-        assertThat(returnedExam.startDate()).isNull();
+        assertThat(returnedExam.exam().startDate()).isNull();
         assertThat(returnedExam.started()).isFalse();
     }
 
@@ -3111,12 +3111,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         exerciseRepository.save(quiz);
 
         ExamWithExerciseGroupsDTO received = request.get("/api/exam/exams/" + exam2.getId(), HttpStatus.OK, ExamWithExerciseGroupsDTO.class);
-        assertThat(received.id()).isEqualTo(exam2.getId());
-        assertThat(received.title()).isEqualTo(exam2.getTitle());
-        assertThat(received.examMode()).isEqualTo(exam2.getExamMode());
+        assertThat(received.exam().id()).isEqualTo(exam2.getId());
+        assertThat(received.exam().title()).isEqualTo(exam2.getTitle());
+        assertThat(received.exam().examMode()).isEqualTo(exam2.getExamMode());
         // exam-import.component reads exam.course to decide isImportInSameCourse
-        assertThat(received.course()).isNotNull();
-        assertThat(received.course().id()).isEqualTo(course1.getId());
+        assertThat(received.exam().course()).isNotNull();
+        assertThat(received.exam().course().id()).isEqualTo(course1.getId());
         assertThat(received.exerciseGroups()).hasSize(1);
         var group = received.exerciseGroups().getFirst();
         // the import modal renders and the body-builder re-posts group id/title/isMandatory
@@ -3252,12 +3252,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
         for (List<ExerciseGroupImportDTO> malformedGroups : List.of(Arrays.asList((ExerciseGroupImportDTO) null),
                 List.of(new ExerciseGroupImportDTO("g", true, Arrays.asList((ExerciseImportDTO) null))))) {
-            ExamImportDTO body = new ExamImportDTO(importDTO.title(), importDTO.examMode(), importDTO.examWithAttendanceCheck(), importDTO.visibleDate(), importDTO.startDate(),
-                    importDTO.endDate(), importDTO.publishResultsDate(), importDTO.examStudentReviewStart(), importDTO.examStudentReviewEnd(), importDTO.gracePeriod(),
-                    importDTO.workingTime(), importDTO.startText(), importDTO.endText(), importDTO.confirmationStartText(), importDTO.confirmationEndText(),
-                    importDTO.examMaxPoints(), importDTO.randomizeExerciseOrder(), importDTO.numberOfExercisesInExam(), importDTO.numberOfCorrectionRoundsInExam(),
-                    importDTO.examiner(), importDTO.moduleNumber(), importDTO.courseName(), importDTO.exampleSolutionPublicationDate(), importDTO.examSummaryPublicationDate(),
-                    importDTO.channelName(), importDTO.courseId(), malformedGroups);
+            ExamImportDTO body = new ExamImportDTO(importDTO.exam(), importDTO.courseId(), malformedGroups);
             request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", body, HttpStatus.BAD_REQUEST, null);
         }
 
@@ -3270,12 +3265,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
         ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
         ExerciseGroupImportDTO malformedGroup = new ExerciseGroupImportDTO("g", true, List.of(new ExerciseImportDTO(null, ExerciseType.TEXT, "x", null, null, null)));
-        ExamImportDTO body = new ExamImportDTO(importDTO.title(), importDTO.examMode(), importDTO.examWithAttendanceCheck(), importDTO.visibleDate(), importDTO.startDate(),
-                importDTO.endDate(), importDTO.publishResultsDate(), importDTO.examStudentReviewStart(), importDTO.examStudentReviewEnd(), importDTO.gracePeriod(),
-                importDTO.workingTime(), importDTO.startText(), importDTO.endText(), importDTO.confirmationStartText(), importDTO.confirmationEndText(), importDTO.examMaxPoints(),
-                importDTO.randomizeExerciseOrder(), importDTO.numberOfExercisesInExam(), importDTO.numberOfCorrectionRoundsInExam(), importDTO.examiner(), importDTO.moduleNumber(),
-                importDTO.courseName(), importDTO.exampleSolutionPublicationDate(), importDTO.examSummaryPublicationDate(), importDTO.channelName(), importDTO.courseId(),
-                List.of(malformedGroup));
+        ExamImportDTO body = new ExamImportDTO(importDTO.exam(), importDTO.courseId(), List.of(malformedGroup));
         int examsBefore = examRepository.findByCourseId(course1.getId()).size();
 
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", body, HttpStatus.BAD_REQUEST, null);

@@ -1,19 +1,17 @@
 import { Component, OnInit, Signal, WritableSignal, computed, inject, model, signal } from '@angular/core';
-import {
-    ExamRoomDTO,
-    ExamRoomDTOExtended,
-    ExamRoomDeletionSummaryDTO,
-    ExamRoomOverviewDTO,
-    ExamRoomOverviewNumberOfAvailable,
-    ExamRoomUploadInformationDTO,
-} from 'app/exam/manage/students/room-distribution/exam-rooms.model';
+import { ExamRoomOverviewNumberOfAvailable, ExamRoomWithCapacity } from 'app/exam/manage/students/room-distribution/exam-rooms.model';
+import type { ExamRoom } from 'app/openapi/model/exam-room';
+import type { ExamRoomDeletionSummary } from 'app/openapi/model/exam-room-deletion-summary';
+import type { ExamRoomOverview } from 'app/openapi/model/exam-room-overview';
+import type { ExamRoomUploadInformation } from 'app/openapi/model/exam-room-upload-information';
+import { AdminExamRoomManagementApi } from 'app/openapi/api/admin-exam-room-management-api';
+import { ExamRoomManagementApi } from 'app/openapi/api/exam-room-management-api';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { SortService } from 'app/foundation/service/sort.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ExamRoomsService } from 'app/exam/manage/students/room-distribution/exam-rooms.service';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
@@ -45,7 +43,8 @@ import { AccountService } from 'app/core/auth/account.service';
     ],
 })
 export class ExamRoomsComponent implements OnInit {
-    private readonly examRoomsService = inject(ExamRoomsService);
+    private readonly examRoomManagementApi = inject(ExamRoomManagementApi);
+    private readonly adminExamRoomManagementApi = inject(AdminExamRoomManagementApi);
     private readonly sortService = inject(SortService);
     private readonly translateService = inject(TranslateService);
     private readonly alertService = inject(AlertService);
@@ -56,8 +55,8 @@ export class ExamRoomsComponent implements OnInit {
 
     private selectedFile: WritableSignal<File | undefined> = signal(undefined);
     private actionStatus: WritableSignal<'uploading' | 'uploadSuccess' | 'deleting' | 'deletionSuccess' | undefined> = signal(undefined);
-    private actionInformation: WritableSignal<ExamRoomUploadInformationDTO | ExamRoomDeletionSummaryDTO | undefined> = signal(undefined);
-    private overview: WritableSignal<ExamRoomOverviewDTO | undefined> = signal(undefined);
+    private actionInformation: WritableSignal<ExamRoomUploadInformation | ExamRoomDeletionSummary | undefined> = signal(undefined);
+    private overview: WritableSignal<ExamRoomOverview | undefined> = signal(undefined);
 
     /** Only administrators upload room data and clean up the rooms; instructors view the overview in the context of an exam. */
     readonly isAdmin: boolean = this.accountService.isAdmin();
@@ -69,8 +68,8 @@ export class ExamRoomsComponent implements OnInit {
     readonly hasUploadInformation: Signal<boolean> = computed(() => this.actionStatus() === 'uploadSuccess' && !!this.uploadInformation());
     readonly isDeleting: Signal<boolean> = computed(() => this.actionStatus() === 'deleting');
     readonly hasDeletionInformation: Signal<boolean> = computed(() => this.actionStatus() === 'deletionSuccess' && !!this.deletionInformation());
-    readonly uploadInformation: Signal<ExamRoomUploadInformationDTO | undefined> = computed(() => this.actionInformation() as ExamRoomUploadInformationDTO);
-    readonly deletionInformation: Signal<ExamRoomDeletionSummaryDTO | undefined> = computed(() => this.actionInformation() as ExamRoomDeletionSummaryDTO);
+    readonly uploadInformation: Signal<ExamRoomUploadInformation | undefined> = computed(() => this.actionInformation() as ExamRoomUploadInformation);
+    readonly deletionInformation: Signal<ExamRoomDeletionSummary | undefined> = computed(() => this.actionInformation() as ExamRoomDeletionSummary);
     readonly hasOverview: Signal<boolean> = computed(() => !!this.overview());
     private readonly numberOfUniqueExamRooms: Signal<number> = computed(() => this.overview()?.newestUniqueExamRooms?.length ?? 0);
     private readonly numberOfUniqueExamSeats: Signal<number> = computed(
@@ -90,7 +89,7 @@ export class ExamRoomsComponent implements OnInit {
         };
     });
     readonly hasExamRoomData: Signal<boolean> = computed(() => !!this.numberOfUniqueExamRooms());
-    readonly examRoomData: Signal<ExamRoomDTOExtended[] | undefined> = computed(() => this.calculateExamRoomData());
+    readonly examRoomData: Signal<ExamRoomWithCapacity[] | undefined> = computed(() => this.calculateExamRoomData());
 
     // Sort state of the exam room table
     readonly sortAttribute = model<string>('name');
@@ -105,10 +104,11 @@ export class ExamRoomsComponent implements OnInit {
      */
     loadExamRoomOverview(): void {
         const { courseId, examId } = this.route.snapshot.queryParams;
-        const overview$ = courseId && examId ? this.examRoomsService.getRoomOverview(Number(courseId), Number(examId)) : this.examRoomsService.getRoomOverview();
+        const overview$ =
+            courseId && examId ? this.examRoomManagementApi.getExamRoomOverview(Number(courseId), Number(examId)) : this.adminExamRoomManagementApi.getExamRoomOverview();
         overview$.subscribe({
-            next: (examRoomOverviewResponse: HttpResponse<ExamRoomOverviewDTO>) => {
-                this.overview.set(examRoomOverviewResponse.body as ExamRoomOverviewDTO);
+            next: (examRoomOverview: ExamRoomOverview) => {
+                this.overview.set(examRoomOverview);
                 this.sortRows();
             },
             error: (errorResponse: HttpErrorResponse) => {
@@ -160,11 +160,11 @@ export class ExamRoomsComponent implements OnInit {
 
         this.actionStatus.set('uploading');
 
-        this.examRoomsService.uploadRoomDataZipFile(file).subscribe({
-            next: (uploadInformationResponse: HttpResponse<ExamRoomUploadInformationDTO>) => {
+        this.adminExamRoomManagementApi.uploadRoomZip(file).subscribe({
+            next: (uploadInformation: ExamRoomUploadInformation) => {
                 this.actionStatus.set('uploadSuccess');
                 this.selectedFile.set(undefined);
-                this.actionInformation.set(uploadInformationResponse.body as ExamRoomUploadInformationDTO);
+                this.actionInformation.set(uploadInformation);
                 this.loadExamRoomOverview();
             },
             error: (errorResponse: HttpErrorResponse) => {
@@ -182,9 +182,9 @@ export class ExamRoomsComponent implements OnInit {
     deleteOutdatedAndUnusedExamRooms(): void {
         this.actionStatus.set('deleting');
 
-        this.examRoomsService.deleteOutdatedAndUnusedExamRooms().subscribe({
-            next: (examRoomDeletionSummaryResponse: HttpResponse<ExamRoomDeletionSummaryDTO>) => {
-                this.actionInformation.set(examRoomDeletionSummaryResponse.body as ExamRoomDeletionSummaryDTO);
+        this.adminExamRoomManagementApi.deleteAllOutdatedAndUnusedExamRooms().subscribe({
+            next: (deletionSummary: ExamRoomDeletionSummary) => {
+                this.actionInformation.set(deletionSummary);
                 this.actionStatus.set('deletionSuccess');
                 this.loadExamRoomOverview();
             },
@@ -219,11 +219,11 @@ export class ExamRoomsComponent implements OnInit {
         this.alertService.error(trailingText ? `${errorMessage}: "${trailingText}"` : errorMessage);
     }
 
-    private getMaxCapacityOfExamRoom(examRoom: ExamRoomDTO): number {
+    private getMaxCapacityOfExamRoom(examRoom: ExamRoom): number {
         return examRoom.layoutStrategies?.map((layoutStrategy) => layoutStrategy.capacity).reduce((max, curr) => Math.max(max, curr), 0) ?? 0;
     }
 
-    private getDefaultCapacityOfExamRoom(examRoom: ExamRoomDTO): number {
+    private getDefaultCapacityOfExamRoom(examRoom: ExamRoom): number {
         return (
             examRoom.layoutStrategies
                 ?.filter((layoutStrategy) => layoutStrategy.name.toLowerCase() === 'default')

@@ -57,7 +57,9 @@ import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-i
 import { ExamStudentsMenuButtonComponent, ExamStudentsMenuItem } from 'app/exam/manage/students/exam-students-menu-button/exam-students-menu-button.component';
 import { UserRegistrationModalComponent } from 'app/shared-ui/user-registration-modal/user-registration-modal.component';
 import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
-import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
+import { ExamUser as GeneratedExamUser } from 'app/openapi/model/exam-user';
+import { ExamApi } from 'app/openapi/api/exam-api';
+import { StudentExamApi } from 'app/openapi/api/student-exam-api';
 import { onError } from 'app/foundation/util/global.utils';
 import { ArtemisServerDateService } from 'app/foundation/service/server-date.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -120,6 +122,8 @@ const SEARCH_DEBOUNCE_MS = 300;
 export class ExamStudentsComponent implements OnDestroy {
     private route = inject(ActivatedRoute);
     private examManagementService = inject(ExamManagementService);
+    private examApi = inject(ExamApi);
+    private studentExamApi = inject(StudentExamApi);
     private accountService = inject(AccountService);
     private confirmationService = inject(TumAetUiConfirmationService);
     private router = inject(Router);
@@ -196,16 +200,16 @@ export class ExamStudentsComponent implements OnDestroy {
         const courseId = this.courseId();
         const examId = this.exam().id;
         if (!examId) return of(void 0);
-        const dtos: ExamUserDTO[] = users.map((u) => ({
+        const dtos: GeneratedExamUser[] = users.map((u) => ({
             login: u.login,
             firstName: '',
             lastName: '',
             registrationNumber: u.registrationNumber ?? '',
             email: u.email ?? '',
         }));
-        return this.examManagementService.addStudentsToExam(courseId, examId, dtos).pipe(
+        return this.examApi.addStudentsToExam(courseId, examId, dtos).pipe(
             tap((res) => {
-                const { notFoundStudents, rejectedStaffUsers } = res.body ?? {};
+                const { notFoundStudents, rejectedStaffUsers } = res;
                 if (notFoundStudents?.length) {
                     const logins = notFoundStudents.map((u) => u.login).join(', ');
                     this.alertService.error('artemisApp.examManagement.examStudents.addDialog.notFoundStudents', { logins });
@@ -436,7 +440,7 @@ export class ExamStudentsComponent implements OnDestroy {
                             onError(this.alertService, err);
                             return of(undefined);
                         }),
-                        map((res) => res?.body ?? undefined),
+                        map((status) => status ?? undefined),
                     );
 
                     return forkJoin({ examStats: examStats$, exercisePreparationStatus: exercisePreparationStatus$ });
@@ -610,7 +614,7 @@ export class ExamStudentsComponent implements OnDestroy {
             return;
         }
 
-        this.examManagementService.removeStudentFromExam(this.courseId(), examId, examUser.login, event.deleteParticipationsAndSubmission).subscribe({
+        this.examApi.removeStudentFromExam(this.courseId(), examId, examUser.login, event.deleteParticipationsAndSubmission ?? false).subscribe({
             next: () => {
                 this.reloadStudentsView();
                 this.dialogErrorSource.next('');
@@ -628,7 +632,7 @@ export class ExamStudentsComponent implements OnDestroy {
             return;
         }
 
-        this.examManagementService.removeAllStudentsFromExam(this.courseId(), examId, event.deleteParticipationsAndSubmission).subscribe({
+        this.examApi.removeAllStudentsFromExam(this.courseId(), examId, event.deleteParticipationsAndSubmission ?? false).subscribe({
             next: () => {
                 this.reloadStudentsView();
                 this.dialogErrorSource.next('');
@@ -646,8 +650,8 @@ export class ExamStudentsComponent implements OnDestroy {
             if (exam?.id) {
                 const courseId = this.courseId();
                 const examId = exam.id;
-                this.examManagementService
-                    .addAllStudentsOfCourseToExam(courseId, examId)
+                this.examApi
+                    .registerCourseStudents(courseId, examId)
                     .pipe(takeUntilDestroyed(this.destroyRef))
                     .subscribe({
                         next: () => {
@@ -747,9 +751,9 @@ export class ExamStudentsComponent implements OnDestroy {
         }
 
         this.isLoading.set(true);
-        this.examManagementService.generateMissingStudentExams(this.courseId(), examId).subscribe({
-            next: (res) => {
-                this.alertService.success('artemisApp.studentExams.missingStudentExamGenerationSuccess', { number: res?.body?.length ?? 0 });
+        this.examApi.generateMissingStudentExams(this.courseId(), examId).subscribe({
+            next: (studentExams) => {
+                this.alertService.success('artemisApp.studentExams.missingStudentExamGenerationSuccess', { number: studentExams?.length ?? 0 });
                 this.reloadStudentsView();
             },
             error: (err: HttpErrorResponse) => {
@@ -769,7 +773,7 @@ export class ExamStudentsComponent implements OnDestroy {
         }
 
         this.isLoading.set(true);
-        this.examManagementService.startExercises(this.courseId(), examId).subscribe({
+        this.studentExamApi.startExercises(this.courseId(), examId).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.studentExams.startExerciseSuccess');
                 this.isLoading.set(false);
@@ -840,15 +844,15 @@ export class ExamStudentsComponent implements OnDestroy {
         }
 
         this.isLoading.set(true);
-        this.examManagementService
+        this.examApi
             .generateStudentExams(this.courseId(), examId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
-                next: (res) => {
+                next: (studentExams) => {
                     if (this.exam().id !== examId) return;
-                    this.studentExamCount.set(res?.body?.length ?? 0);
+                    this.studentExamCount.set(studentExams?.length ?? 0);
                     this.isLoading.set(false);
-                    this.alertService.success('artemisApp.studentExams.studentExamGenerationSuccess', { number: res?.body?.length ?? 0 });
+                    this.alertService.success('artemisApp.studentExams.studentExamGenerationSuccess', { number: studentExams?.length ?? 0 });
                     this.reloadStudentsView();
                 },
                 error: (err: HttpErrorResponse) => {

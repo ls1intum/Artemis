@@ -36,13 +36,12 @@ export class FileUploadExerciseManagementResolve implements Resolve<FileUploadEx
         } else if (route.params['courseId']) {
             if (route.params['examId'] && route.params['exerciseGroupId']) {
                 return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['exerciseGroupId']).pipe(
-                    filter((res) => !!res.body),
-                    map((exerciseGroup: HttpResponse<ExerciseGroup>) => {
-                        const fromFile = exerciseForImportFromFile<FileUploadExercise>(this.router, undefined, exerciseGroup.body!);
+                    map((exerciseGroup: ExerciseGroup) => {
+                        const fromFile = exerciseForImportFromFile<FileUploadExercise>(this.router, undefined, exerciseGroup);
                         if (fromFile) {
                             return fromFile;
                         }
-                        const fileUploadExercise = new FileUploadExercise(undefined, exerciseGroup.body!);
+                        const fileUploadExercise = new FileUploadExercise(undefined, exerciseGroup);
                         fileUploadExercise.filePattern = 'pdf, png';
                         return fileUploadExercise;
                     }),

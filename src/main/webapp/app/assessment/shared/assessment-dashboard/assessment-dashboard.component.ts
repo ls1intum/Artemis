@@ -13,6 +13,7 @@ import { User } from 'app/account/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
 import { Exercise, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -20,8 +21,8 @@ import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date
 import { FilterProp as TeamFilterProp } from 'app/exercise/team/teams/teams.component';
 import { SortService } from 'app/foundation/service/sort.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamApi } from 'app/openapi/api/exam-api';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { AssessmentDashboardInformationComponent, AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.model';
@@ -89,6 +90,7 @@ import dayjs from 'dayjs/esm';
 export class AssessmentDashboardComponent implements OnInit {
     private courseService = inject(CourseManagementService);
     private examManagementService = inject(ExamManagementService);
+    private examApi = inject(ExamApi);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
     private route = inject(ActivatedRoute);
@@ -188,35 +190,34 @@ export class AssessmentDashboardComponent implements OnInit {
         if (this.isExamMode()) {
             this.hideFinishedExercises.set(false);
             const loadExamData = () => {
-                this.examManagementService
-                    .getExamWithInterestingExercisesForAssessmentDashboard(this.courseId(), this.examId(), this.isTestRun())
-                    .subscribe((res: HttpResponse<Exam>) => {
-                        const exam = res.body!;
-                        this.exam.set(exam);
-                        this.course.set(Course.from(exam.course!));
-                        this.accountService.setAccessRightsForCourse(this.course());
+                this.examManagementService.getExamWithInterestingExercisesForAssessmentDashboard(this.courseId(), this.examId(), this.isTestRun()).subscribe((exam) => {
+                    this.exam.set(exam);
+                    this.course.set(Course.from(exam.course!));
+                    this.accountService.setAccessRightsForCourse(this.course());
 
-                        // No exercises exist yet
-                        if (exam.exerciseGroups) {
-                            // get all exercises
-                            const exercises: Exercise[] = [];
-                            exam.exerciseGroups.forEach((exerciseGroup) => {
-                                if (exerciseGroup.exercises) {
-                                    exercises.push(...exerciseGroup.exercises);
+                    // No exercises exist yet
+                    if (exam.exerciseGroups) {
+                        // get all exercises
+                        const exercises: Exercise[] = [];
+                        exam.exerciseGroups.forEach((exerciseGroup) => {
+                            if (exerciseGroup.exercises) {
+                                exercises.push(...exerciseGroup.exercises);
 
-                                    // Set the exercise group since it is undefined by default here
-                                    exerciseGroup.exercises.forEach((exercise: Exercise) => {
-                                        exercise.exerciseGroup = exerciseGroup;
-                                    });
-                                }
-                            });
+                                // Set the exercise group since it is undefined by default here
+                                exerciseGroup.exercises.forEach((exercise: Exercise) => {
+                                    exercise.exerciseGroup = exerciseGroup;
+                                });
+                            }
+                        });
 
-                            this.extractExercises(exercises);
-                        }
-                    });
-                this.examManagementService.getStatsForExamAssessmentDashboard(this.courseId(), this.examId()).subscribe({
-                    next: (res: HttpResponse<StatsForDashboard>) => {
-                        const stats = StatsForDashboard.from(res.body!);
+                        this.extractExercises(exercises);
+                    }
+                });
+                this.examApi.getStatsForExamAssessmentDashboard(this.courseId(), this.examId()).subscribe({
+                    next: (statsDto) => {
+                        const stats = hydrate(new StatsForDashboard(), statsDto);
+                        stats.numberOfSubmissions = hydrate(new DueDateStat(), stats.numberOfSubmissions);
+                        stats.numberOfAutomaticAssistedAssessments = hydrate(new DueDateStat(), stats.numberOfAutomaticAssistedAssessments);
                         this.stats.set(stats);
                         this.numberOfSubmissions.set(stats.numberOfSubmissions);
                         this.numberOfAssessmentsOfCorrectionRounds.set(stats.numberOfAssessmentsOfCorrectionRounds);
@@ -255,10 +256,10 @@ export class AssessmentDashboardComponent implements OnInit {
                 loadExamData();
             } else {
                 this.examManagementService.getLatestIndividualEndDateOfExam(this.courseId(), this.examId()).subscribe({
-                    next: (res: HttpResponse<ExamInformationDTO>) => {
+                    next: (information) => {
                         const exam = new Exam();
                         exam.id = this.examId();
-                        exam.latestIndividualEndDate = res.body!.latestIndividualEndDate;
+                        exam.latestIndividualEndDate = information.latestIndividualEndDate;
                         this.exam.set(exam);
 
                         if (this.examHasFinished(exam)) {

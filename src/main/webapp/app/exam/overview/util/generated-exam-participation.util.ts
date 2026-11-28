@@ -1,0 +1,88 @@
+import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
+import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
+import { CourseForStudentExamDTO, ExamForStudentExamDTO, StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
+import type { ExamForOverview as GeneratedExamForOverview } from 'app/openapi/model/exam-for-overview';
+import type { ExamSidebarData } from 'app/openapi/model/exam-sidebar-data';
+import type { StudentExam as GeneratedStudentExam } from 'app/openapi/model/student-exam';
+import type { ExamForStudentExam } from 'app/openapi/model/exam-for-student-exam';
+import type { CourseForStudentExam } from 'app/openapi/model/course-for-student-exam';
+
+/**
+ * Bridges the generated models of the exam participation endpoints and the exam classes the participation views read.
+ * Generated models carry dates as ISO strings and enums as string unions; the views read dayjs dates and enums.
+ */
+
+/**
+ * Converts the exams of the course overview.
+ *
+ * @param exams the generated overview exams
+ * @returns the exams with dayjs dates
+ */
+export function toExamsForOverview(exams: GeneratedExamForOverview[]): ExamForOverview[] {
+    return exams.map((exam) => ({
+        id: exam.id,
+        title: exam.title,
+        moduleNumber: exam.moduleNumber,
+        visibleDate: convertDateStringFromServer(exam.visibleDate),
+        startDate: convertDateStringFromServer(exam.startDate),
+        endDate: convertDateStringFromServer(exam.endDate),
+        workingTime: exam.workingTime,
+        examMaxPoints: exam.examMaxPoints,
+        examMode: ExamMode[exam.examMode],
+    }));
+}
+
+/**
+ * Converts the sidebar data of a real exam into an exam with the fields the sidebar sends.
+ *
+ * @param data the generated sidebar data
+ * @returns the exam with a dayjs start date
+ */
+export function toSidebarExam(data: ExamSidebarData): Exam {
+    return {
+        id: data.id,
+        title: data.title,
+        moduleNumber: data.moduleNumber,
+        startDate: convertDateStringFromServer(data.startDate),
+        workingTime: data.workingTime,
+        examMaxPoints: data.examMaxPoints,
+    };
+}
+
+function toCourseForStudentExam(course: CourseForStudentExam): CourseForStudentExamDTO {
+    const { id, ...fields } = course;
+    return hydrate({ id }, fields);
+}
+
+function toExamForStudentExam(exam: ExamForStudentExam): ExamForStudentExamDTO {
+    return {
+        id: exam.id,
+        title: exam.title,
+        examMode: ExamMode[exam.examMode],
+        workingTime: exam.workingTime,
+        course: exam.course && toCourseForStudentExam(exam.course),
+    };
+}
+
+/**
+ * Converts the test exams of a user.
+ *
+ * @param studentExams the generated student exams
+ * @returns the student exams with dayjs dates
+ */
+export function toStudentExamDTOs(studentExams: GeneratedStudentExam[]): StudentExamDTO[] {
+    return studentExams.map((studentExam) => ({
+        id: studentExam.id,
+        workingTime: studentExam.workingTime,
+        started: studentExam.started,
+        startedDate: convertDateStringFromServer(studentExam.startedDate),
+        submitted: studentExam.submitted,
+        submissionDate: convertDateStringFromServer(studentExam.submissionDate),
+        testRun: studentExam.testRun,
+        user: studentExam.user,
+        exam: studentExam.exam && toExamForStudentExam(studentExam.exam),
+    }));
+}

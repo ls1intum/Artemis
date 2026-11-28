@@ -137,7 +137,7 @@ describe('GradingComponent', () => {
                 examService = TestBed.inject(ExamManagementService);
                 translateService = TestBed.inject(TranslateService);
 
-                vi.spyOn(examService, 'find').mockReturnValue(of(new HttpResponse<Exam>({ body: exam })));
+                vi.spyOn(examService, 'find').mockReturnValue(of(exam));
 
                 if (isExam) {
                     vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScaleToUse) })));
@@ -478,7 +478,7 @@ describe('GradingComponent', () => {
                     {
                         provide: ExamManagementService,
                         useValue: {
-                            find: vi.fn().mockReturnValue(of(new HttpResponse({ body: { id: 789 } as Exam }))),
+                            find: vi.fn().mockReturnValue(of({ id: 789 } as Exam)),
                         },
                     },
                 ],
@@ -543,7 +543,7 @@ describe('GradingComponent', () => {
             const findGradingScaleForExamStub = vi
                 .spyOn(gradingService, 'findGradingScaleForExam')
                 .mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(comp.gradingScale) })));
-            const findExamStub = vi.spyOn(examService, 'find').mockReturnValue(of(new HttpResponse<Exam>({ body: exam })));
+            const findExamStub = vi.spyOn(examService, 'find').mockReturnValue(of(exam));
 
             fixture.changeDetectorRef.detectChanges();
 

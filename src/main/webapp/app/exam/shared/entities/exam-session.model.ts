@@ -25,31 +25,3 @@ export interface ExamSession extends BaseEntity {
     lastModifiedDate?: Date;
     suspiciousReasons: SuspiciousSessionReason[];
 }
-
-export interface SuspiciousExamSessions {
-    examSessions: ExamSession[];
-}
-/** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
-export class SuspiciousSessionsAnalysisOptions {
-    constructor(
-        sameIpAddressDifferentStudentExams: boolean,
-        sameBrowserFingerprintDifferentStudentExams: boolean,
-        differentIpAddressesSameStudentExam: boolean,
-        differentBrowserFingerprintsSameStudentExam: boolean,
-        ipAddressOutsideOfRange: boolean,
-        subnet?: string,
-    ) {
-        this.sameIpAddressDifferentStudentExams = sameIpAddressDifferentStudentExams;
-        this.sameBrowserFingerprintDifferentStudentExams = sameBrowserFingerprintDifferentStudentExams;
-        this.differentIpAddressesSameStudentExam = differentIpAddressesSameStudentExam;
-        this.differentBrowserFingerprintsSameStudentExam = differentBrowserFingerprintsSameStudentExam;
-        this.ipAddressOutsideOfRange = ipAddressOutsideOfRange;
-        this.ipSubnet = subnet;
-    }
-    sameIpAddressDifferentStudentExams = false;
-    sameBrowserFingerprintDifferentStudentExams = false;
-    differentIpAddressesSameStudentExam = false;
-    differentBrowserFingerprintsSameStudentExam = false;
-    ipAddressOutsideOfRange = false;
-    ipSubnet?: string;
-}

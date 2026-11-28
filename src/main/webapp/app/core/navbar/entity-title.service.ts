@@ -3,6 +3,7 @@ import { OnDestroy, Service, inject } from '@angular/core';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { EMPTY, Observable, ReplaySubject, Subject, Subscription, map } from 'rxjs';
+import { ExamApi } from 'app/openapi/api/exam-api';
 import { LectureApi } from 'app/openapi/api/lecture-api';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { AccountService } from 'app/core/auth/account.service';
@@ -29,6 +30,7 @@ export class EntityTitleService implements OnDestroy {
     private http = inject(HttpClient);
     private readonly tutorialGroupApi = inject(TutorialGroupApi);
     private readonly lectureApi = inject(LectureApi);
+    private readonly examApi = inject(ExamApi);
     private readonly accountService = inject(AccountService);
 
     private readonly titleSubjects = new Map<string, { subject: Subject<string>; revision: number; timeout?: ReturnType<typeof setTimeout> }>();
@@ -161,6 +163,8 @@ export class EntityTitleService implements OnDestroy {
                 return this.tutorialGroupApi.getTitle(id);
             case EntityType.LECTURE:
                 return this.lectureApi.getLectureTitle(id);
+            case EntityType.EXAM:
+                return this.examApi.getExamTitle(id);
             default:
                 return this.http.get(`${resourceUrl}/${id}/title`, { observe: 'response', responseType: 'text' }).pipe(map((response: HttpResponse<string>) => response.body));
         }
@@ -183,9 +187,6 @@ export class EntityTitleService implements OnDestroy {
                 break;
             case EntityType.DIAGRAM:
                 resourceUrl += 'modeling/apollon-diagrams';
-                break;
-            case EntityType.EXAM:
-                resourceUrl += 'exam/exams';
                 break;
             case EntityType.ORGANIZATION:
                 resourceUrl += 'core/organizations';

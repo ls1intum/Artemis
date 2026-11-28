@@ -8,10 +8,12 @@ import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
 import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import type { SeatsOfExamRoom } from 'app/openapi/model/seats-of-exam-room';
+import { ExamRoomDistributionApi } from 'app/openapi/api/exam-room-distribution-api';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { faBan, faChair } from '@fortawesome/free-solid-svg-icons';
-import { RoomForDistributionDTO, SeatsOfExamRoomDTO } from './students-room-distribution.model';
+import { RoomForDistributionDTO } from './students-room-distribution.model';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
 /** A room as listed by the search field; the field shows `label` and hands the suggestion back on selection. */
@@ -37,6 +39,7 @@ interface RoomSuggestion {
 })
 export class StudentsReseatingDialogComponent implements OnInit {
     private readonly studentsRoomDistributionService = inject(StudentsRoomDistributionService);
+    private readonly examRoomDistributionApi = inject(ExamRoomDistributionApi);
 
     protected readonly faBan = faBan;
     protected readonly faChair = faChair;
@@ -55,7 +58,7 @@ export class StudentsReseatingDialogComponent implements OnInit {
     private readonly selectedRoom: Signal<RoomForDistributionDTO | undefined> = computed(() => this.getRoomDTOFromSelectedRoomNumber());
     private readonly selectedRoomId: Signal<number | undefined> = computed(() => this.selectedRoom()?.id);
     readonly selectedRoomIsPersisted: Signal<boolean> = computed(() => this.selectedRoomId() !== undefined && this.selectedRoomId()! >= 0);
-    private seatsOfSelectedRoom: WritableSignal<SeatsOfExamRoomDTO> = signal({ seats: [] });
+    private seatsOfSelectedRoom: WritableSignal<SeatsOfExamRoom> = signal({ seats: [] });
     selectedSeat: WritableSignal<string> = signal('');
     readonly selectedSeatIsPersisted: Signal<boolean> = computed(() => this.selectedRoomIsPersisted() && this.seatsOfSelectedRoom().seats.includes(this.selectedSeat()));
 
@@ -67,7 +70,7 @@ export class StudentsReseatingDialogComponent implements OnInit {
             }
 
             const roomId = this.selectedRoomId()!;
-            this.studentsRoomDistributionService.loadSeatsOfExamRoom(this.courseId(), this.exam().id!, roomId).subscribe({
+            this.examRoomDistributionApi.getSeatsOfExamRoom(this.courseId(), this.exam().id!, roomId).subscribe({
                 next: (data) => {
                     if (this.selectedRoomId() === roomId) {
                         // ignore late responses
@@ -120,8 +123,8 @@ export class StudentsReseatingDialogComponent implements OnInit {
 
     protected attemptReseatAndCloseDialogOnSuccess(): void {
         const actualSelectedRoomNumber: string = this.selectedRoom()?.roomNumber ?? this.selectedRoomNumber();
-        this.studentsRoomDistributionService
-            .reseatStudent(this.courseId(), this.exam().id!, this.examUser()!.id!, actualSelectedRoomNumber, this.selectedSeat() || undefined)
+        this.examRoomDistributionApi
+            .reseatStudent(this.courseId(), this.exam().id!, { examUserId: this.examUser()!.id!, newRoom: actualSelectedRoomNumber, newSeat: this.selectedSeat() || undefined })
             .subscribe({
                 next: () => {
                     this.closeDialog();

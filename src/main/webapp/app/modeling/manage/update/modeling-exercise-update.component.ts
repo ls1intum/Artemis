@@ -269,7 +269,7 @@ export class ModelingExerciseUpdateComponent implements OnDestroy, OnInit {
                         if (this.isExamMode()) {
                             const { exerciseGroupId, examId } = params;
 
-                            this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => this.exerciseState.patch('exerciseGroup', res.body!));
+                            this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => this.exerciseState.patch('exerciseGroup', res));
                             this.exerciseState.patch('course', undefined);
                         } else {
                             this.courseService.findForManagement(courseId).subscribe((res) => this.exerciseState.patch('course', res.body!));

@@ -331,7 +331,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should not report an error when correct participant score calculation', () => {
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(examScoreDTO));
         const errorSpy = vi.spyOn(comp, 'reportScoreCalculationError');
         fixture.detectChanges();
         expect(errorSpy).not.toHaveBeenCalled();
@@ -339,7 +339,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should report an error when missing participant score calculation', () => {
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(examScoreDTO));
         const errorSpy = vi.spyOn(comp, 'reportScoreCalculationError');
         examScoresOfParticipantScoreTable = [];
         fixture.detectChanges();
@@ -347,7 +347,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should report an error when wrong points calculation', () => {
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(examScoreDTO));
         const cs1 = deepClone(examScoreStudent1);
         cs1.pointsAchieved = 99;
         const cs2 = deepClone(examScoreStudent2);
@@ -361,7 +361,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should report an error when wrong score calculation', () => {
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(examScoreDTO));
         const cs1 = deepClone(examScoreStudent1);
         cs1.scoreAchieved = 99;
         const cs2 = deepClone(examScoreStudent2);
@@ -375,7 +375,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should locate a discrepancy by the id of the student and report neither the login nor the scores', () => {
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(examScoreDTO));
         const wrongStudent1 = deepClone(examScoreStudent1);
         wrongStudent1.pointsAchieved = 99;
         wrongStudent1.scoreAchieved = 99;
@@ -399,7 +399,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should make duplicated titles unique', () => {
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(examScoreDTO));
 
         const newExerciseGroup = new ExerciseGroup();
         newExerciseGroup.title = 'group';
@@ -417,7 +417,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should sort the student results by the column chosen in the table header', () => {
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: structuredClone(examScoreDTO) })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(structuredClone(examScoreDTO)));
         vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ status: 404 })));
         fixture.detectChanges();
 
@@ -433,7 +433,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('histogram should have correct entries', () => {
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(examScoreDTO));
         vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ status: 404 })));
         fixture.detectChanges();
 
@@ -515,7 +515,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('histogram should skip not submitted exams', () => {
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(examScoreDTO));
         vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ status: 404 })));
         fixture.detectChanges();
         comp.toggleFilterForSubmittedExam();
@@ -610,7 +610,7 @@ describe('ExamScoresComponent', () => {
         dto.studentResults[2].overallPointsAchieved = undefined;
         dto.studentResults[2].overallScoreAchieved = undefined;
         dto.studentResults[2].submitted = true;
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(dto));
         fixture.detectChanges();
         expect(comp.aggregatedExamResults().meanPointsTotal).toBe(6.2);
         expect(comp.aggregatedExamResults().meanPointsRelativeTotal).toBe(50);
@@ -641,7 +641,7 @@ describe('ExamScoresComponent', () => {
         dto.studentResults[0].overallPointsAchieved = 8.4;
         dto.studentResults[0].overallScoreAchieved = 80;
         dto.studentResults[1].maxPoints = 20;
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(dto));
         fixture.detectChanges();
         const exported = vi.spyOn(comp, 'exportAsCsv');
         comp.exportExamResults({
@@ -667,7 +667,7 @@ describe('ExamScoresComponent', () => {
             result.submitted = true;
             result.overallGrade = index === 2 ? '5' : undefined;
         });
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(dto));
         fixture.detectChanges();
         comp.gradingScaleExists.set(true);
         comp.isBonus.set(false);
@@ -713,7 +713,7 @@ describe('ExamScoresComponent', () => {
                 exerciseResult.hasNonEmptySubmission = true;
             }
         }
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(dto));
         fixture.detectChanges();
         expect(comp.aggregatedExamResults().noOfRegisteredUsers).toBe(3);
         expect(comp.aggregatedExamResults().noOfExamsSubmitted).toBe(2);
@@ -789,7 +789,7 @@ describe('ExamScoresComponent', () => {
                           },
                       };
         });
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(dto));
         const realGradingService = TestBed.runInInjectionContext(() => new GradingService());
         vi.spyOn(gradingService, 'findMatchingGradeStep').mockImplementation((steps, percentage) => realGradingService.findMatchingGradeStep(steps, percentage));
         fixture.detectChanges();
@@ -870,7 +870,7 @@ describe('ExamScoresComponent', () => {
         } as DOMRect);
         (TestBed.inject(ActivatedRoute) as MockActivatedRoute).setParameters({ courseId: 123, examId: 1 });
         comp.course.set({ accuracyOfScores: 1 });
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(dto));
         const navigate = vi.spyOn(TestBed.inject(ArtemisNavigationUtilService), 'routeInNewTab').mockImplementation(() => {});
         fixture.detectChanges();
         await fixture.whenStable();
@@ -932,7 +932,7 @@ describe('ExamScoresComponent', () => {
                         : { exerciseId: 31, title: 'Program', maxScore: 20, hasNonEmptySubmission: true },
             };
         });
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(dto));
         fixture.detectChanges();
         comp.toggleFilterForNonEmptySubmission();
         fixture.detectChanges();
@@ -965,7 +965,7 @@ describe('ExamScoresComponent', () => {
         dto.studentResults[1].maxPoints = 10;
         dto.studentResults[1].overallPointsAchieved = undefined;
         dto.studentResults[1].overallScoreAchieved = undefined;
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(dto));
         fixture.detectChanges();
         expect(comp.aggregatedExamResults().noOfRegisteredUsers).toBe(3);
         expect(comp.aggregatedExamResults().noOfExamsSubmitted).toBe(2);
@@ -981,7 +981,7 @@ describe('ExamScoresComponent', () => {
         dto.studentResults[0].overallGrade = '3';
         dto.studentResults[0].gradeWithBonus = { bonusStrategy: BonusStrategy.POINTS, pending: true };
         dto.studentResults[1].gradeWithBonus = { bonusStrategy: BonusStrategy.POINTS, pending: false, finalGrade: '1.0' };
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: dto })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(dto));
         vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: toGradingScaleDTO(gradingScale) })));
         fixture.detectChanges();
         const finalGrades = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('[data-testid="exam-final-grade"]')).map((cell) => cell.textContent?.trim());
@@ -999,7 +999,7 @@ describe('ExamScoresComponent', () => {
 
     it('should generate csv correctly', () => {
         const noOfSubmittedExercises = examScoreDTO.studentResults.length;
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(examScoreDTO));
         fixture.detectChanges();
         comp.gradingScale.set(gradingScale);
         comp.gradingScale()!.gradeSteps = [gradeStep1];
@@ -1062,9 +1062,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should initialize correctly with bonus grades and plagiarism', () => {
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(
-            of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusGradesAndPlagiarism } as ExamScoreDTO })),
-        );
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of({ ...examScoreDTO, studentResults: studentResultsWithBonusGradesAndPlagiarism } as ExamScoreDTO));
         fixture.detectChanges();
         const finalGrades = studentResultsWithBonusGradesAndPlagiarism.map((studentResult) => studentResult.gradeWithBonus.finalGrade);
         expect(comp.hasBonus()).toEqual(BonusStrategy.GRADES_DISCRETE);
@@ -1074,7 +1072,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should initialize correctly with bonus points', () => {
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusPoints } as ExamScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of({ ...examScoreDTO, studentResults: studentResultsWithBonusPoints } as ExamScoreDTO));
         fixture.detectChanges();
         const finalGrades = studentResultsWithBonusGradesAndPlagiarism.map((studentResult) => studentResult.gradeWithBonus.finalGrade);
         expect(comp.hasBonus()).toEqual(BonusStrategy.POINTS);
@@ -1085,9 +1083,7 @@ describe('ExamScoresComponent', () => {
 
     it('should generate csv correctly with bonus grades and plagiarism', () => {
         const noOfSubmittedExercises = examScoreDTO.studentResults.length;
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(
-            of(new HttpResponse({ body: { ...examScoreDTO, studentResults: studentResultsWithBonusGradesAndPlagiarism } as ExamScoreDTO })),
-        );
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of({ ...examScoreDTO, studentResults: studentResultsWithBonusGradesAndPlagiarism } as ExamScoreDTO));
         fixture.detectChanges();
         comp.gradingScale.set(gradingScale);
         comp.gradingScale()!.gradeSteps = [gradeStep1];
@@ -1162,7 +1158,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should export as csv', () => {
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(examScoreDTO));
         fixture.detectChanges();
 
         const testOptions: CsvExportOptions = {
@@ -1177,7 +1173,7 @@ describe('ExamScoresComponent', () => {
     it('should set grading scale properties', () => {
         const examScoreDTOWithGrades = examScoreDTO;
         examScoreDTOWithGrades.studentResults[0].hasPassed = true;
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOWithGrades })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(examScoreDTOWithGrades));
         vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse({ body: toGradingScaleDTO(gradingScale) })));
         vi.spyOn(gradingService, 'sortGradeSteps').mockImplementation((steps) => steps);
         vi.spyOn(gradingService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
@@ -1209,7 +1205,7 @@ describe('ExamScoresComponent', () => {
         const examScoreDTOOnePassing = examScoreDTO;
         examScoreDTOOnePassing.studentResults[0].hasPassed = true;
         it('should set table state correctly if non empty submissions filter is activated', () => {
-            vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
+            vi.spyOn(examService, 'getExamScores').mockReturnValue(of(examScoreDTOOnePassing));
             vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScale) })));
             comp.filterForNonEmptySubmissions.set(false);
             comp.ngOnInit();
@@ -1255,7 +1251,7 @@ describe('ExamScoresComponent', () => {
         });
 
         it('should set table state correctly if only submitted exams filter is activated', () => {
-            vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
+            vi.spyOn(examService, 'getExamScores').mockReturnValue(of(examScoreDTOOnePassing));
             vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScale) })));
             comp.filterForSubmittedExams.set(false);
             comp.ngOnInit();
@@ -1301,7 +1297,7 @@ describe('ExamScoresComponent', () => {
         });
 
         it('should set table state correctly if both exams are activated', () => {
-            vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTOOnePassing })));
+            vi.spyOn(examService, 'getExamScores').mockReturnValue(of(examScoreDTOOnePassing));
             vi.spyOn(gradingService, 'findGradingScaleForExam').mockReturnValue(of(new HttpResponse<GradingScaleDTO>({ body: toGradingScaleDTO(gradingScale) })));
             comp.ngOnInit();
             comp.filterForNonEmptySubmissions.set(false);
@@ -1351,7 +1347,7 @@ describe('ExamScoresComponent', () => {
     });
 
     it('should toggle median correctly', () => {
-        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(new HttpResponse({ body: examScoreDTO })));
+        vi.spyOn(examService, 'getExamScores').mockReturnValue(of(examScoreDTO));
         comp.isBonus.set(false);
         fixture.detectChanges();
 

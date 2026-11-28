@@ -147,7 +147,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             const exam = new Exam();
             const course = new Course();
             const getAllCoursesWithQuizExercisesSpy = vi.spyOn(courseService, 'getAllCoursesWithQuizExercises').mockReturnValue(of(new HttpResponse<Course[]>({ body: [course] })));
-            const findAllExamsAccessibleToUserSpy = vi.spyOn(examService, 'findAllExamsAccessibleToUser').mockReturnValue(of(new HttpResponse<Exam[]>({ body: [exam] })));
+            const findAllExamsAccessibleToUserSpy = vi.spyOn(examService, 'findAllExamsAccessibleToUser').mockReturnValue(of([exam]));
 
             // Set the input signals
             fixture.componentRef.setInput('show', true);
@@ -659,7 +659,7 @@ describe('QuizQuestionListEditExistingComponent question preview', () => {
             .compileComponents();
 
         vi.spyOn(TestBed.inject(CourseManagementService), 'getAllCoursesWithQuizExercises').mockReturnValue(of(new HttpResponse<Course[]>({ body: [] })));
-        vi.spyOn(TestBed.inject(ExamManagementService), 'findAllExamsAccessibleToUser').mockReturnValue(of(new HttpResponse<Exam[]>({ body: [] })));
+        vi.spyOn(TestBed.inject(ExamManagementService), 'findAllExamsAccessibleToUser').mockReturnValue(of([]));
 
         question = createValidMCQuestion().question;
         question.id = 1;

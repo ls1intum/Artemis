@@ -136,7 +136,7 @@ describe('FileUploadExerciseManagementResolve', () => {
     describe('resolve with courseId and examId and exerciseGroupId', () => {
         it('should create new exercise for exercise group', async () => {
             const exerciseGroup = createExerciseGroup(5);
-            vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+            vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(exerciseGroup));
 
             const snapshot = {
                 params: { courseId: 123, examId: 4, exerciseGroupId: 5 },
@@ -152,7 +152,7 @@ describe('FileUploadExerciseManagementResolve', () => {
 
         it('should not call courseManagementService when exerciseGroupId is present', async () => {
             const exerciseGroup = createExerciseGroup();
-            vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+            vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(exerciseGroup));
 
             const snapshot = {
                 params: { courseId: 123, examId: 4, exerciseGroupId: 5 },
@@ -218,7 +218,7 @@ describe('FileUploadExerciseManagementResolve', () => {
 
         it('should set default file pattern for exam exercise', async () => {
             const exerciseGroup = createExerciseGroup();
-            vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+            vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(exerciseGroup));
 
             const snapshot = {
                 params: { courseId: 123, examId: 4, exerciseGroupId: 5 },
@@ -256,7 +256,7 @@ describe('FileUploadExerciseManagementResolve', () => {
 
         it('should call exerciseGroupService.find with correct IDs', async () => {
             const exerciseGroup = createExerciseGroup();
-            vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+            vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(exerciseGroup));
 
             const snapshot = {
                 params: { courseId: 111, examId: 222, exerciseGroupId: 333 },

@@ -4,7 +4,7 @@ import { faArrowRight, faCheckCircle, faCircleExclamation, faDotCircle, faTimes,
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isActingAsTestExam, isRealExam } from 'app/exam/overview/exam.utils';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
-import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
+import type { ExamChecklist } from 'app/openapi/model/exam-checklist';
 import dayjs from 'dayjs/esm';
 import { round } from 'app/foundation/util/utils';
 import { Course } from 'app/course/shared/entities/course.model';

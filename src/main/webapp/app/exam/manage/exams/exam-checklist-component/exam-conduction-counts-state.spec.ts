@@ -3,15 +3,14 @@ import { Subject, of } from 'rxjs';
 import { ExamConductionCountsState } from './exam-conduction-counts-state';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
-import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
-import { ExamConductionCounts } from 'app/exam/shared/entities/exam-conduction-counts.model';
+import { ExamConductionCounts } from 'app/openapi/model/exam-conduction-counts';
 
 const counts = (generated: number, started: number, submitted = 2): ExamConductionCounts => ({
     numberOfGeneratedStudentExams: generated,
     numberOfExamsStarted: started,
     numberOfExamsSubmitted: submitted,
 });
-const checklist = (generated: number, started: number, submitted = 2) => Object.assign(new ExamChecklist(), counts(generated, started, submitted));
+const checklist = (generated: number, started: number, submitted = 2) => Object.assign({}, counts(generated, started, submitted));
 
 describe('ExamConductionCountsState', () => {
     const exam: Exam = { id: 1, examMode: ExamMode.TEST };

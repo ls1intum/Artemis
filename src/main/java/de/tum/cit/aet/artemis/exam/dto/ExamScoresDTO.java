@@ -7,12 +7,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.dto.BonusResultDTO;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamScoresDTO(Long examId, String title, Integer maxPoints, Double averagePointsAchieved, Boolean hasSecondCorrectionAndStarted,
         List<ExerciseGroupDTO> exerciseGroups, List<StudentResultDTO> studentResults) {
 
     // Inner DTO
+    @Schema(name = "ExamScoresExerciseGroupDTO")
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record ExerciseGroupDTO(Long id, String title, Double maxPoints, Long numberOfParticipants, List<ExerciseInfoDTO> containedExercises) {
 

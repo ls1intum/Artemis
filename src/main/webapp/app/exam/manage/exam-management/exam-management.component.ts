@@ -125,8 +125,8 @@ export class ExamManagementComponent implements OnInit, OnDestroy, SidebarView {
      */
     loadAllExamsForCourse() {
         this.examManagementService.findAllExamsForCourse(this.course().id!).subscribe({
-            next: (res: HttpResponse<Exam[]>) => {
-                this.exams.set(res.body!);
+            next: (exams: Exam[]) => {
+                this.exams.set(exams);
                 this.updateCurrentExam();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),

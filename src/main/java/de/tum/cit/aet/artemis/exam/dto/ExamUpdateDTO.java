@@ -44,6 +44,17 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, @NotNull E
     }
 
     /**
+     * Copies this DTO without its id, for a request that creates a new exam and ignores an id.
+     *
+     * @return the same settings with a null id
+     */
+    public ExamUpdateDTO withoutId() {
+        return new ExamUpdateDTO(null, title, examMode, examWithAttendanceCheck, visibleDate, startDate, endDate, publishResultsDate, examStudentReviewStart, examStudentReviewEnd,
+                gracePeriod, workingTime, startText, endText, confirmationStartText, confirmationEndText, examMaxPoints, randomizeExerciseOrder, numberOfExercisesInExam,
+                numberOfCorrectionRoundsInExam, examiner, moduleNumber, courseName, exampleSolutionPublicationDate, examSummaryPublicationDate, channelName);
+    }
+
+    /**
      * Creates a new Exam entity from this DTO.
      * Used for create operations.
      *

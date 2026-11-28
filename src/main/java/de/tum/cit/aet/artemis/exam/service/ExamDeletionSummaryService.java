@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamExerciseDeletionCountsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExerciseGroupDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -106,14 +107,14 @@ public class ExamDeletionSummaryService {
         long numberOfCommunicationPosts = channel == null ? 0 : postRepository.countByConversationId(channel.getId());
         long numberOfAnswerPosts = channel == null ? 0 : answerPostRepository.countByConversationId(channel.getId());
 
-        return new ExamDeletionSummaryDTO(countBuilds(exerciseIds), numberOfCommunicationPosts, numberOfAnswerPosts, examUserRepository.countByExamId(examId),
+        var exerciseCounts = new ExamExerciseDeletionCountsDTO(countOfType(exercisesByType, ExerciseType.PROGRAMMING), countOfType(exercisesByType, ExerciseType.QUIZ),
+                countOfType(exercisesByType, ExerciseType.TEXT), countOfType(exercisesByType, ExerciseType.MODELING), countOfType(exercisesByType, ExerciseType.FILE_UPLOAD),
+                countParticipations(exerciseIds), countSubmissions(exerciseIds), countResults(exerciseIds), resultRepository.countNumberOfAssessments(exerciseIds),
+                countComplaints(exerciseIds), countPlagiarismComparisons(exerciseIds), countBuilds(exerciseIds));
+        return new ExamDeletionSummaryDTO(exerciseCounts, numberOfCommunicationPosts, numberOfAnswerPosts, examUserRepository.countByExamId(examId),
                 studentExamRepository.countStudentExamsNotStartedByExamIdIgnoreTestRuns(examId), studentExamRepository.countStudentExamsStartedByExamIdIgnoreTestRuns(examId),
                 studentExamRepository.countStudentExamsSubmittedByExamIdIgnoreTestRuns(examId), exerciseGroupRepository.countByExamId(examId),
-                countOfType(exercisesByType, ExerciseType.PROGRAMMING), countOfType(exercisesByType, ExerciseType.QUIZ), countOfType(exercisesByType, ExerciseType.TEXT),
-                countOfType(exercisesByType, ExerciseType.MODELING), countOfType(exercisesByType, ExerciseType.FILE_UPLOAD), countParticipations(exerciseIds),
-                countSubmissions(exerciseIds), countResults(exerciseIds), resultRepository.countNumberOfAssessments(exerciseIds), countComplaints(exerciseIds),
-                countPlagiarismComparisons(exerciseIds), studentExamRepository.countTestRunsByExamId(examId), examSessionRepository.countByExamId(examId),
-                examLiveEventRepository.countByExamId(examId));
+                studentExamRepository.countTestRunsByExamId(examId), examSessionRepository.countByExamId(examId), examLiveEventRepository.countByExamId(examId));
     }
 
     /**
@@ -126,11 +127,11 @@ public class ExamDeletionSummaryService {
         Set<Long> exerciseIds = exerciseGroupRepository.findExerciseDeletionInfoByExerciseGroupId(exerciseGroupId).stream().map(info -> info.id()).collect(Collectors.toSet());
         List<ExerciseTypeCountDTO> exercisesByType = exerciseGroupRepository.countExercisesByExerciseGroupIdGroupedByType(exerciseGroupId);
 
-        return new ExerciseGroupDeletionSummaryDTO(countOfType(exercisesByType, ExerciseType.PROGRAMMING), countOfType(exercisesByType, ExerciseType.QUIZ),
+        var exerciseCounts = new ExamExerciseDeletionCountsDTO(countOfType(exercisesByType, ExerciseType.PROGRAMMING), countOfType(exercisesByType, ExerciseType.QUIZ),
                 countOfType(exercisesByType, ExerciseType.TEXT), countOfType(exercisesByType, ExerciseType.MODELING), countOfType(exercisesByType, ExerciseType.FILE_UPLOAD),
                 countParticipations(exerciseIds), countSubmissions(exerciseIds), countResults(exerciseIds), resultRepository.countNumberOfAssessments(exerciseIds),
-                countComplaints(exerciseIds), countPlagiarismComparisons(exerciseIds), countBuilds(exerciseIds),
-                exerciseIds.isEmpty() ? 0 : studentExamRepository.countRealStudentExamsContainingExercises(exerciseIds));
+                countComplaints(exerciseIds), countPlagiarismComparisons(exerciseIds), countBuilds(exerciseIds));
+        return new ExerciseGroupDeletionSummaryDTO(exerciseCounts, exerciseIds.isEmpty() ? 0 : studentExamRepository.countRealStudentExamsContainingExercises(exerciseIds));
     }
 
     private static long countOfType(List<ExerciseTypeCountDTO> exercisesByType, ExerciseType type) {

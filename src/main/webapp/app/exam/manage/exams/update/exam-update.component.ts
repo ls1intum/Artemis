@@ -2,7 +2,6 @@ import { WorkingTimeChangeComponent } from 'app/exam/shared/working-time-change/
 import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { combineLatest, takeWhile } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -10,7 +9,7 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { isRealExam } from 'app/exam/overview/exam.utils';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
 import { onError } from 'app/foundation/util/global.utils';
@@ -326,15 +325,10 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         }
 
         const request$ = this.exam.id ? this.examManagementService.update(this.course.id!, this.exam) : this.examManagementService.create(this.course.id!, this.exam);
-        request$
-            .pipe(
-                map((response: HttpResponse<Exam>) => response.body!),
-                takeWhile(() => this.componentActive),
-            )
-            .subscribe({
-                next: this.onSaveSuccess.bind(this),
-                error: this.onSaveError.bind(this),
-            });
+        request$.pipe(takeWhile(() => this.componentActive)).subscribe({
+            next: this.onSaveSuccess.bind(this),
+            error: this.onSaveError.bind(this),
+        });
     }
 
     /**
@@ -354,8 +348,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         const request$ = this.examManagementService.import(this.course.id!, this.exam, importId);
         this.examImportProgressDialog()
             .runImport(importId, totalExercises, request$)
-            .then((response) => {
-                const importedExam = response.body?.exam;
+            .then((result) => {
+                const importedExam = result.exam;
                 if (importedExam) {
                     void this.onSaveSuccess(importedExam);
                 } else {

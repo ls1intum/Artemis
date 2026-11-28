@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
 import { EntityArrayResponseType as ExerciseEntityArrayResponseType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -54,8 +53,8 @@ export class UpcomingExamsAndExercisesComponent implements OnInit {
             this.upcomingExercises.set(res.body ?? []);
         });
 
-        this.examManagementService.findAllCurrentAndUpcomingExams().subscribe((res: HttpResponse<Exam[]>) => {
-            this.upcomingExams.set(res.body ?? []);
+        this.examManagementService.findAllCurrentAndUpcomingExams().subscribe((exams) => {
+            this.upcomingExams.set(exams);
         });
     }
 }

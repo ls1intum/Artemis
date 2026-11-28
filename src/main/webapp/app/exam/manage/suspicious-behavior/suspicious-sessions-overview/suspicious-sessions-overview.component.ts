@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
-import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/exam/shared/entities/exam-session.model';
+import type { SuspiciousExamSessions } from 'app/openapi/model/suspicious-exam-sessions';
+import { SuspiciousSessionReason } from 'app/openapi/model/suspicious-session-reason';
 import { SuspiciousSessionsComponent } from 'app/exam/manage/suspicious-behavior/suspicious-sessions/suspicious-sessions.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -18,15 +19,15 @@ export class SuspiciousSessionsOverviewComponent implements OnInit {
 
     mapEnumToTranslationString(reason: SuspiciousSessionReason) {
         switch (reason) {
-            case SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_IP_ADDRESS:
+            case SuspiciousSessionReason.DifferentStudentExamsSameIpAddress:
                 return 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.sameIpAddressDifferentStudentExams';
-            case SuspiciousSessionReason.DIFFERENT_STUDENT_EXAMS_SAME_BROWSER_FINGERPRINT:
+            case SuspiciousSessionReason.DifferentStudentExamsSameBrowserFingerprint:
                 return 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.sameBrowserFingerprintDifferentStudentExams';
-            case SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_IP_ADDRESSES:
+            case SuspiciousSessionReason.SameStudentExamDifferentIpAddresses:
                 return 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.differentIpAddressesSameStudentExam';
-            case SuspiciousSessionReason.SAME_STUDENT_EXAM_DIFFERENT_BROWSER_FINGERPRINTS:
+            case SuspiciousSessionReason.SameStudentExamDifferentBrowserFingerprints:
                 return 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.differentBrowserFingerprintsSameStudentExam';
-            case SuspiciousSessionReason.IP_ADDRESS_OUTSIDE_OF_RANGE:
+            case SuspiciousSessionReason.IpAddressOutsideOfRange:
                 return 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.ipOutsideOfRange';
         }
     }

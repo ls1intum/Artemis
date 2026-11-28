@@ -706,6 +706,259 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionPoolLectureUnitRelevance'}
+  /api/exam/courses/{courseId}/exams:
+    get:
+      tags: [exam]
+      operationId: getExamsForCourse
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ExamWithExerciseGroups'}
+    put:
+      tags: [exam]
+      operationId: updateExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ExamUpdate'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Exam'}
+    post:
+      tags: [exam]
+      operationId: createExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ExamUpdate'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Exam'}
+  /api/exam/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-unsubmitted:
+    put:
+      tags: [student-exam]
+      operationId: unsubmitStudentExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: studentExamId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/StudentExam'}
+  /api/exam/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/toggle-to-submitted:
+    put:
+      tags: [student-exam]
+      operationId: toggleStudentExamToSubmitted
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: studentExamId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/StudentExam'}
+  /api/exam/courses/{courseId}/exams/{examId}/exercises/{exerciseId}/exercise-group:
+    put:
+      tags: [exercise-group]
+      operationId: moveExerciseToGroup
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ExamExerciseGroupAssignment'}
+        required: true
+      responses:
+        '200': {description: OK}
+  /api/exam/courses/{courseId}/exams/{examId}/exercise-groups:
+    get:
+      tags: [exercise-group]
+      operationId: getExerciseGroupsForExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ExerciseGroup'}
+    put:
+      tags: [exercise-group]
+      operationId: updateExerciseGroup
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ExerciseGroupUpdate'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGroup'}
+    post:
+      tags: [exercise-group]
+      operationId: createExerciseGroup
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ExerciseGroupCreate'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGroup'}
+  /api/exam/courses/{courseId}/exams/{examId}/exercise-groups-order:
+    put:
+      tags: [exam]
+      operationId: updateOrderOfExerciseGroups
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {type: integer, format: int64}
+        required: true
+      responses:
+        '200': {description: OK}
+  /api/exam/courses/{courseId}/exams/{examId}/exam-users/{examUserId}/attendance:
+    put:
+      tags: [exam-user]
+      operationId: updateAttendance
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examUserId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ExamAttendanceUpdate'}
+        required: true
+      responses:
+        '200': {description: OK}
+  /api/exam/courses/{courseId}/exams/{examId}/archive:
+    put:
+      tags: [exam]
+      operationId: archiveExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
   /api/assessment/results/{resultId}/rating/{ratingValue}:
     put:
       tags: [rating]
@@ -2262,6 +2515,497 @@ paths:
                 type: array
                 items: {type: string, maxLength: 128}
                 maxItems: 500
+  /api/exam/rooms/admin/upload:
+    post:
+      tags: [admin-exam-room-management]
+      operationId: uploadRoomZip
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: {type: string, format: binary}
+              required: [file]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamRoomUploadInformation'}
+  /api/exam/courses/{courseId}/exams/{examId}/test-runs:
+    get:
+      tags: [student-exam]
+      operationId: findAllTestRunsForExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/StudentExam'}
+    post:
+      tags: [student-exam]
+      operationId: createTestRun
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CreateTestRun'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/StudentExam'}
+  /api/exam/courses/{courseId}/exams/{examId}/students:
+    post:
+      tags: [exam]
+      operationId: addStudentsToExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: '#/components/schemas/ExamUser'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamRegistrationResult'}
+    delete:
+      tags: [exam]
+      operationId: removeAllStudentsFromExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: withParticipationsAndSubmission
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      responses:
+        '200': {description: OK}
+  /api/exam/courses/{courseId}/exams/{examId}/students/{studentLogin}/attendance-check:
+    post:
+      tags: [student-exam]
+      operationId: attendanceCheck
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: studentLogin
+        in: path
+        required: true
+        schema: {type: string}
+      requestBody:
+        content:
+          application/json:
+            schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamAttendanceCheckEvent'}
+  /api/exam/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/request-feedback:
+    post:
+      tags: [student-exam]
+      operationId: requestAthenaFeedback
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: studentExamId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/exam/courses/{courseId}/exams/{examId}/student-exams/submit:
+    post:
+      tags: [student-exam]
+      operationId: submitStudentExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SubmitStudentExam'}
+        required: true
+      responses:
+        '200': {description: OK}
+  /api/exam/courses/{courseId}/exams/{examId}/student-exams/start-exercises:
+    post:
+      tags: [student-exam]
+      operationId: startExercises
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/exam/courses/{courseId}/exams/{examId}/student-exams/evaluate-quiz-exercises:
+    post:
+      tags: [exam]
+      operationId: evaluateQuizExercises
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: integer, format: int32}
+  /api/exam/courses/{courseId}/exams/{examId}/student-exams/assess-unsubmitted-and-empty-student-exams:
+    post:
+      tags: [student-exam]
+      operationId: assessUnsubmittedStudentExamsAndEmptySubmissions
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/exam/courses/{courseId}/exams/{examId}/reseat-student:
+    post:
+      tags: [exam-room-distribution]
+      operationId: reseatStudent
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ReseatInformation'}
+        required: true
+      responses:
+        '200': {description: OK}
+  /api/exam/courses/{courseId}/exams/{examId}/register-course-students:
+    post:
+      tags: [exam]
+      operationId: registerCourseStudents
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/exam/courses/{courseId}/exams/{examId}/import-exercise-group:
+    post:
+      tags: [exercise-group]
+      operationId: importExerciseGroup
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: importId
+        in: query
+        required: false
+        schema: {type: string}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {$ref: '#/components/schemas/ExerciseGroupImport'}
+        required: true
+      responses:
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema: {type: object}
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGroupImportResult'}
+  /api/exam/courses/{courseId}/exams/{examId}/generate-student-exams:
+    post:
+      tags: [exam]
+      operationId: generateStudentExams
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/StudentExam'}
+  /api/exam/courses/{courseId}/exams/{examId}/generate-missing-student-exams:
+    post:
+      tags: [exam]
+      operationId: generateMissingStudentExams
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/StudentExam'}
+  /api/exam/courses/{courseId}/exams/{examId}/exam-users:
+    post:
+      tags: [exam-user]
+      operationId: updateExamUser
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                examUserDTO: {$ref: '#/components/schemas/ExamUser'}
+                file: {type: string, format: binary}
+              required: [examUserDTO]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamUser'}
+  /api/exam/courses/{courseId}/exams/{examId}/exam-users-save-images:
+    post:
+      tags: [exam-user]
+      operationId: saveUsersImages
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: {type: string, format: binary}
+              required: [file]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamUsersNotFound'}
+  /api/exam/courses/{courseId}/exams/{examId}/distribute-registered-students:
+    post:
+      tags: [exam-room-distribution]
+      operationId: distributeRegisteredStudents
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: useOnlyDefaultLayouts
+        in: query
+        required: false
+        schema: {type: boolean, default: true}
+      - name: reserveFactor
+        in: query
+        required: false
+        schema: {type: number, format: double, default: 0.0}
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items: {type: integer, format: int64}
+        required: true
+      responses:
+        '200': {description: OK}
+  /api/exam/courses/{courseId}/exams/{examId}/announcements:
+    get:
+      tags: [exam]
+      operationId: getExamAnnouncements
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ExamWideAnnouncementEvent'}
+    post:
+      tags: [exam]
+      operationId: createExamAnnouncement
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {type: string}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamWideAnnouncementEvent'}
+  /api/exam/courses/{courseId}/exam-import:
+    post:
+      tags: [exam]
+      operationId: importExamWithExercises
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: importId
+        in: query
+        required: false
+        schema: {type: string}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ExamImport'}
+        required: true
+      responses:
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema: {type: object}
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamImportResult'}
   /api/calendar/subscription-token/rotate:
     post:
       tags: [calendar]
@@ -2639,6 +3383,58 @@ paths:
         schema: {type: integer, format: int64}
       responses:
         '200': {description: OK}
+  /api/exam/courses/{courseId}/exams/{examId}/working-time:
+    patch:
+      tags: [exam]
+      operationId: updateExamWorkingTime
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {type: integer, format: int32}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Exam'}
+  /api/exam/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/working-time:
+    patch:
+      tags: [student-exam]
+      operationId: updateWorkingTime
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: studentExamId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {type: integer, format: int32}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/StudentExam'}
   /api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title:
     get:
       tags: [tutorial-group]
@@ -3931,6 +4727,1161 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/CourseBrowserData'}
+  /api/exam/rooms/overview:
+    get:
+      tags: [exam-room-management]
+      operationId: getExamRoomOverview
+      parameters:
+      - name: courseId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: query
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamRoomOverview'}
+  /api/exam/rooms/admin/overview:
+    get:
+      tags: [admin-exam-room-management]
+      operationId: getExamRoomOverview_1
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamRoomOverview'}
+  /api/exam/exams:
+    get:
+      tags: [exam]
+      operationId: getAllExamsOnPage
+      parameters:
+      - name: withExercises
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      - name: searchTerm
+        in: query
+        required: true
+        schema: {type: string}
+      - name: page
+        in: query
+        required: false
+        schema: {type: integer, format: int32}
+      - name: pageSize
+        in: query
+        required: false
+        schema: {type: integer, format: int32}
+      - name: sortingOrder
+        in: query
+        required: false
+        schema: {$ref: '#/components/schemas/SortingOrder'}
+      - name: sortedColumn
+        in: query
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SearchResultPageDTOExamForImportList'}
+  /api/exam/exams/{examId}:
+    get:
+      tags: [exam]
+      operationId: getExamForImportWithExercises
+      parameters:
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamWithExerciseGroups'}
+  /api/exam/exams/{examId}/title:
+    get:
+      tags: [exam]
+      operationId: getExamTitle
+      parameters:
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema: {type: string}
+  /api/exam/exams/active:
+    get:
+      tags: [exam]
+      operationId: getAllActiveExams
+      parameters:
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        required: false
+        schema: {type: integer, default: 0, minimum: 0}
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        required: false
+        schema: {type: integer, default: 20, minimum: 1}
+      - name: sort
+        in: query
+        description: 'Sorting criteria in the format: property,(asc|desc). Default
+          sort order is ascending. Multiple sort criteria are supported.'
+        required: false
+        schema:
+          type: array
+          items: {type: string}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Total-Count:
+              style: simple
+              schema: {type: integer}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ActiveExam'}
+  /api/exam/courses/{courseId}/test-exams-per-user:
+    get:
+      tags: [student-exam]
+      operationId: getStudentExamsForCoursePerUser
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/StudentExam'}
+  /api/exam/courses/{courseId}/real-exams-sidebar-data:
+    get:
+      tags: [exam]
+      operationId: getSidebarDataForRealExams
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ExamSidebarData'}
+                uniqueItems: true
+  /api/exam/courses/{courseId}/exams/{examId}:
+    get:
+      tags: [exam]
+      operationId: getExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: withExerciseGroups
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      responses:
+        '200':
+          description: The exam, either the scalar core (withExerciseGroups=false)
+            or the variant with its exercise groups (withExerciseGroups=true)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - {$ref: '#/components/schemas/Exam'}
+                - {$ref: '#/components/schemas/ExamWithExerciseGroups'}
+    delete:
+      tags: [exam]
+      operationId: deleteExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/exam/courses/{courseId}/exams/{examId}/verify-exam-users:
+    get:
+      tags: [exam-user]
+      operationId: getAllWhoDidNotSign
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: includeAll
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ExamUserAttendanceCheck'}
+                uniqueItems: true
+  /api/exam/courses/{courseId}/exams/{examId}/test-runs/{testRunId}/conduction:
+    get:
+      tags: [student-exam-conduction]
+      operationId: getTestRunForConduction
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: testRunId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/StudentExamForConduction'}
+  /api/exam/courses/{courseId}/exams/{examId}/suspicious-sessions:
+    get:
+      tags: [exam]
+      operationId: getAllSuspiciousExamSessions
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: differentStudentExamsSameIPAddress
+        in: query
+        required: true
+        schema: {type: boolean}
+      - name: differentStudentExamsSameBrowserFingerprint
+        in: query
+        required: true
+        schema: {type: boolean}
+      - name: sameStudentExamDifferentIPAddresses
+        in: query
+        required: true
+        schema: {type: boolean}
+      - name: sameStudentExamDifferentBrowserFingerprints
+        in: query
+        required: true
+        schema: {type: boolean}
+      - name: ipOutsideOfRange
+        in: query
+        required: true
+        schema: {type: boolean}
+      - name: ipSubnet
+        in: query
+        required: false
+        schema: {type: string}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/SuspiciousExamSessions'}
+                uniqueItems: true
+  /api/exam/courses/{courseId}/exams/{examId}/students/search:
+    get:
+      tags: [exam-user]
+      operationId: searchStudentsForExamRegistration
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: searchTerm
+        in: query
+        required: true
+        schema: {type: string}
+      - name: page
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 0, minimum: 0}
+      - name: size
+        in: query
+        required: false
+        schema: {type: integer, format: int32, default: 10, maximum: 200, minimum: 1}
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Total-Count:
+              style: simple
+              schema: {type: integer}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/UserForRegistration'}
+  /api/exam/courses/{courseId}/exams/{examId}/student-exams:
+    get:
+      tags: [student-exam]
+      operationId: getStudentExamsForExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/StudentExam'}
+  /api/exam/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}:
+    get:
+      tags: [student-exam]
+      operationId: getStudentExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: studentExamId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/StudentExamWithGrade'}
+  /api/exam/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/summary:
+    get:
+      tags: [student-exam]
+      operationId: getStudentExamForSummary
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: studentExamId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/StudentExamForSummary'}
+  /api/exam/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/grade-summary:
+    get:
+      tags: [student-exam]
+      operationId: getStudentExamGradesForSummary
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: studentExamId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/StudentExamWithGrade'}
+  /api/exam/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction:
+    get:
+      tags: [student-exam-conduction]
+      operationId: getStudentExamForConduction
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: studentExamId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/StudentExamForConduction'}
+  /api/exam/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/conduction/for-instructor:
+    get:
+      tags: [student-exam-conduction]
+      operationId: getStudentExamForInstructorConduction
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: studentExamId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/StudentExamForConduction'}
+  /api/exam/courses/{courseId}/exams/{examId}/student-exams/{studentExamId}/athena-feedback-usage:
+    get:
+      tags: [student-exam]
+      operationId: getAthenaFeedbackUsage
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: studentExamId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AthenaFeedbackUsage'}
+  /api/exam/courses/{courseId}/exams/{examId}/student-exams/start-exercises/status:
+    get:
+      tags: [student-exam]
+      operationId: getExerciseStartStatus
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamExerciseStartPreparationStatus'}
+  /api/exam/courses/{courseId}/exams/{examId}/student-exams/live-events:
+    get:
+      tags: [student-exam]
+      operationId: getExamLiveEvents
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                  - {$ref: '#/components/schemas/ExamAttendanceCheckEvent'}
+                  - {$ref: '#/components/schemas/ExamWideAnnouncementEvent'}
+                  - {$ref: '#/components/schemas/ProblemStatementUpdateEvent'}
+                  - {$ref: '#/components/schemas/WorkingTimeUpdateEvent'}
+  /api/exam/courses/{courseId}/exams/{examId}/stats-for-exam-assessment-dashboard:
+    get:
+      tags: [exam]
+      operationId: getStatsForExamAssessmentDashboard
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/StatsForDashboard'}
+  /api/exam/courses/{courseId}/exams/{examId}/statistics:
+    get:
+      tags: [exam]
+      operationId: getExamStatistics
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamChecklist'}
+  /api/exam/courses/{courseId}/exams/{examId}/statistics/for-instructor:
+    get:
+      tags: [exam]
+      operationId: getExamStatisticsForInstructor
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamChecklist'}
+  /api/exam/courses/{courseId}/exams/{examId}/statistics/conduction:
+    get:
+      tags: [exam]
+      operationId: getExamConductionCounts
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamConductionCounts'}
+  /api/exam/courses/{courseId}/exams/{examId}/scores:
+    get:
+      tags: [exam]
+      operationId: getExamScore
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamScores'}
+  /api/exam/courses/{courseId}/exams/{examId}/rooms/{roomId}/seats:
+    get:
+      tags: [exam-room-distribution]
+      operationId: getSeatsOfExamRoom
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: roomId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SeatsOfExamRoom'}
+  /api/exam/courses/{courseId}/exams/{examId}/rooms/distribution-data:
+    get:
+      tags: [exam-room-distribution]
+      operationId: getRoomDataForDistribution
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ExamRoomForDistribution'}
+                uniqueItems: true
+  /api/exam/courses/{courseId}/exams/{examId}/rooms/distribution-capacities:
+    get:
+      tags: [exam-room-distribution]
+      operationId: getDistributionCapacities
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: reserveFactor
+        in: query
+        required: true
+        schema: {type: number, format: double}
+      - name: examRoomIds
+        in: query
+        required: true
+        schema:
+          type: array
+          items: {type: integer, format: int64}
+          uniqueItems: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamDistributionCapacity'}
+  /api/exam/courses/{courseId}/exams/{examId}/rooms-used:
+    get:
+      tags: [exam-room-distribution]
+      operationId: getRoomsUsedInExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ExamRoomForDistribution'}
+                uniqueItems: true
+  /api/exam/courses/{courseId}/exams/{examId}/own-student-exam:
+    get:
+      tags: [exam]
+      operationId: getOwnStudentExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/OwnStudentExam'}
+  /api/exam/courses/{courseId}/exams/{examId}/longest-working-time:
+    get:
+      tags: [student-exam]
+      operationId: getLongestWorkingTimeForExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: integer, format: int32}
+  /api/exam/courses/{courseId}/exams/{examId}/locked-submissions:
+    get:
+      tags: [exam]
+      operationId: getLockedSubmissionsForExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/LockedExamSubmission'}
+  /api/exam/courses/{courseId}/exams/{examId}/latest-end-date:
+    get:
+      tags: [exam]
+      operationId: getLatestIndividualEndDateOfExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamInformation'}
+  /api/exam/courses/{courseId}/exams/{examId}/export-students:
+    get:
+      tags: [exam-user]
+      operationId: exportExamUsers
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ExportExamUser'}
+  /api/exam/courses/{courseId}/exams/{examId}/exercises-with-potential-plagiarism:
+    get:
+      tags: [exam]
+      operationId: getAllExercisesWithPotentialPlagiarismForExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ExerciseForPlagiarismCasesOverview'}
+  /api/exam/courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId}:
+    get:
+      tags: [exercise-group]
+      operationId: getExerciseGroup
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: exerciseGroupId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGroup'}
+    delete:
+      tags: [exercise-group]
+      operationId: deleteExerciseGroup
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: exerciseGroupId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: deleteBaseReposBuildPlans
+        in: query
+        required: false
+        schema: {type: boolean, default: true}
+      responses:
+        '200': {description: OK}
+  /api/exam/courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId}/deletion-summary:
+    get:
+      tags: [exercise-group]
+      operationId: getDeletionSummary
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: exerciseGroupId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExerciseGroupDeletionSummary'}
+  /api/exam/courses/{courseId}/exams/{examId}/exam-students/paged:
+    get:
+      tags: [exam-user]
+      operationId: getExamStudentsPaged
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: page
+        in: query
+        required: false
+        schema: {type: integer, format: int32, maximum: 100000, minimum: 0}
+      - name: pageSize
+        in: query
+        required: false
+        schema: {type: integer, format: int32, maximum: 200, minimum: 1}
+      - name: sortingOrder
+        in: query
+        required: false
+        schema: {$ref: '#/components/schemas/SortingOrder'}
+      - name: sortedColumn
+        in: query
+        required: false
+        schema: {type: string}
+      - name: searchTerm
+        in: query
+        required: false
+        schema: {type: string}
+      - name: filterProp
+        in: query
+        required: false
+        schema:
+          type: [string, 'null']
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Total-Count:
+              style: simple
+              schema: {type: integer}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ExamStudent'}
+  /api/exam/courses/{courseId}/exams/{examId}/exam-for-test-run-assessment-dashboard:
+    get:
+      tags: [exam]
+      operationId: getExamForTestRunAssessmentDashboard
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamForAssessmentDashboard'}
+  /api/exam/courses/{courseId}/exams/{examId}/exam-for-assessment-dashboard:
+    get:
+      tags: [exam]
+      operationId: getExamForAssessmentDashboard
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamForAssessmentDashboard'}
+  /api/exam/courses/{courseId}/exams/{examId}/download-archive:
+    get:
+      tags: [exam]
+      operationId: downloadExamArchive
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '503':
+          description: Service Unavailable
+          content:
+            application/json:
+              schema: {type: object}
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: string, format: binary}
+  /api/exam/courses/{courseId}/exams/{examId}/deletion-summary:
+    get:
+      tags: [exam]
+      operationId: getDeletionSummary_1
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamDeletionSummary'}
+  /api/exam/courses/{courseId}/exams/{examId}/deletion-progress:
+    get:
+      tags: [exam]
+      operationId: getDeletionProgress
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/EntityDeletionProgress'}
+  /api/exam/courses/{courseId}/exams/{examId}/attendance:
+    get:
+      tags: [exam-user]
+      operationId: isAttendanceChecked
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: boolean}
+  /api/exam/courses/{courseId}/exams/{examId}/attendance-checker-information:
+    get:
+      tags: [exam-room-distribution]
+      operationId: getAttendanceCheckerAppInformation
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AttendanceCheckerAppExamInformation'}
+  /api/exam/courses/{courseId}/exams-for-user:
+    get:
+      tags: [exam]
+      operationId: getExamsWithQuizExercisesForUser
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ExamForQuestionPool'}
+  /api/exam/courses/{courseId}/exams-for-overview:
+    get:
+      tags: [exam]
+      operationId: getExamsForCourseOverview
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/ExamForOverview'}
+                uniqueItems: true
+  /api/exam/admin/courses/upcoming-exams:
+    get:
+      tags: [admin-exam]
+      operationId: getCurrentAndUpcomingExams
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/UpcomingExam'}
   /api/calendar/subscription-token:
     get:
       tags: [calendar]
@@ -4919,6 +6870,92 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
+  /api/exam/rooms/admin/outdated-and-unused:
+    delete:
+      tags: [admin-exam-room-management]
+      operationId: deleteAllOutdatedAndUnusedExamRooms
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamRoomDeletionSummary'}
+  /api/exam/courses/{courseId}/exams/{examId}/test-runs/{testRunId}:
+    delete:
+      tags: [student-exam]
+      operationId: deleteTestRun
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: testRunId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/exam/courses/{courseId}/exams/{examId}/students/{studentLogin}:
+    delete:
+      tags: [exam]
+      operationId: removeStudentFromExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: studentLogin
+        in: path
+        required: true
+        schema: {type: string}
+      - name: withParticipationsAndSubmission
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      responses:
+        '200': {description: OK}
+  /api/exam/courses/{courseId}/exams/{examId}/reset:
+    delete:
+      tags: [exam]
+      operationId: resetExam
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ExamWithExerciseGroups'}
+  /api/exam/courses/{courseId}/exams/{examId}/cleanup:
+    delete:
+      tags: [exam]
+      operationId: cleanup
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: examId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
 components:
   schemas:
     CourseCompetency:
@@ -5017,6 +7054,10 @@ components:
       type: object
       properties:
         id: {type: integer, format: int64}
+    FileUploadExamSubmission:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
     DropLocationCounter:
       type: object
       properties:
@@ -5100,6 +7141,38 @@ components:
       type: object
       properties:
         showInLeaderboard: {type: boolean}
+    Exam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        examMode: {$ref: '#/components/schemas/ExamMode'}
+        examWithAttendanceCheck: {type: boolean}
+        visibleDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        publishResultsDate: {type: string, format: date-time}
+        examStudentReviewStart: {type: string, format: date-time}
+        examStudentReviewEnd: {type: string, format: date-time}
+        gracePeriod: {type: integer, format: int32}
+        workingTime: {type: integer, format: int32}
+        startText: {type: string}
+        endText: {type: string}
+        confirmationStartText: {type: string}
+        confirmationEndText: {type: string}
+        examMaxPoints: {type: integer, format: int32}
+        randomizeExerciseOrder: {type: boolean}
+        numberOfExercisesInExam: {type: integer, format: int32}
+        numberOfCorrectionRoundsInExam: {type: integer, format: int32}
+        examiner: {type: string}
+        moduleNumber: {type: string}
+        courseName: {type: string}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        examSummaryPublicationDate: {type: string, format: date-time}
+        course: {$ref: '#/components/schemas/CourseForExam'}
+        channelName: {type: string}
+        examArchivePath: {type: string}
+      x-parent: true
     Tokens:
       type: object
       description: Response containing consistency check tokens
@@ -5153,6 +7226,21 @@ components:
         quizQuestions:
           type: array
           items: {$ref: '#/components/schemas/QuizQuestionFromEditor'}
+    UserForDetail:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string}
+        name: {type: string}
+        email: {type: string}
+        visibleRegistrationNumber: {type: string}
+    SuspiciousExamSessions:
+      type: object
+      properties:
+        examSessions:
+          type: array
+          items: {$ref: '#/components/schemas/ExamSession'}
+          uniqueItems: true
     ChannelSubTypeReferenceDates:
       type: object
       properties:
@@ -5234,6 +7322,16 @@ components:
         started: {type: boolean}
         ended: {type: boolean}
       x-parent: true
+    ExamImport:
+      allOf:
+      - {$ref: '#/components/schemas/ExamUpdate'}
+      - type: object
+        properties:
+          courseId: {type: integer, format: int64}
+          exerciseGroups:
+            type: array
+            items: {$ref: '#/components/schemas/ExerciseGroupImport'}
+        required: [courseId]
     BonusExample:
       type: object
       properties:
@@ -5346,6 +7444,10 @@ components:
         complaintText: {type: string}
         complaintType: {$ref: '#/components/schemas/ComplaintType'}
         examId: {type: integer, format: int64}
+    ExamInformation:
+      type: object
+      properties:
+        latestIndividualEndDate: {type: string, format: date-time}
     QuizExerciseForCourse:
       type: object
       properties:
@@ -5466,6 +7568,10 @@ components:
     BonusStrategy:
       type: string
       enum: [GRADES_DISCRETE, GRADES_CONTINUOUS, POINTS]
+    ProgrammingExamSubmission:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
     SortingOrder:
       type: string
       enum: [ASCENDING, DESCENDING]
@@ -5498,6 +7604,30 @@ components:
         isProcessing: {type: boolean}
         buildStartDate: {type: string, format: date-time}
         estimatedCompletionDate: {type: string, format: date-time}
+    ExerciseForAssessmentDashboard:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        type: {$ref: '#/components/schemas/ExerciseType'}
+        title: {type: string}
+        releaseDate: {type: string, format: date-time}
+        includedInOverallScore: {$ref: '#/components/schemas/IncludedInOverallScore'}
+        teamMode: {type: boolean}
+        allowComplaintsForAutomaticAssessments: {type: boolean}
+        secondCorrectionEnabled: {type: boolean}
+        averageRating: {type: number, format: double}
+        numberOfRatings: {type: integer, format: int64}
+        numberOfAssessmentsOfCorrectionRounds: {type: array}
+        numberOfComplaints: {type: integer, format: int64}
+        numberOfOpenComplaints: {type: integer, format: int64}
+        numberOfMoreFeedbackRequests: {type: integer, format: int64}
+        numberOfOpenMoreFeedbackRequests: {type: integer, format: int64}
+        tutorParticipations:
+          type: array
+          items: {$ref: '#/components/schemas/TutorParticipationForAssessmentDashboard'}
+        exampleSubmissions:
+          type: array
+          items: {$ref: '#/components/schemas/ExampleSubmissionForAssessmentDashboard'}
     QuizSearchExam:
       type: object
       properties:
@@ -5529,6 +7659,11 @@ components:
         id: {type: integer, format: int64}
         title: {type: string}
         taxonomy: {$ref: '#/components/schemas/CompetencyTaxonomy'}
+    UserWithIdAndLogin:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string}
     QuizQuestionPoolSelectionRequest:
       type: object
       description: A request to draw questions from the quiz question pool for a new
@@ -5564,10 +7699,50 @@ components:
         location: {type: string, maxLength: 2000, minLength: 1}
         attendance: {type: integer, format: int32}
       required: [date, endTime, location, startTime]
+    ExerciseResult:
+      type: object
+      properties:
+        exerciseId: {type: integer, format: int64}
+        title: {type: string}
+        maxScore: {type: number, format: double}
+        achievedScore: {type: number, format: double}
+        achievedPoints: {type: number, format: double}
+        hasNonEmptySubmission: {type: boolean}
     QuizQuestionPoolItemState:
       type: string
       enum: [PENDING, GENERATING, GENERATED, FILTERING, FILTERED, FAILED_GENERATION,
         FAILED_FILTER]
+    ExamUpdate:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        examMode: {$ref: '#/components/schemas/ExamMode'}
+        examWithAttendanceCheck: {type: boolean}
+        visibleDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        publishResultsDate: {type: string, format: date-time}
+        examStudentReviewStart: {type: string, format: date-time}
+        examStudentReviewEnd: {type: string, format: date-time}
+        gracePeriod: {type: integer, format: int32}
+        workingTime: {type: integer, format: int32}
+        startText: {type: string}
+        endText: {type: string}
+        confirmationStartText: {type: string}
+        confirmationEndText: {type: string}
+        examMaxPoints: {type: integer, format: int32}
+        randomizeExerciseOrder: {type: boolean}
+        numberOfExercisesInExam: {type: integer, format: int32}
+        numberOfCorrectionRoundsInExam: {type: integer, format: int32}
+        examiner: {type: string}
+        moduleNumber: {type: string}
+        courseName: {type: string}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        examSummaryPublicationDate: {type: string, format: date-time}
+        channelName: {type: string}
+      required: [endDate, examMode, startDate, title, visibleDate]
+      x-parent: true
     TestCase:
       type: object
       properties:
@@ -5760,6 +7935,26 @@ components:
             default: before-quiz-start
             enum: [before-quiz-start]
       required: [quizQuestionsType]
+    StudentParticipationForConduction:
+      type: object
+      properties:
+        type: {type: string}
+        id: {type: integer, format: int64}
+        initializationState: {$ref: '#/components/schemas/InitializationState'}
+        initializationDate: {type: string, format: date-time}
+        testRun: {type: boolean}
+        attempt: {type: integer, format: int32}
+        participantIdentifier: {type: string}
+        participantName: {type: string}
+        student: {$ref: '#/components/schemas/UserName'}
+        submissionCount: {type: integer, format: int32}
+        submissions:
+          type: array
+          items: {$ref: '#/components/schemas/SubmissionForConduction'}
+        repositoryUri: {type: string}
+        userIndependentRepositoryUri: {type: string}
+        branch: {type: string}
+        buildPlanId: {type: string}
     AssessmentCriteriaGenerationResponse:
       type: object
       description: Generated structured assessment criteria
@@ -5781,6 +7976,10 @@ components:
         releaseDate: {type: string, format: date-time}
         attachmentType: {$ref: '#/components/schemas/AttachmentType'}
         studentVersion: {type: string}
+    ExamRoomDeletionSummary:
+      type: object
+      properties:
+        numberOfDeletedExamRooms: {type: integer, format: int32}
     QuizQuestionDifficulty:
       type: string
       enum: [EASY, MEDIUM, HARD]
@@ -5863,6 +8062,19 @@ components:
         releaseDate: {type: string, format: date-time}
         startPage: {type: integer, format: int32}
         endPage: {type: integer, format: int32}
+    CourseForActiveExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string, minLength: 1}
+      required: [title]
+    SeatsOfExamRoom:
+      type: object
+      properties:
+        seats:
+          type: array
+          items: {type: string}
+      required: [seats]
     GetLectures:
       type: object
       properties:
@@ -5890,6 +8102,18 @@ components:
     ExerciseType:
       type: string
       enum: [text, programming, modeling, file-upload, quiz]
+    ExerciseGroupImportResult:
+      type: object
+      properties:
+        exerciseGroups:
+          type: array
+          items: {$ref: '#/components/schemas/ExerciseGroup'}
+        skippedExercises:
+          type: array
+          items: {type: string}
+        incompleteExercises:
+          type: array
+          items: {type: string}
     ShortAnswerSolution:
       type: object
       properties:
@@ -5961,6 +8185,25 @@ components:
     ChecklistSection:
       type: string
       enum: [COMPETENCIES, DIFFICULTY, QUALITY]
+    ExamScoresExerciseGroup:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        maxPoints: {type: number, format: double}
+        numberOfParticipants: {type: integer, format: int64}
+        containedExercises:
+          type: array
+          items: {$ref: '#/components/schemas/ExerciseInfo'}
+    ExamRegistrationResult:
+      type: object
+      properties:
+        notFoundStudents:
+          type: array
+          items: {$ref: '#/components/schemas/ExamUser'}
+        rejectedStaffUsers:
+          type: array
+          items: {$ref: '#/components/schemas/ExamUser'}
     TextBlock:
       type: object
       properties:
@@ -5976,6 +8219,39 @@ components:
         entityId: {type: integer, format: int64}
         title: {type: string}
         lectureId: {type: integer, format: int64}
+    ExamScores:
+      type: object
+      properties:
+        examId: {type: integer, format: int64}
+        title: {type: string}
+        maxPoints: {type: integer, format: int32}
+        averagePointsAchieved: {type: number, format: double}
+        hasSecondCorrectionAndStarted: {type: boolean}
+        exerciseGroups:
+          type: array
+          items: {$ref: '#/components/schemas/ExamScoresExerciseGroup'}
+        studentResults:
+          type: array
+          items: {$ref: '#/components/schemas/StudentResult'}
+    ExerciseForExerciseGroup:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        type: {$ref: '#/components/schemas/ExerciseType'}
+        title: {type: string}
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        includedInOverallScore: {$ref: '#/components/schemas/IncludedInOverallScore'}
+        assessmentType: {$ref: '#/components/schemas/AssessmentType'}
+        teamMode: {type: boolean}
+        testRunParticipationsExist: {type: boolean}
+        shortName: {type: string}
+        projectKey: {type: string}
+        allowOfflineIde: {type: boolean}
+        allowOnlineEditor: {type: boolean}
+        allowOnlineIde: {type: boolean}
+        diagramType: {$ref: '#/components/schemas/DiagramType'}
+        filePattern: {type: string}
     PresentationRubric:
       type: object
       properties:
@@ -6042,6 +8318,13 @@ components:
         responseText: {type: string}
         complaintIsAccepted: {type: boolean}
         action: {$ref: '#/components/schemas/ComplaintAction'}
+    ExerciseForPlagiarismCasesOverview:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        type: {type: string}
+        exerciseGroup: {$ref: '#/components/schemas/ExerciseGroupWithIdAndExam'}
     CourseGradeInformation:
       type: object
       properties:
@@ -6051,9 +8334,22 @@ components:
         students:
           type: array
           items: {$ref: '#/components/schemas/Student'}
+    ReseatInformation:
+      type: object
+      properties:
+        examUserId: {type: integer, format: int64}
+        newRoom: {type: string}
+        newSeat: {type: string}
+      required: [examUserId, newRoom]
     AttachmentUpdateIntent:
       type: string
       enum: [NO_FILE_CHANGE, FILE_UPLOAD, EDITOR_PDF_CONTENT_CHANGED]
+    TextExamSubmission:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        text: {type: string}
+        language: {$ref: '#/components/schemas/Language'}
     AttachmentType:
       type: string
       enum: [FILE, URL]
@@ -6066,9 +8362,51 @@ components:
         missing: {type: integer, format: int32, description: Questions a build with
             the stored settings would add to the pool}
       required: [missing, planned]
+    StudentExamWithGrade:
+      type: object
+      properties:
+        maxPoints: {type: number, format: double}
+        maxBonusPoints: {type: number, format: double}
+        gradeType: {$ref: '#/components/schemas/GradeType'}
+        studentExam: {$ref: '#/components/schemas/StudentExamForDetail'}
+        studentResult: {$ref: '#/components/schemas/StudentResult'}
+        achievedPointsPerExercise:
+          type: object
+          additionalProperties: {type: number, format: double}
+        pendingExerciseIds:
+          type: array
+          items: {type: integer, format: int64}
     Severity:
       type: string
       enum: [LOW, MEDIUM, HIGH]
+    ExamStudent:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        userId: {type: integer, format: int64}
+        login: {type: string}
+        name: {type: string}
+        visibleRegistrationNumber: {type: string}
+        studentImagePath: {type: string}
+        plannedRoom: {type: string}
+        actualRoom: {type: string}
+        plannedSeat: {type: string}
+        actualSeat: {type: string}
+        didCheckImage: {type: boolean}
+        didCheckName: {type: boolean}
+        didCheckLogin: {type: boolean}
+        didCheckRegistrationNumber: {type: boolean}
+        signingImagePath: {type: string}
+        didExamUserAttendExam: {type: boolean}
+        studentExamId: {type: integer, format: int64}
+        workingTime: {type: integer, format: int32}
+        started: {type: boolean}
+        submitted: {type: boolean}
+        startedDate: {type: string, format: date-time}
+        submissionDate: {type: string, format: date-time}
+        numberOfExamSessions: {type: integer, format: int64}
+        progress: {type: string}
+      required: [id]
     ExerciseUnitExerciseReference:
       type: object
       properties:
@@ -6104,6 +8442,18 @@ components:
         UNCHANGED_CANDIDATE_RESUBMITTED, REPAIR_DID_NOT_IMPROVE, NO_ADMISSIBLE_CONCEPT,
         CONCEPT_ADMITTED_WITH_FINDINGS, CANCELLED, DEADLINE_EXCEEDED, TOKEN_BUDGET_EXHAUSTED,
         AGENT_ERROR, ENVIRONMENT_UNAVAILABLE, RUN_FAILED, NOT_STARTED]
+    ProblemStatementUpdateEvent:
+      allOf:
+      - {$ref: '#/components/schemas/ExamLiveEventBase'}
+      - type: object
+        properties:
+          id: {type: integer, format: int64}
+          createdDate: {type: string, format: date-time}
+          text: {type: string}
+          problemStatement: {type: string}
+          exerciseId: {type: integer, format: int64}
+          exerciseName: {type: string}
+      required: [createdDate, id]
     CourseInformationSharingConfiguration:
       type: string
       enum: [DISABLED, COMMUNICATION_AND_MESSAGING, COMMUNICATION_ONLY]
@@ -6140,6 +8490,16 @@ components:
     UserRole:
       type: string
       enum: [INSTRUCTOR, TUTOR, USER]
+    ActiveExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string, minLength: 1}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        examMode: {$ref: '#/components/schemas/ExamMode'}
+        course: {$ref: '#/components/schemas/CourseForActiveExam'}
+      required: [course, endDate, startDate, title]
     ScoringType:
       type: string
       enum: [ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY, PROPORTIONAL_WITHOUT_PENALTY]
@@ -6160,6 +8520,10 @@ components:
         afterVersionId: {type: integer, format: int64}
         revertedAt: {type: string, format: date-time}
       required: [courseId, exerciseId, jobId, kind, running, startedAt, status]
+    LockedSubmissionExerciseGroup:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
     InitializationState:
       type: string
       enum: [UNINITIALIZED, REPO_COPIED, REPO_CONFIGURED, INACTIVE, BUILD_PLAN_COPIED,
@@ -6176,6 +8540,9 @@ components:
           items: {$ref: '#/components/schemas/SubmittedAnswerFromStudent'}
           uniqueItems: true
       required: [submittedAnswers]
+    EntityDeletionStatus:
+      type: string
+      enum: [IN_PROGRESS, COMPLETED, FAILED]
     WorkloadCapability:
       type: object
       properties:
@@ -6192,6 +8559,14 @@ components:
         difficulty: {$ref: '#/components/schemas/DifficultyLevel'}
         maxPoints: {type: number, format: double}
       required: [difficulty, maxPoints, packageName, shortName, title]
+    SubmissionPolicyForConduction:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        type: {type: string}
+        active: {type: boolean}
+        submissionLimit: {type: integer, format: int32}
+        exceedingPenalty: {type: number, format: double}
     ShortAnswerSubmittedAnswerFromStudent:
       required: [questionId, submittedTexts, type]
       type: object
@@ -6218,6 +8593,24 @@ components:
       enum: [METHOD_RETURN_TYPE_MISMATCH, METHOD_PARAMETER_MISMATCH, CONSTRUCTOR_PARAMETER_MISMATCH,
         ATTRIBUTE_TYPE_MISMATCH, VISIBILITY_MISMATCH, IDENTIFIER_NAMING_INCONSISTENCY,
         GENERATION_REVIEW_REQUIRED]
+    ExamExerciseGroupAssignment:
+      type: object
+      properties:
+        exerciseGroupId: {type: integer, format: int64}
+      required: [exerciseGroupId]
+    ExamForOverview:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        moduleNumber: {type: string}
+        visibleDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        workingTime: {type: integer, format: int32}
+        examMaxPoints: {type: integer, format: int32}
+        examMode: {$ref: '#/components/schemas/ExamMode'}
+      required: [examMode, id, workingTime]
     AssessmentNote:
       type: object
       properties:
@@ -6263,6 +8656,66 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    ExamExerciseForConduction:
+      type: object
+      properties:
+        type: {type: string}
+        id: {type: integer, format: int64}
+        title: {type: string}
+        shortName: {type: string}
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        difficulty: {$ref: '#/components/schemas/DifficultyLevel'}
+        mode: {$ref: '#/components/schemas/ExerciseMode'}
+        teamMode: {type: boolean}
+        exerciseType: {$ref: '#/components/schemas/ExerciseType'}
+        includedInOverallScore: {$ref: '#/components/schemas/IncludedInOverallScore'}
+        problemStatement: {type: string}
+        presentationScoreEnabled: {type: boolean}
+        secondCorrectionEnabled: {type: boolean}
+        allowComplaintsForAutomaticAssessments: {type: boolean}
+        allowFeedbackRequests: {type: boolean}
+        gradingInstructionFeedbackUsed: {type: boolean}
+        studentAssignedTeamIdComputed: {type: boolean}
+        visibleToStudents: {type: boolean}
+        exerciseGroup: {$ref: '#/components/schemas/ExerciseGroupForConduction'}
+        studentParticipations:
+          type: array
+          items: {$ref: '#/components/schemas/StudentParticipationForConduction'}
+        allowedNumberOfAttempts: {type: integer, format: int32}
+        duration: {type: integer, format: int32}
+        quizStarted: {type: boolean}
+        quizEnded: {type: boolean}
+        quizMode: {$ref: '#/components/schemas/QuizMode'}
+        randomizeQuestionOrder: {type: boolean}
+        quizQuestions:
+          type: array
+          items: {$ref: '#/components/schemas/QuizQuestionForExam'}
+        allowOfflineIde: {type: boolean}
+        allowOnlineEditor: {type: boolean}
+        allowOnlineIde: {type: boolean}
+        assessmentType: {$ref: '#/components/schemas/AssessmentType'}
+        packageName: {type: string}
+        programmingLanguage: {$ref: '#/components/schemas/ProgrammingLanguage'}
+        projectKey: {type: string}
+        projectType: {$ref: '#/components/schemas/ProjectType'}
+        releaseTestsWithExampleSolution: {type: boolean}
+        showTestNamesToStudents: {type: boolean}
+        staticCodeAnalysisEnabled: {type: boolean}
+        submissionPolicy: {$ref: '#/components/schemas/SubmissionPolicyForConduction'}
+        testCasesChanged: {type: boolean}
+        diagramType: {$ref: '#/components/schemas/DiagramType'}
+        filePattern: {type: string}
+    ExamImportResult:
+      type: object
+      properties:
+        exam: {$ref: '#/components/schemas/ExamIdAndTitle'}
+        skippedExercises:
+          type: array
+          items: {type: string}
+        incompleteExercises:
+          type: array
+          items: {type: string}
     IndexedContentPresence:
       type: object
       properties:
@@ -6275,6 +8728,21 @@ components:
           type: array
           items: {type: integer, format: int64}
           uniqueItems: true
+    ExamDeletionSummary:
+      allOf:
+      - {$ref: '#/components/schemas/ExamExerciseDeletionCounts'}
+      - type: object
+        properties:
+          numberOfCommunicationPosts: {type: integer, format: int64}
+          numberOfAnswerPosts: {type: integer, format: int64}
+          numberRegisteredStudents: {type: integer, format: int64}
+          numberNotStartedExams: {type: integer, format: int64}
+          numberStartedExams: {type: integer, format: int64}
+          numberSubmittedExams: {type: integer, format: int64}
+          numberOfExerciseGroups: {type: integer, format: int64}
+          numberOfTestRuns: {type: integer, format: int64}
+          numberOfExamSessions: {type: integer, format: int64}
+          numberOfExamLiveEvents: {type: integer, format: int64}
     AssessmentCriteriaGenerationRequest:
       type: object
       description: Context used to generate structured assessment criteria
@@ -6322,6 +8790,21 @@ components:
         registrationNumber: {type: string, maxLength: 10, minLength: 0}
         email: {type: string, format: email, maxLength: 100, minLength: 0}
         isTestUser: {type: boolean}
+    ExamUserLocation:
+      type: object
+      properties:
+        roomId: {type: integer, format: int64}
+        roomNumber: {type: string, minLength: 1}
+        seatName: {type: string, minLength: 1}
+      required: [roomNumber, seatName]
+    ExamRoomOverview:
+      type: object
+      properties:
+        newestUniqueExamRooms:
+          type: array
+          items: {$ref: '#/components/schemas/ExamRoom'}
+          uniqueItems: true
+      required: [newestUniqueExamRooms]
     DragItemFromEditor:
       type: object
       properties:
@@ -6439,6 +8922,27 @@ components:
     Direction:
       type: string
       enum: [ASC, DESC]
+    ExamSessionForDetail:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        sessionToken: {type: string}
+        userAgent: {type: string}
+        browserFingerprintHash: {type: string}
+        instanceId: {type: string}
+        ipAddress: {type: string}
+        initialSession: {type: boolean}
+        createdDate: {type: string, format: date-time}
+    UserForRegistration:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        login: {type: string}
+        name: {type: string}
+        email: {type: string}
+        registrationNumber: {type: string}
+        profilePictureUrl: {type: string}
+        isRegistered: {type: boolean}
     TutorialGroupSummarySession:
       type: object
       properties:
@@ -6526,6 +9030,27 @@ components:
       properties:
         id: {type: integer, format: int64}
         participation: {$ref: '#/components/schemas/ParticipationForExport'}
+    CourseForUpcomingExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+    LockedSubmissionExercise:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        type: {$ref: '#/components/schemas/ExerciseType'}
+        title: {type: string}
+        exerciseGroup: {$ref: '#/components/schemas/LockedSubmissionExerciseGroup'}
+    CourseForStudentExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        accuracyOfScores: {type: integer, format: int32}
+        maxComplaintTextLimit: {type: integer, format: int32}
+        maxComplaintResponseTextLimit: {type: integer, format: int32}
+        athenaFormativeFeedbackEnabled: {type: boolean}
+      required: [id]
     PresentationAssessmentStudentRow:
       type: object
       properties:
@@ -6577,6 +9102,27 @@ components:
           maxItems: 20
           minItems: 1
       required: [language, mode, presentationDate, studentLogins]
+    StudentExamForConduction:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        workingTime: {type: integer, format: int32}
+        started: {type: boolean}
+        startedDate: {type: string, format: date-time}
+        submitted: {type: boolean}
+        submissionDate: {type: string, format: date-time}
+        testRun: {type: boolean}
+        ended: {type: boolean}
+        finished: {type: boolean}
+        createdDate: {type: string, format: date-time}
+        user: {$ref: '#/components/schemas/UserName'}
+        exam: {$ref: '#/components/schemas/ExamForConduction'}
+        examSessions:
+          type: array
+          items: {$ref: '#/components/schemas/ExamSessionForConduction'}
+        exercises:
+          type: array
+          items: {$ref: '#/components/schemas/ExamExerciseForConduction'}
     MultipleChoiceQuizQuestionWithoutSolution:
       required: [type]
       type: object
@@ -6624,6 +9170,13 @@ components:
           uniqueItems: true
         participantsRated: {type: integer, format: int32}
         participantsUnrated: {type: integer, format: int32}
+    SubmitExamExercise:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        studentParticipations:
+          type: array
+          items: {$ref: '#/components/schemas/SubmitExamParticipation'}
     TutorialGroupSchedule:
       type: object
       properties:
@@ -6694,6 +9247,20 @@ components:
         maxTokens: {type: integer, format: int64, exclusiveMinimum: 0}
         maxJobDuration: {type: string, format: duration}
       required: [mode]
+    ResultForConduction:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        completionDate: {type: string, format: date-time}
+        successful: {type: boolean}
+        score: {type: number, format: double}
+        rated: {type: boolean}
+        testCaseCount: {type: integer, format: int32}
+        passedTestCaseCount: {type: integer, format: int32}
+        codeIssueCount: {type: integer, format: int32}
+        exerciseId: {type: integer, format: int64}
+        assessmentType: {$ref: '#/components/schemas/AssessmentType'}
+        hasComplaint: {type: boolean}
     CompetencyTaxonomy:
       type: string
       enum: [REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE]
@@ -6729,6 +9296,12 @@ components:
         properties:
           explanation: {type: string}
           isCorrect: {type: boolean}
+    ModelingExamSubmission:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        model: {type: string}
+        explanationText: {type: string}
     ExerciseGenerationRevertResult:
       type: object
       description: Result of reverting the last Hyperion generation or adaptation
@@ -6766,6 +9339,15 @@ components:
           items: {$ref: '#/components/schemas/ShortAnswerSolution'}
         similarityValue: {type: integer, format: int32}
         matchLetterCase: {type: boolean}
+    ExamForStudentExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        examMode: {$ref: '#/components/schemas/ExamMode'}
+        workingTime: {type: integer, format: int32}
+        course: {$ref: '#/components/schemas/CourseForStudentExam'}
+      required: [examMode, id, workingTime]
     InitialCommitAuthorMode:
       type: string
       enum: [EXERCISE_CREATOR, PLACEHOLDER, CUSTOM]
@@ -6811,6 +9393,12 @@ components:
           type: string
           default: short-answer
           enum: [short-answer]
+    AthenaFeedbackUsage:
+      type: object
+      properties:
+        used: {type: integer, format: int64}
+        limit: {type: integer, format: int32}
+      required: [limit, used]
     ComplaintAction:
       type: string
       enum: [REFRESH_LOCK, RESOLVE_COMPLAINT]
@@ -6854,6 +9442,12 @@ components:
         explanation: {type: string, description: Optional explanation for the overall
             question, maxLength: 2000, minLength: 0}
       required: [options, questionText, title, type]
+    QuizQuestionForExam:
+      description: 'Exam quiz question projection: solution-hidden during conduction
+        and before results are published, full solutions afterwards (and on test runs)'
+      oneOf:
+      - {$ref: '#/components/schemas/QuizQuestionWithSolution'}
+      - {$ref: '#/components/schemas/QuizQuestionWithoutSolution'}
     HiddenPageInfo:
       type: object
       properties:
@@ -6888,6 +9482,22 @@ components:
         assessor: {$ref: '#/components/schemas/UserName'}
         assessmentNote: {$ref: '#/components/schemas/AssessmentNote'}
         exerciseId: {type: integer, format: int64}
+    EntityDeletionProgress:
+      type: object
+      properties:
+        entityType: {$ref: '#/components/schemas/EntityDeletionType'}
+        entityId: {type: integer, format: int64}
+        status: {$ref: '#/components/schemas/EntityDeletionStatus'}
+        currentStep: {type: string}
+        stepsCompleted: {type: integer, format: int32}
+        totalSteps: {type: integer, format: int32}
+        itemsProcessed: {type: integer, format: int32}
+        totalItems: {type: integer, format: int32}
+        currentItemTitle: {type: string}
+        weightedProgressPercent: {type: number, format: double}
+        startedAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+        errorMessage: {type: string}
     CreateOrUpdateTutorialGroupRequest:
       type: object
       properties:
@@ -6939,6 +9549,16 @@ components:
         title: {type: string}
         maxPoints: {type: integer, format: int32}
         accuracyOfScores: {type: integer, format: int32}
+    UpcomingExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        examMode: {$ref: '#/components/schemas/ExamMode'}
+        course: {$ref: '#/components/schemas/CourseForUpcomingExam'}
+        visibleDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
     TextFeedback:
       type: object
       properties:
@@ -6970,10 +9590,35 @@ components:
         mode: {$ref: '#/components/schemas/GenerationMode'}
         exerciseTitle: {type: string}
         courseId: {type: integer, format: int64}
+    ExerciseGroupWithExercises:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        isMandatory: {type: boolean}
+        exercises:
+          type: array
+          items: {$ref: '#/components/schemas/ExamExercise'}
     EntityIdRef:
       type: object
       properties:
         id: {type: integer, format: int64}
+    ExamUserWithExamRoomAndSeat:
+      type: object
+      properties:
+        login: {type: string, maxLength: 50, minLength: 0}
+        firstName: {type: string, maxLength: 50, minLength: 0}
+        lastName: {type: string, maxLength: 50, minLength: 0}
+        registrationNumber: {type: string, maxLength: 10, minLength: 0}
+        imageUrl: {type: string}
+        didCheckImage: {type: boolean}
+        didCheckName: {type: boolean}
+        didCheckRegistrationNumber: {type: boolean}
+        didCheckLogin: {type: boolean}
+        signingImagePath: {type: string}
+        plannedLocation: {$ref: '#/components/schemas/ExamUserLocation'}
+        actualLocation: {$ref: '#/components/schemas/ExamUserLocation'}
+      required: [login, plannedLocation, registrationNumber]
     VariantJobPhase:
       type: string
       enum: [ANALYZING, PLANNING, PROVISIONING, TRANSFORMING, VERIFYING, REPAIRING,
@@ -7014,6 +9659,39 @@ components:
         x: {type: number, format: double, minimum: 0}
         y: {type: number, format: double, minimum: 0}
       required: [condition, name]
+    ExamForOwnStudentExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        examMode: {$ref: '#/components/schemas/ExamMode'}
+        examWithAttendanceCheck: {type: boolean}
+        visibleDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        gracePeriod: {type: integer, format: int32}
+        workingTime: {type: integer, format: int32}
+        startText: {type: string}
+        endText: {type: string}
+        confirmationStartText: {type: string}
+        confirmationEndText: {type: string}
+        examMaxPoints: {type: integer, format: int32}
+        numberOfExercisesInExam: {type: integer, format: int32}
+        examiner: {type: string}
+        moduleNumber: {type: string}
+        courseName: {type: string}
+        examSummaryPublicationDate: {type: string, format: date-time}
+        publishResultsDate: {type: string, format: date-time}
+        course: {$ref: '#/components/schemas/CourseForStudentExam'}
+    ExamWideAnnouncementEvent:
+      allOf:
+      - {$ref: '#/components/schemas/ExamLiveEventBase'}
+      - type: object
+        properties:
+          id: {type: integer, format: int64}
+          createdDate: {type: string, format: date-time}
+          text: {type: string}
+      required: [createdDate, id]
     DropLocationFromEditor:
       type: object
       properties:
@@ -7045,6 +9723,13 @@ components:
       properties:
         type: {type: string}
       required: [type]
+    SubmitStudentExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exercises:
+          type: array
+          items: {$ref: '#/components/schemas/SubmitExamExercise'}
     PresentationAssessmentMode:
       type: string
       enum: [ONLINE, IN_PERSON]
@@ -7076,6 +9761,19 @@ components:
     ExamMode:
       type: string
       enum: [REAL, TEST, TEST_WITH_SUPERVISED_SESSION]
+    WorkingTimeUpdateEvent:
+      allOf:
+      - {$ref: '#/components/schemas/ExamLiveEventBase'}
+      - type: object
+        properties:
+          id: {type: integer, format: int64}
+          createdDate: {type: string, format: date-time}
+          newWorkingTime: {type: integer, format: int32}
+          oldWorkingTime: {type: integer, format: int32}
+          courseWide: {type: boolean}
+          newStartDate: {type: string, format: date-time}
+          newEndDate: {type: string, format: date-time}
+      required: [createdDate, id]
     MultipleChoiceSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
@@ -7098,6 +9796,22 @@ components:
         lectureId: {type: integer, format: int64}
         ingestedAt: {type: string, format: date-time}
         expected: {type: boolean}
+    TutorLeaderboard:
+      type: object
+      properties:
+        userId: {type: integer, format: int64}
+        name: {type: string}
+        numberOfAssessments: {type: integer, format: int64}
+        numberOfAcceptedComplaints: {type: integer, format: int64}
+        numberOfTutorComplaints: {type: integer, format: int64}
+        numberOfNotAnsweredMoreFeedbackRequests: {type: integer, format: int64}
+        numberOfComplaintResponses: {type: integer, format: int64}
+        numberOfAnsweredMoreFeedbackRequests: {type: integer, format: int64}
+        numberOfTutorMoreFeedbackRequests: {type: integer, format: int64}
+        points: {type: number, format: double}
+        averageScore: {type: number, format: double}
+        averageRating: {type: number, format: double}
+        numberOfTutorRatings: {type: integer, format: int64}
     SearchResultPageDTOGradingScale:
       type: object
       properties:
@@ -7105,6 +9819,26 @@ components:
           type: array
           items: {$ref: '#/components/schemas/GradingScale'}
         numberOfPages: {type: integer, format: int32}
+    ExamDistributionCapacity:
+      type: object
+      properties:
+        combinedDefaultCapacity: {type: integer, format: int32}
+        combinedMaximumCapacity: {type: integer, format: int32}
+      required: [combinedDefaultCapacity, combinedMaximumCapacity]
+    OwnStudentExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        workingTime: {type: integer, format: int32}
+        started: {type: boolean}
+        startedDate: {type: string, format: date-time}
+        submitted: {type: boolean}
+        submissionDate: {type: string, format: date-time}
+        testRun: {type: boolean}
+        ended: {type: boolean}
+        user: {$ref: '#/components/schemas/UserName'}
+        exam: {$ref: '#/components/schemas/ExamForOwnStudentExam'}
+      required: [id, testRun]
     SuggestedDifficulty:
       type: string
       enum: [EASY, MEDIUM, HARD, UNKNOWN]
@@ -7134,6 +9868,19 @@ components:
         firstName: {type: string}
         lastName: {type: string}
         email: {type: string}
+    ExamRoomForAttendanceChecker:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        roomNumber: {type: string, minLength: 1}
+        alternativeRoomNumber: {type: string}
+        name: {type: string, minLength: 1}
+        alternativeName: {type: string}
+        building: {type: string, minLength: 1}
+        seats:
+          type: array
+          items: {$ref: '#/components/schemas/ExamSeat'}
+      required: [building, name, roomNumber, seats]
     AssessmentType:
       type: string
       enum: [AUTOMATIC, SEMI_AUTOMATIC, MANUAL, AUTOMATIC_ATHENA]
@@ -7169,6 +9916,27 @@ components:
       type: object
       properties:
         id: {type: integer, format: int64}
+    AttendanceCheckerAppExamInformation:
+      type: object
+      properties:
+        examId: {type: integer, format: int64}
+        examTitle: {type: string, minLength: 1}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        examMode: {$ref: '#/components/schemas/ExamMode'}
+        courseId: {type: integer, format: int64}
+        courseTitle: {type: string, minLength: 1}
+        examRoomsUsedInExam:
+          type: array
+          items: {$ref: '#/components/schemas/ExamRoomForAttendanceChecker'}
+          uniqueItems: true
+        examUsersWithExamRoomAndSeat:
+          type: array
+          items: {$ref: '#/components/schemas/ExamUserWithExamRoomAndSeat'}
+          minItems: 1
+          uniqueItems: true
+      required: [courseTitle, endDate, examMode, examRoomsUsedInExam, examTitle, examUsersWithExamRoomAndSeat,
+        startDate]
     ShortAnswerSubmittedTextFromLiveClient:
       type: object
       properties:
@@ -7193,6 +9961,23 @@ components:
         text: {type: string, maxLength: 255, minLength: 0}
         spotId: {type: integer, format: int64}
       required: [spotId, text]
+    ExamChecklist:
+      type: object
+      properties:
+        numberOfGeneratedStudentExams: {type: integer, format: int64}
+        numberOfTestRuns: {type: integer, format: int64}
+        numberOfTotalExamAssessmentsFinishedByCorrectionRound:
+          type: array
+          items: {type: integer, format: int64}
+        numberOfTotalParticipationsForAssessment: {type: integer, format: int64}
+        numberOfExamsSubmitted: {type: integer, format: int64}
+        numberOfExamsStarted: {type: integer, format: int64}
+        numberOfAllComplaints: {type: integer, format: int64}
+        numberOfAllComplaintsDone: {type: integer, format: int64}
+        allExamExercisesAllStudentsPrepared: {type: boolean}
+        existsUnassessedQuizzes: {type: boolean}
+        existsUnsubmittedExercises: {type: boolean}
+      required: [existsUnassessedQuizzes, existsUnsubmittedExercises, numberOfTotalParticipationsForAssessment]
     BonusRequest:
       type: object
       properties:
@@ -7236,6 +10021,19 @@ components:
             default: after-quiz-end
             enum: [after-quiz-end]
       required: [quizQuestionsType]
+    ExamQuizQuestion:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        type: {type: string}
+    TutorParticipationForAssessmentDashboard:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        status: {$ref: '#/components/schemas/TutorParticipationStatus'}
+        trainedExampleSubmissions:
+          type: array
+          items: {$ref: '#/components/schemas/ExampleSubmissionForAssessmentDashboard'}
     SeatCondition:
       type: string
       enum: [USABLE, NO_TABLE, DEFECT, WHEELCHAIR]
@@ -7275,18 +10073,51 @@ components:
         explanation: {type: string, maxLength: 2000, minLength: 0}
         isCorrect: {type: boolean}
       required: [isCorrect, text]
+    ExerciseGroupUpdate:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        isMandatory: {type: boolean}
+      required: [id, isMandatory]
     ArtifactType:
       type: string
       enum: [PROBLEM_STATEMENT, TEMPLATE_REPOSITORY, SOLUTION_REPOSITORY, TESTS_REPOSITORY]
     SubmissionType:
       type: string
       enum: [MANUAL, TIMEOUT, TEST, OTHER, INSTRUCTOR, EXTERNAL]
+    StudentExamForDetail:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        workingTime: {type: integer, format: int32}
+        started: {type: boolean}
+        startedDate: {type: string, format: date-time}
+        submitted: {type: boolean}
+        submissionDate: {type: string, format: date-time}
+        testRun: {type: boolean}
+        ended: {type: boolean}
+        finished: {type: boolean}
+        createdDate: {type: string, format: date-time}
+        user: {$ref: '#/components/schemas/UserForDetail'}
+        exam: {$ref: '#/components/schemas/ExamForSummary'}
+        examSessions:
+          type: array
+          items: {$ref: '#/components/schemas/ExamSessionForDetail'}
+        exercises:
+          type: array
+          items: {$ref: '#/components/schemas/ExamExerciseForConduction'}
     QuizSubmissionForResult:
       allOf:
       - {$ref: '#/components/schemas/QuizSubmissionAfterEvaluation'}
       - type: object
         properties:
           participation: {$ref: '#/components/schemas/StudentQuizParticipationWithSolutions'}
+    ExampleSubmissionForAssessmentDashboard:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        usedForTutorial: {type: boolean}
     QuizSubmissionFromLiveClient:
       type: object
       properties:
@@ -7400,6 +10231,21 @@ components:
         dueDate: {type: string, format: date-time}
         assessmentDueDate: {type: string, format: date-time}
         exampleSolutionPublicationDate: {type: string, format: date-time}
+    ExamUserAttendanceCheck:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        studentImagePath: {type: string}
+        login: {type: string}
+        registrationNumber: {type: string}
+        signingImagePath: {type: string}
+        started: {type: boolean}
+        submitted: {type: boolean}
+        didCheckImage: {type: boolean}
+        didCheckName: {type: boolean}
+        didCheckLogin: {type: boolean}
+        didCheckRegistrationNumber: {type: boolean}
+        attendanceChecked: {type: boolean}
     ChecklistAnalysisResponse:
       type: object
       description: Response containing the checklist analysis results
@@ -7416,6 +10262,13 @@ components:
           type: array
           description: List of quality issues found in the problem statement
           items: {$ref: '#/components/schemas/QualityIssue'}
+    SubmitExamParticipation:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        submissions:
+          type: array
+          items: {$ref: '#/components/schemas/SubmitExamSubmission'}
     DragAndDropQuestionStatistic:
       required: [type]
       type: object
@@ -7444,6 +10297,13 @@ components:
           type: array
           items: {$ref: '#/components/schemas/PresentationRubricLevel'}
       required: [levels, name, scale, weight]
+    ExamSessionForConduction:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        sessionToken: {type: string}
+        initialSession: {type: boolean}
+        createdDate: {type: string, format: date-time}
     ExerciseGenerationRetainedFile:
       type: object
       description: A file of a generated candidate that was not saved to the exercise
@@ -7476,6 +10336,13 @@ components:
         exerciseId: {type: integer, format: int64}
         sourceExerciseId: {type: integer, format: int64}
       required: [jobId]
+    SearchResultPageDTOExamForImportList:
+      type: object
+      properties:
+        resultsOnPage:
+          type: array
+          items: {$ref: '#/components/schemas/ExamForImportList'}
+        numberOfPages: {type: integer, format: int32}
     QuizQuestionWithSolution:
       discriminator:
         propertyName: type
@@ -7514,6 +10381,22 @@ components:
         indexed: {type: integer, format: int64}
         missing: {type: integer, format: int64}
         orphaned: {type: integer, format: int64}
+    ExamExerciseDeletionCounts:
+      type: object
+      properties:
+        numberOfProgrammingExercises: {type: integer, format: int64}
+        numberOfQuizExercises: {type: integer, format: int64}
+        numberOfTextExercises: {type: integer, format: int64}
+        numberOfModelingExercises: {type: integer, format: int64}
+        numberOfFileUploadExercises: {type: integer, format: int64}
+        numberOfStudentParticipations: {type: integer, format: int64}
+        numberOfSubmissions: {type: integer, format: int64}
+        numberOfResults: {type: integer, format: int64}
+        numberOfAssessments: {type: integer, format: int64}
+        numberOfComplaints: {type: integer, format: int64}
+        numberOfPlagiarismComparisons: {type: integer, format: int64}
+        numberOfBuilds: {type: integer, format: int64}
+      x-parent: true
     ResultForExport:
       type: object
       properties:
@@ -7568,6 +10451,16 @@ components:
         timestamp: {type: string, format: date-time, description: The moment the event
             was produced}
       required: [timestamp, type]
+    ExamSidebarData:
+      type: object
+      properties:
+        title: {type: string}
+        id: {type: integer, format: int64}
+        moduleNumber: {type: string}
+        startDate: {type: string, format: date-time}
+        workingTime: {type: integer, format: int32}
+        examMaxPoints: {type: integer, format: int32}
+      required: [id, startDate, title, workingTime]
     DragAndDropSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
@@ -7626,6 +10519,36 @@ components:
         releaseDate: {type: string, format: date-time}
         startDate: {type: string, format: date-time}
         dueDate: {type: string, format: date-time}
+    ExamExercise:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        type: {$ref: '#/components/schemas/ExerciseType'}
+        title: {type: string}
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+        difficulty: {$ref: '#/components/schemas/DifficultyLevel'}
+        includedInOverallScore: {$ref: '#/components/schemas/IncludedInOverallScore'}
+        assessmentType: {$ref: '#/components/schemas/AssessmentType'}
+        teamMode: {type: boolean}
+        testRunParticipationsExist: {type: boolean}
+        numberOfParticipations: {type: integer, format: int64}
+        shortName: {type: string}
+        projectKey: {type: string}
+        allowOfflineIde: {type: boolean}
+        allowOnlineEditor: {type: boolean}
+        allowOnlineIde: {type: boolean}
+        templateParticipation: {$ref: '#/components/schemas/ExamProgrammingParticipation'}
+        solutionParticipation: {$ref: '#/components/schemas/ExamProgrammingParticipation'}
+        diagramType: {$ref: '#/components/schemas/DiagramType'}
+        filePattern: {type: string}
+        quizQuestions:
+          type: array
+          items: {$ref: '#/components/schemas/ExamQuizQuestion'}
+        randomizeQuestionOrder: {type: boolean}
+        allowedNumberOfAttempts: {type: integer, format: int32}
+        quizMode: {$ref: '#/components/schemas/QuizMode'}
+        duration: {type: integer, format: int32}
     ComplaintResponse:
       type: object
       properties:
@@ -7662,6 +10585,13 @@ components:
     IncludedInOverallScore:
       type: string
       enum: [INCLUDED_COMPLETELY, INCLUDED_AS_BONUS, NOT_INCLUDED]
+    ExamRoomLayoutStrategy:
+      type: object
+      properties:
+        name: {type: string}
+        type: {$ref: '#/components/schemas/LayoutStrategyType'}
+        capacity: {type: integer, format: int32}
+      required: [capacity, name, type]
     VariantJobDetail:
       type: object
       properties:
@@ -7672,6 +10602,15 @@ components:
             type: array
             items: {$ref: '#/components/schemas/StepOutput'}
         request: {$ref: '#/components/schemas/VariantGenerationRequest'}
+    ExamForSummary:
+      allOf:
+      - {$ref: '#/components/schemas/ExamForConduction'}
+      - type: object
+        properties:
+          publishResultsDate: {type: string, format: date-time}
+          exampleSolutionPublicationDate: {type: string, format: date-time}
+          examStudentReviewStart: {type: string, format: date-time}
+          examStudentReviewEnd: {type: string, format: date-time}
     Team:
       type: object
       properties:
@@ -7695,6 +10634,16 @@ components:
         refinementPrompt: {type: string, description: User instructions describing
             how all questions should be changed, maxLength: 2000, minLength: 1}
       required: [questions, refinementPrompt]
+    ExerciseGroup:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        isMandatory: {type: boolean}
+        exam: {$ref: '#/components/schemas/ExamForExerciseGroup'}
+        exercises:
+          type: array
+          items: {$ref: '#/components/schemas/ExerciseForExerciseGroup'}
     LeaderboardEntry:
       type: object
       properties:
@@ -7776,6 +10725,17 @@ components:
         startDate: {type: string, format: date-time}
         endDate: {type: string, format: date-time}
         isTutorialLecture: {type: boolean}
+    ExportExamUser:
+      type: object
+      properties:
+        matriculationNumber: {type: string}
+        login: {type: string, minLength: 1}
+        name: {type: string}
+        email: {type: string}
+        room: {type: string}
+        seat: {type: string}
+        fullLocation: {type: string}
+      required: [login]
     ExerciseGenerationWedgedSlot:
       type: object
       properties:
@@ -7895,6 +10855,11 @@ components:
         date: {type: string, format: date}
         count: {type: integer, format: int64}
       required: [count, date]
+    ExamIdAndTitle:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
     DifficultyLevel:
       type: string
       enum: [EASY, MEDIUM, HARD]
@@ -7906,6 +10871,21 @@ components:
         lastName: {type: string}
         login: {type: string}
         repositoryURI: {type: string}
+    SubmitExamSubmission:
+      discriminator:
+        propertyName: submissionExerciseType
+        mapping: {text: '#/components/schemas/TextExamSubmission', modeling: '#/components/schemas/ModelingExamSubmission',
+          quiz: '#/components/schemas/QuizExamSubmission', programming: '#/components/schemas/ProgrammingExamSubmission',
+          file-upload: '#/components/schemas/FileUploadExamSubmission'}
+      oneOf:
+      - {$ref: '#/components/schemas/TextExamSubmission'}
+      - {$ref: '#/components/schemas/ModelingExamSubmission'}
+      - {$ref: '#/components/schemas/QuizExamSubmission'}
+      - {$ref: '#/components/schemas/ProgrammingExamSubmission'}
+      - {$ref: '#/components/schemas/FileUploadExamSubmission'}
+      properties:
+        submissionExerciseType: {type: string}
+      required: [submissionExerciseType]
     FeedbackType:
       type: string
       enum: [MANUAL, MANUAL_UNREFERENCED, AUTOMATIC_ADAPTED, AUTOMATIC]
@@ -7923,6 +10903,9 @@ components:
     TranscriptionStatus:
       type: string
       enum: [PENDING, COMPLETED, FAILED]
+    EntityDeletionType:
+      type: string
+      enum: [EXERCISE, EXAM, EXERCISE_GROUP]
     ProblemStatementRewriteRequest:
       type: object
       description: Request to rewrite a problem statement
@@ -7930,6 +10913,23 @@ components:
         problemStatementText: {type: string, description: Original problem statement
             text to be improved, minLength: 1}
       required: [problemStatementText]
+    ExamWithExerciseGroups:
+      allOf:
+      - {$ref: '#/components/schemas/Exam'}
+      - type: object
+        properties:
+          started: {type: boolean}
+          numberOfExamUsers: {type: integer, format: int64}
+          exerciseGroups:
+            type: array
+            items: {$ref: '#/components/schemas/ExerciseGroupWithExercises'}
+    ExamUserDetails:
+      type: object
+      properties:
+        login: {type: string, maxLength: 50, minLength: 0}
+        name: {type: string, maxLength: 50, minLength: 0}
+        visibleRegistrationNumber: {type: string, maxLength: 10, minLength: 0}
+        id: {type: integer, format: int64}
     DragAndDropSubmittedAnswerAfterEvaluation:
       required: [type]
       type: object
@@ -7945,9 +10945,27 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    CourseForAssessmentDashboard:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        complaintsEnabled: {type: boolean}
+        requestMoreFeedbackEnabled: {type: boolean}
     QuizQuestionPoolBuildTrigger:
       type: string
       enum: [MANUAL, SCHEDULED]
+    ExamForAssessmentDashboard:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        endDate: {type: string, format: date-time}
+        publishResultsDate: {type: string, format: date-time}
+        numberOfCorrectionRoundsInExam: {type: integer, format: int32}
+        course: {$ref: '#/components/schemas/CourseForAssessmentDashboard'}
+        exerciseGroups:
+          type: array
+          items: {$ref: '#/components/schemas/ExerciseGroupForAssessmentDashboard'}
     PresentationRubricScale:
       type: string
       enum: [THREE_POINT, FIVE_POINT]
@@ -7958,6 +10976,12 @@ components:
         startDate: {type: string, format: date-time}
         endDate: {type: string, format: date-time}
       required: [title]
+    LockedSubmissionParticipation:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exercise: {$ref: '#/components/schemas/LockedSubmissionExercise'}
+        submissionCount: {type: integer, format: int32}
     CourseForQuizExercise:
       type: object
       properties:
@@ -8006,6 +11030,14 @@ components:
       type: string
       enum: [MAVEN_MAVEN, PLAIN_MAVEN, PLAIN, XCODE, FACT, GCC, PLAIN_GRADLE, GRADLE_GRADLE,
         MAVEN_BLACKBOX]
+    QuizExamSubmission:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        submittedAnswers:
+          type: array
+          items: {$ref: '#/components/schemas/SubmittedAnswerFromLiveClient'}
+          uniqueItems: true
     FeedbackDetail:
       type: object
       properties:
@@ -8041,6 +11073,15 @@ components:
       type: object
       properties:
         id: {type: integer, format: int64}
+    ExamUsersNotFound:
+      type: object
+      properties:
+        numberOfUsersNotFound: {type: integer, format: int32}
+        numberOfImagesSaved: {type: integer, format: int32}
+        listOfExamUserRegistrationNumbers:
+          type: array
+          items: {type: string}
+      required: [numberOfImagesSaved, numberOfUsersNotFound]
     CreateExerciseVariantGroup:
       type: object
       properties:
@@ -8203,6 +11244,15 @@ components:
       properties:
         type: {type: string}
       required: [type]
+    ExamExerciseStartPreparationStatus:
+      type: object
+      properties:
+        finished: {type: integer, format: int32}
+        failed: {type: integer, format: int32}
+        overall: {type: integer, format: int32}
+        participationCount: {type: integer, format: int32}
+        startedAt: {type: string, format: date-time}
+      required: [failed, finished, overall]
     WorkerState:
       type: string
       enum: [OFFLINE, NOT_READY, AVAILABLE, RESERVED, BUSY]
@@ -8212,6 +11262,27 @@ components:
         attachmentVersion: {type: integer, format: int32}
         videoVersion: {type: integer, format: int32}
         hasVideo: {type: boolean}
+    SubmissionForConduction:
+      type: object
+      properties:
+        submissionExerciseType: {type: string}
+        id: {type: integer, format: int64}
+        submitted: {type: boolean}
+        empty: {type: boolean}
+        submissionDate: {type: string, format: date-time}
+        results:
+          type: array
+          items: {$ref: '#/components/schemas/ResultForConduction'}
+        text: {type: string}
+        model: {type: string}
+        explanationText: {type: string}
+        scoreInPoints: {type: number, format: double}
+        submittedAnswers:
+          type: array
+          items: {$ref: '#/components/schemas/SubmittedAnswerAfterEvaluation'}
+        filePath: {type: string}
+        commitHash: {type: string}
+        buildFailed: {type: boolean}
     PointCounter:
       type: object
       properties:
@@ -8241,6 +11312,16 @@ components:
         busy: {type: boolean}
         capacityAvailable: {type: boolean}
         restriction: {type: string}
+    ExerciseImport:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exerciseType: {$ref: '#/components/schemas/ExerciseType'}
+        title: {type: string}
+        shortName: {type: string}
+        maxPoints: {type: number, format: double}
+        bonusPoints: {type: number, format: double}
+      required: [exerciseType, id]
     CalendarEvent:
       type: object
       properties:
@@ -8267,6 +11348,18 @@ components:
         solutionTempId: {type: integer, format: int64}
         spotTempId: {type: integer, format: int64}
       required: [solutionTempId, spotTempId]
+    ExamRoom:
+      type: object
+      properties:
+        roomNumber: {type: string}
+        name: {type: string}
+        building: {type: string}
+        numberOfSeats: {type: integer, format: int32}
+        layoutStrategies:
+          type: array
+          items: {$ref: '#/components/schemas/ExamRoomLayoutStrategy'}
+          uniqueItems: true
+      required: [building, layoutStrategies, name, numberOfSeats, roomNumber]
     TutorParticipationStatus:
       type: string
       enum: [NOT_PARTICIPATED, REVIEWED_INSTRUCTIONS, TRAINED, COMPLETED]
@@ -8345,6 +11438,13 @@ components:
         userPrompt: {type: string, description: User prompt for global refinement,
           maxLength: 1000, minLength: 1}
       required: [problemStatementText, userPrompt]
+    ExerciseGroupCreate:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        isMandatory: {type: boolean}
+        exam: {$ref: '#/components/schemas/ExamReference'}
     SubmissionRequest:
       type: object
       properties:
@@ -8448,6 +11548,15 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    ExamAttendanceCheckEvent:
+      allOf:
+      - {$ref: '#/components/schemas/ExamLiveEventBase'}
+      - type: object
+        properties:
+          id: {type: integer, format: int64}
+          createdDate: {type: string, format: date-time}
+          text: {type: string}
+      required: [createdDate, id]
     LectureLearningStatistics:
       type: object
       properties:
@@ -8456,6 +11565,13 @@ components:
         type: {type: string}
         total: {type: integer, format: int64}
         completed: {type: integer, format: int64}
+    ExamConductionCounts:
+      type: object
+      properties:
+        numberOfGeneratedStudentExams: {type: integer, format: int64}
+        numberOfExamsStarted: {type: integer, format: int64}
+        numberOfExamsSubmitted: {type: integer, format: int64}
+      required: [numberOfExamsStarted, numberOfExamsSubmitted, numberOfGeneratedStudentExams]
     ResultAfterEvaluation:
       type: object
       properties:
@@ -8466,6 +11582,16 @@ components:
         rated: {type: boolean}
         assessmentType: {$ref: '#/components/schemas/AssessmentType'}
       x-parent: true
+    LockedExamSubmission:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        submissionDate: {type: string, format: date-time}
+        submissionExerciseType: {type: string}
+        participation: {$ref: '#/components/schemas/LockedSubmissionParticipation'}
+        results:
+          type: array
+          items: {$ref: '#/components/schemas/LockedSubmissionResult'}
     QuizQuestionRefinementRequest:
       type: object
       description: Request to refine an existing quiz question using a user prompt
@@ -8499,6 +11625,10 @@ components:
         endTime: {type: number, format: double}
         text: {type: string}
         slideNumber: {type: integer, format: int32}
+    ExamReference:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
     CalendarEventType:
       type: string
       enum: [LECTURE, TUTORIAL, EXAM, QUIZ_EXERCISE, TEXT_EXERCISE, MODELING_EXERCISE,
@@ -8533,6 +11663,11 @@ components:
         correctMappings:
           type: array
           items: {$ref: '#/components/schemas/DragAndDropMapping'}
+    CourseForExerciseGroup:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        defaultProgrammingLanguage: {$ref: '#/components/schemas/ProgrammingLanguage'}
     ProblemStatementRewriteResponse:
       type: object
       description: Response containing rewritten problem statement
@@ -8541,6 +11676,11 @@ components:
         improved: {type: boolean, description: Whether the text was actually improved,
           example: true}
       required: [improved, rewrittenText]
+    ExamProgrammingParticipation:
+      type: object
+      properties:
+        type: {type: string}
+        buildPlanId: {type: string}
     QuizQuestionPoolBuild:
       type: object
       description: One build of a course's quiz question pool
@@ -8564,6 +11704,12 @@ components:
         failure: {type: string, description: 'Why the build stopped early, absent
             when it ran through'}
       required: [id, startedAt, trigger]
+    CourseForExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        testCourse: {type: boolean}
     PresentationAssessmentRequest:
       type: object
       properties:
@@ -8631,6 +11777,11 @@ components:
           videoSourceType: {$ref: '#/components/schemas/VideoSourceType'}
           youtubeVideoId: {type: string}
           type: {type: string}
+    ExamLiveEventBase:
+      discriminator: {propertyName: eventType}
+      properties:
+        eventType: {type: string}
+      required: [eventType]
     MultipleChoiceQuestionReEvaluate:
       required: [answerOptions, id, invalid, randomizeOrder, scoringType, title, type]
       type: object
@@ -8716,6 +11867,13 @@ components:
         endDate: {type: string, format: date-time}
         reason: {type: string}
       required: [endDate, startDate]
+    LockedSubmissionResult:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        score: {type: number, format: double}
+        completionDate: {type: string, format: date-time}
+        correctionRound: {type: integer, format: int32}
     ExerciseReference:
       type: object
       properties:
@@ -8733,6 +11891,14 @@ components:
         reviewState: {$ref: '#/components/schemas/QuizQuestionReviewState', description: The
             review decision}
       required: [reviewState]
+    ExerciseInfo:
+      type: object
+      properties:
+        exerciseId: {type: integer, format: int64}
+        title: {type: string}
+        maxPoints: {type: number, format: double}
+        numberOfParticipants: {type: integer, format: int64}
+        exerciseType: {type: string}
     PresentationAssessmentInstance:
       type: object
       properties:
@@ -8748,6 +11914,12 @@ components:
         remark: {type: string, maxLength: 1000, minLength: 0}
         student: {$ref: '#/components/schemas/PresentationAssessmentStudent'}
       required: [language, mode, presentationDate]
+    StudentExamWithIdAndExamAndUser:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        exam: {$ref: '#/components/schemas/ExamWithIdAndCourse'}
+        user: {$ref: '#/components/schemas/UserWithIdAndLogin'}
     IndexedEntityRecord:
       type: object
       properties:
@@ -8758,6 +11930,18 @@ components:
         properties:
           type: object
           additionalProperties: {}
+    ExamSession:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        browserFingerprintHash: {type: string}
+        ipAddress: {type: string}
+        suspiciousReasons:
+          type: array
+          items: {$ref: '#/components/schemas/SuspiciousSessionReason'}
+          uniqueItems: true
+        createdDate: {type: string, format: date-time}
+        studentExam: {$ref: '#/components/schemas/StudentExamWithIdAndExamAndUser'}
     CompetencyExerciseLink:
       type: object
       properties:
@@ -8774,6 +11958,14 @@ components:
         delta: {$ref: '#/components/schemas/DifficultyDelta'}
         taskCount: {type: integer, format: int32}
         testCount: {type: integer, format: int32}
+    ExerciseGroupForAssessmentDashboard:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        exercises:
+          type: array
+          items: {$ref: '#/components/schemas/ExerciseForAssessmentDashboard'}
     TutorialGroupConfiguration:
       type: object
       properties:
@@ -8797,6 +11989,22 @@ components:
       properties:
         draftProblemStatement: {type: string, description: Draft problem statement
             text}
+    ExerciseGroupForConduction:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        isMandatory: {type: boolean}
+    ExamRoomForDistribution:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        roomNumber: {type: string, minLength: 1}
+        alternativeRoomNumber: {type: string}
+        name: {type: string, minLength: 1}
+        alternativeName: {type: string}
+        building: {type: string, minLength: 1}
+      required: [building, id, name, roomNumber]
     QuizQuestionGenerationRequest:
       type: object
       description: Request to generate quiz questions. Either topic or competencyIds
@@ -8878,6 +12086,27 @@ components:
         width: {type: number, format: double, exclusiveMinimum: 0}
         height: {type: number, format: double, exclusiveMinimum: 0}
       required: [height, posX, posY, tempID, width]
+    StudentExamForSummary:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        workingTime: {type: integer, format: int32}
+        started: {type: boolean}
+        startedDate: {type: string, format: date-time}
+        submitted: {type: boolean}
+        submissionDate: {type: string, format: date-time}
+        testRun: {type: boolean}
+        ended: {type: boolean}
+        finished: {type: boolean}
+        createdDate: {type: string, format: date-time}
+        user: {$ref: '#/components/schemas/UserName'}
+        exam: {$ref: '#/components/schemas/ExamForSummary'}
+        examSessions:
+          type: array
+          items: {$ref: '#/components/schemas/ExamSessionForConduction'}
+        exercises:
+          type: array
+          items: {$ref: '#/components/schemas/ExamExerciseForConduction'}
     Complaint:
       type: object
       properties:
@@ -8905,6 +12134,14 @@ components:
         courseId: {type: integer, format: int64}
         exerciseId: {type: integer, format: int64}
         exerciseTitle: {type: string}
+    CreateTestRun:
+      type: object
+      properties:
+        examId: {type: integer, format: int64}
+        exerciseIds:
+          type: array
+          items: {type: integer, format: int64}
+        workingTime: {type: integer, format: int32}
     ExerciseOverview:
       type: object
       properties:
@@ -8971,6 +12208,14 @@ components:
             mechanically verified)
           items: {type: string}
       required: [mechanicallyVerified, reasons, solutionPassed, templateFailed, testCount]
+    ExamForImportList:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        examMode: {$ref: '#/components/schemas/ExamMode'}
+        course: {$ref: '#/components/schemas/CourseForExam'}
+      required: [examMode]
     MultipleChoiceSubmittedAnswerBeforeEvaluation:
       required: [type]
       type: object
@@ -9003,6 +12248,19 @@ components:
       properties:
         id: {type: integer, format: int64}
         course: {$ref: '#/components/schemas/CourseWithId'}
+    StudentExam:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        workingTime: {type: integer, format: int32}
+        started: {type: boolean}
+        startedDate: {type: string, format: date-time}
+        submitted: {type: boolean}
+        submissionDate: {type: string, format: date-time}
+        testRun: {type: boolean}
+        user: {$ref: '#/components/schemas/UserName'}
+        exam: {$ref: '#/components/schemas/ExamForStudentExam'}
+      required: [id, testRun]
     Type:
       type: string
       enum: [STARTED, PROGRESS, DONE, CANCELLED, ERROR]
@@ -9077,6 +12335,11 @@ components:
     GenerationMode:
       type: string
       enum: [GENERATE, ADAPT]
+    ExamAttendanceUpdate:
+      type: object
+      properties:
+        attended: {type: boolean}
+      required: [attended]
     TutorialGroupStudentImportData:
       type: object
       properties:
@@ -9085,6 +12348,14 @@ components:
     ActionType:
       type: string
       enum: [FIX_QUALITY_ISSUE, FIX_ALL_QUALITY_ISSUES, ADAPT_DIFFICULTY]
+    ExamForExerciseGroup:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        examMode: {$ref: '#/components/schemas/ExamMode'}
+        exampleSolutionPublicationDate: {type: string, format: date-time}
+        course: {$ref: '#/components/schemas/CourseForExerciseGroup'}
+      required: [examMode]
     GradeSteps:
       type: object
       properties:
@@ -9181,6 +12452,11 @@ components:
     Kind:
       type: string
       enum: [CREATE, ADAPT, VARIANT]
+    ExamForQuestionPool:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
     QuizQuestionPoolSelection:
       type: object
       description: The questions one draw took from the quiz question pool
@@ -9286,6 +12562,20 @@ components:
       properties:
         quizQuestionsType: {type: string}
       required: [quizQuestionsType]
+    ExerciseGroupImport:
+      type: object
+      properties:
+        title: {type: string}
+        isMandatory: {type: boolean}
+        exercises:
+          type: array
+          items: {$ref: '#/components/schemas/ExerciseImport'}
+    ExerciseGroupDeletionSummary:
+      allOf:
+      - {$ref: '#/components/schemas/ExamExerciseDeletionCounts'}
+      - type: object
+        properties:
+          numberOfStudentExams: {type: integer, format: int64}
     RatingListItem:
       type: object
       properties:
@@ -9300,6 +12590,16 @@ components:
         exerciseId: {type: integer, format: int64}
         exerciseTitle: {type: string}
         exerciseType: {$ref: '#/components/schemas/ExerciseType'}
+    ExamRoomUploadInformation:
+      type: object
+      properties:
+        uploadedFileName: {type: string}
+        numberOfUploadedRooms: {type: integer, format: int32}
+        numberOfUploadedSeats: {type: integer, format: int32}
+        uploadedRoomNames:
+          type: array
+          items: {type: string}
+      required: [uploadedFileName, uploadedRoomNames]
     LectureUnitForLearningPathNodeDetails:
       type: object
       properties:
@@ -9334,6 +12634,31 @@ components:
         isEditor: {type: boolean}
         isTeachingAssistant: {type: boolean}
         isStudent: {type: boolean}
+    ExamForConduction:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        moduleNumber: {type: string}
+        courseName: {type: string}
+        examiner: {type: string}
+        examMode: {$ref: '#/components/schemas/ExamMode'}
+        examWithAttendanceCheck: {type: boolean}
+        visibleDate: {type: string, format: date-time}
+        startDate: {type: string, format: date-time}
+        endDate: {type: string, format: date-time}
+        gracePeriod: {type: integer, format: int32}
+        workingTime: {type: integer, format: int32}
+        startText: {type: string}
+        endText: {type: string}
+        confirmationStartText: {type: string}
+        confirmationEndText: {type: string}
+        examMaxPoints: {type: integer, format: int32}
+        randomizeExerciseOrder: {type: boolean}
+        numberOfExercisesInExam: {type: integer, format: int32}
+        numberOfCorrectionRoundsInExam: {type: integer, format: int32}
+        course: {$ref: '#/components/schemas/CourseForStudentExam'}
+      x-parent: true
     MultipleChoiceSubmittedAnswerAfterEvaluation:
       required: [type]
       type: object
@@ -9361,6 +12686,19 @@ components:
     IPVersion:
       type: string
       enum: [IPv4, IPv6]
+    BonusResult:
+      type: object
+      properties:
+        bonusStrategy: {$ref: '#/components/schemas/BonusStrategy'}
+        bonusFromTitle: {type: string}
+        studentPointsOfBonusSource: {type: number, format: double}
+        bonusGrade: {type: string}
+        finalPoints: {type: number, format: double}
+        finalGrade: {type: string}
+        mostSeverePlagiarismVerdict: {$ref: '#/components/schemas/PlagiarismVerdict'}
+        achievedPresentationScore: {type: number, format: double}
+        presentationScoreThreshold: {type: integer, format: int32}
+        pending: {type: boolean, readOnly: true}
     PresentationGradingMethod:
       type: string
       enum: [PASS_FAIL, SCORE, RUBRIC]
@@ -9487,6 +12825,29 @@ components:
       properties:
         refinedProblemStatement: {type: string, description: Refined problem statement
             text}
+    ExamUser:
+      type: object
+      properties:
+        login: {type: string, maxLength: 50, minLength: 0}
+        firstName: {type: string, maxLength: 50, minLength: 0}
+        lastName: {type: string, maxLength: 50, minLength: 0}
+        registrationNumber: {type: string, maxLength: 10, minLength: 0}
+        email: {type: string, format: email, maxLength: 100, minLength: 0}
+        studentIdentifier: {type: string}
+        room: {type: string}
+        seat: {type: string}
+        didCheckImage: {type: boolean}
+        didCheckName: {type: boolean}
+        didCheckRegistrationNumber: {type: boolean}
+        didCheckLogin: {type: boolean}
+        signingImagePath: {type: string, maxLength: 100, minLength: 0}
+        id: {type: integer, format: int64}
+        actualRoom: {type: string}
+        actualSeat: {type: string}
+        plannedRoom: {type: string}
+        plannedSeat: {type: string}
+        studentImagePath: {type: string}
+        user: {$ref: '#/components/schemas/ExamUserDetails'}
     AssessmentUploadError:
       type: object
       properties:
@@ -9571,6 +12932,27 @@ components:
       required: [easyPercent, hardPercent, mediumPercent, multipleChoiceEnabled, multipleChoiceMaxCorrectOptions,
         multipleChoiceMinCorrectOptions, multipleChoiceQuestionsPerLectureUnit, poolGenerationEnabled,
         singleChoiceQuestionsPerLectureUnit]
+    StudentResult:
+      type: object
+      properties:
+        userId: {type: integer, format: int64}
+        name: {type: string}
+        email: {type: string}
+        login: {type: string}
+        registrationNumber: {type: string}
+        submitted: {type: boolean}
+        overallPointsAchieved: {type: number, format: double}
+        overallScoreAchieved: {type: number, format: double}
+        overallGrade: {type: string}
+        overallGradeInFirstCorrection: {type: string}
+        hasPassed: {type: boolean}
+        overallPointsAchievedInFirstCorrection: {type: number, format: double}
+        gradeWithBonus: {$ref: '#/components/schemas/BonusResult'}
+        exerciseGroupIdToExerciseResult:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/ExerciseResult'}
+        mostSeverePlagiarismVerdict: {$ref: '#/components/schemas/PlagiarismVerdict'}
+        maxPoints: {type: number, format: double}
     ConsistencyCheckResponse:
       type: object
       description: Response containing consistency check results
@@ -9599,6 +12981,25 @@ components:
         totalTimeSpentMinutes: {type: number, format: double}
         exerciseId: {type: integer, format: int64}
         courseId: {type: integer, format: int64}
+    StatsForDashboard:
+      type: object
+      properties:
+        numberOfStudents: {type: integer, format: int64}
+        totalNumberOfAssessments: {type: integer, format: int64}
+        totalNumberOfAssessmentLocks: {type: integer, format: int64}
+        complaintsEnabled: {type: boolean}
+        feedbackRequestEnabled: {type: boolean}
+        numberOfAssessmentsOfCorrectionRounds: {type: array}
+        numberOfLockedAssessmentByOtherTutorsOfCorrectionRound: {type: array}
+        numberOfComplaints: {type: integer, format: int64}
+        numberOfOpenComplaints: {type: integer, format: int64}
+        numberOfMoreFeedbackRequests: {type: integer, format: int64}
+        numberOfOpenMoreFeedbackRequests: {type: integer, format: int64}
+        numberOfAssessmentLocks: {type: integer, format: int64}
+        tutorLeaderboardEntries:
+          type: array
+          items: {$ref: '#/components/schemas/TutorLeaderboard'}
+        numberOfRatings: {type: integer, format: int64}
     ShortAnswerSubmittedAnswerFromLiveClient:
       required: [type]
       type: object

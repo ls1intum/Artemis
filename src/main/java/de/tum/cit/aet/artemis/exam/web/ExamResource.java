@@ -30,6 +30,7 @@ import jakarta.ws.rs.BadRequestException;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.context.annotation.Conditional;
@@ -149,6 +150,9 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExamSearchableEn
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -807,10 +811,11 @@ public class ExamResource {
      * @return a {@link ResponseEntity} with status 200 (OK) and the list of visible active exams;
      *         the list may be empty if no active exams exist
      */
+    @ApiResponse(responseCode = "200", headers = { @Header(name = "X-Total-Count", schema = @Schema(type = "integer")) })
     @GetMapping("exams/active")
     @EnforceAtLeastStudent
     @ManualConfig
-    public ResponseEntity<List<ActiveExamDTO>> getAllActiveExams(Pageable pageable) {
+    public ResponseEntity<List<ActiveExamDTO>> getAllActiveExams(@ParameterObject Pageable pageable) {
         final var user = userRepository.getUserWithAuthorities();
         Page<ActiveExamDTO> page = examService.getAllActiveExams(pageable, user);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
@@ -830,11 +835,13 @@ public class ExamResource {
      * @param search        Pageable with all relevant information
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
+    // The generic sort column of the search object is not documented by springdoc on its own.
+    @Parameter(name = "sortedColumn", in = ParameterIn.QUERY, schema = @Schema(type = "string"))
     @GetMapping("exams")
     @EnforceAtLeastStudent
     @ManualConfig
     public ResponseEntity<SearchResultPageDTO<ExamForImportListDTO>> getAllExamsOnPage(@RequestParam(defaultValue = "false") boolean withExercises,
-            SearchTermPageableSearchDTO<String> search) {
+            @ParameterObject SearchTermPageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithAuthorities();
         SearchResultPageDTO<Exam> page = examService.getAllOnPageWithSize(search, user, withExercises);
         List<ExamForImportListDTO> rows = page.getResultsOnPage().stream().map(ExamForImportListDTO::of).toList();
@@ -898,7 +905,7 @@ public class ExamResource {
      * @return the title of the exam wrapped in an ResponseEntity or 404 Not Found if no exam with that id exists
      */
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
-    @GetMapping("exams/{examId}/title")
+    @GetMapping(value = "exams/{examId}/title", produces = MediaType.TEXT_PLAIN_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<String> getExamTitle(@PathVariable Long examId) {
         long courseId = examRepository.findCourseIdById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
@@ -1115,7 +1122,7 @@ public class ExamResource {
     @DeleteMapping("courses/{courseId}/exams/{examId}/cleanup")
     @EnforceAtLeastStudent
     @ManualConfig
-    public ResponseEntity<Resource> cleanup(@PathVariable Long courseId, @PathVariable Long examId, Principal principal) {
+    public ResponseEntity<Void> cleanup(@PathVariable Long courseId, @PathVariable Long examId, Principal principal) {
         log.info("REST request to cleanup the exam : {}", examId);
         final Exam exam = examRepository.findByIdElseThrow(examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);

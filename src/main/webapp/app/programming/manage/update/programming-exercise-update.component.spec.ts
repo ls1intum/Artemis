@@ -885,7 +885,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         it('should be in exam mode after onInit', () => {
             // GIVEN
-            vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+            vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(exerciseGroup));
             vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 
             // WHEN
@@ -939,7 +939,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 exerciseGroup.exam = { id: examId, course };
                 route.params = of({ courseId, examId, exerciseGroupId });
                 route.data = of({ programmingExercise: new ProgrammingExercise(undefined, exerciseGroup) });
-                vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+                vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(exerciseGroup));
             } else {
                 route.params = of({ courseId });
                 route.data = of({ programmingExercise: new ProgrammingExercise(course, undefined) });
@@ -1417,7 +1417,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             exerciseGroup.id = exerciseGroupId;
             exerciseGroup.exam = { id: examId, course };
             const programmingExercise = new ProgrammingExercise(undefined, exerciseGroup);
-            vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+            vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(exerciseGroup));
             route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId, examId, exerciseGroupId });
             route.data = of({ programmingExercise });
@@ -1540,7 +1540,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             route.url = of([{ path: 'import' } as UrlSegment]);
 
             // mock exerciseGroupService
-            const findSpy = vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseGroup })));
+            const findSpy = vi.spyOn(exerciseGroupService, 'find').mockReturnValue(of(exerciseGroup));
             vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
 
             // WHEN

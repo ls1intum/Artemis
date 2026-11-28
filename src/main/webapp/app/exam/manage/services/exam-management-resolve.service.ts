@@ -3,8 +3,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { Service, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
-import { Observable, filter, map, of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { Observable, map, of } from 'rxjs';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -45,15 +44,9 @@ export class ExamResolve implements Resolve<Exam> {
         if (isImport && examId) {
             // When importing an exam, the courseId cannot be used, as the exam.course.id may deviate from the target course id
             // Additionally, the exercises are needed to select the exercises, that should be imported alongside the exam
-            return this.examManagementService.findWithExercisesAndWithoutCourseId(examId).pipe(
-                filter((response: HttpResponse<Exam>) => response.ok),
-                map((response: HttpResponse<Exam>) => response.body!),
-            );
+            return this.examManagementService.findWithExercisesAndWithoutCourseId(examId);
         } else if (courseId && examId) {
-            return this.examManagementService.find(courseId, examId, withExerciseGroups).pipe(
-                filter((response: HttpResponse<Exam>) => response.ok),
-                map((response: HttpResponse<Exam>) => response.body!),
-            );
+            return this.examManagementService.find(courseId, examId, withExerciseGroups);
         }
         return of(new Exam());
     }
@@ -73,10 +66,7 @@ export class StudentExamResolve implements Resolve<StudentExamWithGradeDTO> {
         const examId = route.params['examId'] || undefined;
         const studentExamId = route.params['studentExamId'] ? route.params['studentExamId'] : route.params['testRunId'];
         if (courseId && examId && studentExamId) {
-            return this.studentExamService.find(courseId, examId, studentExamId).pipe(
-                filter((response) => response.ok),
-                map((response) => response.body!),
-            );
+            return this.studentExamService.find(courseId, examId, studentExamId);
         }
         return of(new StudentExamWithGradeDTO());
     }

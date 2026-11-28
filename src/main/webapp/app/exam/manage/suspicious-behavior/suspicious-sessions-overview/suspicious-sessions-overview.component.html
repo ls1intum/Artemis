@@ -9,9 +9,9 @@
     <p>
         {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.reasons' | artemisTranslate }}
         <!-- all sessions have the same reasons, so we can just use the first one -->
-        @for (reason of suspiciousSessionsSet.examSessions.at(0)?.suspiciousReasons; track reason; let i = $index) {
+        @for (reason of suspiciousSessionsSet.examSessions?.at(0)?.suspiciousReasons; track reason; let i = $index) {
             <span class="font-bold" [jhiTranslate]="mapEnumToTranslationString(reason)" [translateValues]="{ range: ipSubnet() }"></span>
-            @if (i < suspiciousSessionsSet.examSessions.at(0)?.suspiciousReasons?.length! - 1) {
+            @if (i < suspiciousSessionsSet.examSessions?.at(0)?.suspiciousReasons?.length! - 1) {
                 <span>,</span>
             }
         }

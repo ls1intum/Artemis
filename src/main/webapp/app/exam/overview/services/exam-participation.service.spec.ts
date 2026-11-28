@@ -16,9 +16,12 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
+import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
+import { StudentExamApi } from 'app/openapi/api/student-exam-api';
+import type { OwnStudentExam } from 'app/openapi/model/own-student-exam';
+import type { AthenaFeedbackUsage } from 'app/openapi/model/athena-feedback-usage';
 import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -48,7 +51,7 @@ describe('ExamParticipationService', () => {
         service.loadStudentExamWithExercisesForConduction(1, 2, 3, 'instructor-owner').subscribe((value) => (result = value));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush({ id: 3, exercises: [], exam: { startDate: '2026-10-25T08:00:00Z' } });
-        expect(req.request.url).toBe('api/exam/courses/1/exams/2/student-exams/3/conduction/for-instructor');
+        expect(req.request.url).toBe('/api/exam/courses/1/exams/2/student-exams/3/conduction/for-instructor');
         expect(dayjs.isDayjs(result?.exam?.startDate)).toBe(true);
     });
 
@@ -59,7 +62,7 @@ describe('ExamParticipationService', () => {
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
 
-        const req = httpMock.expectOne({ method: 'GET' });
+        const req = httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/exams/1/student-exams/1/conduction' });
         req.flush(returnedFromService);
     });
 
@@ -80,7 +83,7 @@ describe('ExamParticipationService', () => {
             .loadStudentExamWithExercisesForSummary(1, 1, 1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
-        const req = httpMock.expectOne({ method: 'GET' });
+        const req = httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/exams/1/student-exams/1/summary' });
         req.flush(returnedFromService);
     });
 
@@ -117,24 +120,14 @@ describe('ExamParticipationService', () => {
         expect(error).toBeInstanceOf(HttpErrorResponse);
     });
 
-    it('should load a student exam grade info for summary', async () => {
-        const studentExamWithGrade: StudentExamWithGradeDTO = {
-            maxPoints: 100,
-            maxBonusPoints: 10,
-            studentResult: {} as StudentResult,
-            gradeType: GradeType.GRADE,
-            achievedPointsPerExercise: {
-                1: 20,
-                2: 10,
-            },
-        };
-        const returnedFromService = Object.assign({}, studentExamWithGrade);
-        service
-            .loadStudentExamGradeInfoForSummary(1, 1, 1)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
+    it('should load a student exam grade info for summary', () => {
+        let received: StudentExamWithGradeDTO | undefined;
+        service.loadStudentExamGradeInfoForSummary(1, 2, 3).subscribe((value) => (received = value));
+        const req = httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/exams/2/student-exams/3/grade-summary' });
+        req.flush({ maxPoints: 100, maxBonusPoints: 10, gradeType: 'GRADE', achievedPointsPerExercise: { '1': 20, '2': 10 }, pendingExerciseIds: [4] });
+
+        expect(received).toBeInstanceOf(StudentExamWithGradeDTO);
+        expect(received).toMatchObject({ maxPoints: 100, maxBonusPoints: 10, gradeType: GradeType.GRADE, achievedPointsPerExercise: { 1: 20, 2: 10 }, pendingExerciseIds: [4] });
     });
 
     it('surfaces an own exam load conflict immediately without an automatic retry', async () => {
@@ -142,7 +135,7 @@ describe('ExamParticipationService', () => {
         try {
             let error: HttpErrorResponse | undefined;
             service.getOwnStudentExam(1, 2).subscribe({ error: (value) => (error = value) });
-            const url = 'api/exam/courses/1/exams/2/own-student-exam';
+            const url = '/api/exam/courses/1/exams/2/own-student-exam';
             httpMock.expectOne(url).flush({ message: 'error.concurrencyFailure' }, { status: 409, statusText: 'Conflict' });
             expect(error?.status).toBe(409);
             await vi.advanceTimersByTimeAsync(10000);
@@ -152,58 +145,78 @@ describe('ExamParticipationService', () => {
         }
     });
 
-    it('should load a StudentExam', async () => {
-        const sendExam = Object.assign(
-            {
-                visibleDate: dayjs(),
-                startDate: dayjs(),
-                endDate: dayjs(),
-                publishResultDate: dayjs(),
-                examStudentReviewStart: dayjs(),
-                examStudentReviewEnd: dayjs(),
+    describe('own student exam', () => {
+        const ownStudentExam: OwnStudentExam = {
+            id: 3,
+            workingTime: 3600,
+            started: true,
+            startedDate: '2026-01-01T10:05:00.000Z',
+            submitted: true,
+            submissionDate: '2026-01-01T10:50:00.000Z',
+            testRun: false,
+            ended: true,
+            user: { id: 5, login: 'student', name: 'Stu Dent' },
+            exam: {
+                id: 2,
+                title: 'Exam',
+                examMode: 'REAL',
+                visibleDate: '2026-01-01T09:00:00.000Z',
+                startDate: '2026-01-01T10:00:00.000Z',
+                endDate: '2026-01-01T12:00:00.000Z',
+                publishResultsDate: '2026-01-02T12:00:00.000Z',
+                examSummaryPublicationDate: '2026-01-03T12:00:00.000Z',
+                gracePeriod: 180,
+                workingTime: 3600,
+                course: { id: 1 },
             },
-            exam,
-        );
-        const returnedFromService = Object.assign(
-            {
-                exam: sendExam,
-            },
-            studentExam,
-        );
-        service
-            .getOwnStudentExam(1, 1)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
+        };
 
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
+        it('should GET the own student exam and convert the dates of the student exam and its exam', () => {
+            let loaded: StudentExam | undefined;
+            service.getOwnStudentExam(1, 1).subscribe((value) => (loaded = value));
+            httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/exams/1/own-student-exam' }).flush(ownStudentExam);
+
+            expect(loaded).toEqual({
+                ...ownStudentExam,
+                startedDate: dayjs('2026-01-01T10:05:00.000Z'),
+                submissionDate: dayjs('2026-01-01T10:50:00.000Z'),
+                exam: {
+                    ...ownStudentExam.exam,
+                    visibleDate: dayjs('2026-01-01T09:00:00.000Z'),
+                    startDate: dayjs('2026-01-01T10:00:00.000Z'),
+                    endDate: dayjs('2026-01-01T12:00:00.000Z'),
+                    publishResultsDate: dayjs('2026-01-02T12:00:00.000Z'),
+                    examSummaryPublicationDate: dayjs('2026-01-03T12:00:00.000Z'),
+                    examStudentReviewStart: undefined,
+                    examStudentReviewEnd: undefined,
+                },
+            });
+        });
+
+        it('should leave ended and numberOfExamSessions undefined when the server omits them', () => {
+            let loaded: StudentExam | undefined;
+            service.getOwnStudentExam(1, 1).subscribe((value) => (loaded = value));
+            httpMock.expectOne({ method: 'GET' }).flush({ id: 3, testRun: false });
+
+            expect(loaded?.ended).toBeUndefined();
+            expect(loaded?.numberOfExamSessions).toBeUndefined();
+        });
     });
 
-    it('should load a StudentExam for a TestExam', async () => {
-        const sendExam = Object.assign(
-            {
-                visibleDate: dayjs(),
-                startDate: dayjs(),
-                endDate: dayjs(),
-                publishResultDate: dayjs(),
-                examStudentReviewStart: dayjs(),
-                examStudentReviewEnd: dayjs(),
-            },
-            exam,
-        );
-        const returnedFromService = Object.assign(
-            {
-                exam: sendExam,
-            },
-            studentExam,
-        );
-        service
-            .getOwnStudentExam(1, 1)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject(returnedFromService));
+    it.each([
+        ['conduction', () => service.loadStudentExamWithExercisesForConduction(1, 2, 3), '/api/exam/courses/1/exams/2/student-exams/3/conduction'],
+        ['summary', () => service.loadStudentExamWithExercisesForSummary(1, 2, 3), '/api/exam/courses/1/exams/2/student-exams/3/summary'],
+        ['test run', () => service.loadTestRunWithExercisesForConduction(1, 2, 3), '/api/exam/courses/1/exams/2/test-runs/3/conduction'],
+    ])('should keep an omitted ended flag undefined and keep a sent one for %s', (_name, load, url) => {
+        const results: (StudentExam | undefined)[] = [];
+        load().subscribe((value) => results.push(value));
+        httpMock.expectOne({ method: 'GET', url }).flush({ id: 3, exercises: [] });
+        load().subscribe((value) => results.push(value));
+        httpMock.expectOne({ method: 'GET', url }).flush({ id: 3, ended: false, exercises: [] });
 
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
+        expect(results[0]?.ended).toBeUndefined();
+        expect(results[0]?.numberOfExamSessions).toBeUndefined();
+        expect(results[1]?.ended).toBe(false);
     });
 
     it('should load only the exam overview fields and convert all sidebar dates', () => {
@@ -224,7 +237,7 @@ describe('ExamParticipationService', () => {
         let received: ExamForOverview[] | undefined;
 
         service.getExamsForOverview(5).subscribe((exams) => (received = exams));
-        const request = httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/5/exams-for-overview' });
+        const request = httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/5/exams-for-overview' });
         expect(request.request.params.keys()).toEqual([]);
         request.flush([serverExam]);
 
@@ -303,7 +316,7 @@ describe('ExamParticipationService', () => {
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject(expected));
 
-        const req = httpMock.expectOne({ method: 'GET' });
+        const req = httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/exams/1/test-runs/1/conduction' });
         req.flush(returnedFromService);
     });
 
@@ -324,16 +337,30 @@ describe('ExamParticipationService', () => {
         });
     });
 
-    it('should load a List of StudentExams for a user and course', async () => {
-        const returnedFromService = [studentExam];
-        service
-            .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(1)
-            .pipe(take(1))
-            .subscribe(() => {
-                expect(service.testStudentExams()).toEqual(returnedFromService);
-            });
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
+    it('should load the test exams of a user and course and convert their dates', () => {
+        let completed = false;
+        service.loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(1).subscribe({ complete: () => (completed = true) });
+        const req = httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/test-exams-per-user' });
+        req.flush([
+            {
+                id: 4,
+                testRun: false,
+                workingTime: 3600,
+                submitted: true,
+                startedDate: '2026-01-01T10:00:00Z',
+                submissionDate: '2026-01-01T10:30:00Z',
+                exam: { id: 2, title: 'Test exam', examMode: 'TEST', workingTime: 7200, course: { id: 1, accuracyOfScores: 1 } },
+            },
+        ]);
+
+        expect(completed).toBe(true);
+        const loaded = service.testStudentExams();
+        expect(loaded).toHaveLength(1);
+        const loadedExam = loaded[0];
+        expect(loadedExam).toMatchObject({ id: 4, testRun: false, workingTime: 3600, submitted: true });
+        expect(dayjs.isDayjs(loadedExam.startedDate)).toBe(true);
+        expect(dayjs.isDayjs(loadedExam.submissionDate)).toBe(true);
+        expect(loadedExam.exam).toStrictEqual({ id: 2, title: 'Test exam', examMode: ExamMode.TEST, workingTime: 7200, course: { id: 1, accuracyOfScores: 1 } });
     });
 
     it('should submit a StudentExam successfully', async () => {
@@ -347,17 +374,20 @@ describe('ExamParticipationService', () => {
             });
 
         const req = httpMock.expectOne({ method: 'POST' });
-        expect(req.request.url).toBe('api/exam/courses/1/exams/1/student-exams/submit');
+        expect(req.request.url).toBe('/api/exam/courses/1/exams/1/student-exams/submit');
         req.flush(null);
         expect(received).toBeNull();
     });
-    it('should fetch real exam sidebar data successfully', async () => {
-        const returnedFromService = [{ id: 1, title: 'Exam 1' } as Exam];
-        service.getRealExamSidebarData(1).subscribe((resp: Exam[]) => expect(resp).toMatchObject(returnedFromService));
+    it('should fetch real exam sidebar data successfully', () => {
+        let received: Exam[] | undefined;
+        service.getRealExamSidebarData(1).subscribe((exams) => (received = exams));
 
-        const req = httpMock.expectOne({ method: 'GET' });
-        expect(req.request.url).toBe('api/exam/courses/1/real-exams-sidebar-data');
-        req.flush(returnedFromService);
+        const req = httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/real-exams-sidebar-data' });
+        req.flush([{ id: 1, title: 'Exam 1', startDate: '2026-01-01T10:00:00Z', workingTime: 3600, examMaxPoints: 10, moduleNumber: 'M1' }]);
+
+        expect(received).toHaveLength(1);
+        expect(received![0]).toMatchObject({ id: 1, title: 'Exam 1', workingTime: 3600, examMaxPoints: 10, moduleNumber: 'M1' });
+        expect(received![0].startDate?.toISOString()).toBe('2026-01-01T10:00:00.000Z');
     });
 
     it('should throw error if submission is not in time', async () => {
@@ -412,15 +442,21 @@ describe('ExamParticipationService', () => {
         req.flush('Hand-in failed', errorResponse);
     });
 
-    describe('Athena feedback for test exams', () => {
+    describe('Athena feedback requests of the generated client', () => {
+        let studentExamApi: StudentExamApi;
+
+        beforeEach(() => {
+            studentExamApi = TestBed.inject(StudentExamApi);
+        });
+
         it('should POST to the request-feedback endpoint with an empty body', () => {
             let nextCalled = false;
-            service
+            studentExamApi
                 .requestAthenaFeedback(7, 8, 9)
                 .pipe(take(1))
                 .subscribe(() => (nextCalled = true));
 
-            const req = httpMock.expectOne({ method: 'POST', url: 'api/exam/courses/7/exams/8/student-exams/9/request-feedback' });
+            const req = httpMock.expectOne({ method: 'POST', url: '/api/exam/courses/7/exams/8/student-exams/9/request-feedback' });
             expect(req.request.body).toBeNull();
             req.flush(null);
 
@@ -429,13 +465,13 @@ describe('ExamParticipationService', () => {
 
         it('should GET the Athena feedback usage and return used/limit', () => {
             const usage = { used: 3, limit: 10 };
-            let received: { used: number; limit: number } | undefined;
-            service
+            let received: AthenaFeedbackUsage | undefined;
+            studentExamApi
                 .getAthenaFeedbackUsage(7, 8, 9)
                 .pipe(take(1))
                 .subscribe((resp) => (received = resp));
 
-            const req = httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/7/exams/8/student-exams/9/athena-feedback-usage' });
+            const req = httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/7/exams/8/student-exams/9/athena-feedback-usage' });
             req.flush(usage);
 
             expect(received).toEqual(usage);
@@ -443,14 +479,14 @@ describe('ExamParticipationService', () => {
 
         it('should propagate errors from the request-feedback endpoint', () => {
             let errorStatus: number | undefined;
-            service
+            studentExamApi
                 .requestAthenaFeedback(1, 2, 3)
                 .pipe(take(1))
                 .subscribe({
                     error: (err: HttpErrorResponse) => (errorStatus = err.status),
                 });
 
-            const req = httpMock.expectOne({ method: 'POST', url: 'api/exam/courses/1/exams/2/student-exams/3/request-feedback' });
+            const req = httpMock.expectOne({ method: 'POST', url: '/api/exam/courses/1/exams/2/student-exams/3/request-feedback' });
             req.flush('rate limit reached', new HttpErrorResponse({ status: 400 }));
 
             expect(errorStatus).toBe(400);
@@ -550,12 +586,182 @@ describe('ExamParticipationService', () => {
             expect(loaded?.exercises?.[0].exerciseGroup?.exam).toBe(loaded?.exam);
             expect(loaded?.exam?.startDate?.toISOString()).toBe('2026-01-01T10:00:00.000Z');
         });
-        httpMock.expectOne({ method: 'GET', url: 'api/exam/courses/1/exams/2/student-exams/3/conduction' }).flush({
+        httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/exams/2/student-exams/3/conduction' }).flush({
             id: 3,
             exam: { id: 2, startDate: '2026-01-01T10:00:00Z' },
             examSessions: [{ sessionToken: 'session-token' }],
             exercises: [{ id: 7, type: 'text', exerciseGroup: { id: 8, title: 'Group', isMandatory: true } }],
         });
         expect(TestBed.inject(SessionStorageService).retrieve('ExamSessionToken')).toBe('session-token');
+    });
+
+    it('converts the student exam dates of the own exam and the test run but leaves exercises untouched', () => {
+        const response = {
+            id: 3,
+            startedDate: '2026-01-01T10:05:00Z',
+            submissionDate: '2026-01-01T10:50:00Z',
+            exam: { id: 2, endDate: '2026-01-01T12:00:00Z' },
+            exercises: [{ id: 7, releaseDate: '2026-01-01T08:00:00Z' }],
+        };
+        const loaded: StudentExam[] = [];
+        service.getOwnStudentExam(1, 2).subscribe((value) => loaded.push(value));
+        const { exercises: _exercises, ...ownResponse } = response;
+        httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/exams/2/own-student-exam' }).flush(ownResponse);
+        service.loadTestRunWithExercisesForConduction(1, 2, 3).subscribe((value) => loaded.push(value));
+        httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/exams/2/test-runs/3/conduction' }).flush(response);
+
+        expect(loaded).toHaveLength(2);
+        for (const studentExam of loaded) {
+            expect(dayjs.isDayjs(studentExam.startedDate)).toBe(true);
+            expect(dayjs.isDayjs(studentExam.submissionDate)).toBe(true);
+            expect(dayjs.isDayjs(studentExam.exam?.endDate)).toBe(true);
+        }
+        expect(loaded[1].exercises?.[0].releaseDate).toBe('2026-01-01T08:00:00Z');
+    });
+
+    describe('wire contract pins', () => {
+        const conductionResponse = () => ({
+            id: 3,
+            workingTime: 3600,
+            started: true,
+            startedDate: '2026-01-01T10:05:00Z',
+            submitted: false,
+            submissionDate: '2026-01-01T10:50:00Z',
+            testRun: false,
+            ended: false,
+            user: { id: 5, login: 'student', name: 'Stu Dent' },
+            exam: {
+                id: 2,
+                title: 'Exam',
+                visibleDate: '2026-01-01T09:00:00Z',
+                startDate: '2026-01-01T10:00:00Z',
+                endDate: '2026-01-01T12:00:00Z',
+                examMode: 'REAL',
+                course: { id: 1 },
+            },
+            examSessions: [{ id: 1, sessionToken: 'token-1', createdDate: '2026-01-01T10:01:00Z' }],
+            exercises: [
+                {
+                    id: 7,
+                    type: 'text',
+                    title: 'Text',
+                    exerciseGroup: { id: 8, title: 'Group', isMandatory: true },
+                    studentParticipations: [
+                        {
+                            id: 11,
+                            initializationDate: '2026-01-01T10:02:00Z',
+                            submissions: [
+                                {
+                                    id: 12,
+                                    submissionExerciseType: 'text',
+                                    text: 'answer',
+                                    submissionDate: '2026-01-01T10:03:00Z',
+                                    results: [{ id: 13, completionDate: '2026-01-01T10:04:00Z', score: 50 }],
+                                },
+                            ],
+                        },
+                    ],
+                },
+                {
+                    id: 9,
+                    type: 'quiz',
+                    title: 'Quiz',
+                    releaseDate: '2026-01-01T08:00:00Z',
+                    dueDate: '2026-01-01T11:00:00Z',
+                    quizQuestions: [{ id: 21, type: 'multiple-choice', answerOptions: [{ id: 22, text: 'a' }] }],
+                    studentParticipations: [
+                        {
+                            id: 14,
+                            submissions: [
+                                {
+                                    id: 15,
+                                    submissionExerciseType: 'quiz',
+                                    submittedAnswers: [{ id: 16, type: 'multiple-choice', quizQuestion: { id: 21 }, selectedOptions: [{ id: 22 }] }],
+                                },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        });
+
+        it('maps a conduction response to the domain object', () => {
+            const emitted: StudentExam[] = [];
+            service.currentlyLoadedStudentExam.subscribe((value) => emitted.push(value));
+            let loaded: StudentExam | undefined;
+            service.loadStudentExamWithExercisesForConduction(1, 2, 3).subscribe((value) => (loaded = value));
+            const req = httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/1/exams/2/student-exams/3/conduction' });
+            req.flush(conductionResponse());
+
+            expect(loaded).toBeDefined();
+            expect(emitted).toHaveLength(1);
+            expect(emitted[0]).toBe(loaded);
+            expect(TestBed.inject(SessionStorageService).retrieve('ExamSessionToken')).toBe('token-1');
+            // the conduction path leaves the student exam's own dates as the strings the server sent
+            expect(loaded!.startedDate).toBe('2026-01-01T10:05:00Z');
+            expect(loaded!.submissionDate).toBe('2026-01-01T10:50:00Z');
+            expect(dayjs.isDayjs(loaded!.exam!.startDate)).toBe(true);
+            expect(dayjs.isDayjs(loaded!.exam!.visibleDate)).toBe(true);
+            expect(dayjs.isDayjs(loaded!.exam!.endDate)).toBe(true);
+            expect(loaded!.exam!.publishResultsDate).toBeUndefined();
+            expect(loaded!.exam!.examMode).toBe('REAL');
+            expect(loaded!.examSessions![0].sessionToken).toBe('token-1');
+            expect(loaded!.user).toStrictEqual({ id: 5, login: 'student', name: 'Stu Dent' });
+
+            const [text, quiz] = loaded!.exercises!;
+            expect(text.exerciseGroup!.exam).toBe(loaded!.exam);
+            expect(text.exerciseGroup).toMatchObject({ id: 8, title: 'Group', isMandatory: true });
+            expect(quiz.exerciseGroup).toBeInstanceOf(Object);
+            expect(quiz.exerciseGroup!.exam).toBe(loaded!.exam);
+            expect(dayjs.isDayjs(quiz.releaseDate)).toBe(true);
+            expect(dayjs.isDayjs(quiz.dueDate)).toBe(true);
+            const textParticipation = text.studentParticipations![0];
+            expect(dayjs.isDayjs(textParticipation.initializationDate)).toBe(true);
+            const textSubmission = textParticipation.submissions![0];
+            expect(textSubmission).toMatchObject({ id: 12, text: 'answer', submissionExerciseType: 'text' });
+            expect(textSubmission.submissionDate).toBe('2026-01-01T10:03:00Z');
+            expect(textSubmission.results![0]).toMatchObject({ id: 13, score: 50 });
+            expect(textSubmission.results![0].completionDate).toBe('2026-01-01T10:04:00Z');
+            const quizSubmission = quiz.studentParticipations![0].submissions![0];
+            expect(JSON.parse(JSON.stringify(quizSubmission))).toStrictEqual({
+                id: 15,
+                submissionExerciseType: 'quiz',
+                submittedAnswers: [{ id: 16, type: 'multiple-choice', quizQuestion: { id: 21 }, selectedOptions: [{ id: 22 }] }],
+            });
+        });
+
+        it('posts the exact hand-in body for a student exam as the conduction response delivers it', () => {
+            let loaded: StudentExam | undefined;
+            service.loadStudentExamWithExercisesForConduction(1, 2, 3).subscribe((value) => (loaded = value));
+            httpMock.expectOne({ method: 'GET' }).flush(conductionResponse());
+
+            service.submitStudentExam(1, 2, loaded!).subscribe();
+            const req = httpMock.expectOne({ method: 'POST', url: '/api/exam/courses/1/exams/2/student-exams/submit' });
+            expect(JSON.parse(JSON.stringify(req.request.body))).toStrictEqual({
+                id: 3,
+                exercises: [
+                    {
+                        id: 7,
+                        studentParticipations: [{ id: 11, submissions: [{ submissionExerciseType: 'text', id: 12, text: 'answer' }] }],
+                    },
+                    {
+                        id: 9,
+                        studentParticipations: [
+                            {
+                                id: 14,
+                                submissions: [
+                                    {
+                                        submissionExerciseType: 'quiz',
+                                        id: 15,
+                                        submittedAnswers: [{ type: 'multiple-choice', quizQuestion: { id: 21 }, selectedOptions: [{ id: 22 }] }],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            });
+            req.flush(null);
+        });
     });
 });

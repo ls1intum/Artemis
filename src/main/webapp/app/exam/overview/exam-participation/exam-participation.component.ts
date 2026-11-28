@@ -49,7 +49,7 @@ import {
 } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamUserApi } from 'app/openapi/api/exam-user-api';
 import { CourseOverviewTabDataService } from 'app/course/overview/services/course-overview-tab-data.service';
 import { ExamForOverview } from 'app/exam/shared/entities/exam-for-overview.model';
 import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
@@ -119,7 +119,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private courseService = inject(CourseManagementService);
     private courseStorageService = inject(CourseStorageService);
     private examExerciseUpdateService = inject(ExamExerciseUpdateService);
-    private examManagementService = inject(ExamManagementService);
+    private examUserApi = inject(ExamUserApi);
     private courseOverviewTabDataService = inject(CourseOverviewTabDataService);
 
     /**
@@ -760,9 +760,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (!isRealExam(this.exam()) || !this.exam().examWithAttendanceCheck || this.handInEarly()) {
             this.handleHandInEarly();
         } else {
-            this.examManagementService.isAttendanceChecked(this.courseId(), this.examId()).subscribe((res) => {
-                if (res.body) {
-                    this.attendanceChecked.set(res.body);
+            this.examUserApi.isAttendanceChecked(this.courseId(), this.examId()).subscribe((checked) => {
+                if (checked) {
+                    this.attendanceChecked.set(checked);
                 }
                 this.handleHandInEarly();
             });

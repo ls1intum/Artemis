@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Shared response projection of a {@link StudentExam}, used by the management/test-run endpoints in
@@ -21,8 +22,8 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
  * of the seven in-scope endpoints serialize them today.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record StudentExamDTO(long id, Integer workingTime, Boolean started, ZonedDateTime startedDate, Boolean submitted, ZonedDateTime submissionDate, boolean testRun,
-        UserNameDTO user, ExamForStudentExamDTO exam) {
+public record StudentExamDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long id, Integer workingTime, Boolean started, ZonedDateTime startedDate, Boolean submitted,
+        ZonedDateTime submissionDate, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean testRun, UserNameDTO user, ExamForStudentExamDTO exam) {
 
     /**
      * Converts a StudentExam into a StudentExamDTO without the nested user or exam.

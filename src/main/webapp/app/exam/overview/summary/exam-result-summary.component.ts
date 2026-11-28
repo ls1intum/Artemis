@@ -1,4 +1,4 @@
-import { EMPTY, Subscription, catchError, defer, expand, filter, interval, map, of, retry, switchMap, take, takeWhile, throwError, timer } from 'rxjs';
+import { EMPTY, Subscription, catchError, defer, expand, filter, interval, of, retry, switchMap, take, takeWhile, throwError, timer } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
@@ -231,7 +231,7 @@ export class ExamResultSummaryComponent implements OnInit {
             const grades = this.instructorView()
                 ? suppliedGrades
                     ? of(suppliedGrades)
-                    : this.studentExamService.find(this.courseId(), studentExam.exam.id, studentExam.id).pipe(map((response) => response.body!))
+                    : this.studentExamService.find(this.courseId(), studentExam.exam.id, studentExam.id)
                 : defer(() =>
                       this.studentExam().id === studentExam.id
                           ? this.examParticipationService.loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam!.id!, studentExam.id!)
@@ -264,7 +264,7 @@ export class ExamResultSummaryComponent implements OnInit {
                                     return EMPTY;
                                 }
                                 return this.instructorView()
-                                    ? this.studentExamService.find(this.courseId(), studentExam.exam!.id!, studentExam.id!).pipe(map((response) => response.body!))
+                                    ? this.studentExamService.find(this.courseId(), studentExam.exam!.id!, studentExam.id!)
                                     : this.examParticipationService.loadStudentExamGradeInfoForSummary(this.courseId(), studentExam.exam!.id!, studentExam.id!);
                             }),
                             // A transient refresh failure leaves the pending state visible and retries on the next interval.

@@ -1,8 +1,8 @@
 import { signal, untracked } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
-import { ExamConductionCounts } from 'app/exam/shared/entities/exam-conduction-counts.model';
+import type { ExamChecklist } from 'app/openapi/model/exam-checklist';
+import type { ExamConductionCounts } from 'app/openapi/model/exam-conduction-counts';
 
 /** Keeps the initial checklist and live events together while bounding count refreshes to one per second. */
 export class ExamConductionCountsState {
@@ -34,7 +34,7 @@ export class ExamConductionCountsState {
         this.numberOfGeneratedStudentExams.set(0);
     }
 
-    initialize(checklist?: ExamChecklist): void {
+    initialize(checklist?: Pick<ExamChecklist, 'numberOfGeneratedStudentExams' | 'numberOfExamsStarted' | 'numberOfExamsSubmitted'>): void {
         if (checklist) {
             // A response can already include an event received while the request was in flight. Do not add its delta twice.
             this.numberOfStarted.update((count) => Math.max(count, checklist.numberOfExamsStarted ?? 0));

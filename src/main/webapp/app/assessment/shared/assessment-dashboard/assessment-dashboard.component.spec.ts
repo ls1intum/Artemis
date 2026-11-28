@@ -17,6 +17,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamApi } from 'app/openapi/api/exam-api';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.model';
@@ -43,6 +44,7 @@ describe('AssessmentDashboardComponent', () => {
     let fixture: ComponentFixture<AssessmentDashboardComponent>;
 
     let examManagementService: ExamManagementService;
+    let examApi: ExamApi;
     let getExamWithInterestingExercisesForAssessmentDashboardStub: MockInstance;
     let getStatsForExamAssessmentDashboardStub: MockInstance;
 
@@ -152,14 +154,13 @@ describe('AssessmentDashboardComponent', () => {
 
                 courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
                 examManagementService = TestBed.inject(ExamManagementService);
+                examApi = TestBed.inject(ExamApi);
                 sortService = TestBed.inject(SortService);
 
                 getExamWithInterestingExercisesForAssessmentDashboardStub = vi
                     .spyOn(examManagementService, 'getExamWithInterestingExercisesForAssessmentDashboard')
-                    .mockReturnValue(of({ body: exam }) as Observable<HttpResponse<Exam>>);
-                getStatsForExamAssessmentDashboardStub = vi
-                    .spyOn(examManagementService, 'getStatsForExamAssessmentDashboard')
-                    .mockReturnValue(of({ body: courseTutorStats }) as Observable<HttpResponse<StatsForDashboard>>);
+                    .mockReturnValue(of(exam));
+                getStatsForExamAssessmentDashboardStub = vi.spyOn(examApi, 'getStatsForExamAssessmentDashboard').mockReturnValue(of(courseTutorStats));
 
                 getCourseWithInterestingExercisesForTutorsStub = vi
                     .spyOn(courseManagementService, 'getCourseWithInterestingExercisesForTutors')
@@ -489,9 +490,7 @@ describe('AssessmentDashboardComponent', () => {
 
         const accountService = TestBed.inject(AccountService);
         vi.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
-        vi.spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').mockReturnValue(
-            of({ body: { latestIndividualEndDate: dayjs().add(2, 'hours') } as ExamInformationDTO }) as Observable<HttpResponse<ExamInformationDTO>>,
-        );
+        vi.spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').mockReturnValue(of({ latestIndividualEndDate: dayjs().add(2, 'hours') } as ExamInformationDTO));
 
         fixture.detectChanges();
 

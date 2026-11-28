@@ -8,6 +8,8 @@ import java.util.TreeMap;
 
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.exam.dto.ExamExerciseDeletionCountsDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import io.swagger.v3.oas.models.media.Discriminator;
 import io.swagger.v3.oas.models.media.IntegerSchema;
 import io.swagger.v3.oas.models.media.ObjectSchema;
@@ -26,9 +28,38 @@ class UnwrappedSchemaOpenApiCustomizerTest {
     void findsTheRecordsThatUnwrapOneComponent() {
         Map<String, String> parentByChild = UnwrappedSchemaOpenApiCustomizer.unwrappedSchemaNames();
 
-        assertThat(parentByChild).containsEntry("QuizPointStatisticsDTO", "QuizExerciseWithoutQuestionsDTO").containsEntry("QuizBatchWithPasswordDTO", "QuizBatchDTO");
+        assertThat(parentByChild).containsEntry("QuizPointStatisticsDTO", "QuizExerciseWithoutQuestionsDTO").containsEntry("QuizBatchWithPasswordDTO", "QuizBatchDTO")
+                .containsEntry("ExamDeletionSummaryDTO", "ExamExerciseDeletionCountsDTO").containsEntry("ExerciseGroupDeletionSummaryDTO", "ExamExerciseDeletionCountsDTO");
         // Records that unwrap two components keep their flat schema, so they are not listed.
         assertThat(parentByChild).doesNotContainKey("MultipleChoiceQuizQuestionWithSolutionDTO");
+    }
+
+    @Test
+    void describesAnEmbeddedRecordThatNoEndpointReferences() {
+        Map<String, Schema> schemas = schemas(Map.of("ExamDeletionSummaryDTO", new ObjectSchema()));
+
+        UnwrappedSchemaOpenApiCustomizer.describeEmbeddedSchemas(schemas, Map.of("ExamDeletionSummaryDTO", ExamExerciseDeletionCountsDTO.class));
+
+        assertThat(schemas).containsKey("ExamExerciseDeletionCountsDTO");
+        assertThat(schemas.get("ExamExerciseDeletionCountsDTO").getProperties()).containsKeys("numberOfTextExercises", "numberOfBuilds");
+    }
+
+    @Test
+    void doesNotDescribeAnEmbeddedRecordWithoutTheMark() {
+        Map<String, Schema> schemas = schemas(Map.of("ExamDeletionSummaryDTO", new ObjectSchema()));
+
+        UnwrappedSchemaOpenApiCustomizer.describeEmbeddedSchemas(schemas, Map.of("ExamDeletionSummaryDTO", ExamImportDTO.class));
+
+        assertThat(schemas).containsOnlyKeys("ExamDeletionSummaryDTO");
+    }
+
+    @Test
+    void doesNotDescribeTheEmbeddedRecordOfAnAbsentChild() {
+        Map<String, Schema> schemas = schemas(Map.of());
+
+        UnwrappedSchemaOpenApiCustomizer.describeEmbeddedSchemas(schemas, Map.of("ExamDeletionSummaryDTO", ExamExerciseDeletionCountsDTO.class));
+
+        assertThat(schemas).isEmpty();
     }
 
     @Test

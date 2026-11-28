@@ -360,6 +360,35 @@ describe('ExamParticipationLiveEventsService', () => {
         expect(eventIds).toContain(10);
     });
 
+    it('converts the dates of fetched events and skips events of an unknown type', async () => {
+        vi.spyOn(mockWebsocketService, 'subscribe').mockReturnValue(new Subject<any>().asObservable());
+        currentlyLoadedStudentExamSubject.next({ id: 5, exam: { id: 5, course: { id: 5 } } });
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const req = httpMock.expectOne({ method: 'GET', url: '/api/exam/courses/5/exams/5/student-exams/live-events' });
+        req.flush([
+            {
+                id: 1,
+                createdDate: '2021-08-02T12:00:00.000Z',
+                eventType: ExamLiveEventType.WORKING_TIME_UPDATE,
+                oldWorkingTime: 60,
+                newWorkingTime: 120,
+                courseWide: false,
+                newStartDate: '2021-08-02T13:00:00.000Z',
+            },
+            { id: 2, createdDate: '2021-08-02T11:00:00.000Z', eventType: ExamLiveEventType.EXAM_WIDE_ANNOUNCEMENT, text: 'Hello' },
+            { id: 3, createdDate: '2021-08-02T10:00:00.000Z', eventType: 'somethingNew' },
+        ]);
+
+        const events = service['events'];
+        expect(events.map((event) => event.id)).toEqual([1, 2]);
+        expect(dayjs.isDayjs(events[0].createdDate)).toBe(true);
+        const workingTimeEvent = events[0] as WorkingTimeUpdateEvent;
+        expect(workingTimeEvent.newStartDate?.toISOString()).toBe('2021-08-02T13:00:00.000Z');
+        expect(workingTimeEvent.newEndDate).toBeUndefined();
+        expect(workingTimeEvent).toMatchObject({ oldWorkingTime: 60, newWorkingTime: 120, courseWide: false });
+        expect(events[1]).toMatchObject({ text: 'Hello' });
+    });
+
     // Regression test for the race condition where a WebSocket event arrives while an HTTP
     // request is in flight. The HTTP response does NOT contain the WS event (it was created
     // after the server processed the GET request). Previously, the HTTP response would overwrite

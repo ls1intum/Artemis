@@ -27,14 +27,15 @@ export class ModelingExerciseResolver implements Resolve<ModelingExercise> {
             );
         } else if (route.params['courseId']) {
             if (route.params['examId'] && route.params['exerciseGroupId']) {
-                return this.exerciseGroupService.find(route.params['courseId'], route.params['examId'], route.params['exerciseGroupId']).pipe(
-                    filter((res) => !!res.body),
-                    map(
-                        (exerciseGroup: HttpResponse<ExerciseGroup>) =>
-                            exerciseForImportFromFile<ModelingExercise>(this.router, undefined, exerciseGroup.body!) ??
-                            new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup.body || undefined),
-                    ),
-                );
+                return this.exerciseGroupService
+                    .find(route.params['courseId'], route.params['examId'], route.params['exerciseGroupId'])
+                    .pipe(
+                        map(
+                            (exerciseGroup: ExerciseGroup) =>
+                                exerciseForImportFromFile<ModelingExercise>(this.router, undefined, exerciseGroup) ??
+                                new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, exerciseGroup),
+                        ),
+                    );
             } else {
                 return this.courseService.findForManagement(route.params['courseId']).pipe(
                     filter((res) => !!res.body),

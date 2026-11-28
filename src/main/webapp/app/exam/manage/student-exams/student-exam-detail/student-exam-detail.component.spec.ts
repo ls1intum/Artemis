@@ -5,8 +5,9 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { MockProvider } from 'ng-mocks';
+import { StudentExamApi } from 'app/openapi/api/student-exam-api';
+import type { StudentExam as GeneratedStudentExam } from 'app/openapi/model/student-exam';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -25,7 +26,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
-import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 describe('StudentExamDetailComponent', () => {
     let studentExamDetailComponentFixture: ComponentFixture<StudentExamDetailComponent>;
@@ -41,6 +42,7 @@ describe('StudentExamDetailComponent', () => {
     let result: Result;
 
     let studentExamService: any;
+    let studentExamApi: StudentExamApi;
 
     beforeEach(async () => {
         course = { id: 1 };
@@ -121,33 +123,22 @@ describe('StudentExamDetailComponent', () => {
 
         // The real server responses are slimmed DTOs, not the full StudentExam entity fixtures above — model that
         // here so the mocked service methods match the actual `StudentExamService` return types.
-        const updateWorkingTimeResponseBody: StudentExamDTO = { id: studentExam.id!, workingTime: studentExam.workingTime, testRun: !!studentExam.testRun };
-        const toggleSubmittedStateResponseBody: StudentExamDTO = {
+        const updateWorkingTimeResponseBody: GeneratedStudentExam = { id: studentExam.id!, workingTime: studentExam.workingTime, testRun: !!studentExam.testRun };
+        const toggleSubmittedStateResponseBody: GeneratedStudentExam = {
             id: studentExam2.id!,
-            submitted: studentExam2.submitted,
-            submissionDate: studentExam2.submissionDate,
+            submitted: true,
+            submissionDate: dayjs().toISOString(),
             testRun: !!studentExam2.testRun,
         };
 
         await TestBed.configureTestingModule({
             providers: [
                 MockProvider(StudentExamService, {
-                    updateWorkingTime: () => {
-                        return of(
-                            new HttpResponse({
-                                body: updateWorkingTimeResponseBody,
-                                status: 200,
-                            }),
-                        );
-                    },
-                    toggleSubmittedState: () => {
-                        return of(
-                            new HttpResponse({
-                                body: toggleSubmittedStateResponseBody,
-                                status: 200,
-                            }),
-                        );
-                    },
+                    updateWorkingTime: () => of(updateWorkingTimeResponseBody),
+                }),
+                MockProvider(StudentExamApi, {
+                    toggleStudentExamToSubmitted: () => of(toggleSubmittedStateResponseBody),
+                    unsubmitStudentExam: () => of({ id: studentExam2.id!, submitted: false, testRun: false }),
                 }),
                 {
                     provide: ActivatedRoute,
@@ -165,6 +156,7 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponentFixture = TestBed.createComponent(StudentExamDetailComponent);
         studentExamDetailComponent = studentExamDetailComponentFixture.componentInstance;
         studentExamService = TestBed.inject(StudentExamService);
+        studentExamApi = TestBed.inject(StudentExamApi);
     });
 
     afterEach(() => {
@@ -194,21 +186,14 @@ describe('StudentExamDetailComponent', () => {
         // The server response for the working-time PATCH is a slimmed DTO: no `user`/`exercises`, and its nested
         // `exam` lacks `startDate`/`gracePeriod`. Ensure saveWorkingTime() merges instead of replacing wholesale.
         exam.gracePeriod = 300;
-        const slimmedResponseBody: StudentExamDTO = {
+        const slimmedResponseBody: GeneratedStudentExam = {
             id: studentExam.id!,
             workingTime: 4200,
             submissionDate: undefined,
             testRun: false,
             exam: { id: exam.id!, title: exam.title, examMode: ExamMode.REAL, workingTime: 4200 },
         };
-        const studentExamSpy = vi.spyOn(studentExamService, 'updateWorkingTime').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: slimmedResponseBody,
-                    status: 200,
-                }),
-            ),
-        );
+        const studentExamSpy = vi.spyOn(studentExamService, 'updateWorkingTime').mockReturnValue(of(slimmedResponseBody));
         studentExamDetailComponentFixture.detectChanges();
 
         studentExamDetailComponent.saveWorkingTime();
@@ -278,7 +263,7 @@ describe('StudentExamDetailComponent', () => {
     });
 
     it('should toggle to unsubmitted', () => {
-        const toggleSubmittedStateSpy = vi.spyOn(studentExamService, 'toggleSubmittedState');
+        const toggleSubmittedStateSpy = vi.spyOn(studentExamApi, 'toggleStudentExamToSubmitted');
         studentExamDetailComponentFixture.detectChanges();
         expect(studentExamDetailComponent.studentExam()!.submitted).toBeUndefined();
         expect(studentExamDetailComponent.studentExam()!.submissionDate).toBeUndefined();
@@ -286,10 +271,25 @@ describe('StudentExamDetailComponent', () => {
         studentExamDetailComponent.toggle();
 
         expect(toggleSubmittedStateSpy).toHaveBeenCalledOnce();
+        expect(toggleSubmittedStateSpy).toHaveBeenCalledWith(1, exam.id, studentExam.id);
         expect(studentExamDetailComponent.studentExam()!.submitted).toBe(true);
         // the toggle uses the current time as submission date,
         // therefore no useful assertion about a concrete value is possible here
         expect(studentExamDetailComponent.studentExam()!.submissionDate).toBeDefined();
+    });
+
+    it('should unsubmit a submitted student exam', () => {
+        const unsubmitSpy = vi.spyOn(studentExamApi, 'unsubmitStudentExam');
+        const submitSpy = vi.spyOn(studentExamApi, 'toggleStudentExamToSubmitted');
+        studentExamDetailComponentFixture.detectChanges();
+        studentExamDetailComponent.studentExam.update((current) => cloneWith(current!, { submitted: true }));
+
+        studentExamDetailComponent.toggle();
+
+        expect(unsubmitSpy).toHaveBeenCalledOnce();
+        expect(submitSpy).not.toHaveBeenCalled();
+        expect(studentExamDetailComponent.studentExam()!.submitted).toBe(false);
+        expect(studentExamDetailComponent.studentExam()!.submissionDate).toBeUndefined();
     });
 
     it('should open the confirmation dialog and toggle on confirm', () => {

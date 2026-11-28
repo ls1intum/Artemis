@@ -1,65 +1,70 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { HttpClient, provideHttpClient } from '@angular/common/http';
-import { of } from 'rxjs';
-import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('Exercise Group Service', () => {
-    let httpClient: any;
-    let httpClientDeleteSpy: any;
     let service: ExerciseGroupService;
+    let httpMock: HttpTestingController;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({
-            providers: [provideHttpClient()],
-        });
-
+        TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
         service = TestBed.inject(ExerciseGroupService);
-        httpClient = TestBed.inject(HttpClient);
-        httpClientDeleteSpy = vi.spyOn(httpClient, 'delete').mockImplementation(() => {
-            return {} as any;
-        });
+        httpMock = TestBed.inject(HttpTestingController);
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
+        httpMock.verify();
     });
 
-    it('should set additional parameters correctly in delete', () => {
-        service.delete(1, 2, 3, true, false);
-        expect(httpClientDeleteSpy).toHaveBeenCalledOnce();
-        expect(httpClientDeleteSpy.mock.calls[0]).toHaveLength(2);
-        const updates = httpClientDeleteSpy.mock.calls[0][1].params.updates;
-        expect(updates).toEqual(
-            expect.arrayContaining([
-                { op: 's', param: 'deleteStudentReposBuildPlans', value: 'true' },
-                { op: 's', param: 'deleteBaseReposBuildPlans', value: 'false' },
-            ]),
-        );
-    });
+    it('should GET the group with the enums of the domain classes', () => {
+        let group: ExerciseGroup | undefined;
+        service.find(1, 2, 3).subscribe((result) => (group = result));
 
-    it('should PUT the target group id when moving an exercise to a different group', () => {
-        const httpClientPutSpy = vi.spyOn(httpClient, 'put').mockImplementation(() => {
-            return {} as any;
+        const req = httpMock.expectOne('/api/exam/courses/1/exams/2/exercise-groups/3');
+        expect(req.request.method).toBe('GET');
+        req.flush({
+            id: 3,
+            title: 'Group',
+            isMandatory: true,
+            exam: { id: 2, examMode: 'TEST', exampleSolutionPublicationDate: '2026-01-02T03:04:05Z', course: { id: 1, defaultProgrammingLanguage: 'JAVA' } },
         });
 
-        service.moveExerciseToGroup(1, 2, 3, 4);
-
-        expect(httpClientPutSpy).toHaveBeenCalledWith('api/exam/courses/1/exams/2/exercises/3/exercise-group', { exerciseGroupId: 4 }, { observe: 'response' });
+        expect(Object.keys(group?.exam ?? {}).sort()).toEqual(['course', 'examMode', 'exampleSolutionPublicationDate', 'id']);
+        expect(Object.keys(group?.exam?.course ?? {}).sort()).toEqual(['defaultProgrammingLanguage', 'id']);
+        expect(group?.id).toBe(3);
+        expect(group?.title).toBe('Group');
+        expect(group?.isMandatory).toBe(true);
+        expect(group?.exam?.id).toBe(2);
+        expect(group?.exam?.examMode).toBe(ExamMode.TEST);
+        // as the server sent it: the old client left the string in place
+        expect(group?.exam?.exampleSolutionPublicationDate).toBe('2026-01-02T03:04:05Z');
+        expect(group?.exam?.course?.id).toBe(1);
+        expect(group?.exam?.course?.defaultProgrammingLanguage).toBe(ProgrammingLanguage.JAVA);
+        expect(group?.exercises).toBeUndefined();
     });
 
-    it('should group the deletion summary of an exercise group into categories', () => {
-        const httpClientGetSpy = vi.spyOn(httpClient, 'get').mockReturnValue(of({ numberOfTextExercises: 2, numberOfStudentParticipations: 600, numberOfStudentExams: 30 }));
-        let categories: EntitySummaryCategory[] | undefined;
+    it('should leave out the exam and the dates the server does not send', () => {
+        let group: ExerciseGroup | undefined;
+        service.find(1, 2, 3).subscribe((result) => (group = result));
 
-        service.getDeletionSummary(1, 2, 3).subscribe((value) => (categories = value));
+        httpMock.expectOne('/api/exam/courses/1/exams/2/exercise-groups/3').flush({ id: 3, exam: { id: 2 } });
 
-        expect(httpClientGetSpy).toHaveBeenCalledWith('api/exam/courses/1/exams/2/exercise-groups/3/deletion-summary');
-        expect(categories!.map((category) => category.titleKey)).toEqual([
-            'artemisApp.examManagement.delete.summary.category.structure',
-            'artemisApp.examManagement.delete.summary.category.studentWork',
-        ]);
-        expect(categories![1].items.find((item) => item.value === 600)?.highlight).toBe(true);
+        expect(group?.exam?.exampleSolutionPublicationDate).toBeUndefined();
+        expect(group?.exam?.course).toBeUndefined();
+        expect(group?.exam?.examMode).toBeUndefined();
+    });
+
+    it('should propagate the error of the request', () => {
+        let status: number | undefined;
+        service.find(1, 2, 3).subscribe({ error: (error) => (status = error.status) });
+
+        httpMock.expectOne('/api/exam/courses/1/exams/2/exercise-groups/3').flush(null, { status: 404, statusText: 'Not Found' });
+
+        expect(status).toBe(404);
     });
 });

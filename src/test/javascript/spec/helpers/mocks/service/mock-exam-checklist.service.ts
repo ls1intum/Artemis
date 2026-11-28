@@ -1,5 +1,5 @@
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
+import { ExamChecklist } from 'app/openapi/model/exam-checklist';
 import { EMPTY, of } from 'rxjs';
 
 export class MockExamChecklistService {
@@ -32,7 +32,7 @@ export class MockExamChecklistService {
     }
 
     getExamStatistics(exam: Exam) {
-        const checklist = new ExamChecklist();
+        const checklist: ExamChecklist = { numberOfTotalParticipationsForAssessment: 0, existsUnassessedQuizzes: false, existsUnsubmittedExercises: false };
         checklist.allExamExercisesAllStudentsPrepared = true;
         return of(checklist);
     }

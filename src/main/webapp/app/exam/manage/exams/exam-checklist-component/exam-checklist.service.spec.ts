@@ -1,14 +1,13 @@
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { HttpResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Course } from 'app/course/shared/entities/course.model';
-import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
+import { ExamChecklist } from 'app/openapi/model/exam-checklist';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { MockProvider } from 'ng-mocks';
 import { of, take } from 'rxjs';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
-import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamApi } from 'app/openapi/api/exam-api';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 function getExerciseGroups(equalPoints: boolean) {
@@ -31,20 +30,20 @@ function getExerciseGroups(equalPoints: boolean) {
 describe('ExamChecklistService', () => {
     let service: ExamChecklistService;
     const exam = new Exam();
-    const examChecklist = new ExamChecklist();
-    let examManagementService: ExamManagementService;
+    const examChecklist: ExamChecklist = { numberOfTotalParticipationsForAssessment: 0, existsUnassessedQuizzes: false, existsUnsubmittedExercises: false };
+    let examApi: ExamApi;
 
     let result: boolean;
     let numericResult: number;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            providers: [MockProvider(ExamManagementService), { provide: AccountService, useClass: MockAccountService }],
+            providers: [MockProvider(ExamApi), { provide: AccountService, useClass: MockAccountService }],
         }).compileComponents();
 
         vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(false);
         service = TestBed.inject(ExamChecklistService);
-        examManagementService = TestBed.inject(ExamManagementService);
+        examApi = TestBed.inject(ExamApi);
     });
 
     afterEach(() => {
@@ -83,16 +82,16 @@ describe('ExamChecklistService', () => {
 
     it('should choose instructor statistics using known numeric course membership', () => {
         const access = vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(true);
-        const stats = vi.spyOn(examManagementService, 'getExamStatistics').mockReturnValue(of(new HttpResponse({ body: examChecklist })));
+        const stats = vi.spyOn(examApi, 'getExamStatisticsForInstructor').mockReturnValue(of(examChecklist));
         service.getExamStatistics(exam).subscribe();
         expect(access).toHaveBeenCalledWith(2);
-        expect(stats).toHaveBeenCalledWith(2, 1, 'instructor');
+        expect(stats).toHaveBeenCalledWith(2, 1);
     });
 
     it.each([true, false])('only requests conduction counts for an instructor membership (%s)', (allowed) => {
         const access = vi.spyOn(TestBed.inject(AccountService), 'isAtLeastInstructorInCourseWithId').mockReturnValue(allowed);
         const counts = { numberOfGeneratedStudentExams: 8, numberOfExamsStarted: 5, numberOfExamsSubmitted: 2 };
-        const fetch = vi.spyOn(examManagementService, 'getExamConductionCounts').mockReturnValue(of(counts));
+        const fetch = vi.spyOn(examApi, 'getExamConductionCounts').mockReturnValue(of(counts));
         const received = vi.fn();
         service.getExamConductionCounts(exam).subscribe(received);
         expect(access).toHaveBeenCalledWith(2);
@@ -106,7 +105,7 @@ describe('ExamChecklistService', () => {
     });
 
     it('should return exam statistics correctly', () => {
-        const getExamStatisticsStub = vi.spyOn(examManagementService, 'getExamStatistics').mockReturnValue(of({ body: examChecklist } as HttpResponse<ExamChecklist>));
+        const getExamStatisticsStub = vi.spyOn(examApi, 'getExamStatistics').mockReturnValue(of(examChecklist));
 
         service
             .getExamStatistics(exam)
@@ -114,7 +113,7 @@ describe('ExamChecklistService', () => {
             .subscribe((checklist) => expect(checklist).toEqual(examChecklist));
 
         expect(getExamStatisticsStub).toHaveBeenCalledOnce();
-        expect(getExamStatisticsStub).toHaveBeenCalledWith(2, 1, 'tutor');
+        expect(getExamStatisticsStub).toHaveBeenCalledWith(2, 1);
     });
 
     describe('test checkTotalPointsMandatory', () => {

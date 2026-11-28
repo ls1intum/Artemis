@@ -1,16 +1,15 @@
 package de.tum.cit.aet.artemis.exam.dto;
 
-import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -34,11 +33,11 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
  * Response DTO for an {@link Exam} together with its exercise groups, returned by the detailed {@code GET} by id
  * ({@code withExerciseGroups=true}) and by {@code reset}.
  * <p>
- * It repeats the scalar exam core (kept flat on the wire so the client reads {@code exam.title} etc. unchanged) and adds
- * the two things those two screens read beyond the core: {@code numberOfExamUsers} (a transient set by
- * {@code ExamService.setExamProperties}) and the exercise groups with their exercises. {@code channelName} is
- * intentionally absent — neither the detailed get nor reset populates it today, and no consumer of these two responses
- * reads it (the edit round-trip uses the plain {@link ExamDTO} path).
+ * It embeds the scalar exam core {@link ExamDTO} with {@link JsonUnwrapped}, so the exam fields stay flat on the wire (the client
+ * reads {@code exam.title} etc. unchanged) and exist once in the schema. Beyond the core it adds the two things those two screens
+ * read: {@code numberOfExamUsers} (a transient set by {@code ExamService.setExamProperties}) and the exercise groups with their
+ * exercises. {@code channelName}, an {@link ExamDTO} field, stays absent: neither the detailed get nor reset populates it, and
+ * the transient is only set on the plain path.
  * <p>
  * Two factories serve the two fetch shapes. {@link #ofDetailed(Exam)} maps the fully hydrated graph (quiz-question count
  * and programming build-plan ids attached by {@code populate*}); {@link #ofReset(Exam)} maps the lighter reset graph
@@ -60,46 +59,14 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
  * question count, and the programming {@code template}/{@code solutionParticipation} build-plan ids). Once that branch
  * merges, unification is a rename plus a field-union, not a reshape.
  *
- * @param id                             the id of the exam
- * @param title                          the title of the exam
- * @param examMode                       the mode of the exam
- * @param examWithAttendanceCheck        whether an attendance check is enabled
- * @param visibleDate                    the date the exam becomes visible
- * @param startDate                      the exam start date
- * @param endDate                        the exam end date
- * @param publishResultsDate             the date results are published
- * @param examStudentReviewStart         the start of the student review period
- * @param examStudentReviewEnd           the end of the student review period
- * @param gracePeriod                    the grace period in seconds
- * @param workingTime                    the regular working time in seconds
- * @param startText                      the markdown start text
- * @param endText                        the markdown end text
- * @param confirmationStartText          the markdown confirmation start text
- * @param confirmationEndText            the markdown confirmation end text
- * @param examMaxPoints                  the maximum achievable points
- * @param randomizeExerciseOrder         whether the exercise order is randomized per student
- * @param numberOfExercisesInExam        the number of exercises drawn per student exam
- * @param numberOfCorrectionRoundsInExam the number of correction rounds
- * @param examiner                       the examiner
- * @param moduleNumber                   the module number
- * @param courseName                     the course name shown on the exam cover
- * @param exampleSolutionPublicationDate the date example solutions are published
- * @param examSummaryPublicationDate     the date the submission overview becomes visible to students
- * @param course                         the slim course projection (id, title, testCourse)
- * @param examArchivePath                the archive path; the exam-detail archive button reads it to enable download / cleanup
- * @param started                        whether the exam has started (computed server-side; {@code false} when no start date is set; the test-run screen reads it)
- * @param numberOfExamUsers              the number of registered exam users (transient; set by setExamProperties)
- * @param exerciseGroups                 the exercise groups with their exercises
+ * @param exam              the scalar exam core, written inline into the JSON of this record (the channel name is not set on these paths and stays absent)
+ * @param started           whether the exam has started (computed server-side; {@code false} when no start date is set; the test-run screen reads it)
+ * @param numberOfExamUsers the number of registered exam users (transient; set by setExamProperties)
+ * @param exerciseGroups    the exercise groups with their exercises
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, ExamMode examMode, boolean examWithAttendanceCheck, @Nullable ZonedDateTime visibleDate,
-        @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable ZonedDateTime publishResultsDate, @Nullable ZonedDateTime examStudentReviewStart,
-        @Nullable ZonedDateTime examStudentReviewEnd, @Nullable Integer gracePeriod, int workingTime, @Nullable String startText, @Nullable String endText,
-        @Nullable String confirmationStartText, @Nullable String confirmationEndText, int examMaxPoints, @Nullable Boolean randomizeExerciseOrder,
-        @Nullable Integer numberOfExercisesInExam, @Nullable Integer numberOfCorrectionRoundsInExam, @Nullable String examiner, @Nullable String moduleNumber,
-        @Nullable String courseName, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable ZonedDateTime examSummaryPublicationDate, @Nullable CourseForExamDTO course,
-        @Nullable String examArchivePath, boolean started, @Nullable Long numberOfExamUsers, @Nullable List<ExerciseGroupWithExercisesDTO> exerciseGroups)
-        implements ExamResponseDTO {
+public record ExamWithExerciseGroupsDTO(@JsonUnwrapped ExamDTO exam, boolean started, @Nullable Long numberOfExamUsers,
+        @Nullable List<ExerciseGroupWithExercisesDTO> exerciseGroups) implements ExamResponseDTO {
 
     /**
      * Builds the response for the detailed {@code GET} ({@code withExerciseGroups=true}): the exercise-group management
@@ -172,8 +139,6 @@ public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, ExamMod
     }
 
     private static ExamWithExerciseGroupsDTO of(Exam exam, boolean withDetails) {
-        // Single source for the shared scalar core: build the plain ExamDTO once and copy its accessors, so only ExamDTO.of
-        // reads the scalar entity getters. channelName (ExamDTO-only) is dropped; started and numberOfExamUsers are added.
         ExamDTO core = ExamDTO.of(exam);
         var exerciseGroups = exam.getExerciseGroups();
         List<ExerciseGroupWithExercisesDTO> groups = Hibernate.isInitialized(exerciseGroups) && exerciseGroups != null
@@ -181,11 +146,7 @@ public record ExamWithExerciseGroupsDTO(long id, @Nullable String title, ExamMod
                 : null;
         // isStarted() dereferences startDate, so guard the null case: a not-yet-scheduled exam reads as not started.
         boolean started = exam.getStartDate() != null && exam.isStarted();
-        return new ExamWithExerciseGroupsDTO(core.id(), core.title(), core.examMode(), core.examWithAttendanceCheck(), core.visibleDate(), core.startDate(), core.endDate(),
-                core.publishResultsDate(), core.examStudentReviewStart(), core.examStudentReviewEnd(), core.gracePeriod(), core.workingTime(), core.startText(), core.endText(),
-                core.confirmationStartText(), core.confirmationEndText(), core.examMaxPoints(), core.randomizeExerciseOrder(), core.numberOfExercisesInExam(),
-                core.numberOfCorrectionRoundsInExam(), core.examiner(), core.moduleNumber(), core.courseName(), core.exampleSolutionPublicationDate(),
-                core.examSummaryPublicationDate(), core.course(), core.examArchivePath(), started, exam.getNumberOfExamUsers(), groups);
+        return new ExamWithExerciseGroupsDTO(core, started, exam.getNumberOfExamUsers(), groups);
     }
 
     /**

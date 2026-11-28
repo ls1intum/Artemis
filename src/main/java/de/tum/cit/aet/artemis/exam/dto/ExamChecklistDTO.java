@@ -6,6 +6,8 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * This is a dto for providing statistics for the exam instructor dashboard, some values are nullable because they are not always needed
  * Instructors typically see all values, while tutors only see some values (e.g. the assessment progress and the complaint counts)
@@ -15,9 +17,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamChecklistDTO(@Nullable Long numberOfGeneratedStudentExams, @Nullable Long numberOfTestRuns,
-        @Nullable List<Long> numberOfTotalExamAssessmentsFinishedByCorrectionRound, Long numberOfTotalParticipationsForAssessment, @Nullable Long numberOfExamsSubmitted,
+        @Nullable List<Long> numberOfTotalExamAssessmentsFinishedByCorrectionRound,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long numberOfTotalParticipationsForAssessment, @Nullable Long numberOfExamsSubmitted,
         @Nullable Long numberOfExamsStarted, Long numberOfAllComplaints, Long numberOfAllComplaintsDone, @Nullable Boolean allExamExercisesAllStudentsPrepared,
-        Boolean existsUnassessedQuizzes, Boolean existsUnsubmittedExercises) {
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Boolean existsUnassessedQuizzes,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Boolean existsUnsubmittedExercises) {
 
     public ExamChecklistDTO(@Nullable List<Long> numberOfTotalExamAssessmentsFinishedByCorrectionRound, Long numberOfTotalParticipationsForAssessment, Long numberOfAllComplaints,
             Long numberOfAllComplaintsDone, Boolean existsUnassessedQuizzes, Boolean existsUnsubmittedExercises) {

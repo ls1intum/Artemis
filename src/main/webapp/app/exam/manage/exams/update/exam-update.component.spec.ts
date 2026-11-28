@@ -124,20 +124,10 @@ describe('ExamUpdateComponent', () => {
                     }),
                     MockProvider(ExamManagementService, {
                         create: () => {
-                            return of(
-                                new HttpResponse({
-                                    body: {},
-                                    status: 200,
-                                }),
-                            );
+                            return of({});
                         },
                         update: () => {
-                            return of(
-                                new HttpResponse({
-                                    body: {},
-                                    status: 200,
-                                }),
-                            );
+                            return of({});
                         },
                     }),
                     { provide: TranslateService, useClass: MockTranslateService },
@@ -599,14 +589,10 @@ describe('ExamUpdateComponent', () => {
             fixture.detectChanges();
 
             const updateSpy = vi.spyOn(examManagementService, 'update').mockReturnValue(
-                of(
-                    new HttpResponse<Exam>({
-                        body: {
-                            ...examWithoutExercises,
-                            id: 1,
-                        },
-                    }),
-                ),
+                of({
+                    ...examWithoutExercises,
+                    id: 1,
+                }),
             );
 
             // trigger save
@@ -745,14 +731,10 @@ describe('ExamUpdateComponent', () => {
             fixture.changeDetectorRef.detectChanges();
 
             const createSpy = vi.spyOn(examManagementService, 'create').mockReturnValue(
-                of(
-                    new HttpResponse<Exam>({
-                        body: {
-                            ...examWithoutExercises,
-                            id: 1,
-                        },
-                    }),
-                ),
+                of({
+                    ...examWithoutExercises,
+                    id: 1,
+                }),
             );
 
             // trigger save
@@ -1103,14 +1085,10 @@ describe('ExamUpdateComponent', () => {
         it('should not open the confirmation dialog when dates have not changed', async () => {
             const navigateSpy = vi.spyOn(router, 'navigate');
             const saveSpy = vi.spyOn(examManagementService, 'update').mockReturnValue(
-                of(
-                    new HttpResponse<Exam>({
-                        body: {
-                            ...examWithoutExercises,
-                            id: 1,
-                        },
-                    }),
-                ),
+                of({
+                    ...examWithoutExercises,
+                    id: 1,
+                }),
             );
 
             // Set up an ongoing exam
@@ -1156,14 +1134,10 @@ describe('ExamUpdateComponent', () => {
 
         it('should save and close the dialog when confirming the date change', async () => {
             const saveSpy = vi.spyOn(examManagementService, 'update').mockReturnValue(
-                of(
-                    new HttpResponse<Exam>({
-                        body: {
-                            ...examWithoutExercises,
-                            id: 1,
-                        },
-                    }),
-                ),
+                of({
+                    ...examWithoutExercises,
+                    id: 1,
+                }),
             );
 
             fixture.detectChanges();
@@ -1354,12 +1328,12 @@ describe('ExamUpdateComponent', () => {
             expectedExam.course = course;
             const alertSpy = vi.spyOn(alertService, 'error');
             const navigateSpy = vi.spyOn(router, 'navigate');
-            const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(of(new HttpResponse({ status: 200, body: { exam: examForImport } })));
+            const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(of({ exam: examForImport }));
 
             fixture.detectChanges();
             vi.spyOn(examManagementService, 'generateImportId').mockReturnValue('test-import-id');
             // The import runs behind the progress dialog; navigation happens once the user dismisses the success summary
-            vi.spyOn(component.examImportProgressDialog(), 'runImport').mockResolvedValue(new HttpResponse({ status: 200, body: { exam: examForImport } }));
+            vi.spyOn(component.examImportProgressDialog(), 'runImport').mockResolvedValue({ exam: examForImport });
             component.save();
             await Promise.resolve();
             await Promise.resolve();
@@ -1384,11 +1358,11 @@ describe('ExamUpdateComponent', () => {
             expectedExam.exerciseGroups = [exerciseGroup1];
             const alertSpy = vi.spyOn(alertService, 'error');
             const navigateSpy = vi.spyOn(router, 'navigate');
-            const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(of(new HttpResponse({ status: 200, body: { exam: examForImport } })));
+            const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(of({ exam: examForImport }));
 
             fixture.changeDetectorRef.detectChanges();
             vi.spyOn(examManagementService, 'generateImportId').mockReturnValue('test-import-id');
-            vi.spyOn(component.examImportProgressDialog(), 'runImport').mockResolvedValue(new HttpResponse({ status: 200, body: { exam: examForImport } }));
+            vi.spyOn(component.examImportProgressDialog(), 'runImport').mockResolvedValue({ exam: examForImport });
             component.save();
             await Promise.resolve();
             await Promise.resolve();
@@ -1403,14 +1377,7 @@ describe('ExamUpdateComponent', () => {
         });
 
         it('should trigger an alarm for a wrong user input in the examWithoutExercises exercises', () => {
-            const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(
-                of(
-                    new HttpResponse({
-                        status: 200,
-                        body: { exam: examForImport },
-                    }),
-                ),
-            );
+            const importSpy = vi.spyOn(examManagementService, 'import').mockReturnValue(of({ exam: examForImport }));
             const alertSpy = vi.spyOn(alertService, 'error');
 
             fixture.detectChanges();

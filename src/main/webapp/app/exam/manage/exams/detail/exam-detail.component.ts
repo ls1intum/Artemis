@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -11,6 +11,7 @@ import { examDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown, trac
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamApi } from 'app/openapi/api/exam-api';
 import dayjs from 'dayjs/esm';
 import { faAward, faClipboard, faEye, faFlaskVial, faListAlt, faThList, faTrash, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -54,6 +55,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private accountService = inject(AccountService);
     private examManagementService = inject(ExamManagementService);
+    private examApi = inject(ExamApi);
     private router = inject(Router);
     private alertService = inject(AlertService);
     private gradingService = inject(GradingService);
@@ -174,9 +176,9 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
      */
     resetExam(): void {
         this.examManagementService.reset(this.exam().course!.id!, this.exam().id!).subscribe({
-            next: (res: HttpResponse<Exam>) => {
+            next: (exam: Exam) => {
                 this.dialogErrorSource.next('');
-                this.exam.set(res.body!);
+                this.exam.set(exam);
                 this.alertService.success('artemisApp.examManagement.reset.success');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -190,7 +192,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     deleteExam(examId: number): void {
         const exam = this.exam();
         const courseId = exam.course!.id!;
-        this.entityDeletionService.delete(examDeletionTarget(courseId, examId, exam.title), this.examManagementService.delete(courseId, examId)).subscribe({
+        this.entityDeletionService.delete(examDeletionTarget(courseId, examId, exam.title), this.examApi.deleteExam(courseId, examId)).subscribe({
             next: (progress) => {
                 this.onDeletionEnded(progress, courseId, examId);
                 // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.

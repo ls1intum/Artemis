@@ -369,8 +369,8 @@ export class GradingComponent implements OnInit {
                     this.handleFindResponse(gradingSystemResponse.body);
                 }
                 if (this.isExam()) {
-                    this.examService.find(this.courseId!, this.examId!).subscribe((examResponse) => {
-                        this.exam.set(examResponse.body!);
+                    this.examService.find(this.courseId!, this.examId!).subscribe((exam) => {
+                        this.exam.set(exam);
                         this.maxPoints.set(this.exam()?.examMaxPoints);
                         this.onChangeMaxPoints(this.exam()?.examMaxPoints);
                     });

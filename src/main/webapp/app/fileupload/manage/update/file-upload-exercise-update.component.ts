@@ -248,7 +248,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                 const courseId = params['courseId'];
                 const examId = params['examId'];
 
-                this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => this.exerciseState.patch('exerciseGroup', res.body ?? undefined));
+                this.exerciseGroupService.find(courseId, examId, exerciseGroupId).subscribe((res) => this.exerciseState.patch('exerciseGroup', res));
                 this.exerciseState.patch('course', undefined);
             } else {
                 const targetCourseId = params['courseId'];

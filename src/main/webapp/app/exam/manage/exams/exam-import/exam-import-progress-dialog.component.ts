@@ -1,5 +1,4 @@
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
 import { Observable, Subscription } from 'rxjs';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
@@ -54,8 +53,8 @@ export class ExamImportProgressDialogComponent implements OnDestroy {
 
     private progressSubscription?: Subscription;
     private requestSubscription?: Subscription;
-    private resolve?: (response: HttpResponse<ExamImportResultDTO | ExerciseGroupImportResultDTO>) => void;
-    private lastResponse?: HttpResponse<ExamImportResultDTO | ExerciseGroupImportResultDTO>;
+    private resolve?: (response: ExamImportResultDTO | ExerciseGroupImportResultDTO) => void;
+    private lastResponse?: ExamImportResultDTO | ExerciseGroupImportResultDTO;
 
     /**
      * Runs the given import with a live-progress dialog.
@@ -67,27 +66,23 @@ export class ExamImportProgressDialogComponent implements OnDestroy {
      * @return a promise resolving with the import response once the user dismisses the dialog; rejects with the request
      *         error (e.g. a validation failure returned before the import starts) without showing a summary
      */
-    runImport<T extends ExamImportResultDTO | ExerciseGroupImportResultDTO>(
-        importId: string,
-        totalExercises: number,
-        request$: Observable<HttpResponse<T>>,
-    ): Promise<HttpResponse<T>> {
+    runImport<T extends ExamImportResultDTO | ExerciseGroupImportResultDTO>(importId: string, totalExercises: number, request$: Observable<T>): Promise<T> {
         this.reset();
         this.totalExercises.set(totalExercises);
         this.progressSubscription = this.examManagementService.subscribeToImportProgress(importId).subscribe((progress) => this.applyProgress(progress));
 
-        return new Promise<HttpResponse<T>>((resolve, reject) => {
+        return new Promise<T>((resolve, reject) => {
             this.requestSubscription = request$.subscribe({
                 next: (response) => {
                     // The HTTP response is authoritative for the final outcome (robust even if the terminal websocket event is lost):
                     // the skipped/incomplete titles come from the response, the total is the caller-provided count, so the summary is correct.
-                    this.skippedExercises.set(response.body?.skippedExercises ?? []);
-                    this.incompleteExercises.set(response.body?.incompleteExercises ?? []);
+                    this.skippedExercises.set(response.skippedExercises ?? []);
+                    this.incompleteExercises.set(response.incompleteExercises ?? []);
                     this.processedExercises.set(this.totalExercises());
                     this.ready.set(true);
                     this.visible.set(true);
                     this.lastResponse = response;
-                    this.resolve = resolve as (response: HttpResponse<ExamImportResultDTO | ExerciseGroupImportResultDTO>) => void;
+                    this.resolve = resolve as (response: ExamImportResultDTO | ExerciseGroupImportResultDTO) => void;
                 },
                 error: (error) => {
                     // Validation errors (e.g. duplicate short name) are returned before any progress; let the caller handle them as before.

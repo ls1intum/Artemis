@@ -3,8 +3,8 @@ import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
 import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/exam/shared/entities/exam-session.model';
-import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
+import type { SuspiciousExamSessions } from 'app/openapi/model/suspicious-exam-sessions';
+import { ExamApi } from 'app/openapi/api/exam-api';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -37,7 +37,7 @@ import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/cours
     ],
 })
 export class SuspiciousBehaviorComponent implements OnInit {
-    private suspiciousSessionsService = inject(SuspiciousSessionsService);
+    private examApi = inject(ExamApi);
     private activatedRoute = inject(ActivatedRoute);
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private examService = inject(ExamManagementService);
@@ -117,25 +117,28 @@ export class SuspiciousBehaviorComponent implements OnInit {
     }
 
     analyzeSessions() {
-        const options = new SuspiciousSessionsAnalysisOptions(
-            this.checkboxCriterionDifferentStudentExamsSameIPAddressChecked(),
-            this.checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked(),
-            this.checkboxCriterionSameStudentExamDifferentIPAddressesChecked(),
-            this.checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked(),
-            this.checkboxCriterionIPOutsideOfASpecificRangeChecked(),
-            this.ipSubnet(),
-        );
         this.analyzing.set(true);
-        this.suspiciousSessionsService.getSuspiciousSessions(this.courseId()!, this.examId()!, options).subscribe({
-            next: (suspiciousSessions) => {
-                this.suspiciousSessions.set(suspiciousSessions);
-                this.analyzing.set(false);
-                this.analyzed.set(true);
-            },
-            error: () => {
-                this.analyzing.set(false);
-                this.analyzed.set(true);
-            },
-        });
+        this.examApi
+            .getAllSuspiciousExamSessions(
+                this.courseId()!,
+                this.examId()!,
+                this.checkboxCriterionDifferentStudentExamsSameIPAddressChecked(),
+                this.checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked(),
+                this.checkboxCriterionSameStudentExamDifferentIPAddressesChecked(),
+                this.checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked(),
+                this.checkboxCriterionIPOutsideOfASpecificRangeChecked(),
+                this.ipSubnet() || undefined,
+            )
+            .subscribe({
+                next: (suspiciousSessions) => {
+                    this.suspiciousSessions.set(suspiciousSessions);
+                    this.analyzing.set(false);
+                    this.analyzed.set(true);
+                },
+                error: () => {
+                    this.analyzing.set(false);
+                    this.analyzed.set(true);
+                },
+            });
     }
 }

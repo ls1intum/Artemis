@@ -2,8 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Params, convertToParamMap } from '@angular/router';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamApi } from 'app/openapi/api/exam-api';
+import { StudentExamApi } from 'app/openapi/api/student-exam-api';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { of, throwError } from 'rxjs';
@@ -30,36 +31,18 @@ describe('ExamAssessmentButtons', () => {
     let studentOne: User;
     let studentExamOne: StudentExam | undefined;
     let exam: Exam;
-    let examManagementService: ExamManagementService;
+    let examApi: ExamApi;
+    let studentExamApi: StudentExamApi;
 
     const providers = [
         MockProvider(ExamManagementService, {
-            find: () => {
-                return of(
-                    new HttpResponse({
-                        body: exam,
-                        status: 200,
-                    }),
-                );
-            },
-            assessUnsubmittedExamModelingAndTextParticipations: () => {
-                return of(
-                    new HttpResponse({
-                        body: 1,
-                        status: 200,
-                    }),
-                );
-            },
-            evaluateQuizExercises: () => {
-                return of(
-                    new HttpResponse({
-                        body: 1,
-                        status: 200,
-                    }),
-                );
-            },
+            find: () => of(exam),
         }),
-        MockProvider(StudentExamService, {
+        MockProvider(ExamApi, {
+            evaluateQuizExercises: () => of(1),
+        }),
+        MockProvider(StudentExamApi, {
+            assessUnsubmittedStudentExamsAndEmptySubmissions: () => of(undefined),
             getLongestWorkingTimeForExam: () => {
                 return of(studentExamOne?.workingTime ?? 0);
             },
@@ -125,7 +108,8 @@ describe('ExamAssessmentButtons', () => {
             .then(() => {
                 examAssessmentButtonsFixture = TestBed.createComponent(ExamAssessmentButtonsComponent);
                 examAssessmentButtonsComponent = examAssessmentButtonsFixture.componentInstance;
-                examManagementService = TestBed.inject(ExamManagementService);
+                examApi = TestBed.inject(ExamApi);
+                studentExamApi = TestBed.inject(StudentExamApi);
             });
     });
 
@@ -144,11 +128,14 @@ describe('ExamAssessmentButtons', () => {
         expect(examAssessmentButtonsComponent.isLoading()).toBe(false);
         expect(examAssessmentButtonsComponent.isExamOver()).toBe(true);
         expect(course).toBeTruthy();
-        const assessSpy = vi.spyOn(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations');
+        const assessSpy = vi.spyOn(studentExamApi, 'assessUnsubmittedStudentExamsAndEmptySubmissions');
+        const successSpy = vi.spyOn(TestBed.inject(AlertService), 'success');
         const assessButton = examAssessmentButtonsFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
         expect(assessButton).not.toBeNull();
         assessButton.nativeElement.click();
         expect(assessSpy).toHaveBeenCalledTimes(1);
+        expect(successSpy).toHaveBeenCalledWith('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess');
+        expect(examAssessmentButtonsComponent.isAssessingUnsubmittedExams()).toBe(false);
     });
 
     it('should correctly catch HTTPError when assessing unsubmitted exams', () => {
@@ -165,7 +152,7 @@ describe('ExamAssessmentButtons', () => {
         expect(examAssessmentButtonsComponent.isLoading()).toBe(false);
         expect(examAssessmentButtonsComponent.isExamOver()).toBe(true);
         expect(course).toBeTruthy();
-        vi.spyOn(examManagementService, 'assessUnsubmittedExamModelingAndTextParticipations').mockReturnValue(throwError(() => httpError));
+        vi.spyOn(studentExamApi, 'assessUnsubmittedStudentExamsAndEmptySubmissions').mockReturnValue(throwError(() => httpError));
         const assessButton = examAssessmentButtonsFixture.debugElement.query(By.css('#assessUnsubmittedExamModelingAndTextParticipationsButton'));
         expect(assessButton).toBeTruthy();
         assessButton.nativeElement.click();
@@ -182,7 +169,7 @@ describe('ExamAssessmentButtons', () => {
         expect(examAssessmentButtonsComponent.isExamOver()).toBe(true);
         expect(examAssessmentButtonsComponent.course()!.isAtLeastInstructor).toBe(true);
         expect(course).toBeTruthy();
-        const evaluateQuizExercises = vi.spyOn(examManagementService, 'evaluateQuizExercises');
+        const evaluateQuizExercises = vi.spyOn(examApi, 'evaluateQuizExercises');
         const evaluateQuizExercisesButton = examAssessmentButtonsFixture.debugElement.query(By.css('#evaluateQuizExercisesButton'));
 
         expect(evaluateQuizExercisesButton).toBeTruthy();
@@ -205,7 +192,7 @@ describe('ExamAssessmentButtons', () => {
         expect(course).toBeTruthy();
 
         const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
-        vi.spyOn(examManagementService, 'evaluateQuizExercises').mockReturnValue(throwError(() => httpError));
+        vi.spyOn(examApi, 'evaluateQuizExercises').mockReturnValue(throwError(() => httpError));
         examAssessmentButtonsFixture.detectChanges();
 
         const alertServiceSpy = vi.spyOn(alertService, 'error');

@@ -15,6 +15,7 @@ import jakarta.validation.constraints.Min;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Conditional;
@@ -22,6 +23,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -64,6 +66,9 @@ import de.tum.cit.aet.artemis.exam.dto.ExportExamUserDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exam.service.ExamUserService;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing ExamUser.
@@ -110,7 +115,7 @@ public class ExamUserResource {
      * @return saved examUser ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
     @FeatureUsage(UserFeature.EXAM_ATTENDANCE)
-    @PostMapping("courses/{courseId}/exams/{examId}/exam-users")
+    @PostMapping(value = "courses/{courseId}/exams/{examId}/exam-users", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastStudent
     @ManualConfig
     public ResponseEntity<ExamUserDTO> updateExamUser(@RequestPart ExamUserDTO examUserDTO, @RequestPart(value = "file", required = false) MultipartFile signatureFile,
@@ -164,7 +169,7 @@ public class ExamUserResource {
      * @param file     the pdf file
      * @return list of not found student matriculation numbers ResponseEntity with status 200 (OK)
      */
-    @PostMapping("courses/{courseId}/exams/{examId}/exam-users-save-images")
+    @PostMapping(value = "courses/{courseId}/exams/{examId}/exam-users-save-images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastStudent
     @ManualConfig
     public ResponseEntity<ExamUsersNotFoundDTO> saveUsersImages(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam("file") MultipartFile file) {
@@ -277,10 +282,11 @@ public class ExamUserResource {
      * @param search   search term, pagination / sorting info, and an optional filter value (e.g. {@code "Submitted"}, {@code "AttendanceNotChecked"})
      * @return ResponseEntity containing a page of {@link ExamStudentDTO} with status 200 (OK) and pagination headers
      */
+    @ApiResponse(responseCode = "200", headers = { @Header(name = "X-Total-Count", schema = @Schema(type = "integer")) })
     @GetMapping("courses/{courseId}/exams/{examId}/exam-students/paged")
     @EnforceAtLeastStudent
     @ManualConfig
-    public ResponseEntity<List<ExamStudentDTO>> getExamStudentsPaged(@PathVariable long courseId, @PathVariable long examId, @Valid PagedSearchDTO search) {
+    public ResponseEntity<List<ExamStudentDTO>> getExamStudentsPaged(@PathVariable long courseId, @PathVariable long examId, @ParameterObject @Valid PagedSearchDTO search) {
         log.debug("REST request to get paged exam-students for exam: {}", examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         Page<ExamStudentDTO> page = examUserService.findExamStudentsForExamPaged(examId, search);
@@ -318,6 +324,7 @@ public class ExamUserResource {
      * @param size       number of results per page (default 10)
      * @return a page of {@link UserForRegistrationDTO} with {@code X-Total-Count} and Link pagination headers
      */
+    @ApiResponse(responseCode = "200", headers = { @Header(name = "X-Total-Count", schema = @Schema(type = "integer")) })
     @GetMapping("courses/{courseId}/exams/{examId}/students/search")
     @EnforceAtLeastStudent
     @ManualConfig

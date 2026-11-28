@@ -8,7 +8,8 @@ import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-u
 import { TranslateService } from '@ngx-translate/core';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { HttpResponse } from '@angular/common/http';
+import { Observable, combineLatest } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -17,7 +18,6 @@ import { TextAssessmentService } from 'app/text/manage/assess/service/text-asses
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { faBan, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
-import { combineLatest } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -88,16 +88,16 @@ export class AssessmentLocksComponent implements OnInit {
      * Get all locked submissions for course and user.
      */
     getAllLockedSubmissions() {
-        let lockedSubmissionsObservable;
+        let lockedSubmissionsObservable: Observable<Submission[]>;
         if (this.examId) {
             lockedSubmissionsObservable = this.examManagementService.findAllLockedSubmissionsOfExam(this.courseId(), this.examId);
             this.showAll.set(true);
         } else {
-            lockedSubmissionsObservable = this.courseService.findAllLockedSubmissionsOfCourse(this.courseId());
+            lockedSubmissionsObservable = this.courseService.findAllLockedSubmissionsOfCourse(this.courseId()).pipe(map((response) => response.body ?? []));
         }
         lockedSubmissionsObservable.subscribe({
-            next: (response: HttpResponse<Submission[]>) => {
-                this.submissions.update((submissions) => [...submissions, ...(response.body ?? [])]);
+            next: (lockedSubmissions) => {
+                this.submissions.update((submissions) => [...submissions, ...lockedSubmissions]);
             },
             error: (response: string) => this.onError(response),
         });

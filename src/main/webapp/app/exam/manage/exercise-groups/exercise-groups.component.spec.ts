@@ -4,7 +4,7 @@ import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
 import { By } from '@angular/platform-browser';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EmbeddedViewRef } from '@angular/core';
 import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
@@ -12,12 +12,11 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { ExerciseGroupApi } from 'app/openapi/api/exercise-group-api';
 import { ExerciseGroupsComponent } from 'app/exam/manage/exercise-groups/exercise-groups.component';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -25,7 +24,7 @@ import { NEVER, Subject, of, throwError } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -56,7 +55,7 @@ describe('Exercise Groups Component', () => {
     let comp: ExerciseGroupsComponent;
     let fixture: ComponentFixture<ExerciseGroupsComponent>;
 
-    let exerciseGroupService: ExerciseGroupService;
+    let exerciseGroupApi: ExerciseGroupApi;
     let examManagementService: ExamManagementService;
     let eventManager: EventManager;
     let router: Router;
@@ -101,7 +100,7 @@ describe('Exercise Groups Component', () => {
                 fixture = TestBed.createComponent(ExerciseGroupsComponent);
                 comp = fixture.componentInstance;
 
-                exerciseGroupService = TestBed.inject(ExerciseGroupService);
+                exerciseGroupApi = TestBed.inject(ExerciseGroupApi);
                 examManagementService = TestBed.inject(ExamManagementService);
                 eventManager = TestBed.inject(EventManager);
                 alertService = TestBed.inject(AlertService);
@@ -145,13 +144,11 @@ describe('Exercise Groups Component', () => {
     });
 
     it('loads the exercise groups', async () => {
-        const mockResponse = new HttpResponse<Exam>({ body: exam });
-
-        vi.spyOn(examManagementService, 'find').mockReturnValue(of(mockResponse));
+        vi.spyOn(examManagementService, 'find').mockReturnValue(of(exam));
 
         comp.loadExerciseGroups().subscribe((response) => {
-            expect(response.body).not.toBeNull();
-            expect(response.body!.id).toBe(exam.id);
+            expect(response).not.toBeNull();
+            expect(response.id).toBe(exam.id);
         });
 
         await Promise.resolve();
@@ -159,14 +156,11 @@ describe('Exercise Groups Component', () => {
 
     it('loads exam information', async () => {
         const latestIndividualEndDate = dayjs();
-        const mockResponse = new HttpResponse<ExamInformationDTO>({ body: { latestIndividualEndDate } });
-
-        vi.spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').mockReturnValue(of(mockResponse));
+        vi.spyOn(examManagementService, 'getLatestIndividualEndDateOfExam').mockReturnValue(of({ latestIndividualEndDate }));
 
         comp.loadLatestIndividualEndDateOfExam().subscribe((response) => {
             expect(response).not.toBeNull();
-            expect(response!.body).not.toBeNull();
-            expect(response!.body!.latestIndividualEndDate).toBe(latestIndividualEndDate);
+            expect(response!.latestIndividualEndDate).toBe(latestIndividualEndDate);
         });
 
         await Promise.resolve();
@@ -183,22 +177,22 @@ describe('Exercise Groups Component', () => {
     it('deletes an exercise group', async () => {
         comp.exerciseGroups.set(groups);
 
-        vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        vi.spyOn(exerciseGroupApi, 'deleteExerciseGroup').mockReturnValue(of(undefined));
         vi.spyOn(eventManager, 'broadcast');
         vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(NEVER);
 
         comp.deleteExerciseGroup(0, {});
         await Promise.resolve();
 
-        expect(exerciseGroupService.delete).toHaveBeenCalledOnce();
+        expect(exerciseGroupApi.deleteExerciseGroup).toHaveBeenCalledOnce();
         expect(comp.exerciseGroups()).toHaveLength(groups.length - 1);
     });
 
     it('reads the exercise groups from the server after a deletion ended, because the outcome may be unknown', () => {
         comp.exerciseGroups.set(groups);
-        vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        vi.spyOn(exerciseGroupApi, 'deleteExerciseGroup').mockReturnValue(of(undefined));
         const serverGroups = [{ id: 0, title: 'still there' } as ExerciseGroup];
-        const loadSpy = vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(of(new HttpResponse<Exam>({ body: { exerciseGroups: serverGroups } as Exam })));
+        const loadSpy = vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(of({ exerciseGroups: serverGroups } as Exam));
 
         comp.deleteExerciseGroup(0, {});
 
@@ -209,7 +203,7 @@ describe('Exercise Groups Component', () => {
     it('reads the exercise groups from the server again, e.g. when it is not known how the deletion of an exercise ended', () => {
         comp.exerciseGroups.set(groups);
         const serverGroups = [{ id: 0, title: 'still there', exercises: [{ id: 11 }] } as ExerciseGroup];
-        const loadSpy = vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(of(new HttpResponse<Exam>({ body: { exerciseGroups: serverGroups } as Exam })));
+        const loadSpy = vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(of({ exerciseGroups: serverGroups } as Exam));
 
         comp.reloadExerciseGroups();
 
@@ -219,7 +213,7 @@ describe('Exercise Groups Component', () => {
 
     it('hands the exercise group to the background deletion with the title it has', () => {
         comp.exerciseGroups.set([{ id: 5, title: 'Group A' } as ExerciseGroup]);
-        vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        vi.spyOn(exerciseGroupApi, 'deleteExerciseGroup').mockReturnValue(of(undefined));
 
         comp.deleteExerciseGroup(5, { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true });
 
@@ -233,7 +227,7 @@ describe('Exercise Groups Component', () => {
     it('keeps the exercise group when the background deletion failed', () => {
         (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.FAILED;
         comp.exerciseGroups.set(groups);
-        vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        vi.spyOn(exerciseGroupApi, 'deleteExerciseGroup').mockReturnValue(of(undefined));
         const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
 
         comp.deleteExerciseGroup(0, {});
@@ -245,10 +239,10 @@ describe('Exercise Groups Component', () => {
     it('announces no deletion and reads the groups from the server when the outcome of the deletion is unknown', () => {
         (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.UNKNOWN;
         comp.exerciseGroups.set(groups);
-        vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
+        vi.spyOn(exerciseGroupApi, 'deleteExerciseGroup').mockReturnValue(of(undefined));
         const broadcastSpy = vi.spyOn(eventManager, 'broadcast');
         const serverGroups = [...groups];
-        const loadSpy = vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(of(new HttpResponse<Exam>({ body: { exerciseGroups: serverGroups } as Exam })));
+        const loadSpy = vi.spyOn(comp, 'loadExerciseGroups').mockReturnValue(of({ exerciseGroups: serverGroups } as Exam));
 
         comp.deleteExerciseGroup(0, {});
 
@@ -285,10 +279,10 @@ describe('Exercise Groups Component', () => {
             loadedExam.title = 'Final exam';
             loadedExam.course = examCourse;
             loadedExam.exerciseGroups = [{ id: 8, title: 'Group A' } as ExerciseGroup, { id: 9, title: 'Group B' } as ExerciseGroup];
-            const loaded = of(new HttpResponse<Exam>({ body: loadedExam }));
+            const loaded = of(loadedExam);
             const loadSpy = vi.spyOn(comp, 'loadExerciseGroups');
             loadSpy.mockReturnValueOnce(loaded);
-            loadSpy.mockReturnValue(reloadedGroups ? of(new HttpResponse<Exam>({ body: { exerciseGroups: reloadedGroups } as Exam })) : loaded);
+            loadSpy.mockReturnValue(reloadedGroups ? of({ exerciseGroups: reloadedGroups } as Exam) : loaded);
             vi.spyOn(comp, 'loadLatestIndividualEndDateOfExam').mockReturnValue(of(null));
             comp.ngOnInit();
         };
@@ -399,7 +393,7 @@ describe('Exercise Groups Component', () => {
 
     it('reports a refused deletion to the confirmation dialog', () => {
         comp.exerciseGroups.set(groups);
-        vi.spyOn(exerciseGroupService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409, statusText: 'Conflict' })));
+        vi.spyOn(exerciseGroupApi, 'deleteExerciseGroup').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409, statusText: 'Conflict' })));
         const errors: string[] = [];
         comp.dialogError.subscribe((message) => errors.push(message));
 
@@ -411,8 +405,7 @@ describe('Exercise Groups Component', () => {
     });
 
     it('fetches the deletion summary of the exercise group that is about to be deleted', () => {
-        const categories: EntitySummaryCategory[] = [{ titleKey: 'category', items: [{ labelKey: 'label', value: 3 }] }];
-        const summarySpy = vi.spyOn(exerciseGroupService, 'getDeletionSummary').mockReturnValue(of(categories));
+        const summarySpy = vi.spyOn(exerciseGroupApi, 'getDeletionSummary').mockReturnValue(of({ numberOfTextExercises: 3, numberOfStudentParticipations: 600 }));
         expect(comp['deleteGroupSummary']()).toBeUndefined();
 
         comp['confirmDeleteGroup']({ id: 8, title: 'Group B' } as ExerciseGroup);
@@ -420,7 +413,11 @@ describe('Exercise Groups Component', () => {
         comp['deleteGroupSummary']()!.subscribe((value) => (received = value));
 
         expect(summarySpy).toHaveBeenCalledWith(comp.courseId(), comp.examId(), 8);
-        expect(received).toEqual(categories);
+        expect(received!.map((category) => category.titleKey)).toEqual([
+            'artemisApp.examManagement.delete.summary.category.structure',
+            'artemisApp.examManagement.delete.summary.category.studentWork',
+        ]);
+        expect(received![1].items.find((item) => item.value === 600)?.highlight).toBe(true);
     });
 
     it.each([[ExerciseType.PROGRAMMING], [ExerciseType.TEXT], [ExerciseType.MODELING], [ExerciseType.QUIZ], [ExerciseType.FILE_UPLOAD]])(
@@ -531,8 +528,8 @@ describe('Exercise Groups Component', () => {
         comp.exerciseGroups.set(groups);
 
         // Two independent PUTs, each controlled manually so the test can decide when they resolve.
-        const firstSave = new Subject<HttpResponse<void>>();
-        const secondSave = new Subject<HttpResponse<void>>();
+        const firstSave = new Subject<void>();
+        const secondSave = new Subject<void>();
         const updateOrderSpy = vi.spyOn(examManagementService, 'updateOrder').mockReturnValueOnce(firstSave.asObservable()).mockReturnValueOnce(secondSave.asObservable());
 
         // User action 1: move group at index 0 ("id 0") down. Optimistic local order becomes [1, 0, 2] and a save starts.
@@ -549,7 +546,7 @@ describe('Exercise Groups Component', () => {
         expect(comp.exerciseGroups()!.map((group) => group.id)).toEqual([1, 0, 2]);
 
         // The first (and only) in-flight save resolves; the response has no body and the optimistic order stands.
-        firstSave.next(new HttpResponse<void>({}));
+        firstSave.next();
         firstSave.complete();
         await Promise.resolve();
 
@@ -562,7 +559,7 @@ describe('Exercise Groups Component', () => {
         expect(comp.orderSavePending()).toBe(true);
         expect(comp.exerciseGroups()!.map((group) => group.id)).toEqual([1, 2, 0]);
 
-        secondSave.next(new HttpResponse<void>({}));
+        secondSave.next();
         secondSave.complete();
         await Promise.resolve();
 
@@ -572,7 +569,7 @@ describe('Exercise Groups Component', () => {
 
     it('restores the previous order and clears the pending flag when the reorder save is rejected', async () => {
         comp.exerciseGroups.set(groups);
-        const failingSave = new Subject<HttpResponse<void>>();
+        const failingSave = new Subject<void>();
         vi.spyOn(examManagementService, 'updateOrder').mockReturnValueOnce(failingSave.asObservable());
         const errorSpy = vi.spyOn(alertService, 'error');
 
@@ -608,8 +605,8 @@ describe('Exercise Groups Component', () => {
 
     it('opens the group-edit modal for an existing group and updates it on save', async () => {
         comp.exerciseGroups.set(groups);
-        const updated = { id: 1, title: 'Renamed', isMandatory: false } as ExerciseGroup;
-        vi.spyOn(exerciseGroupService, 'update').mockReturnValue(of(new HttpResponse<ExerciseGroup>({ body: updated })));
+        const updated: ExerciseGroup = { id: 1, title: 'Renamed', isMandatory: false };
+        vi.spyOn(exerciseGroupApi, 'updateExerciseGroup').mockReturnValue(of({ id: 1, title: 'Renamed', isMandatory: false }));
 
         comp.openGroupEditModal(1);
         expect(comp.groupEditIsNew()).toBe(false);
@@ -618,14 +615,34 @@ describe('Exercise Groups Component', () => {
         comp.onGroupEditSaved(updated);
         await Promise.resolve();
 
-        expect(exerciseGroupService.update).toHaveBeenCalledWith(course.id, exam.id, updated);
+        expect(exerciseGroupApi.updateExerciseGroup).toHaveBeenCalledWith(course.id, exam.id, { id: 1, title: 'Renamed', isMandatory: false });
         expect(comp.exerciseGroups()!.find((g) => g.id === 1)?.title).toBe('Renamed');
+    });
+
+    it('sends a mandatory group when the edited group carries no flag', async () => {
+        comp.exerciseGroups.set(groups);
+        vi.spyOn(exerciseGroupApi, 'updateExerciseGroup').mockReturnValue(of({ id: 1, title: 'Renamed', isMandatory: true }));
+
+        comp.openGroupEditModal(1);
+        comp.onGroupEditSaved({ id: 1, title: 'Renamed' });
+
+        expect(exerciseGroupApi.updateExerciseGroup).toHaveBeenCalledWith(course.id, exam.id, { id: 1, title: 'Renamed', isMandatory: true });
+    });
+
+    it('reports a bad request instead of sending an update without an id', () => {
+        const errorSpy = vi.spyOn(alertService, 'error');
+        vi.spyOn(exerciseGroupApi, 'updateExerciseGroup');
+
+        comp.onGroupEditSaved({ title: 'No id', isMandatory: true });
+
+        expect(exerciseGroupApi.updateExerciseGroup).not.toHaveBeenCalled();
+        expect(errorSpy).toHaveBeenCalledWith('error.http.400');
     });
 
     it('creates a new group via the create-group modal', async () => {
         comp.exerciseGroups.set(groups);
-        const created = { id: 99, title: 'New group', isMandatory: true, exam } as ExerciseGroup;
-        vi.spyOn(exerciseGroupService, 'create').mockReturnValue(of(new HttpResponse<ExerciseGroup>({ body: created })));
+        const created = { id: 99, title: 'New group', isMandatory: true, exam: { id: exam.id, examMode: 'REAL' as const } };
+        vi.spyOn(exerciseGroupApi, 'createExerciseGroup').mockReturnValue(of(created));
 
         comp.openCreateGroupModal();
         expect(comp.groupEditIsNew()).toBe(true);
@@ -633,18 +650,19 @@ describe('Exercise Groups Component', () => {
         comp.onGroupEditSaved({ title: 'New group', isMandatory: true });
         await Promise.resolve();
 
-        expect(exerciseGroupService.create).toHaveBeenCalledOnce();
+        expect(exerciseGroupApi.createExerciseGroup).toHaveBeenCalledWith(course.id, exam.id, { title: 'New group', isMandatory: true, exam: { id: exam.id } });
+        expect(comp.exerciseGroups()!.at(-1)).toEqual(expect.objectContaining({ id: 99, title: 'New group' }));
         expect(comp.exerciseGroups()).toHaveLength(groups.length + 1);
     });
 
     it('moves an exercise into a different group on table group change', async () => {
         comp.exerciseGroups.set(groups);
-        vi.spyOn(exerciseGroupService, 'moveExerciseToGroup').mockReturnValue(of(new HttpResponse<void>()));
+        vi.spyOn(exerciseGroupApi, 'moveExerciseToGroup').mockReturnValue(of(undefined));
 
         comp.onTableGroupChange({ exercise: { id: 3 } as Exercise, group: { id: 1 } as ExerciseGroup });
         await Promise.resolve();
 
-        expect(exerciseGroupService.moveExerciseToGroup).toHaveBeenCalledWith(course.id, exam.id, 3, 1);
+        expect(exerciseGroupApi.moveExerciseToGroup).toHaveBeenCalledWith(course.id, exam.id, 3, { exerciseGroupId: 1 });
         expect(comp.exerciseGroups()!.find((g) => g.id === 0)!.exercises).toHaveLength(1);
         expect(comp.exerciseGroups()!.find((g) => g.id === 1)!.exercises).toEqual([{ id: 3, type: ExerciseType.TEXT }]);
     });
@@ -652,7 +670,7 @@ describe('Exercise Groups Component', () => {
     it('moves an exercise into an empty target group without an exercises array', async () => {
         comp.exerciseGroups.set(groups);
         expect(comp.exerciseGroups()!.find((g) => g.id === 1)!.exercises).toBeUndefined();
-        vi.spyOn(exerciseGroupService, 'moveExerciseToGroup').mockReturnValue(of(new HttpResponse<void>()));
+        vi.spyOn(exerciseGroupApi, 'moveExerciseToGroup').mockReturnValue(of(undefined));
 
         expect(() => comp.onTableGroupChange({ exercise: { id: 3 } as Exercise, group: { id: 1 } as ExerciseGroup })).not.toThrow();
         await Promise.resolve();
@@ -663,7 +681,7 @@ describe('Exercise Groups Component', () => {
     it('keeps the groups unchanged and alerts when the move is rejected', async () => {
         comp.exerciseGroups.set(groups);
         const before = comp.exerciseGroups();
-        vi.spyOn(exerciseGroupService, 'moveExerciseToGroup').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
+        vi.spyOn(exerciseGroupApi, 'moveExerciseToGroup').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
         const alertSpy = vi.spyOn(alertService, 'addAlert');
 
         comp.onTableGroupChange({ exercise: { id: 3 } as Exercise, group: { id: 1 } as ExerciseGroup });
@@ -675,7 +693,7 @@ describe('Exercise Groups Component', () => {
 
     it('does not show a duplicate generic alert when the move rejection already carries a server error key', async () => {
         comp.exerciseGroups.set(groups);
-        vi.spyOn(exerciseGroupService, 'moveExerciseToGroup').mockReturnValue(
+        vi.spyOn(exerciseGroupApi, 'moveExerciseToGroup').mockReturnValue(
             throwError(() => new HttpErrorResponse({ status: 409, error: { errorKey: 'studentExamsAlreadyGenerated' } })),
         );
         const alertSpy = vi.spyOn(alertService, 'addAlert');
@@ -763,10 +781,64 @@ describe('Exercise Groups Component', () => {
         comp.exerciseGroups.set(groups);
         comp.openGroupEditModal(0);
         const error = vi.spyOn(alertService, 'error');
-        vi.spyOn(exerciseGroupService, 'update').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+        vi.spyOn(exerciseGroupApi, 'updateExerciseGroup').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
         comp.onGroupEditSaved({ id: 0, title: 'Rejected title', isMandatory: true });
-        expect(exerciseGroupService.update).toHaveBeenCalledWith(456, 123, { id: 0, title: 'Rejected title', isMandatory: true });
+        expect(exerciseGroupApi.updateExerciseGroup).toHaveBeenCalledWith(456, 123, { id: 0, title: 'Rejected title', isMandatory: true });
         expect(comp.exerciseGroups()).toEqual(groups);
         expect(error).toHaveBeenCalledWith('error.http.403');
+    });
+
+    describe('requests', () => {
+        let httpMock: HttpTestingController;
+
+        beforeEach(() => {
+            httpMock = TestBed.inject(HttpTestingController);
+            httpMock.match(() => true);
+        });
+
+        it('sends the new group with the exam id only', () => {
+            comp.exerciseGroups.set(groups);
+            comp.groupEditIsNew.set(true);
+            comp.onGroupEditSaved({ title: 'New group', isMandatory: true, exercises: [] });
+
+            const req = httpMock.expectOne({ method: 'POST', url: '/api/exam/courses/456/exams/123/exercise-groups' });
+            expect(req.request.body).toEqual({ title: 'New group', isMandatory: true, exam: { id: 123 } });
+            req.flush({ id: 99, title: 'New group', isMandatory: true });
+            expect(comp.exerciseGroups()!.at(-1)?.id).toBe(99);
+        });
+
+        it('sends only id, title and mandatory flag when updating', () => {
+            comp.exerciseGroups.set(groups);
+            comp.onGroupEditSaved({ id: 1, title: 'Renamed', isMandatory: false, exercises: [{ id: 5 } as Exercise] });
+
+            const req = httpMock.expectOne({ method: 'PUT', url: '/api/exam/courses/456/exams/123/exercise-groups' });
+            expect(req.request.body).toEqual({ id: 1, title: 'Renamed', isMandatory: false });
+            req.flush({ id: 1, title: 'Renamed', isMandatory: false });
+            expect(comp.exerciseGroups()!.find((g) => g.id === 1)?.title).toBe('Renamed');
+        });
+
+        it('deletes with the base repository flag', () => {
+            comp.exerciseGroups.set(groups);
+            comp.deleteExerciseGroup(2, { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: false });
+
+            const req = httpMock.expectOne({ method: 'DELETE', url: '/api/exam/courses/456/exams/123/exercise-groups/2?deleteBaseReposBuildPlans=false' });
+            req.flush(null, { status: 202, statusText: 'Accepted' });
+        });
+
+        it('deletes without query parameters when the dialog sends no flags', () => {
+            comp.exerciseGroups.set(groups);
+            comp.deleteExerciseGroup(2, {});
+
+            httpMock.expectOne({ method: 'DELETE', url: '/api/exam/courses/456/exams/123/exercise-groups/2' }).flush(null, { status: 202, statusText: 'Accepted' });
+        });
+
+        it('moves an exercise with the target group id in the body', () => {
+            comp.exerciseGroups.set(groups);
+            comp.onTableGroupChange({ exercise: { id: 3 } as Exercise, group: { id: 1 } as ExerciseGroup });
+
+            const req = httpMock.expectOne({ method: 'PUT', url: '/api/exam/courses/456/exams/123/exercises/3/exercise-group' });
+            expect(req.request.body).toEqual({ exerciseGroupId: 1 });
+            req.flush(null);
+        });
     });
 });

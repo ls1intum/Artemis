@@ -31,12 +31,15 @@
 # The following entries are pre-populated based on the input obtained via
 # the option `openapiGeneratorIgnoreList` (--openapi-generator-ignore-list in CLI for example).
 api/presentation-assessment-resources.ts
+api/student-exam-resources.ts
 api/hyperion-quiz-question-generation-resources.ts
 api/hyperion-authoring-run-resources.ts
+api/admin-exam-resources.ts
 api/tutorial-groups-configuration-resources.ts
 api/quiz-exercise-evaluation-resources.ts
 api/lecture-resources.ts
 api/hyperion-programming-variant-resources.ts
+api/exercise-group-resources.ts
 api/hyperion-exercise-generation-resources.ts
 api/quiz-exercise-deletion-resources.ts
 api/quiz-training-resources.ts
@@ -46,10 +49,13 @@ api/hyperion-code-generation-resources.ts
 api/quiz-participation-resources.ts
 api/hyperion-assessment-criteria-generation-resources.ts
 api/athena-resources.ts
+api/admin-exam-room-management-resources.ts
 api/tum-live-upload-resources.ts
+api/exam-resources.ts
 api/admin-hyperion-generation-monitoring-resources.ts
 api/quiz-exercise-resources.ts
 api/calendar-resources.ts
+api/exam-room-distribution-resources.ts
 api/lecture-unit-resources.ts
 api/complaint-resources.ts
 api/quiz-exercise-creation-update-resources.ts
@@ -60,6 +66,7 @@ api/assessment-upload-resources.ts
 api/quiz-submission-resources.ts
 api/ingestion-browser-resources.ts
 api/tutorial-group-session-resources.ts
+api/exam-user-resources.ts
 api/tutor-participation-resources.ts
 api/quiz-statistics-resources.ts
 api/hyperion-exercise-variant-resources.ts
@@ -70,6 +77,7 @@ api/online-unit-resources.ts
 api/quiz-assessment-resources.ts
 api/quiz-exercise-batch-resources.ts
 api/text-unit-resources.ts
+api/student-exam-conduction-resources.ts
 api/tutorial-group-resources.ts
 api/exercise-unit-resources.ts
 api/admin-ai-worker-resources.ts
@@ -82,6 +90,7 @@ api/hyperion-quiz-question-pool-resources.ts
 api/tutorial-group-free-period-resources.ts
 api/attachment-video-unit-resources.ts
 api/hyperion-faq-resources.ts
+api/exam-room-management-resources.ts
 api/tutor-effort-resources.ts
 api/complaint-response-resources.ts
 api/attachment-video-unit-playlist-resources.ts
