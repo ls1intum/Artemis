@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.course;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -16,6 +17,8 @@ import java.util.concurrent.CompletableFuture;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -52,19 +55,24 @@ class CourseHomeWelcomeResourceTest extends AbstractSpringIntegrationIndependent
     @BeforeEach
     void setup() {
         doReturn(true).when(courseHomeAiProperties).isConfigured();
-        doReturn("LOCAL").when(courseHomeAiProperties).providerLocation();
+        doReturn(Optional.of("local")).when(courseHomeAiProperties).presetFor(AiSelectionDecision.LOCAL_AI);
+        doReturn(Optional.of("cloud")).when(courseHomeAiProperties).presetFor(AiSelectionDecision.CLOUD_AI);
         var users = userUtilService.addUsers(PREFIX, 1, 0, 0, 1);
         course = courseUtilService.createEnrolledCourse(PREFIX);
         users.forEach(u -> preferences.recordDecision(u.getId(), AiSelectionDecision.CLOUD_AI, ZonedDateTime.now()));
-        when(courseHomeAiClient.generate(any())).thenReturn(CompletableFuture.completedFuture(Optional.of("Try one manageable step, then reflect on what you learn from it.")));
+        when(courseHomeAiClient.generate(any(), any()))
+                .thenReturn(CompletableFuture.completedFuture(Optional.of("Try one manageable step, then reflect on what you learn from it.")));
     }
 
-    @Test
-    void aConsentedWelcomeUsesTheAuthorizedFingerprintWithoutAcknowledgingAVisit() throws Exception {
+    @ParameterizedTest
+    @CsvSource({ "LOCAL_AI,local", "CLOUD_AI,cloud" })
+    void aConsentedWelcomeUsesTheSelectedPresetAndAuthorizedFingerprint(AiSelectionDecision decision, String preset) throws Exception {
+        preferences.recordDecision(userUtilService.getUserByLogin(PREFIX + "student1").getId(), decision, ZonedDateTime.now());
         var snapshot = request.get(url(), HttpStatus.OK, CourseHomeDTO.class);
         assertThat(snapshot.welcome().aiEligible()).isTrue();
         var result = generate(snapshot.welcome().contextFingerprint());
         assertThat(result.source()).isEqualTo(CourseHomeWelcomeSource.AI);
+        verify(courseHomeAiClient).generate(eq(preset), any());
         assertThat(result.contextFingerprint()).isEqualTo(snapshot.welcome().contextFingerprint());
         assertThat(visits.findByCourseIdAndUserId(course.getId(), userUtilService.getUserByLogin(PREFIX + "student1").getId())).isEmpty();
     }
@@ -73,26 +81,26 @@ class CourseHomeWelcomeResourceTest extends AbstractSpringIntegrationIndependent
     void declinedAiProducesFallbackWithoutAModelCall() throws Exception {
         preferences.recordDecision(userUtilService.getUserByLogin(PREFIX + "student1").getId(), AiSelectionDecision.NO_AI, ZonedDateTime.now());
         assertThat(generate("a".repeat(64)).source()).isEqualTo(CourseHomeWelcomeSource.FALLBACK);
-        verify(courseHomeAiClient, never()).generate(any());
+        verify(courseHomeAiClient, never()).generate(any(), any());
     }
 
     @Test
     void staleContextIsNeverSent() throws Exception {
         assertThat(generate("b".repeat(64)).source()).isEqualTo(CourseHomeWelcomeSource.FALLBACK);
-        verify(courseHomeAiClient, never()).generate(any());
+        verify(courseHomeAiClient, never()).generate(any(), any());
     }
 
     @Test
     void localeIsRequired() throws Exception {
         request.postWithoutResponseBody(url() + "/welcome", Map.of("contextFingerprint", "a".repeat(64)), HttpStatus.BAD_REQUEST);
-        verify(courseHomeAiClient, never()).generate(any());
+        verify(courseHomeAiClient, never()).generate(any(), any());
     }
 
     @Test
     @WithAnonymousUser
     void anonymousUsersCannotGenerate() throws Exception {
         request.postWithoutResponseBody(url() + "/welcome", new CourseHomeWelcomeRequestDTO("a".repeat(64), "en"), HttpStatus.UNAUTHORIZED);
-        verify(courseHomeAiClient, never()).generate(any());
+        verify(courseHomeAiClient, never()).generate(any(), any());
     }
 
     @Test
@@ -100,7 +108,7 @@ class CourseHomeWelcomeResourceTest extends AbstractSpringIntegrationIndependent
     void nonmembersCannotGenerate() throws Exception {
         userUtilService.createAndSaveUser(PREFIX + "outsider");
         request.postWithoutResponseBody(url() + "/welcome", new CourseHomeWelcomeRequestDTO("a".repeat(64), "en"), HttpStatus.FORBIDDEN);
-        verify(courseHomeAiClient, never()).generate(any());
+        verify(courseHomeAiClient, never()).generate(any(), any());
     }
 
     @Test
