@@ -10,7 +10,7 @@ import { DraftMessageInputDirective } from '../draft-message-input.directive';
 import { Subscription } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',

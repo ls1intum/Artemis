@@ -1,14 +1,14 @@
 import { TranslateService } from '@ngx-translate/core';
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiButtonDirective,
-    TumAetUiButtonGroupComponent,
-    TumAetUiCheckboxComponent,
-    TumAetUiMultiSelectComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faFilter } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiButtonGroupComponent } from '@tumaet/ui-angular/button-group';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 let nextFilterDropdownId = 0;
@@ -19,26 +19,36 @@ export interface FilterGroup {
     segmented?: boolean;
 }
 
+/**
+ * The filters of a table as one button for its 40px toolbar: the button shows how many filters are active, and the groups are in a popover that
+ * stacks them, so that the toolbar keeps its height on a narrow screen too.
+ */
 @Component({
     selector: 'jhi-filter-dropdown',
     templateUrl: './filter-dropdown.component.html',
+    host: { class: 'inline-flex shrink-0' },
     imports: [
-        FormsModule,
         ArtemisTranslatePipe,
+        FaIconComponent,
+        TranslateDirective,
         TumAetUiButtonDirective,
         TumAetUiCheckboxComponent,
-        TumAetUiMultiSelectComponent,
         TumAetUiButtonComponent,
         TumAetUiButtonGroupComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiTagComponent,
         TumAetUiTooltipDirective,
     ],
-    styleUrls: ['./filter-dropdown.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FilterDropdownComponent {
     private readonly translateService = inject(TranslateService);
     protected readonly allValue = '';
-    protected readonly checkboxIdPrefix = `exercise-filter-${nextFilterDropdownId++}-`;
+    private readonly instanceId = nextFilterDropdownId++;
+    protected readonly checkboxIdPrefix = `exercise-filter-${this.instanceId}-`;
+    protected readonly groupIdPrefix = `exercise-filter-group-${this.instanceId}-`;
+    protected readonly faFilter = faFilter;
 
     readonly groupedFilters = input.required<FilterGroup[]>();
     readonly activeFilters = input.required<string[]>();
@@ -70,6 +80,11 @@ export class FilterDropdownComponent {
     protected toggleGroupOption(group: FilterGroup & { selected: string[] }, value: string): void {
         const selected = group.selected.includes(value) ? group.selected.filter((item) => item !== value) : [...group.selected, value];
         this.updateGroup(group, value === this.allValue ? [] : selected);
+    }
+
+    /** Adds or removes one item of a group that is listed as checkboxes. */
+    protected toggleItem(group: FilterGroup & { selected: string[] }, item: string, checked: boolean): void {
+        this.updateGroup(group, checked ? [...group.selected, item] : group.selected.filter((value) => value !== item));
     }
 
     protected updateGroup(group: FilterGroup, values: unknown[]): void {

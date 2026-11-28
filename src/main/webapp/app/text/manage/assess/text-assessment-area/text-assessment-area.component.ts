@@ -1,4 +1,4 @@
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Component, HostListener, effect, inject, input, model, output, signal } from '@angular/core';
 import { DOCUMENT } from '@angular/common';

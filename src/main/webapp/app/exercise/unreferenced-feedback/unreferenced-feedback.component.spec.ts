@@ -1,5 +1,5 @@
 import { Course } from 'app/course/shared/entities/course.model';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';

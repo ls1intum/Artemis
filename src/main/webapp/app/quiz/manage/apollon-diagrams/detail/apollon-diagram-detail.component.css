@@ -35,6 +35,12 @@
 
 .apollon-diagram-detail__canvas {
     position: relative;
+
+    /*
+     * Inside this dialog Apollon renders its popovers into the editor, so they paint in this layer. A popover that reaches
+     * past the canvas would otherwise sit below the footer, whose buttons come later in the dialog and take its clicks.
+     */
+    z-index: 1;
     container-type: inline-size;
     min-height: 12rem;
     flex: 1 1 auto;

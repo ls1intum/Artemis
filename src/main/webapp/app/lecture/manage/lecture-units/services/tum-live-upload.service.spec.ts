@@ -99,7 +99,7 @@ describe('TumLiveUploadService', () => {
 
         expect(xhr.method).toBe('POST');
         expect(xhr.url).toBe('/api/lecture/lecture-units/7/tumlive-upload/file?ref=reference-a-0000');
-        expect(xhr.requestHeaders).toEqual({ 'Content-Type': 'application/octet-stream' });
+        expect(xhr.requestHeaders).toEqual({ 'Content-Type': 'application/octet-stream', 'ngsw-bypass': 'true' });
         expect(xhr.body).toBe(file);
         expect(events).toEqual([{ type: 'progress', percent: 25 }, { type: 'done' }]);
         expect(completed).toBe(true);

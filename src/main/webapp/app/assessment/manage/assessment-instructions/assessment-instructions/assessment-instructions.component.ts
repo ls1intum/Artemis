@@ -1,4 +1,4 @@
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { Component, computed, effect, inject, input, model, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';

@@ -49,7 +49,9 @@ import {
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { AssessmentScore } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { AssessmentSubmissionPanelComponent } from 'app/assessment/manage/assessment-submission-panel/assessment-submission-panel.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AssessmentInstructionsTabsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions-tabs/assessment-instructions-tabs.component';
@@ -213,6 +215,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
      * All properties MUST be set to a default value (e.g. null) to prevent data corruption by state leaking into following new assessments.
      */
     private resetComponent(): void {
+        // Cancel a still-pending feedback-suggestion request for the previous submission: the component is reused
+        // for the next one, and its eventual response/error must not apply to the assessment now being shown.
+        this.feedbackSuggestionsObservable?.unsubscribe();
+
         this.participation = undefined;
         this.submission = undefined;
         this.exercise = undefined;
@@ -479,7 +485,10 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
                 this.hasAutomaticFeedback.set(feedbackSuggestions.length > 0);
                 this.loadingFeedbackSuggestions.set(false);
             },
-            error: () => this.loadingFeedbackSuggestions.set(false),
+            error: () => {
+                this.loadingFeedbackSuggestions.set(false);
+                this.alertService.error('artemisApp.textAssessment.error.loadFeedbackSuggestionsFailed');
+            },
         });
     }
 

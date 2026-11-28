@@ -4,6 +4,7 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { parseJson } from 'app/foundation/util/json.util';
 import { getPositiveAndCappedTotalScore } from 'app/exercise/util/exercise.utils';
+import { GradingInstructionWithCriterionTitle, withoutCriterionTitle } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 
 /** Score of a complete assessment, broken down the way it is presented to and saved for a tutor. */
 export interface AssessmentScore {
@@ -14,12 +15,6 @@ export interface AssessmentScore {
     /** {@code awarded + deducted}, floored at zero and capped at {@code maxPoints}. */
     total: number;
 }
-
-/**
- * The payload dragged from the grading instructions panel: the instruction, plus the title of its criterion, which an
- * instruction does not carry itself. The criterion title only names the feedback and is not stored with the instruction.
- */
-export type DraggedGradingInstruction = GradingInstruction & { criterionTitle?: string };
 
 @Service()
 export class StructuredGradingCriterionService {
@@ -37,10 +32,8 @@ export class StructuredGradingCriterionService {
         event.preventDefault();
         try {
             const data = (event as DragEvent).dataTransfer!.getData('text/plain');
-            const dragged = parseJson<DraggedGradingInstruction>(data);
-            const criterionTitle = dragged.criterionTitle;
-            delete dragged.criterionTitle;
-            this.applyGradingInstruction(feedback, dragged, criterionTitle);
+            const dragged = parseJson<GradingInstructionWithCriterionTitle>(data);
+            this.applyGradingInstruction(feedback, withoutCriterionTitle(dragged), dragged.criterionTitle);
         } catch (err) {
             // Rethrow any non syntax error. syntax errors are caused by invalid JSON if someone drops something unrelated, ignore them
             if (!(err instanceof SyntaxError)) {

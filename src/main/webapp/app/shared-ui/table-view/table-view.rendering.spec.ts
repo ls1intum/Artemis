@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TableViewComponent, TableViewLazyLoadEvent } from './table-view';
 

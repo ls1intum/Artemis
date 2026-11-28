@@ -1,7 +1,7 @@
 import { Component, input, model, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCommentDots, faFlag, faLock, faPlus, faTerminal } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent, TumAetUiTabsSurface } from '@tumaet/ui-angular';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent, TumAetUiTabsSurface } from '@tumaet/ui-angular/tabs';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { CollapsedPanelRailItem } from 'app/shared-ui/components/collapsed-panel-rail/collapsed-panel-rail.component';

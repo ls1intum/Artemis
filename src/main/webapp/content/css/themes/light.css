@@ -418,84 +418,7 @@
     --close-circle-background: white;
     --close-circle-border: rgba(93, 93, 93, 0.65);
     --close-circle-opacity: 0.7;
-}
 
-/*
- * The tokens of the Apollon editor. Inside `.artemis-apollon-theme` they replace the values of Apollon's own stylesheet.
- * On the root element they only fill in what Apollon does not declare: the selector is `html`, not `:root`, so the
- * `:root` rule of Apollon, which is loaded later, keeps winning there.
- */
-html,
-.artemis-apollon-theme {
-    /* Apollon */
-    --apollon-primary: var(--primary);
-    --apollon-primary-foreground: var(--white);
-    --apollon-foreground: var(--body-color);
-    --apollon-secondary: var(--secondary);
-    --apollon-background: var(--module-bg);
-    --apollon-background-variant: var(--gray-100);
-    --apollon-gray: var(--gray-200);
-    --apollon-gray-variant: var(--gray-700);
-    --apollon-grid: rgba(36, 39, 36, 0.1);
-    --apollon-guide-vertical: var(--danger);
-    --apollon-guide-horizontal: var(--primary);
-    --apollon-danger: var(--danger);
-    --apollon-surface: var(--card-bg);
-    --apollon-surface-sunken: var(--gray-100);
-    --apollon-border: var(--border-color);
-    --apollon-border-subtle: var(--gray-200);
-
-    /*
-     * Apollon paints its embedded @tumaet/ui primitives (the popover's buttons and
-     * inputs, selects, menus) from this scale, so it has to be the SAME ramp the rest
-     * of Artemis uses — not the legacy Bootstrap --border-radius-* values, which are
-     * roughly half the size and made the editor's buttons read as visibly squarer
-     * than every other TUM AET UI button on the page.
-     */
-    --apollon-radius: var(--tumaet-ui-radius-md);
-    --apollon-radius-sm: var(--tumaet-ui-radius-sm);
-    --apollon-radius-md: var(--tumaet-ui-radius-md);
-    --apollon-radius-lg: var(--tumaet-ui-radius-md);
-    --apollon-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.18);
-    --apollon-hover-neutral: rgba(33, 37, 41, 0.075);
-    --apollon-interactive-selection: var(--warning);
-    --apollon-dropzone-accent: var(--primary);
-    --apollon-dropzone-accent-fill: rgba(62, 138, 204, 0.4);
-    --apollon-on-collaboration-cursor: var(--white);
-    --apollon-assessment-positive-text: var(--artemis-alert-success-color);
-    --apollon-assessment-positive-bg: var(--artemis-alert-success-background);
-    --apollon-assessment-negative-text: var(--artemis-alert-danger-color);
-    --apollon-assessment-negative-bg: var(--artemis-alert-danger-background);
-    --apollon-assessment-zero-text: var(--artemis-alert-info-color);
-    --apollon-assessment-zero-bg: var(--artemis-alert-info-background);
-    --apollon-assessment-ungraded-text: var(--artemis-alert-neutral-color);
-    --apollon-assessment-ungraded-bg: var(--artemis-alert-neutral-background);
-    --apollon-collaboration-color-1: var(--yellow);
-    --apollon-collaboration-color-2: var(--green);
-    --apollon-collaboration-color-3: var(--blue);
-    --apollon-collaboration-color-4: var(--red);
-    --apollon-collaboration-color-5: var(--purple);
-    --apollon-collaboration-color-6: var(--teal);
-    --apollon-collaboration-color-7: var(--orange);
-    --apollon-collaboration-color-8: var(--cyan);
-    --apollon-swatch-slate: var(--gray-700);
-    --apollon-swatch-red: var(--red);
-    --apollon-swatch-orange: var(--orange);
-    --apollon-swatch-amber: var(--yellow);
-    --apollon-swatch-green: var(--green);
-    --apollon-swatch-teal: var(--teal);
-    --apollon-swatch-blue: var(--blue);
-    --apollon-swatch-violet: var(--purple);
-    --apollon-swatch-pink: var(--pink);
-    --apollon-chrome-accent: var(--apollon-primary);
-    --apollon-chrome-radius-sm: 0.15rem;
-    --apollon-chrome-radius-md: 0.25rem;
-    --apollon-chrome-radius-lg: 0.5rem;
-    --apollon-chrome-edge: 10px;
-    --apollon-chrome-gap: 12px;
-}
-
-:root {
     /* Feedback Suggestions (Athena) */
     --feedback-suggestions-primary: rgb(181, 78, 254);
 
@@ -626,4 +549,79 @@ html,
     --overview-card-bg: #fff;
     --overview-card-nested-bg: #f1f5f9;
     --overview-card-hover-bg: #e2e8f0;
+}
+
+/*
+ * The tokens of the Apollon editor. Inside `.artemis-apollon-theme` they replace the values of Apollon's own stylesheet.
+ * On the root element they only fill in what Apollon does not declare: the selector is `html`, not `:root`, so the
+ * `:root` rule of Apollon, which is loaded later, keeps winning there.
+ */
+html,
+.artemis-apollon-theme {
+    /* Apollon */
+    --apollon-primary: var(--primary);
+    --apollon-primary-foreground: var(--white);
+    --apollon-foreground: var(--body-color);
+    --apollon-secondary: var(--secondary);
+    --apollon-background: var(--module-bg);
+    --apollon-background-variant: var(--gray-100);
+    --apollon-gray: var(--gray-200);
+    --apollon-gray-variant: var(--gray-700);
+    --apollon-grid: rgba(36, 39, 36, 0.1);
+    --apollon-guide-vertical: var(--danger);
+    --apollon-guide-horizontal: var(--primary);
+    --apollon-danger: var(--danger);
+    --apollon-surface: var(--card-bg);
+    --apollon-surface-sunken: var(--gray-100);
+    --apollon-border: var(--border-color);
+    --apollon-border-subtle: var(--gray-200);
+
+    /*
+     * Apollon paints its embedded @tumaet/ui primitives (the popover's buttons and
+     * inputs, selects, menus) from this scale, so it has to be the SAME ramp the rest
+     * of Artemis uses — not the legacy Bootstrap --border-radius-* values, which are
+     * roughly half the size and made the editor's buttons read as visibly squarer
+     * than every other TUM AET UI button on the page.
+     */
+    --apollon-radius: var(--tumaet-ui-radius-md);
+    --apollon-radius-sm: var(--tumaet-ui-radius-sm);
+    --apollon-radius-md: var(--tumaet-ui-radius-md);
+    --apollon-radius-lg: var(--tumaet-ui-radius-md);
+    --apollon-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.18);
+    --apollon-hover-neutral: rgba(33, 37, 41, 0.075);
+    --apollon-interactive-selection: var(--warning);
+    --apollon-dropzone-accent: var(--primary);
+    --apollon-dropzone-accent-fill: rgba(62, 138, 204, 0.4);
+    --apollon-on-collaboration-cursor: var(--white);
+    --apollon-assessment-positive-text: var(--artemis-alert-success-color);
+    --apollon-assessment-positive-bg: var(--artemis-alert-success-background);
+    --apollon-assessment-negative-text: var(--artemis-alert-danger-color);
+    --apollon-assessment-negative-bg: var(--artemis-alert-danger-background);
+    --apollon-assessment-zero-text: var(--artemis-alert-info-color);
+    --apollon-assessment-zero-bg: var(--artemis-alert-info-background);
+    --apollon-assessment-ungraded-text: var(--artemis-alert-neutral-color);
+    --apollon-assessment-ungraded-bg: var(--artemis-alert-neutral-background);
+    --apollon-collaboration-color-1: var(--yellow);
+    --apollon-collaboration-color-2: var(--green);
+    --apollon-collaboration-color-3: var(--blue);
+    --apollon-collaboration-color-4: var(--red);
+    --apollon-collaboration-color-5: var(--purple);
+    --apollon-collaboration-color-6: var(--teal);
+    --apollon-collaboration-color-7: var(--orange);
+    --apollon-collaboration-color-8: var(--cyan);
+    --apollon-swatch-slate: var(--gray-700);
+    --apollon-swatch-red: var(--red);
+    --apollon-swatch-orange: var(--orange);
+    --apollon-swatch-amber: var(--yellow);
+    --apollon-swatch-green: var(--green);
+    --apollon-swatch-teal: var(--teal);
+    --apollon-swatch-blue: var(--blue);
+    --apollon-swatch-violet: var(--purple);
+    --apollon-swatch-pink: var(--pink);
+    --apollon-chrome-accent: var(--apollon-primary);
+    --apollon-chrome-radius-sm: 0.15rem;
+    --apollon-chrome-radius-md: 0.25rem;
+    --apollon-chrome-radius-lg: 0.5rem;
+    --apollon-chrome-edge: 10px;
+    --apollon-chrome-gap: 12px;
 }

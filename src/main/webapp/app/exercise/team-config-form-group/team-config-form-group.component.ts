@@ -1,4 +1,4 @@
-import { TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { AfterViewChecked, Component, OnDestroy, OnInit, input, output, signal, viewChild } from '@angular/core';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { Exercise, ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';

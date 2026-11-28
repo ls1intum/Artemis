@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
-import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { ApollonDiagramListComponent } from '../list/apollon-diagram-list.component';

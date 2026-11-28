@@ -1,7 +1,8 @@
 import { Component, input } from '@angular/core';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
-import { TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 

@@ -5,7 +5,8 @@ import { DocumentationLinkComponent } from 'app/shared-ui/components/documentati
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { SshUserSettingsFingerprintsService } from 'app/account/user/settings/credentials/ssh-settings/fingerprints/ssh-user-settings-fingerprints.service';
-import { TumAetUiButtonDirective, TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular/list';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({

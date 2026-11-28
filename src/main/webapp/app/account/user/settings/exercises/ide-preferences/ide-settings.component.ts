@@ -4,16 +4,10 @@ import { faPlus, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiButtonDirective,
-    TumAetUiListComponent,
-    TumAetUiListItemDirective,
-    TumAetUiMenuComponent,
-    TumAetUiMenuItemDirective,
-    TumAetUiMenuTriggerDirective,
-    TumAetUiSelectButtonComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiListComponent, TumAetUiListItemDirective } from '@tumaet/ui-angular/list';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';

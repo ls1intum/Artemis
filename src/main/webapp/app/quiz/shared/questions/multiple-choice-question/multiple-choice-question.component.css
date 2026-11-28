@@ -63,6 +63,13 @@
     background: var(--mc-question-answer-option-selected-background);
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .mc-question .answer-options .answer-option:not(.click-disabled).selected {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
+
 @keyframes on-select {
     0%,
     100% {

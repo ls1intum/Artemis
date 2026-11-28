@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular/tabs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';

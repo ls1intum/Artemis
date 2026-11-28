@@ -22,7 +22,11 @@
     border-radius: 16px;
     padding: 20px;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease,
+        background 0.3s ease,
+        border-color 0.3s ease;
     border: 2px solid transparent;
     flex: 1 1 250px;
     display: flex;
@@ -31,6 +35,12 @@
     max-width: 350px;
     min-width: min(280px, 100%);
     box-sizing: border-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .option-card {
+        transition: none;
+    }
 }
 
 .option-card:hover {

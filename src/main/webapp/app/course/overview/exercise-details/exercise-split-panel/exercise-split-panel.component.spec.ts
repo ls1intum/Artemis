@@ -1,4 +1,6 @@
-import { TumAetUiButtonDirective, TumAetUiPanelComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';

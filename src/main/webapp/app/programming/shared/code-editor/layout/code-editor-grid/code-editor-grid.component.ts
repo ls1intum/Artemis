@@ -19,7 +19,7 @@ import { CollapsableCodeEditorElement } from 'app/programming/manage/code-editor
 import { ResizeType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 import { FeedbackSplitComponent } from 'app/exercise/feedback-bottom-panel/feedback-split.component';
-import { TumAetUiSplitterComponent } from '@tumaet/ui-angular';
+import { TumAetUiSplitterComponent } from '@tumaet/ui-angular/splitter';
 import { parseJson } from 'app/foundation/util/json.util';
 import { NgTemplateOutlet } from '@angular/common';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';

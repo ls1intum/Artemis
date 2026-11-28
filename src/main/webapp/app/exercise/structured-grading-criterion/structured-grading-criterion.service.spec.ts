@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { DraggedGradingInstruction, StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { GradingInstructionWithCriterionTitle } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { provideHttpClient } from '@angular/common/http';
@@ -21,6 +22,19 @@ describe('Structured Grading Criteria Service', () => {
     });
 
     describe('Service methods', () => {
+        it('should link a dropped instruction to the feedback without the criterion title it carries for display', () => {
+            const feedback = new Feedback();
+            const dropEvent = {
+                preventDefault: () => {},
+                dataTransfer: { getData: () => JSON.stringify({ id: 1, credits: 2, criterionTitle: 'Associations' }) },
+            } as unknown as DragEvent;
+
+            service.updateFeedbackWithStructuredGradingInstructionEvent(feedback, dropEvent);
+
+            expect(feedback.gradingInstruction).toEqual({ id: 1, credits: 2 });
+            expect(feedback.credits).toBe(2);
+        });
+
         it('should calculate the total score', () => {
             // define Grading Criteria and Feedback here
             const limitedSGI = new GradingInstruction();
@@ -78,7 +92,7 @@ describe('Structured Grading Criteria Service', () => {
     });
 
     describe('dropping a grading instruction', () => {
-        const dropEventWith = (instruction: Partial<DraggedGradingInstruction>): Event =>
+        const dropEventWith = (instruction: Partial<GradingInstructionWithCriterionTitle>): Event =>
             ({ preventDefault: () => {}, dataTransfer: { getData: () => JSON.stringify(instruction) } }) as unknown as DragEvent;
 
         const correct = { id: 1, credits: 2, feedback: 'Bubble Sort is implemented correctly.' };
@@ -95,7 +109,7 @@ describe('Structured Grading Criteria Service', () => {
         });
 
         describe('title', () => {
-            // The panel drags the instruction together with its criterion's title (DraggedGradingInstruction)
+            // The panel drags the instruction together with its criterion's title (GradingInstructionWithCriterionTitle)
             const withCriterion = (instruction: Partial<GradingInstruction>) => dropEventWith({ ...instruction, criterionTitle: 'Bubble Sort' });
 
             it("should name a feedback without a title after the instruction's criterion", () => {

@@ -27,7 +27,7 @@ The following tables show exactly what data is affected by a course reset:
 
 | Category | Data Type | Description |
 |----------|-----------|-------------|
-| **Course Structure** | Course settings | Title, description, dates, groups, all configuration |
+| **Course Structure** | Course settings | Title, description, dates, all configuration |
 | | Exercises | All exercise definitions (programming, text, modeling, quiz, file upload) |
 | | Exercise materials | Problem statements, grading criteria, example solutions |
 | | Programming exercise repos | Template, solution, and test repositories |
@@ -63,9 +63,11 @@ The following tables show exactly what data is affected by a course reset:
 | **AI Features** | Iris chat sessions | All AI tutor conversation history |
 | | LLM token usage | Records of AI model usage and costs |
 | **Tutorial Groups** | Registrations | All student registrations to tutorial groups |
-| **Enrollment** | Students | Removed from student group |
-| | Tutors | Removed from tutor group |
-| | Editors | Removed from editor group |
+| **Enrollment** | Students | Lose their student role in the course |
+| | Tutors | Lose their tutor role in the course |
+| | Editors | Lose their editor role in the course |
+
+Instructors keep their role in the course.
 
 ## Course Archive
 
@@ -146,7 +148,7 @@ Every repository of a programming exercise is stored as its own ZIP inside the e
 | | Notification settings | User preferences; not student work |
 | | Audit logs | Managed separately by system |
 | **User Data** | User accounts | Managed at system level |
-| | Group memberships | Can be derived from participation data |
+| | Course memberships | Can be derived from participation data |
 
 ### Student Data Export Files
 

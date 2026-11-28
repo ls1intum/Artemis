@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faComments } from '@fortawesome/free-solid-svg-icons';

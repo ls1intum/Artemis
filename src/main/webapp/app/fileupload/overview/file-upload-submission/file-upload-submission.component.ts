@@ -38,7 +38,7 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
 import { FileService } from 'app/foundation/service/file.service';
 import { firstValueFrom, map } from 'rxjs';
 import { AssessmentSubmissionPanelComponent } from 'app/assessment/manage/assessment-submission-panel/assessment-submission-panel.component';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 
 @Component({
     selector: 'jhi-file-upload-submission',

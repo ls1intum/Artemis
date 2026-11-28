@@ -1,5 +1,5 @@
 import { Component, computed, input } from '@angular/core';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { Course } from 'app/course/shared/entities/course.model';
 import { AssessmentScore } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

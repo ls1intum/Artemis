@@ -3,7 +3,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCommentDots, faTerminal } from '@fortawesome/free-solid-svg-icons';
 import { CollapsedPanelRailItem } from 'app/shared-ui/components/collapsed-panel-rail/collapsed-panel-rail.component';
-import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular/tabs';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FeedbackBottomPanelComponent } from 'app/exercise/feedback-bottom-panel/feedback-bottom-panel.component';
 import { TranslateService } from '@ngx-translate/core';

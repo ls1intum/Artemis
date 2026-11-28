@@ -388,12 +388,10 @@ export const getFeedbackBodyText = (feedback: Feedback): string | undefined => f
  *
  * An AI feedback suggestion's `text` is never included: it always holds just the suggestion's short title (tagged
  * with the internal `FeedbackSuggestion:...` marker), which is redundant with the suggestion's own `detailText`.
- * For text/programming/file-upload exercises that title is still shown separately (the editable unified feedback
- * editor's own title field, or the "name · title" heading in the read-only feedback item), so dropping it here
- * only avoids showing it twice. For modeling exercises the title ends up shown nowhere at all, since Apollon has
- * no separate title UI — that is safe because Apollon always writes an assessor's real edit into `detailText` and
- * leaves `.text` as the untouched original suggestion title (see `ModelingAssessmentComponent`), so no
- * assessor-authored content is ever hiding behind the excluded `text`.
+ * That title is shown separately: in the editable unified feedback editor's own title field, in the "name · title"
+ * heading of the read-only feedback item, and for modeling exercises in the title of Apollon's assessment box (see
+ * `ModelingAssessmentComponent`, which also writes an assessor's description edits into `detailText`). Dropping it
+ * here only avoids showing it twice.
  *
  * @param feedback that contains feedback text and grading instruction
  * @param addFeedbackText if the (non-suggestion) text of the feedback should be part of the resulting text.

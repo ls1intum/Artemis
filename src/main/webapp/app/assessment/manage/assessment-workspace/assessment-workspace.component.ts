@@ -1,4 +1,4 @@
-import { TumAetUiSplitterComponent } from '@tumaet/ui-angular';
+import { TumAetUiSplitterComponent } from '@tumaet/ui-angular/splitter';
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { NgTemplateOutlet } from '@angular/common';

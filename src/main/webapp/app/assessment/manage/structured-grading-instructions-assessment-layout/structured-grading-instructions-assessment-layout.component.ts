@@ -1,13 +1,10 @@
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiMessageComponent,
-    TumAetUiTableDirective,
-    TumAetUiTagComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { DraggedGradingInstruction } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { Component, OnInit, computed, effect, inject, input, signal, viewChildren } from '@angular/core';
@@ -17,7 +14,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
-import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
+import { GradingInstructionSelectionService, GradingInstructionWithCriterionTitle } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -198,7 +195,7 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
             return;
         }
         // The criterion's title travels with the instruction, which does not carry it, so the drop target can name the feedback after it
-        const payload: DraggedGradingInstruction = cloneWith(instruction, { criterionTitle });
+        const payload: GradingInstructionWithCriterionTitle = cloneWith(instruction, { criterionTitle: criterionTitle ?? this.selectionService.criterionTitleOf(instruction) });
         // The mimetype has to be text/plain to enable dragging into an external application, e.g, Apollon
         event.dataTransfer?.setData('text/plain', JSON.stringify(payload));
     }
