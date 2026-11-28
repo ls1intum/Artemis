@@ -9,28 +9,28 @@ Course **Home** gives students a contextual next step, recent course updates, th
 
 ## Enable a welcome provider
 
-Home calls its own LLM preset, defined under `artemis.llm` like the presets of the other AI features (see [LLM configuration](./llm-configuration)). Enabling Iris, Atlas or Hyperion does not assign it. The feature is disabled by default. Assign a preset and its location to enable it:
+Home selects its [LLM preset](./llm-configuration) from the student's choice in the AI selection dialog. The feature is off by default. Enable it and configure a preset for each mode you want to offer.
 
 ```yaml
 artemis:
     course-home:
         ai:
             enabled: true
-            location: LOCAL
-            llm-preset: welcome
+            local-llm-preset: welcomelocal
+            cloud-llm-preset: welcomecloud
 ```
 
-Set `location` to `LOCAL` only when the preset's endpoint runs within the installation's approved local environment. Use `CLOUD` for an external provider. Students who selected local AI can receive welcomes only from a `LOCAL` provider. Students who selected cloud AI can use either location. Students who declined AI, have not selected a preference, or need to renew their consent receive deterministic welcomes.
+Use an approved local inference endpoint for the local preset and an external inference endpoint for the cloud preset. Students who choose **Local AI** use the local preset. Students who choose **Cloud AI** use the cloud preset. If the selected mode has no configured preset, the student receives a template welcome. Students who choose **No AI**, have yet to select a preference, or need to renew their consent also receive template welcomes.
 
 When the Home provider is configured, students can open **Account settings → AI experience**, even if no other AI module is enabled. The local AI option in the selection dialog stays governed by `info.localLLMDeploymentEnabled`, which you set only when the connected services support local inference. A Home provider, even a local one, does not make that option available. Students can then receive Home welcomes through a local provider only after you enable that setting. Iris interaction counts and deletion controls appear only when Iris is enabled.
 
-With `enabled: true`, the server does not start without `llm-preset` or with an unknown preset. A missing or unknown `location` leaves the provider unavailable, and deterministic welcomes continue to work. Earlier releases configured `base-url`, `api-key` and `model` here; move them to an endpoint and a preset. The endpoint's base URL must not contain credentials, query parameters or fragments; keep API keys in deployment secrets.
+With `enabled: true`, the server requires at least one assigned preset and validates every assignment. A legacy `llm-preset` with `location: LOCAL` or `CLOUD` applies only to the corresponding preference. An explicit local or cloud preset takes precedence for its mode. The endpoint's base URL must be free of credentials, query parameters and fragments. Keep API keys in deployment secrets.
 
 ## Request limits and fallback
 
 The course overview loads independently of the model. Only an eligible welcome starts a separate request, with a three-second provider timeout, no retries, an output budget of 160 tokens (or the preset's lower limit), and at most four simultaneous requests per application instance. These limits apply whatever the preset's own timeout and retries are. Requests beyond that capacity fall back immediately. The client waits at most 3.5 seconds while continuing to show deterministic encouragement and usable course links.
 
-Artemis rebuilds the authorized context and checks the student's current consent before dispatch and after the response. The bounded prompt contains published course description, instructor-authored learning guidance, the current situation, and a nonprivate next action. It excludes student identity, grades, question text, Iris conversation titles and transcripts, and source code. Private actions are described generically. Generated text is limited to encouragement; dates, counts, answer states and links come from course data. Invalid or unavailable model output keeps the deterministic welcome.
+Artemis rebuilds the authorized context and checks the student's current preference before dispatch and after the response. A response is discarded if the student has changed modes or withdrawn consent while it was in flight. The bounded prompt contains published course description, instructor-authored learning guidance, the current situation, and a nonprivate next action. It excludes student identity, grades, question text, Iris conversation titles and transcripts, and source code. Private actions are described generically. Generated text is limited to encouragement; dates, counts, answer states and links come from course data. Invalid or unavailable model output keeps the deterministic welcome.
 
 ## Course guidance and stored visits
 
