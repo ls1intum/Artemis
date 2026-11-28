@@ -328,4 +328,24 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(comp.pointsSummary()).toEqual({ awarded: 12, deducted: -2, total: 10 });
         });
     });
+
+    describe('score summary', () => {
+        it('should show the score when only referenced feedback exists', () => {
+            const referenced = { credits: 3, type: FeedbackType.MANUAL, reference: 'Class:1' } as Feedback;
+            fixture.componentRef.setInput('allFeedbacks', [referenced]);
+            fixture.componentRef.setInput('maxPoints', 10);
+            fixture.detectChanges();
+
+            expect(comp.unreferencedFeedback).toHaveLength(0);
+            expect(fixture.debugElement.query(By.css('.unreferenced-feedback__summary'))).not.toBeNull();
+            expect(comp.pointsSummary()).toEqual({ awarded: 3, deducted: 0, total: 3 });
+        });
+
+        it('should not show the score when there is no feedback at all', () => {
+            fixture.componentRef.setInput('maxPoints', 10);
+            fixture.detectChanges();
+
+            expect(fixture.debugElement.query(By.css('.unreferenced-feedback__summary'))).toBeNull();
+        });
+    });
 });

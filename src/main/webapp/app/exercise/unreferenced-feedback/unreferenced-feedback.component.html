@@ -3,10 +3,10 @@
         <span jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"></span>
     </button>
 
-    <!-- Section header: the title on the leading edge, the point balance of this list on the trailing edge. -->
+    <!-- Section header: the title on the leading edge, the point balance of the whole assessment on the trailing edge. -->
     <div class="unreferenced-feedback__header">
         <h4 class="unreferenced-feedback__title" jhiTranslate="artemisApp.assessment.detail.feedback"></h4>
-        @if (unreferencedFeedback.length > 0) {
+        @if (scoringFeedbacks().length > 0) {
             @let summary = pointsSummary();
             <dl class="unreferenced-feedback__summary">
                 <div class="unreferenced-feedback__summary-item">
