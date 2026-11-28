@@ -34,7 +34,7 @@ import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessm
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { parseJson } from 'app/foundation/util/json.util';
 import { Course } from 'app/course/shared/entities/course.model';
-import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
+import { isAllowedToModifyFeedback, isAssessorOfResult } from 'app/assessment/manage/services/assessment.service';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
@@ -439,7 +439,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     private checkPermissions(): void {
-        this.isAssessor.set(this.result()?.assessor?.id === this.userId);
+        this.isAssessor.set(isAssessorOfResult(this.result(), this.userId, this.modelingExercise(), this.submission()?.participation));
     }
 
     get canOverride(): boolean {
@@ -653,7 +653,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.modelingExercise(), this.submission(), this.isTestRun());
+        assessmentNavigateBack(this.location, this.router, this.modelingExercise(), this.isTestRun());
     }
 
     private highlightElementsWithMissingFeedback() {

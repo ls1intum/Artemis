@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { isAllowedToModifyFeedback, isAllowedToRespondToComplaintAction } from 'app/assessment/manage/services/assessment.service';
+import { isAllowedToModifyFeedback, isAllowedToRespondToComplaintAction, isAssessorOfResult } from 'app/assessment/manage/services/assessment.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { User } from 'app/account/user/user.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 describe('Assessment Service', () => {
     const user = {} as User;
@@ -100,6 +101,24 @@ describe('Assessment Service', () => {
             const isAllowedNotAssessor = isAllowedToRespondToComplaintAction(false, false, feedbackRequest, exercise);
             expect(isAllowedAssessor).toBe(true);
             expect(isAllowedNotAssessor).toBe(false);
+        });
+    });
+
+    describe('isAssessorOfResult', () => {
+        const instructorResult = (completed: boolean) => ({ assessor: { id: 2 } as User, completionDate: completed ? dayjs() : undefined }) as Result;
+        const teamParticipation = { testRun: false } as StudentParticipation;
+
+        it('treats the user who holds the result as its assessor', () => {
+            expect(isAssessorOfResult({ assessor: { id: 1 } as User } as Result, 1, exercise, teamParticipation)).toBe(true);
+            expect(isAssessorOfResult(instructorResult(true), 1, exercise, teamParticipation)).toBe(false);
+        });
+
+        it.each([
+            [true, false, true],
+            [false, false, false],
+            [true, true, false],
+        ])('lets the team tutor override a completed team assessment of another user: completed=%s, practice=%s', (completed, practice, expected) => {
+            expect(isAssessorOfResult(instructorResult(completed), 1, teamExercise, { testRun: practice } as StudentParticipation)).toBe(expected);
         });
     });
 });

@@ -32,7 +32,7 @@ import { getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
 import { Course } from 'app/course/shared/entities/course.model';
-import { isAllowedToModifyFeedback } from 'app/assessment/manage/services/assessment.service';
+import { isAllowedToModifyFeedback, isAssessorOfResult } from 'app/assessment/manage/services/assessment.service';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
@@ -305,7 +305,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     private checkPermissions(result?: Result): void {
-        this.isAssessor.set(result?.assessor?.id === this.userId);
+        this.isAssessor.set(isAssessorOfResult(result, this.userId, this.exercise, this.participation));
     }
 
     /**
@@ -537,7 +537,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     }
 
     navigateBack() {
-        assessmentNavigateBack(this.location, this.router, this.exercise, this.submission, this.isTestRun());
+        assessmentNavigateBack(this.location, this.router, this.exercise, this.isTestRun());
     }
 
     /**

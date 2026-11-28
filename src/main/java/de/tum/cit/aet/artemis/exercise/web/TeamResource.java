@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.AssessmentQueueTeamDTO;
 import de.tum.cit.aet.artemis.exercise.dto.CourseWithTeamExercisesDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
@@ -72,6 +73,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
+import de.tum.cit.aet.artemis.exercise.service.team.TeamAssessmentService;
 import de.tum.cit.aet.artemis.exercise.service.team.TeamService;
 
 /**
@@ -123,10 +125,13 @@ public class TeamResource {
 
     private final TeamScoreRepository teamScoreRepository;
 
+    private final TeamAssessmentService teamAssessmentService;
+
     public TeamResource(TeamRepository teamRepository, TeamService teamService, TeamWebsocketService teamWebsocketService, CourseRepository courseRepository,
             ExerciseRepository exerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ParticipationDeletionService participationDeletionService, SubmissionService submissionService, AuditEventRepository auditEventRepository,
-            StudentParticipationRepository studentParticipationRepository, TeamScoreRepository teamScoreRepository) {
+            StudentParticipationRepository studentParticipationRepository, TeamScoreRepository teamScoreRepository, TeamAssessmentService teamAssessmentService) {
+        this.teamAssessmentService = teamAssessmentService;
         this.teamRepository = teamRepository;
         this.teamService = teamService;
         this.teamWebsocketService = teamWebsocketService;
@@ -362,6 +367,25 @@ public class TeamResource {
         teams.forEach(Team::filterSensitiveInformation);
         teams.forEach(team -> team.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber())));
         return ResponseEntity.ok().body(TeamResponseDTO.of(teams));
+    }
+
+    /**
+     * Lists all eligible submissions and existing assessments for the caller's teams, without claiming them.
+     *
+     * @param exerciseId      the exercise whose queue is displayed
+     * @param correctionRound the requested assessment round
+     * @return one queue entry per participating team
+     */
+    @GetMapping("exercises/{exerciseId}/assessment-queue-teams")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<List<AssessmentQueueTeamDTO>> getAssessmentQueueTeams(@PathVariable long exerciseId,
+            @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        if (!exercise.isTeamMode() || exercise.isExamExercise()) {
+            throw new BadRequestAlertException("The exercise is not a course team exercise", "exercise", "notTeamExercise");
+        }
+        submissionService.checkCorrectionRoundIsValidElseThrow(exercise, correctionRound);
+        return ResponseEntity.ok(teamAssessmentService.getAssessmentQueue(exercise, correctionRound));
     }
 
     /**

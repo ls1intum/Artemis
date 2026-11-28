@@ -1,27 +1,18 @@
 import { Location } from '@angular/common';
 import { Router } from '@angular/router';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-
-function teamIdOf(submission: Submission): number | undefined {
-    // The participation of a submission is optional
-    return (submission.participation as StudentParticipation)?.team?.id;
-}
 
 /**
  * Navigate from Assessment Editor to Dashboard:
- *   1. For Team Exercises: Navigate to Team Dashboard with all Submissions of the Team
- *   2. For Regular Exercises: Navigate to the Exercise Assessment Dashboard
+ *   Course exercises return to the Exercise Assessment Dashboard.
  *   Fallback: If we do not know the exercise, we navigate back in the browser's history.
  *
  * @param location: Angular wrapper for interacting with Browser URL and History
  * @param router: Angular router to navigate to URL
  * @param exercise: Exercise currently assessed
- * @param submission: Submission currently assessed
  * @param isTestRun: flag to determine if it is an exam test run
  */
-export function assessmentNavigateBack(location: Location, router: Router, exercise?: Exercise, submission?: Submission, isTestRun = false) {
+export function assessmentNavigateBack(location: Location, router: Router, exercise?: Exercise, isTestRun = false) {
     if (exercise) {
         const course = getCourseFromExercise(exercise);
 
@@ -32,9 +23,6 @@ export function assessmentNavigateBack(location: Location, router: Router, exerc
             if (exercise.exerciseGroup) {
                 const exam = exercise.exerciseGroup.exam!;
                 void router.navigateByUrl(`/course-management/${course?.id}/exams/${exam.id}/assessment-dashboard/${exercise.id}`);
-            } else if (exercise.teamMode && submission && teamIdOf(submission) !== undefined) {
-                // Without a loaded team the link would end in `/teams/undefined`, so the assessment dashboard is used then.
-                void router.navigateByUrl(`/courses/${course?.id}/exercises/${exercise.id}/teams/${teamIdOf(submission)}`);
             } else {
                 void router.navigateByUrl(`/course-management/${course?.id}/assessment-dashboard/${exercise.id}`);
             }

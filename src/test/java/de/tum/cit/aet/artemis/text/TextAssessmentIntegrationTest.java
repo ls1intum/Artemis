@@ -373,6 +373,28 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(participationWithoutAssessment.student()).as("student of participation is hidden").isNull();
     }
 
+    @ParameterizedTest
+    @CsvSource({ "false,false", "false,true", "true,false", "true,true" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void retrieveParticipationForSubmission_preservesIndividualAssessmentRegardlessOfDeadline(boolean deadlinePassed, boolean existingAssessment) throws Exception {
+        TextSubmission submission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        submission = existingAssessment
+                ? textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1")
+                : textExerciseUtilService.saveTextSubmission(textExercise, submission, TEST_PREFIX + "student1");
+        var originalResultId = existingAssessment ? submission.getLatestResult().getId() : null;
+        exerciseUtilService.updateExerciseDueDate(textExercise.getId(), deadlinePassed ? now().minusDays(1) : now().plusDays(1));
+
+        request.get("/api/text/text-submissions/" + submission.getId() + "/for-assessment", HttpStatus.OK, TextParticipationDTO.class);
+
+        var results = submissionRepository.findByIdWithResultsElseThrow(submission.getId()).getResults();
+        if (existingAssessment) {
+            assertThat(results).extracting(Result::getId).containsExactly(originalResultId);
+        }
+        else {
+            assertThat(results).hasSize(1);
+        }
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void retrieveParticipationForLockedSubmission() throws Exception {

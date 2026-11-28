@@ -59,6 +59,7 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.team.TeamAssessmentService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -101,11 +102,13 @@ public class SubmissionService {
 
     private final ScaFeedbackRepository scaFeedbackRepository;
 
+    protected final TeamAssessmentService teamAssessmentService;
+
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
             FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService, ParticipationRepository participationRepository,
             ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi, TestCaseFeedbackRepository testCaseFeedbackRepository,
-            ScaFeedbackRepository scaFeedbackRepository) {
+            ScaFeedbackRepository scaFeedbackRepository, TeamAssessmentService teamAssessmentService) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -120,6 +123,7 @@ public class SubmissionService {
         this.athenaApi = athenaApi;
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;
         this.scaFeedbackRepository = scaFeedbackRepository;
+        this.teamAssessmentService = teamAssessmentService;
     }
 
     /**
@@ -669,6 +673,7 @@ public class SubmissionService {
     /**
      * Soft locks the submission to prevent other tutors from receiving and assessing it. We set the assessor and save the result to soft lock the assessment in the client, i.e.
      * the client will not allow tutors to assess a submission when an assessor is already assigned. If no result exists for this submission we create one first.
+     * A completed assessment of a course team exercise is returned unchanged, so that its tutor can reopen it without claiming it.
      *
      * @param submission      the submission to lock
      * @param correctionRound the correction round to lock the submission for, must not be negative
@@ -678,6 +683,10 @@ public class SubmissionService {
     protected Result lockSubmission(Submission submission, int correctionRound) {
         checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         Result result = submission.getResultForCorrectionRound(correctionRound);
+        teamAssessmentService.checkCanAssessElseThrow(submission, result == null || result.getAssessmentType() == null);
+        if (result != null && result.getCompletionDate() != null && submission.getParticipation().getExercise().isTeamMode()) {
+            return result;
+        }
         if (result == null && correctionRound > 0) {
             // copy the result of the previous correction round
             result = copyResultFromPreviousRoundAndSave(submission, submission.getResultForCorrectionRound(correctionRound - 1));

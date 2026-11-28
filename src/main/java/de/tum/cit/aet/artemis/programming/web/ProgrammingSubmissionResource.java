@@ -54,6 +54,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.service.team.TeamAssessmentService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -119,6 +120,8 @@ public class ProgrammingSubmissionResource {
 
     private final SelectedBuildRunStatusService selectedBuildRunStatusService;
 
+    private final TeamAssessmentService teamAssessmentService;
+
     public ProgrammingSubmissionResource(ProgrammingSubmissionService programmingSubmissionService, ProgrammingTriggerService programmingTriggerService,
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ExerciseRepository exerciseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
@@ -126,7 +129,8 @@ public class ProgrammingSubmissionResource {
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, GradingCriterionRepository gradingCriterionRepository,
             SubmissionRepository submissionRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository,
             ExerciseDateService exerciseDateService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService,
-            CourseAthenaConfigRepository courseAthenaConfigRepository, SelectedBuildRunStatusService selectedBuildRunStatusService) {
+            CourseAthenaConfigRepository courseAthenaConfigRepository, SelectedBuildRunStatusService selectedBuildRunStatusService, TeamAssessmentService teamAssessmentService) {
+        this.teamAssessmentService = teamAssessmentService;
         this.courseAthenaConfigRepository = courseAthenaConfigRepository;
         this.selectedBuildRunStatusService = selectedBuildRunStatusService;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -452,12 +456,17 @@ public class ProgrammingSubmissionResource {
 
             // As no manual result is present we need to lock the submission for assessment
             Result latestAutomaticResult = programmingSubmission.getLatestResult();
-            if (latestAutomaticResult == null) {
+            // Team queue links name the submission to assess; the lock assesses the latest commit of the participation anyway, so no pending submission is needed.
+            if (latestAutomaticResult == null && !programmingExercise.isTeamMode()) {
                 // if the participation does not have a result we want to create a new result for the submission of the participation.
                 // If there isn't a submission either, we should not create any result.
                 programmingSubmission = programmingSubmissionService.getLatestPendingSubmission(participation.getId(), false).orElseThrow();
             }
             programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
+        }
+        else {
+            // reopening an existing assessment does not lock the submission, which is where the team assessment rules are checked otherwise
+            teamAssessmentService.checkCanAssessElseThrow(programmingSubmission, false);
         }
 
         // prepare programming submission for response (double-blind assessment: removes the participant for tutors)

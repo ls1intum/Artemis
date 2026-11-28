@@ -2,6 +2,8 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 /**
  * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests themself
@@ -49,3 +51,11 @@ export const isAllowedToModifyFeedback = (
     }
     return !hasAssessmentDueDatePassed;
 };
+
+/**
+ * Whether the current user acts as the assessor of a result in the assessment editors.
+ * The team tutor may override a completed assessment of a course team exercise until the assessment due date, like the server allows, even if an instructor
+ * completed it. Only the team tutor and instructors can open it, and a draft stays locked to the user who holds it.
+ */
+export const isAssessorOfResult = (result: Result | undefined, userId: number | undefined, exercise: Exercise | undefined, participation: Participation | undefined): boolean =>
+    result?.assessor?.id === userId || (!!result?.completionDate && !!exercise?.teamMode && !!participation && !isPracticeMode(participation));

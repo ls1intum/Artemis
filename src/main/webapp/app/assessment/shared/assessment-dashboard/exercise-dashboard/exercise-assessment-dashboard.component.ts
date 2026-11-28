@@ -76,6 +76,7 @@ import type { TutorParticipationStatusEnum } from 'app/openapi/model/tutor-parti
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetReason } from 'app/assessment/shared/util/assessment-availability.util';
+import { AssessmentQueueTeam, TeamService } from 'app/exercise/team/team.service';
 import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
 import { AssessmentUploadDialogComponent } from 'app/assessment/manage/assessment-upload/assessment-upload-dialog.component';
 
@@ -149,6 +150,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     private sortService = inject(SortService);
     private datePipe = inject(ArtemisDatePipe);
     private destroyRef = inject(DestroyRef);
+    private teamService = inject(TeamService);
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
@@ -183,8 +185,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly feedbackRequestEnabled = signal(false);
     readonly tutorAssessmentPercentage = signal(0);
     readonly tutorParticipationStatus = signal<TutorParticipationStatus>(undefined!);
+    readonly assessmentQueueTeams = signal<ReadonlyMap<number, AssessmentQueueTeam>>(new Map());
     // Indexed by correction round (0, 1) — readonly so any in-place mutation is a compile error and updates go through .update() with a new array.
     readonly assessedSubmissionsByRound = signal<readonly (readonly Submission[])[]>([]);
+    readonly teamUnassessedSubmissionsByRound = signal<readonly (readonly Submission[])[]>([]);
     readonly unassessedSubmissionByRound = signal<readonly (Submission | undefined)[]>([]);
     readonly exampleSubmissionsToReview = signal<ExampleSubmission[]>([]);
     readonly exampleSubmissionsToAssess = signal<ExampleSubmission[]>([]);
@@ -203,7 +207,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly formattedGradingInstructions = signal<SafeHtml | undefined>(undefined);
     readonly formattedProblemStatement = signal<SafeHtml | undefined>(undefined);
     readonly formattedSampleSolution = signal<SafeHtml | undefined>(undefined);
-    getSubmissionResultByCorrectionRound = getSubmissionResultByCorrectionRound;
 
     // helper variables to display information message about why no new assessments are possible anymore.
     // Computed synchronously in calculateAssessmentProgressInformation alongside statsForDashboard.set(), so they render on that signal's CD tick.
@@ -322,6 +325,26 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     // links (set in setupLinks alongside exercise.set() in the getForTutors subscribe)
     readonly complaintsLink = signal<(string | number)[]>(undefined!);
     readonly moreFeedbackRequestsLink = signal<(string | number)[]>(undefined!);
+
+    // One row per displayed submission, so that the template binds values instead of calling methods.
+    readonly submissionRowsByRound = computed(() =>
+        this.correctionRoundIndices().map((correctionRound) => {
+            const toRow = (submission: Submission, unassessed: boolean) => ({
+                submission,
+                team: this.exercise().teamMode && !this.isTestRun() ? this.assessmentQueueTeams().get(submission.participation?.id ?? -1) : undefined,
+                result: getSubmissionResultByCorrectionRound(submission, correctionRound),
+                canContinue: this.canContinueTeamAssessment(submission, correctionRound),
+                isDraft: this.calculateSubmissionStatusIsDraft(submission, correctionRound),
+                link: this.getAssessmentLink(unassessed && !this.exercise().teamMode ? 'new' : submission),
+            });
+            return {
+                unassessed: this.getUnassessedSubmissionsForRound(correctionRound).map((submission) => toRow(submission, true)),
+                assessed: (this.assessedSubmissionsByRound()[correctionRound] ?? []).map((submission) => toRow(submission, false)),
+                showSubmissions: this.showSubmissionsForRound(correctionRound),
+                queryParams: this.getAssessmentQueryParams(correctionRound),
+            };
+        }),
+    );
 
     // Icons
     faSpinner = faSpinner;
@@ -495,7 +518,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                 }
                 this.getAllTutorAssessedSubmissionsForAllCorrectionRounds();
 
-                // The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
                 const isAfterDueDate = !exercise.dueDate || exercise.dueDate.isBefore(dayjs());
                 // Athena feedback requests, and thus the pre-due-date exception, are only supported for these exercise types
                 const supportsAthenaFeedbackRequests = [ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.PROGRAMMING].includes(exercise.type!);
@@ -634,7 +656,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
             }
             // the submissions could not be fetched while assessment was blocked, so fetch them now
             const exercise = this.exercise();
-            if (exercise && !exercise.teamMode && !this.isTestRun()) {
+            if (exercise && !this.isTestRun()) {
                 this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
             }
         }, millisecondsUntilNextChange);
@@ -668,6 +690,13 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * If not in examMode, correction rounds defaults to 0, as more than 1 is currently not supported.
      */
     private getAllTutorAssessedSubmissionsForAllCorrectionRounds(): void {
+        // team exercises are course exercises, so their queue has only the first correction round
+        if (this.exercise().teamMode && !this.isTestRun()) {
+            if (!this.assessmentNotPossibleYetReason()) {
+                this.loadTeamQueueForCorrectionRound(0);
+            }
+            return;
+        }
         if (this.isExamMode()) {
             for (let i = 0; i < this.exam()!.numberOfCorrectionRoundsInExam!; i++) {
                 this.getAllTutorAssessedSubmissionsForCorrectionRound(i);
@@ -742,10 +771,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      */
     private reconnectEntities = (submissions: Submission[]) => {
         return submissions.map((submission: Submission) => {
+            submission.results?.forEach((result) => {
+                result.submission = submission;
+            });
             const latestResult = getLatestSubmissionResult(submission);
             if (latestResult) {
-                // reconnect some associations
-                latestResult.submission = submission;
                 setLatestSubmissionResult(submission, latestResult);
             }
             return submission;
@@ -757,6 +787,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
      * If not in examMode correction rounds defaults to 0.
      */
     private getSubmissionWithoutAssessmentForAllCorrectionRounds(): void {
+        // team exercises are course exercises, so their queue has only the first correction round
+        if (this.exercise().teamMode && !this.isTestRun()) {
+            this.loadTeamQueueForCorrectionRound(0);
+            return;
+        }
         if (this.isExamMode()) {
             for (let i = 0; i < this.exam()!.numberOfCorrectionRoundsInExam!; i++) {
                 if (i <= this.numberOfCorrectionRoundsEnabled()) {
@@ -826,12 +861,52 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         });
     }
 
+    /** Loads team queue metadata without claiming assessment locks. */
+    private loadTeamQueueForCorrectionRound(correctionRound: number): void {
+        this.teamService
+            .findAssessmentQueueTeams(this.exerciseId(), correctionRound)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (teams) => {
+                    this.assessmentQueueTeams.set(new Map(teams.map((team) => [team.participationId, team])));
+                    const submissions = this.reconnectEntities(teams.map((team) => team.submission));
+                    submissions.forEach((submission) => {
+                        submission.participation!.submissions = [submission];
+                    });
+                    this.teamUnassessedSubmissionsByRound.update((rounds) => {
+                        const next = [...rounds];
+                        next[correctionRound] = submissions.filter((submission) => !getSubmissionResultByCorrectionRound(submission, correctionRound));
+                        return next;
+                    });
+                    this.assessedSubmissionsByRound.update((rounds) => {
+                        const next = [...rounds];
+                        next[correctionRound] = submissions.filter((submission) => !!getSubmissionResultByCorrectionRound(submission, correctionRound));
+                        return next;
+                    });
+                    this.sortSubmissionRows(correctionRound);
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+    }
+
+    /** Returns the submissions displayed as unassessed in this correction round. */
+    getUnassessedSubmissionsForRound(correctionRound: number): readonly Submission[] {
+        if (this.isTestRun()) {
+            return [];
+        }
+        if (this.exercise().teamMode) {
+            return this.teamUnassessedSubmissionsByRound()[correctionRound] ?? [];
+        }
+        const proposal = this.unassessedSubmissionByRound()[correctionRound];
+        return proposal ? [proposal] : [];
+    }
+
     /**
      * Whether to show graded submissions and actions regarding them
      * @param correctionRound Round to check for unassessed submissions
      */
     showSubmissionsForRound(correctionRound: number): boolean {
-        const unassessedSubmissionExist = !!this.unassessedSubmissionByRound()[correctionRound]?.id;
+        const unassessedSubmissionExist = this.getUnassessedSubmissionsForRound(correctionRound).length > 0;
         const assessedSubmissionsExist = !!this.assessedSubmissionsByRound()[correctionRound]?.length;
 
         return (unassessedSubmissionExist || assessedSubmissionsExist) && !this.exercise().allowComplaintsForAutomaticAssessments;
@@ -874,6 +949,20 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     private onError(error: string) {
         this.alertService.error(error);
+    }
+
+    /**
+     * Whether the user may continue the team assessment of a submission. A tutor cannot continue a draft that another user holds, which the assessment editors refuse as
+     * well, but may open it to view it, except for text exercises, whose editor refuses to load a draft of another user.
+     * @param submission      the displayed submission
+     * @param correctionRound the displayed correction round
+     */
+    private canContinueTeamAssessment(submission: Submission, correctionRound: number): boolean {
+        if (!this.exercise().teamMode || this.isTestRun()) {
+            return true;
+        }
+        const result = getSubmissionResultByCorrectionRound(submission, correctionRound);
+        return !!result?.completionDate || !result?.assessor || !!this.exercise().isAtLeastInstructor || result.assessor.id === this.tutor()?.id;
     }
 
     /**
@@ -1032,6 +1121,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     sortSubmissionRows(correctionRound: number) {
+        if (this.exercise().teamMode) {
+            this.teamUnassessedSubmissionsByRound.update((rounds) => {
+                const next = [...rounds];
+                const sorted = [...(next[correctionRound] ?? [])];
+                this.sortService.sortByProperty(sorted, this.sortPredicates[0], this.reverseOrders[0]);
+                next[correctionRound] = sorted;
+                return next;
+            });
+        }
         this.assessedSubmissionsByRound.update((rounds) => {
             const next = [...rounds];
             const sorted = [...(next[correctionRound] ?? [])];
