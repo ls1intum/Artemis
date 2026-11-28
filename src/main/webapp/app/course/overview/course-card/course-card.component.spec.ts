@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseCardComponent } from 'app/course/overview/course-card/course-card.component';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { CourseScores } from 'app/course/manage/course-scores/course-scores';
@@ -66,7 +66,7 @@ describe('CourseCardComponent', () => {
     });
 
     it('should display the total course scores returned from the scores storage service', () => {
-        const mockCourseScores: CourseScores = new CourseScores(0, 20, 0, {
+        const mockCourseScores: CourseScores = new CourseScores(20, 10, 0, {
             absoluteScore: 4,
             absoluteScoreTotal: 4,
             relativeScore: 0.3,
@@ -78,9 +78,44 @@ describe('CourseCardComponent', () => {
         fixture.detectChanges();
         TestBed.tick();
 
-        expect(component.totalRelativeScore()).toBe(0.2);
+        expect(component.totalRelativeScore()).toBe(0.3);
         expect(component.totalAbsoluteScore()).toBe(4);
-        expect(component.totalReachableScore()).toBe(20);
+        expect(component.totalMaxPoints()).toBe(20);
+    });
+
+    it('uses the full course maximum and relative score when a future manual exercise is not yet reachable', () => {
+        const completedExercise = {
+            id: 10,
+            type: ExerciseType.PROGRAMMING,
+            maxPoints: 10,
+            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+        } as Exercise;
+        const futureManualExercise = {
+            id: 11,
+            type: ExerciseType.TEXT,
+            maxPoints: 10,
+            dueDate: dayjs().add(2, 'days'),
+            includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
+            studentParticipations: [],
+        } as Exercise;
+        fixture.componentRef.setInput('course', { ...course, exercises: [completedExercise, futureManualExercise] } as Course);
+        vi.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(
+            new CourseScores(20, 10, 0, {
+                absoluteScore: 10,
+                absoluteScoreTotal: 10,
+                relativeScore: 50,
+                currentRelativeScore: 100,
+                presentationScore: 0,
+            }),
+        );
+
+        fixture.detectChanges();
+        TestBed.tick();
+
+        expect(component.totalRelativeScore()).toBe(50);
+        expect(component.totalAbsoluteScore()).toBe(10);
+        expect(component.totalMaxPoints()).toBe(20);
+        expect(component.doughnutChartEntries().map((entry) => entry.value)).toEqual([10, 10]);
     });
 
     it('should show the translated chart label as tooltip title and the value as body', () => {

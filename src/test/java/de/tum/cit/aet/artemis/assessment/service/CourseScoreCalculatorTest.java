@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.dto.CourseScoreContextDTO;
@@ -47,11 +49,35 @@ class CourseScoreCalculatorTest {
                 new CourseGradeScoreDTO(5L, STUDENT_ID, 5L, 100.0, false, null, ExerciseType.TEXT)), List.of(), 0.0, 0);
         StudentScoresDTO scores = CourseScoreCalculator.calculateCourseScoreForStudent(context, input);
 
-        assertThat(context.maxAndReachablePoints().maxPoints()).isEqualTo(12.0);
+        assertThat(context.maxAndReachablePoints().maxPoints()).isEqualTo(42.0);
         assertThat(context.maxAndReachablePoints().reachablePoints()).isEqualTo(12.0);
-        assertThat(scores.absoluteScore()).isEqualTo(13.0);
-        assertThat(scores.relativeScore()).isEqualTo(108.3);
-        assertThat(scores.currentRelativeScore()).isEqualTo(108.3);
+        assertThat(scores.absoluteScore()).isEqualTo(43.0);
+        assertThat(scores.relativeScore()).isEqualTo(102.4);
+        assertThat(scores.currentRelativeScore()).isEqualTo(358.3);
+    }
+
+    @Test
+    void shouldCreditSingleRatedParticipationForExercise() {
+        ExerciseCourseScoreDTO exercise = exercise(1L, IncludedInOverallScore.INCLUDED_COMPLETELY, 10.0, null, null);
+        CourseScoreContextDTO context = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(exercise), CALCULATION_TIME);
+
+        StudentScoresDTO scores = CourseScoreCalculator.calculateCourseScoreForStudent(context, input(List.of(grade(101L, 1L, 50.0, true)), List.of(), 0.0, 0));
+
+        assertThat(scores.absoluteScore()).isEqualTo(5.0);
+        assertThat(scores.relativeScore()).isEqualTo(50.0);
+    }
+
+    @Test
+    void shouldCreditEveryRatedParticipationForExercise() {
+        ExerciseCourseScoreDTO exercise = exercise(1L, IncludedInOverallScore.INCLUDED_COMPLETELY, 10.0, null, null);
+        CourseScoreContextDTO context = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(exercise), CALCULATION_TIME);
+
+        StudentScoresDTO scores = CourseScoreCalculator.calculateCourseScoreForStudent(context,
+                input(List.of(grade(101L, 1L, 50.0, true), grade(102L, 1L, 60.0, true)), List.of(), 0.0, 0));
+
+        assertThat(scores.absoluteScore()).isEqualTo(11.0);
+        assertThat(scores.absoluteScoreTotal()).isEqualTo(11.0);
+        assertThat(scores.relativeScore()).isEqualTo(110.0);
     }
 
     @Test
@@ -87,6 +113,8 @@ class CourseScoreCalculatorTest {
 
         StudentScoresDTO gradedScores = CourseScoreCalculator.calculateCourseScoreForStudent(gradedContext, gradedInput);
 
+        assertThat(gradedContext.maxAndReachablePoints().maxPoints()).isEqualTo(8.0);
+        assertThat(gradedContext.maxAndReachablePoints().reachablePoints()).isEqualTo(8.0);
         assertThat(gradedContext.maxAndReachablePoints().reachablePresentationPoints()).isEqualTo(3.0);
         assertThat(gradedScores.presentationScore()).isEqualTo(2.3);
         assertThat(gradedScores.absoluteScore()).isEqualTo(2.3);
@@ -99,16 +127,81 @@ class CourseScoreCalculatorTest {
     }
 
     @Test
-    void shouldUseTheProvidedCalculationTimeForAutomaticAssessment() {
+    void shouldBaseMaximumPresentationPointsOnMaximumExercisePointsWhenAssessmentIsPending() {
+        ExerciseCourseScoreDTO assessmentDone = exercise(1L, IncludedInOverallScore.INCLUDED_COMPLETELY, 10.0, null, null);
+        ExerciseCourseScoreDTO assessmentPending = scoreExercise(2L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL,
+                CALCULATION_TIME.plusDays(1), CALCULATION_TIME.plusDays(2), null, 10.0, null, null);
+
+        CourseScoreContextDTO context = CourseScoreCalculator.createContext(SETTINGS, new GradedPresentationConfigDTO(2, 25.0), Set.of(assessmentDone, assessmentPending),
+                CALCULATION_TIME);
+
+        assertThat(context.maxAndReachablePoints().maxPoints()).isEqualTo(26.7);
+        assertThat(context.maxAndReachablePoints().reachablePoints()).isEqualTo(13.3);
+        assertThat(context.maxAndReachablePoints().reachablePresentationPoints()).isEqualTo(3.3);
+    }
+
+    @Test
+    void shouldUseTheProvidedCalculationTimeForAutomaticAssessmentReachability() {
         ExerciseCourseScoreDTO exercise = new ExerciseCourseScoreDTO(1L, ExerciseType.PROGRAMMING, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.AUTOMATIC,
                 CALCULATION_TIME.minusDays(1), CALCULATION_TIME.minusHours(1), CALCULATION_TIME.plusMinutes(1), 10.0, 0.0, COURSE_ID, null, null);
 
         CourseScoreContextDTO beforeFinalBuild = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(exercise), CALCULATION_TIME);
         CourseScoreContextDTO afterFinalBuild = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(exercise), CALCULATION_TIME.plusMinutes(2));
 
-        assertThat(beforeFinalBuild.maxAndReachablePoints().maxPoints()).isZero();
+        assertThat(beforeFinalBuild.maxAndReachablePoints().maxPoints()).isEqualTo(10.0);
+        assertThat(beforeFinalBuild.maxAndReachablePoints().reachablePoints()).isZero();
         assertThat(afterFinalBuild.maxAndReachablePoints().maxPoints()).isEqualTo(10.0);
         assertThat(afterFinalBuild.maxAndReachablePoints().reachablePoints()).isEqualTo(10.0);
+    }
+
+    @ParameterizedTest
+    @EnumSource(ExerciseType.class)
+    void shouldPreserveLegacyReachabilityPerExerciseTypeExceptForAnUnendedQuiz(ExerciseType type) {
+        AssessmentType assessmentType = type == ExerciseType.PROGRAMMING ? AssessmentType.AUTOMATIC : AssessmentType.MANUAL;
+        ExerciseCourseScoreDTO exercise = scoreExercise(1L, type, IncludedInOverallScore.INCLUDED_COMPLETELY, assessmentType, CALCULATION_TIME.plusDays(1), null, null, 10.0, null,
+                null);
+
+        CourseScoreContextDTO context = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(exercise), CALCULATION_TIME);
+
+        assertThat(context.maxAndReachablePoints().maxPoints()).as("max points for %s are included regardless of the future due date", type).isEqualTo(10.0);
+        double legacyReachablePoints = type == ExerciseType.QUIZ ? 0.0 : 10.0;
+        assertThat(context.maxAndReachablePoints().reachablePoints()).as("reachable points for %s preserve the previous assessment rule", type).isEqualTo(legacyReachablePoints);
+    }
+
+    @Test
+    void shouldMakeQuizPointsReachableOnlyAfterItsDueDate() {
+        ZonedDateTime quizDueDate = CALCULATION_TIME.plusDays(1);
+        ExerciseCourseScoreDTO quiz = scoreExercise(1L, ExerciseType.QUIZ, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.AUTOMATIC, quizDueDate, null, null, 10.0,
+                null, null);
+
+        CourseScoreContextDTO beforeQuizEnds = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(quiz), CALCULATION_TIME);
+        CourseScoreContextDTO atQuizEnd = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(quiz), quizDueDate);
+        CourseScoreContextDTO afterQuizEnds = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(quiz), quizDueDate.plusNanos(1));
+
+        assertThat(beforeQuizEnds.maxAndReachablePoints().maxPoints()).isEqualTo(10.0);
+        assertThat(beforeQuizEnds.maxAndReachablePoints().reachablePoints()).isZero();
+        assertThat(atQuizEnd.maxAndReachablePoints().reachablePoints()).isZero();
+        assertThat(afterQuizEnds.maxAndReachablePoints().maxPoints()).isEqualTo(10.0);
+        assertThat(afterQuizEnds.maxAndReachablePoints().reachablePoints()).isEqualTo(10.0);
+
+        StudentCourseScoreInputDTO input = input(List.of(grade(1L, 50.0, true)), List.of(), 0.0, 0);
+        StudentScoresDTO beforeQuizScores = CourseScoreCalculator.calculateCourseScoreForStudent(beforeQuizEnds, input);
+        StudentScoresDTO afterQuizScores = CourseScoreCalculator.calculateCourseScoreForStudent(afterQuizEnds, input);
+        assertThat(beforeQuizScores.relativeScore()).isEqualTo(50.0);
+        assertThat(beforeQuizScores.currentRelativeScore()).isZero();
+        assertThat(afterQuizScores.relativeScore()).isEqualTo(50.0);
+        assertThat(afterQuizScores.currentRelativeScore()).isEqualTo(50.0);
+    }
+
+    @Test
+    void shouldPreserveReachabilityForQuizWithoutDueDate() {
+        ExerciseCourseScoreDTO quizWithoutDueDate = scoreExercise(1L, ExerciseType.QUIZ, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.AUTOMATIC, null, null, null,
+                10.0, null, null);
+
+        CourseScoreContextDTO context = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(quizWithoutDueDate), CALCULATION_TIME);
+
+        assertThat(context.maxAndReachablePoints().maxPoints()).isEqualTo(10.0);
+        assertThat(context.maxAndReachablePoints().reachablePoints()).isEqualTo(10.0);
     }
 
     @Test
@@ -125,7 +218,7 @@ class CourseScoreCalculatorTest {
     }
 
     @Test
-    void shouldIncludeExercisesOnlyWhenTheirScoringWindowHasOpened() {
+    void shouldIncludeExercisesBasedOnScoreSettingRegardlessOfDueDate() {
         ExerciseCourseScoreDTO manualFuture = scoreExercise(1L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL,
                 CALCULATION_TIME.plusMinutes(1), null, null, 10.0, null, null);
         ExerciseCourseScoreDTO manualAtBoundary = scoreExercise(2L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL, CALCULATION_TIME, null,
@@ -144,23 +237,23 @@ class CourseScoreCalculatorTest {
         ExerciseCourseScoreDTO automaticWithoutFinalBuild = scoreExercise(9L, ExerciseType.PROGRAMMING, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.AUTOMATIC,
                 CALCULATION_TIME.plusDays(1), null, null, 10.0, null, null);
 
-        assertThat(CourseScoreCalculator.includeIntoScoreCalculation(manualFuture, CALCULATION_TIME)).isFalse();
-        assertThat(CourseScoreCalculator.includeIntoScoreCalculation(manualAtBoundary, CALCULATION_TIME)).isFalse();
-        assertThat(CourseScoreCalculator.includeIntoScoreCalculation(manualPast, CALCULATION_TIME)).isTrue();
-        assertThat(CourseScoreCalculator.includeIntoScoreCalculation(manualWithoutDueDate, CALCULATION_TIME)).isTrue();
-        assertThat(CourseScoreCalculator.includeIntoScoreCalculation(excluded, CALCULATION_TIME)).isFalse();
-        assertThat(CourseScoreCalculator.includeIntoScoreCalculation(automaticFutureBuild, CALCULATION_TIME)).isFalse();
-        assertThat(CourseScoreCalculator.includeIntoScoreCalculation(automaticAtBuildBoundary, CALCULATION_TIME)).isFalse();
-        assertThat(CourseScoreCalculator.includeIntoScoreCalculation(automaticPastBuild, CALCULATION_TIME)).isTrue();
-        assertThat(CourseScoreCalculator.includeIntoScoreCalculation(automaticWithoutFinalBuild, CALCULATION_TIME)).isTrue();
+        assertThat(CourseScoreCalculator.includeIntoScoreCalculation(manualFuture)).isTrue();
+        assertThat(CourseScoreCalculator.includeIntoScoreCalculation(manualAtBoundary)).isTrue();
+        assertThat(CourseScoreCalculator.includeIntoScoreCalculation(manualPast)).isTrue();
+        assertThat(CourseScoreCalculator.includeIntoScoreCalculation(manualWithoutDueDate)).isTrue();
+        assertThat(CourseScoreCalculator.includeIntoScoreCalculation(excluded)).isFalse();
+        assertThat(CourseScoreCalculator.includeIntoScoreCalculation(automaticFutureBuild)).isTrue();
+        assertThat(CourseScoreCalculator.includeIntoScoreCalculation(automaticAtBuildBoundary)).isTrue();
+        assertThat(CourseScoreCalculator.includeIntoScoreCalculation(automaticPastBuild)).isTrue();
+        assertThat(CourseScoreCalculator.includeIntoScoreCalculation(automaticWithoutFinalBuild)).isTrue();
     }
 
     @Test
-    void shouldKeepMaximumAndReachablePointsSeparateUntilAssessmentIsDone() {
+    void shouldIncludeManualExercisePointsBeforeDueDateAndKeepReachabilitySeparateUntilAssessmentIsDone() {
         ExerciseCourseScoreDTO assessmentPending = scoreExercise(1L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL,
-                CALCULATION_TIME.minusDays(2), CALCULATION_TIME.plusDays(1), null, 10.0, null, null);
+                CALCULATION_TIME.plusDays(2), CALCULATION_TIME.plusDays(1), null, 10.0, null, null);
         ExerciseCourseScoreDTO assessmentDone = scoreExercise(2L, ExerciseType.TEXT, IncludedInOverallScore.INCLUDED_COMPLETELY, AssessmentType.MANUAL,
-                CALCULATION_TIME.minusDays(2), CALCULATION_TIME.minusDays(1), null, 10.0, null, null);
+                CALCULATION_TIME.plusDays(2), CALCULATION_TIME.minusDays(1), null, 10.0, null, null);
         CourseScoreContextDTO context = CourseScoreCalculator.createContext(SETTINGS, null, Set.of(assessmentPending, assessmentDone), CALCULATION_TIME);
 
         StudentScoresDTO scores = CourseScoreCalculator.calculateCourseScoreForStudent(context, input(List.of(grade(1L, 50.0, true), grade(2L, 50.0, true)), List.of(), 0.0, 0));
@@ -264,7 +357,11 @@ class CourseScoreCalculatorTest {
     }
 
     private static CourseGradeScoreDTO grade(long exerciseId, double score, boolean rated) {
-        return new CourseGradeScoreDTO(exerciseId, STUDENT_ID, exerciseId, score, rated, null, ExerciseType.TEXT);
+        return grade(exerciseId, exerciseId, score, rated);
+    }
+
+    private static CourseGradeScoreDTO grade(long participationId, long exerciseId, double score, boolean rated) {
+        return new CourseGradeScoreDTO(participationId, STUDENT_ID, exerciseId, score, rated, null, ExerciseType.TEXT);
     }
 
     private static StudentCourseScoreInputDTO input(List<CourseGradeScoreDTO> grades, List<PlagiarismCaseScoreDTO> plagiarismCases, double presentationScoreSum,

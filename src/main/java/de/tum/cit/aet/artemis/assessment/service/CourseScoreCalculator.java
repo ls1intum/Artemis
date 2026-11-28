@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundToNDecimalPlace
 
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -61,11 +62,9 @@ public final class CourseScoreCalculator {
      * Calculates max and reachable max points for the given exercises, plus the reachable presentation points when the
      * course awards them.
      * <p>
-     * Max points are the sum of the points for all included (see {@link #includeIntoScoreCalculation}) exercises whose
-     * due date has passed or is unset, or which are automatically assessed with their build-and-test date in the past.
+     * Max points include every exercise configured to count towards the overall score, independent of its due date.
      * Reachable max points only count exercises whose assessment is done (see {@link #isAssessmentDone}). An exercise
-     * that is not automatically assessed with a due date in the past but an assessment due date in the future therefore
-     * counts towards max points but not towards reachable max points.
+     * whose assessment is still pending therefore counts towards max points but not towards reachable max points.
      *
      * @param settings           the course settings the calculation rounds by
      * @param presentationConfig the graded presentation configuration, or {@code null} to calculate no presentation points
@@ -74,8 +73,7 @@ public final class CourseScoreCalculator {
      */
     private static MaxAndReachablePointsDTO calculateMaxAndReachablePoints(CourseScoreSettingsDTO settings, @Nullable GradedPresentationConfigDTO presentationConfig,
             Set<ExerciseCourseScoreDTO> exercises, ZonedDateTime calculationTime) {
-        var completelyIncludedNonVariants = exercises.stream().filter(exercise -> !isExerciseVariant(exercise))
-                .filter(exercise -> includeIntoScoreCalculation(exercise, calculationTime))
+        var completelyIncludedNonVariants = exercises.stream().filter(exercise -> !isExerciseVariant(exercise)).filter(exercise -> includeIntoScoreCalculation(exercise))
                 .filter(exercise -> exercise.includedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY).toList();
 
         double maxPoints = completelyIncludedNonVariants.stream().mapToDouble(ExerciseCourseScoreDTO::maxPoints).sum();
@@ -87,8 +85,9 @@ public final class CourseScoreCalculator {
         maxPoints += variantGroupPoints.maxPoints();
         reachableMaxPoints += variantGroupPoints.reachablePoints();
 
+        double maxPresentationPoints = calculateReachablePresentationPoints(presentationConfig, maxPoints, settings.accuracyOfScores());
         double reachablePresentationPoints = calculateReachablePresentationPoints(presentationConfig, reachableMaxPoints, settings.accuracyOfScores());
-        maxPoints += reachablePresentationPoints;
+        maxPoints += maxPresentationPoints;
         reachableMaxPoints += reachablePresentationPoints;
 
         return new MaxAndReachablePointsDTO(maxPoints, reachableMaxPoints, reachablePresentationPoints);
@@ -106,8 +105,7 @@ public final class CourseScoreCalculator {
         var maxPointsPerGroup = new VariantGroupCappedSum();
         var reachableMaxPointsPerGroup = new VariantGroupCappedSum();
 
-        var completelyIncludedVariants = exercises.stream().filter(CourseScoreCalculator::isExerciseVariant)
-                .filter(exercise -> includeIntoScoreCalculation(exercise, calculationTime))
+        var completelyIncludedVariants = exercises.stream().filter(CourseScoreCalculator::isExerciseVariant).filter(exercise -> includeIntoScoreCalculation(exercise))
                 .filter(exercise -> exercise.includedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY).toList();
         completelyIncludedVariants.forEach(exercise -> maxPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(), exercise.maxPoints()));
         completelyIncludedVariants.stream().filter(exercise -> isAssessmentDone(exercise, calculationTime))
@@ -131,17 +129,17 @@ public final class CourseScoreCalculator {
         }
 
         CourseScoreSettingsDTO settings = context.settings();
-        Map<Long, CourseGradeScoreDTO> gradeScorePerExercise = ratedGradeScoresPerExercise(studentInput.gradeScores());
+        Map<Long, List<CourseGradeScoreDTO>> gradeScoresPerExercise = ratedGradeScoresPerExercise(studentInput.gradeScores());
 
         // Non-variant exercises are summed individually.
         double pointsAchievedByStudentInCourse = context.exercises().stream().filter(exercise -> !isExerciseVariant(exercise))
-                .filter(exercise -> includeIntoScoreCalculation(exercise, context.calculationTime()))
-                .flatMapToDouble(exercise -> Optional.ofNullable(gradeScorePerExercise.get(exercise.id())).stream()
+                .filter(exercise -> includeIntoScoreCalculation(exercise))
+                .flatMapToDouble(exercise -> gradeScoresPerExercise.getOrDefault(exercise.id(), List.of()).stream()
                         .mapToDouble(gradeScore -> calculatePointsAchievedFromExercise(exercise, gradeScore.score(), plagiarismCasesForStudent.get(exercise.id()), settings)))
                 .sum();
 
         // Exercise variants: the points a student earns across a group's variants are capped at the group's configured maxPoints.
-        VariantGroupCappedSum variantGroupAchievedPoints = calculateVariantGroupAchievedPoints(context, gradeScorePerExercise, plagiarismCasesForStudent);
+        VariantGroupCappedSum variantGroupAchievedPoints = calculateVariantGroupAchievedPoints(context, gradeScoresPerExercise, plagiarismCasesForStudent);
         pointsAchievedByStudentInCourse += variantGroupAchievedPoints.total();
         double pointsCappedAwayFromVariantGroups = variantGroupAchievedPoints.uncappedTotal() - variantGroupAchievedPoints.total();
 
@@ -167,12 +165,12 @@ public final class CourseScoreCalculator {
      * @return the per-group accumulator of the points the student earns from the variant groups (see
      *         {@link VariantGroupCappedSum#total()} for the capped and {@link VariantGroupCappedSum#uncappedTotal()} for the uncapped sum)
      */
-    private static VariantGroupCappedSum calculateVariantGroupAchievedPoints(CourseScoreContextDTO context, Map<Long, CourseGradeScoreDTO> gradeScorePerExercise,
+    private static VariantGroupCappedSum calculateVariantGroupAchievedPoints(CourseScoreContextDTO context, Map<Long, List<CourseGradeScoreDTO>> gradeScoresPerExercise,
             Map<Long, PlagiarismCaseScoreDTO> plagiarismCasesForStudent) {
         var achievedPointsPerGroup = new VariantGroupCappedSum();
-        context.exercises().stream().filter(CourseScoreCalculator::isExerciseVariant).filter(exercise -> includeIntoScoreCalculation(exercise, context.calculationTime()))
-                .forEach(exercise -> Optional.ofNullable(gradeScorePerExercise.get(exercise.id()))
-                        .ifPresent(gradeScore -> achievedPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(),
+        context.exercises().stream().filter(CourseScoreCalculator::isExerciseVariant).filter(exercise -> includeIntoScoreCalculation(exercise))
+                .forEach(exercise -> gradeScoresPerExercise.getOrDefault(exercise.id(), List.of())
+                        .forEach(gradeScore -> achievedPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(),
                                 calculatePointsAchievedFromExercise(exercise, gradeScore.score(), plagiarismCasesForStudent.get(exercise.id()), context.settings()))));
         return achievedPointsPerGroup;
     }
@@ -192,22 +190,18 @@ public final class CourseScoreCalculator {
         if (studentHasVerdict(plagiarismCasesForStudent.values(), PlagiarismVerdict.PLAGIARISM)) {
             return Map.of();
         }
-        Map<Long, CourseGradeScoreDTO> gradeScorePerExercise = ratedGradeScoresPerExercise(studentInput.gradeScores());
+        Map<Long, List<CourseGradeScoreDTO>> gradeScoresPerExercise = ratedGradeScoresPerExercise(studentInput.gradeScores());
 
         var achievedPointsPerGroup = new VariantGroupCappedSum();
-        context.exercises().stream().filter(exercise -> exercise.variantGroupId() != null).filter(exercise -> includeIntoScoreCalculation(exercise, context.calculationTime()))
-                .forEach(exercise -> Optional.ofNullable(gradeScorePerExercise.get(exercise.id()))
-                        .ifPresent(gradeScore -> achievedPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(),
+        context.exercises().stream().filter(exercise -> exercise.variantGroupId() != null).filter(exercise -> includeIntoScoreCalculation(exercise))
+                .forEach(exercise -> gradeScoresPerExercise.getOrDefault(exercise.id(), List.of())
+                        .forEach(gradeScore -> achievedPointsPerGroup.add(exercise.variantGroupId(), exercise.variantGroupMaxPoints(),
                                 calculatePointsAchievedFromExercise(exercise, gradeScore.score(), plagiarismCasesForStudent.get(exercise.id()), context.settings()))));
         return achievedPointsPerGroup.cappedPointsPerGroup();
     }
 
-    private static Map<Long, CourseGradeScoreDTO> ratedGradeScoresPerExercise(Collection<CourseGradeScoreDTO> gradeScores) {
-        return gradeScores.stream().filter(gradeScore -> Boolean.TRUE.equals(gradeScore.rated()))
-                // A student can hold more than one graded participation in one exercise, for instance after moving between
-                // individual and team mode. Keeping the higher score matches what the participation-based path credits,
-                // and is in any case preferable to Collectors.toMap's default of throwing.
-                .collect(Collectors.toMap(CourseGradeScoreDTO::exerciseId, gradeScore -> gradeScore, (first, second) -> first.score() >= second.score() ? first : second));
+    private static Map<Long, List<CourseGradeScoreDTO>> ratedGradeScoresPerExercise(Collection<CourseGradeScoreDTO> gradeScores) {
+        return gradeScores.stream().filter(gradeScore -> Boolean.TRUE.equals(gradeScore.rated())).collect(Collectors.groupingBy(CourseGradeScoreDTO::exerciseId));
     }
 
     private static Map<Long, PlagiarismCaseScoreDTO> plagiarismCasesForStudent(StudentCourseScoreInputDTO studentInput) {
@@ -295,23 +289,14 @@ public final class CourseScoreCalculator {
      * Determines whether a given exercise will be included into course score calculation.
      * <p>
      * The requirement that has to be fulfilled for every exercise: it has to be included in the score.
-     * The base case: an exercise that is not an automatically assessed programming exercise
-     * -> include in maxPointsInCourse after the due date.
-     * Edge case 1: an automatically assessed programming exercise without test runs after the due date
-     * -> include in maxPointsInCourse directly after release because the student can achieve points immediately.
-     * Edge case 2: an automatically assessed programming exercise with test runs after the due date
-     * -> include in maxPointsInCourse after the final test run is over, not immediately after release, because
-     * the test run after the due date is important for the final course score (hidden tests).
+     * Inclusion depends only on the course score setting. Whether the points are reachable yet is evaluated separately
+     * by {@link #isAssessmentDone(ExerciseCourseScoreDTO, ZonedDateTime)}.
      *
-     * @param exercise        the exercise whose involvement should be determined
-     * @param calculationTime the instant at which the score is calculated
+     * @param exercise the exercise whose involvement should be determined
      * @return true if the exercise counts towards the course score
      */
-    public static boolean includeIntoScoreCalculation(ExerciseCourseScoreDTO exercise, ZonedDateTime calculationTime) {
-        boolean isExerciseIncluded = exercise.includedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED;
-        boolean isExerciseFinished = !isAssessedAutomatically(exercise) && (exercise.dueDate() == null || exercise.dueDate().isBefore(calculationTime));
-
-        return isExerciseIncluded && (isExerciseFinished || isAutomaticAssessmentDone(exercise, calculationTime));
+    public static boolean includeIntoScoreCalculation(ExerciseCourseScoreDTO exercise) {
+        return exercise.includedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED;
     }
 
     /**
@@ -331,16 +316,18 @@ public final class CourseScoreCalculator {
      * <p>
      * Base case: points are reachable if the exercise is released and the assessment is over -> it was possible for the student to get points.
      * Addition regarding edge case 1: the exercise score is reachable immediately after release since the student score only depends on the
-     * immediate automatic feedback.
+     * immediate automatic feedback. Quiz points are an exception; they become reachable after their due date, even if no assessment due date is set.
      * Addition regarding edge case 2: the exercise score is officially reachable after the final test run
      * (so after the buildAndTestStudentSubmissionsAfterDueDate is over).
      *
      * @param exercise the exercise whose assessment state should be determined
      */
     private static boolean isAssessmentDone(ExerciseCourseScoreDTO exercise, ZonedDateTime calculationTime) {
+        boolean quizHasEnded = exercise.type() != ExerciseType.QUIZ || exercise.dueDate() == null || calculationTime.isAfter(exercise.dueDate());
         boolean isNonAutomaticAssessmentDone = !isAssessedAutomatically(exercise)
                 && (exercise.assessmentDueDate() == null || calculationTime.isAfter(exercise.assessmentDueDate()));
-        return isNonAutomaticAssessmentDone || isAutomaticAssessmentDone(exercise, calculationTime);
+        boolean assessmentIsDone = isNonAutomaticAssessmentDone || isAutomaticAssessmentDone(exercise, calculationTime);
+        return quizHasEnded && assessmentIsDone;
     }
 
     private static boolean isAssessedAutomatically(ExerciseCourseScoreDTO exercise) {

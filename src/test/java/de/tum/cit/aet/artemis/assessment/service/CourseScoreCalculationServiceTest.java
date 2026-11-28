@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.assessment.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Clock;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -34,6 +36,7 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.StudentScoreTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleFactory;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForDashboardDTO;
@@ -42,6 +45,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.CourseGradeScoreDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
@@ -57,6 +61,8 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "cscservicetest";
+
+    private static final ZonedDateTime FIXED_CALCULATION_TIME = ZonedDateTime.of(2030, 6, 1, 12, 0, 0, 0, ZoneId.of("Europe/Berlin"));
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
@@ -194,20 +200,11 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), courseScores,
                 new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of(), courseExercises);
-        if (withDueDate) {
-            assertThat(studentScoresDTO.absoluteScore()).isEqualTo(0.0);
-            assertThat(studentScoresDTO.relativeScore()).isEqualTo(0.0);
-            assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(0.0);
-        }
-        else {
-            // The text participation contributes nothing because its results were deleted above. That deletion used to
-            // be a no-op: the results were an ordered list whose position column stayed at its database default for
-            // every result saved through the result repository, so the list came back with a null in it, and the null
-            // was filtered out before the delete. The expected values used to encode that.
-            assertThat(studentScoresDTO.absoluteScore()).isEqualTo(6.0);
-            assertThat(studentScoresDTO.relativeScore()).isEqualTo(24.0);
-            assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(120.0);
-        }
+        // Including an exercise in the course score no longer depends on its due date. Reachable points are still
+        // calculated separately from the assessment due date.
+        assertThat(studentScoresDTO.absoluteScore()).isEqualTo(6.0);
+        assertThat(studentScoresDTO.relativeScore()).isEqualTo(24.0);
+        assertThat(studentScoresDTO.currentRelativeScore()).isEqualTo(120.0);
 
         Map<Long, BonusSourceResultDTO> bonusSourceResultDTOMap = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course, null, List.of(student.getId()));
 
@@ -228,7 +225,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         exercise.setDueDate(null);
         exercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
 
-        exerciseRepository.save(exercise);
+        // Keep this test focused on the excluded exercise instead of contributions from the fixture's other exercises.
+        exerciseList.stream().skip(1).forEach(otherExercise -> otherExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED));
+        exerciseRepository.saveAll(exerciseList);
 
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
@@ -247,6 +246,38 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getScoresAndParticipationResultsIncludesPublishedManualScoreBeforeExerciseDueDate() {
+        var exercise = course.getExercises().stream().filter(TextExercise.class::isInstance).findFirst().orElseThrow();
+        exercise.setReleaseDate(FIXED_CALCULATION_TIME.minusDays(2));
+        exercise.setDueDate(FIXED_CALCULATION_TIME.plusDays(1));
+        exercise.setAssessmentDueDate(FIXED_CALCULATION_TIME.minusHours(1));
+        exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
+        StudentParticipation participation = exercise.getStudentParticipations().iterator().next();
+        Result ratedResult = participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).filter(Result::isRated).findFirst().orElseThrow();
+        ratedResult.setCompletionDate(FIXED_CALCULATION_TIME.minusHours(2));
+
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        TimeUtil.setClock(Clock.fixed(FIXED_CALCULATION_TIME.toInstant(), FIXED_CALCULATION_TIME.getZone()));
+        CourseForDashboardDTO courseForDashboard;
+        try {
+            courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(course, null, student.getId());
+        }
+        finally {
+            TimeUtil.resetClock();
+        }
+        CourseScoresDTO textScores = courseForDashboard.textScores();
+
+        assertThat(textScores.maxPoints()).isEqualTo(5.0);
+        assertThat(textScores.reachablePoints()).isEqualTo(5.0);
+        assertThat(textScores.studentScores().absoluteScore()).isEqualTo(0.6);
+        assertThat(textScores.studentScores().absoluteScoreTotal()).isEqualTo(0.6);
+        assertThat(textScores.studentScores().relativeScore()).isEqualTo(12.0);
+        assertThat(textScores.studentScores().currentRelativeScore()).isEqualTo(12.0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getScoresAndParticipationResultsForPastCourse() {
         // Create course with assessment due date passed.
         Course pastCourse = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
@@ -255,19 +286,19 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, null, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(CourseDashboardDTO.of(pastCourse));
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
-        assertThat(totalCourseScores.maxPoints()).isEqualTo(5.0);
-        assertThat(totalCourseScores.reachablePoints()).isEqualTo(5.0);
+        assertThat(totalCourseScores.maxPoints()).isEqualTo(25.0);
+        assertThat(totalCourseScores.reachablePoints()).isEqualTo(25.0);
         assertThat(totalCourseScores.reachablePresentationPoints()).isZero();
-        assertThat(totalCourseScores.studentScores().absoluteScore()).isZero();
-        assertThat(totalCourseScores.studentScores().relativeScore()).isZero();
-        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isZero();
+        assertThat(totalCourseScores.studentScores().absoluteScore()).isEqualTo(6.6);
+        assertThat(totalCourseScores.studentScores().relativeScore()).isEqualTo(26.4);
+        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isEqualTo(26.4);
 
         CourseScoresDTO programmingExerciseScores = courseForDashboard.programmingScores();
-        assertThat(programmingExerciseScores.maxPoints()).isZero();
-        assertThat(programmingExerciseScores.reachablePoints()).isZero();
-        assertThat(programmingExerciseScores.studentScores().absoluteScore()).isZero();
-        assertThat(programmingExerciseScores.studentScores().relativeScore()).isZero();
-        assertThat(programmingExerciseScores.studentScores().currentRelativeScore()).isZero();
+        assertThat(programmingExerciseScores.maxPoints()).isEqualTo(5.0);
+        assertThat(programmingExerciseScores.reachablePoints()).isEqualTo(5.0);
+        assertThat(programmingExerciseScores.studentScores().absoluteScore()).isEqualTo(1.0);
+        assertThat(programmingExerciseScores.studentScores().relativeScore()).isEqualTo(20.0);
+        assertThat(programmingExerciseScores.studentScores().currentRelativeScore()).isEqualTo(20.0);
 
         CourseScoresDTO quizExerciseScores = courseForDashboard.quizScores();
         assertThat(quizExerciseScores.maxPoints()).isEqualTo(5.0);
@@ -296,12 +327,12 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, gradingScale, student.getId());
         assertThat(courseForDashboard.course()).isEqualTo(CourseDashboardDTO.of(pastCourse));
         CourseScoresDTO totalCourseScores = courseForDashboard.totalScores();
-        assertThat(totalCourseScores.maxPoints()).isEqualTo(8.0);
-        assertThat(totalCourseScores.reachablePoints()).isEqualTo(8.0);
-        assertThat(totalCourseScores.reachablePresentationPoints()).isEqualTo(3.0);
-        assertThat(totalCourseScores.studentScores().absoluteScore()).isEqualTo(3.0);
-        assertThat(totalCourseScores.studentScores().relativeScore()).isEqualTo(37.5);
-        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isEqualTo(37.5);
+        assertThat(totalCourseScores.maxPoints()).isEqualTo(40.0);
+        assertThat(totalCourseScores.reachablePoints()).isEqualTo(40.0);
+        assertThat(totalCourseScores.reachablePresentationPoints()).isEqualTo(15.0);
+        assertThat(totalCourseScores.studentScores().absoluteScore()).isEqualTo(21.6);
+        assertThat(totalCourseScores.studentScores().relativeScore()).isEqualTo(54.0);
+        assertThat(totalCourseScores.studentScores().currentRelativeScore()).isEqualTo(54.0);
 
         CourseScoresDTO programmingExerciseScores = courseForDashboard.programmingScores();
         assertThat(programmingExerciseScores.studentScores().presentationScore()).isZero();
@@ -483,6 +514,36 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
+    void achievedPointsPerVariantGroupApplyTeamPlagiarismDeductionToEveryMember() {
+        ExerciseVariantGroup group = cappedGroup(200L, 100.0);
+        Course variantCourse = variantScoringCourse();
+        TextExercise variant1 = variantExercise(101L, variantCourse, group);
+        TextExercise variant2 = variantExercise(102L, variantCourse, group);
+        User firstStudent = new User();
+        firstStudent.setId(1L);
+        User secondStudent = new User();
+        secondStudent.setId(2L);
+        Team team = new Team();
+        team.setStudents(Set.of(firstStudent, secondStudent));
+
+        StudentParticipation participation1 = ratedParticipation(variant1, 100.0);
+        participation1.setParticipant(team);
+        StudentParticipation participation2 = ratedParticipation(variant2, 100.0);
+        participation2.setParticipant(team);
+        PlagiarismCase teamPlagiarism = new PlagiarismCase();
+        teamPlagiarism.setTeam(team);
+        teamPlagiarism.setExercise(variant1);
+        teamPlagiarism.setVerdict(PlagiarismVerdict.POINT_DEDUCTION);
+        teamPlagiarism.setVerdictPointDeduction(50);
+
+        List<StudentParticipation> participations = List.of(participation1, participation2);
+        assertThat(courseScoreCalculationService.calculateAchievedPointsPerVariantGroup(1L, participations, List.of(teamPlagiarism)))
+                .containsExactlyInAnyOrderEntriesOf(Map.of(200L, 7.5));
+        assertThat(courseScoreCalculationService.calculateAchievedPointsPerVariantGroup(2L, participations, List.of(teamPlagiarism)))
+                .containsExactlyInAnyOrderEntriesOf(Map.of(200L, 7.5));
+    }
+
+    @Test
     void achievedPointsPerVariantGroupIncludesUncappedGroupsAtRawSum() {
         // A group with no configured maxPoints is deliberately uncapped; it must still appear in the map (the
         // group-detail page reads it and treats a missing entry as 0), just without a cap applied.
@@ -563,6 +624,8 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
     /** Builds an in-memory participation for the given exercise carrying a single rated result with the given score. */
     private static StudentParticipation ratedParticipation(TextExercise exercise, double score) {
         StudentParticipation participation = new StudentParticipation();
+        // Score calculation projects persisted participation IDs, so use a stable fixture ID for this in-memory participation.
+        participation.setId(exercise.getId());
         participation.setExercise(exercise);
         TextSubmission submission = new TextSubmission();
         Result result = ParticipationFactory.generateResult(true, score);
