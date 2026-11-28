@@ -17,7 +17,9 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { CourseManagementDetailViewDto } from 'app/course/shared/entities/course-management-detail-view-dto.model';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { objectToJsonBlob } from 'app/foundation/util/blob-util';
-import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
+import { OnlineCourseConfiguration } from 'app/openapi/model/online-course-configuration';
+import { LtiApi } from 'app/openapi/api/lti-api';
+import dayjs from 'dayjs/esm';
 import { CourseForDashboardDTO } from 'app/course/shared/entities/course-for-dashboard-dto';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
@@ -95,6 +97,7 @@ export class GradeScoreDTO {
 @Service()
 export class CourseManagementService implements OnDestroy {
     private http = inject(HttpClient);
+    private readonly ltiApi = inject(LtiApi);
     private courseStorageService = inject(CourseStorageService);
     private accountService = inject(AccountService);
     private entityTitleService = inject(EntityTitleService);
@@ -155,8 +158,8 @@ export class CourseManagementService implements OnDestroy {
      * @param courseId - the id of the course to be updated
      * @param onlineCourseConfiguration - the updates to the online course configuration
      */
-    updateOnlineCourseConfiguration(courseId: number, onlineCourseConfiguration: OnlineCourseConfiguration): Observable<EntityResponseType> {
-        return this.http.put<OnlineCourseConfiguration>(`api/lti/courses/${courseId}/online-course-configuration`, onlineCourseConfiguration, { observe: 'response' });
+    updateOnlineCourseConfiguration(courseId: number, onlineCourseConfiguration: OnlineCourseConfiguration): Observable<OnlineCourseConfiguration> {
+        return this.ltiApi.updateOnlineCourseConfiguration(courseId, onlineCourseConfiguration);
     }
 
     /**
@@ -168,8 +171,20 @@ export class CourseManagementService implements OnDestroy {
     }
 
     findAllOnlineCoursesWithRegistrationId(clientId: string): Observable<OnlineCourseDtoModel[]> {
-        const params = new HttpParams().set('clientId', '' + clientId);
-        return this.http.get<OnlineCourseDtoModel[]>('api/lti/courses/for-lti-dashboard', { params });
+        return this.ltiApi.findAllOnlineCoursesForLtiDashboard(clientId).pipe(
+            map((courses) =>
+                courses.map((course) => ({
+                    id: course.id,
+                    title: course.title,
+                    shortName: course.shortName,
+                    registrationId: course.registrationId,
+                    startDate: course.startDate ? dayjs(course.startDate) : undefined,
+                    endDate: course.endDate ? dayjs(course.endDate) : undefined,
+                    description: course.description,
+                    numberOfStudents: course.numberOfStudents,
+                })),
+            ),
+        );
     }
 
     /**

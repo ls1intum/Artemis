@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -39,6 +40,9 @@ import de.tum.cit.aet.artemis.lti.dto.LtiPlatformConfigurationUpdateDTO;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiDynamicRegistrationService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing LTI platform configurations.
@@ -88,8 +92,10 @@ public class AdminLtiConfigurationResource {
      * @param pageable Pageable
      * @return ResponseEntity containing a list of all lti platforms with status 200 (OK)
      */
+    @ApiResponse(responseCode = "200", headers = { @Header(name = "X-Total-Count", schema = @Schema(type = "integer", format = "int64")),
+            @Header(name = "Link", schema = @Schema(type = "string")) })
     @GetMapping("lti-platforms")
-    public ResponseEntity<List<LtiPlatformConfigurationDTO>> getAllConfiguredLtiPlatforms(Pageable pageable) {
+    public ResponseEntity<List<LtiPlatformConfigurationDTO>> getAllConfiguredLtiPlatforms(@ParameterObject Pageable pageable) {
         log.info("REST request to get all configured LTI platforms");
         Page<LtiPlatformConfiguration> platformsPage = ltiPlatformConfigurationRepository.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), platformsPage);

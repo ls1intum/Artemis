@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lti;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 
@@ -22,12 +23,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.RSAKey;
 
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
@@ -135,7 +138,10 @@ class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
         doReturn(mockRsaKey).when(oAuth2JWKSService).getJWK(any());
         var params = getDeepLinkingRequestParamsForExercise();
 
-        request.postWithoutResponseBody("/api/lti/lti13/courses/" + course.getId() + "/deep-linking", HttpStatus.OK, params);
+        var response = request.postWithoutResponseBody("/api/lti/lti13/courses/" + course.getId() + "/deep-linking", HttpStatus.OK, params);
+
+        assertThat(response.getContentType()).isEqualTo(MediaType.APPLICATION_JSON_VALUE);
+        assertThat(JsonObjectMapper.get().readTree(response.getContentAsString()).get("targetLinkUri").asString()).isNotBlank();
     }
 
     @Test

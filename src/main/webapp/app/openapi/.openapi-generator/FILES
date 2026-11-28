@@ -1,6 +1,7 @@
 api/admin-ai-worker-api.ts
 api/admin-hyperion-generation-api.ts
 api/admin-hyperion-generation-monitoring-api.ts
+api/admin-lti-configuration-api.ts
 api/assessment-upload-api.ts
 api/athena-api.ts
 api/attachment-video-unit-api.ts
@@ -29,6 +30,7 @@ api/lecture-api.ts
 api/lecture-transcription-api.ts
 api/lecture-unit-api.ts
 api/long-feedback-text-api.ts
+api/lti-api.ts
 api/multipart.ts
 api/online-unit-api.ts
 api/participant-score-api.ts
@@ -111,6 +113,7 @@ model/course.ts
 model/create-exercise-variant-group.ts
 model/create-or-update-tutorial-group-request.ts
 model/create-or-update-tutorial-group-session-request.ts
+model/deep-linking-target.ts
 model/difficulty-assessment.ts
 model/domain-object.ts
 model/drag-and-drop-mapping-create.ts
@@ -229,6 +232,8 @@ model/lecture-unit-material-versions.ts
 model/lecture-unit-split-information.ts
 model/lecture-unit-split.ts
 model/lecture-unit.ts
+model/lti-platform-configuration-update.ts
+model/lti-platform-configuration.ts
 model/missing-content.ts
 model/missing-entity.ts
 model/modeling-feedback.ts
@@ -242,6 +247,8 @@ model/multiple-choice-submitted-answer-after-evaluation.ts
 model/multiple-choice-submitted-answer-before-evaluation.ts
 model/multiple-choice-submitted-answer-from-live-client.ts
 model/multiple-choice-submitted-answer-from-student.ts
+model/online-course-configuration.ts
+model/online-course.ts
 model/online-resource.ts
 model/online-unit.ts
 model/participant.ts
