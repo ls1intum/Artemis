@@ -64,7 +64,6 @@ import { ChangeDetectorRef, Signal, computed, signal } from '@angular/core';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
-import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ExerciseMetadataSyncService } from 'app/exercise/synchronization/services/exercise-metadata-sync.service';
 import { CategorySelectorComponent } from 'app/exercise/category-selector/category-selector.component';
@@ -109,7 +108,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     let programmingExerciseFeatureService: ProgrammingLanguageFeatureService;
     let alertService: AlertService;
     let profileService: ProfileService;
-    let programmingExerciseSharingService: ProgrammingExerciseSharingService;
     let localStorageService: LocalStorageService;
 
     beforeEach(async () => {
@@ -170,7 +168,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         programmingExerciseFeatureService = TestBed.inject(ProgrammingLanguageFeatureService);
         alertService = TestBed.inject(AlertService);
         profileService = TestBed.inject(ProfileService);
-        programmingExerciseSharingService = TestBed.inject(ProgrammingExerciseSharingService);
         localStorageService = TestBed.inject(LocalStorageService);
 
         const programmingLanguageFeature = {
@@ -1640,173 +1637,43 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         );
     });
 
-    describe('import from sharing', () => {
-        let route: ActivatedRoute;
-
-        beforeEach(() => {
-            route = TestBed.inject(ActivatedRoute);
-            route.params = of({ courseId });
-
-            route.url = of([{ path: 'import-from-sharing' } as UrlSegment]);
-            route.queryParams = of({
-                basketToken: 'test-basket-token',
-                returnURL: '/test-return-url',
-                apiBaseURL: 'https://api.example.com',
-                selectedExercise: 5,
-                checksum: 'test-checksum',
-            });
-        });
-
-        it('should import and reset dates, id, project key and handle exercise', () => {
-            const programmingExercise = getProgrammingExerciseForImport();
-
-            route.data = of({ programmingExercise });
-            const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
-            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
-            const sharingServiceStub = vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises');
-            sharingServiceStub.mockReturnValue(of(programmingExercise));
+    describe('external import', () => {
+        function openImport(exercise: ProgrammingExercise, save = vi.fn()) {
+            route.data = of({ externalImport: { exercise, save } });
+            route.params = of({ courseId: String(courseId) });
+            route.url = of([]);
+            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockImplementation(getProgrammingLanguageFeature);
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.PYTHON } })));
             comp.ngOnInit();
+        }
 
-            fixture.changeDetectorRef.detectChanges();
+        it('prepares the supplied exercise for import and keeps its language and build options', () => {
+            const exercise = getProgrammingExerciseForImport();
+            exercise.buildConfig!.sequentialTestRuns = true;
+            exercise.staticCodeAnalysisEnabled = true;
+            openImport(exercise);
+            expect(comp.isExternalImport).toBe(true);
             expect(comp.isImportFromFile).toBe(false);
-            expect(comp.isImportFromSharing).toBe(true);
-            expect(comp.isImportFromExistingExercise).toBe(false);
-
-            verifyImport(programmingExercise);
-        });
-
-        it('should keep the imported language and build options when the course has another default language', () => {
-            const programmingExercise = getProgrammingExerciseForImport();
-            programmingExercise.buildConfig!.sequentialTestRuns = true;
-            programmingExercise.staticCodeAnalysisEnabled = true;
-
-            route.data = of({ programmingExercise });
-            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockImplementation((language: ProgrammingLanguage) =>
-                getProgrammingLanguageFeature(language),
-            );
-            vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises').mockReturnValue(of(programmingExercise));
-            vi.spyOn(courseService, 'findForManagement').mockReturnValue(
-                of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.PYTHON } as Course })),
-            );
-            comp.ngOnInit();
-
-            expect(comp.isImportFromSharing).toBe(true);
-            expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.JAVA);
+            verifyImport(exercise);
             expect(comp.programmingExercise.buildConfig?.sequentialTestRuns).toBe(true);
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(true);
         });
 
-        it.each([ProjectType.MAVEN_MAVEN, ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE])(
-            'should keep the imported project type %s',
-            (projectType) => {
-                const programmingExercise = getProgrammingExerciseForImport();
-                programmingExercise.projectType = projectType;
-
-                route.data = of({ programmingExercise });
-                vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockImplementation((language: ProgrammingLanguage) =>
-                    getProgrammingLanguageFeature(language),
-                );
-                vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises').mockReturnValue(of(programmingExercise));
-                comp.ngOnInit();
-
-                expect(comp.isImportFromSharing).toBe(true);
-                expect(comp.programmingExercise.projectType).toBe(projectType);
-            },
-        );
-
-        it('should also handle exam mode import', () => {
-            const examId = 1;
-            const exerciseGroupId = 1;
-            const exerciseGroup = new ExerciseGroup();
-            exerciseGroup.id = exerciseGroupId;
-            exerciseGroup.exam = { id: examId, course };
-            route.params = of({ courseId, examId, exerciseGroupId });
-
-            const programmingExercise = getProgrammingExerciseForImport();
-
-            route.data = of({ programmingExercise });
-            const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
-            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
-            const sharingServiceStub = vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises');
-            sharingServiceStub.mockReturnValue(of(programmingExercise));
-            comp.ngOnInit();
-
-            fixture.changeDetectorRef.detectChanges();
-            expect(comp.isImportFromFile).toBe(false);
-            expect(comp.isImportFromSharing).toBe(true);
-            expect(comp.isImportFromExistingExercise).toBe(false);
-
-            verifyImport(programmingExercise);
+        it.each([ProjectType.MAVEN_MAVEN, ProjectType.GRADLE_GRADLE, ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE])('keeps the imported project type %s', (projectType) => {
+            const exercise = getProgrammingExerciseForImport();
+            exercise.projectType = projectType;
+            openImport(exercise);
+            expect(comp.programmingExercise.projectType).toBe(projectType);
         });
 
-        it('should call create service on save for new sharing entity', () => {
-            // GIVEN
-            const entity: ProgrammingExercise = new ProgrammingExercise(undefined, undefined);
-            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
-            vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(
-                of(
-                    new HttpResponse({
-                        body: {
-                            ...entity,
-                            id: 2,
-                        },
-                    }),
-                ),
-            );
-            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
-            vi.spyOn(programmingExerciseSharingService, 'setUpFromSharingImport').mockReturnValue(of(new HttpResponse({ body: entity })));
-
-            comp.isImportFromSharing = true;
-
-            comp.programmingExercise = entity;
-            comp.backupExercise = {} as ProgrammingExercise;
-            comp.programmingExercise.course = course;
-            comp.courseId.set(course.id!);
-            // WHEN
+        it('submits the edited exercise to the import route', () => {
+            const exercise = getProgrammingExerciseForImport();
+            const save = vi.fn().mockReturnValue(of(new HttpResponse({ body: exercise })));
+            openImport(exercise, save);
+            comp.programmingExercise.title = 'Edited title';
+            comp.programmingExercise.releaseDate = dayjs();
             comp.save();
-
-            // THEN
-            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course.id!, comp['sharingInfo']);
-        });
-
-        it('should call create service on save for new sharing entity, but save failed', () => {
-            // GIVEN
-            const entity = new ProgrammingExercise(undefined, undefined);
-            entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
-
-            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
-            vi.spyOn(programmingExerciseSharingService, 'setUpFromSharingImport').mockReturnValue(throwError(() => new HttpErrorResponse({ error: 'save failed', status: 503 })));
-
-            comp.isImportFromSharing = true;
-
-            comp.programmingExercise = entity;
-            comp.backupExercise = {} as ProgrammingExercise;
-            comp.programmingExercise.course = course;
-            comp.courseId.set(course.id!);
-            // WHEN
-            comp.save();
-
-            // THEN
-            expect(programmingExerciseSharingService.setUpFromSharingImport).toHaveBeenCalledWith(comp.programmingExercise, course.id!, comp['sharingInfo']);
-        });
-
-        it('should import without buildConfig and reset dates, id, project key and store zipFile', () => {
-            const programmingExercise = getProgrammingExerciseForImport();
-            programmingExercise.buildConfig = undefined; // Simulate no build config
-
-            route.data = of({ programmingExercise });
-            const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
-            getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
-            const sharingServiceStub = vi.spyOn(programmingExerciseSharingService, 'loadDetailsForExercises');
-            sharingServiceStub.mockReturnValue(of(programmingExercise));
-            comp.ngOnInit();
-
-            fixture.changeDetectorRef.detectChanges();
-            expect(comp.isImportFromFile).toBe(false);
-            expect(comp.isImportFromSharing).toBe(true);
-            expect(comp.isImportFromExistingExercise).toBe(false);
-
-            verifyImport(programmingExercise);
+            expect(save).toHaveBeenCalledExactlyOnceWith(comp.programmingExercise, courseId);
         });
     });
 
@@ -2381,7 +2248,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(returned).toBe('new-value');
         });
 
-        it('should find no validation errors for valid input', () => {
+        it.each([undefined, null])('should accept valid exercise details with submissionPolicy %s', (submissionPolicy) => {
+            Object.assign(comp.programmingExercise, { submissionPolicy });
             comp.programmingExercise.title = 'New title';
             comp.programmingExercise.shortName = 'home2';
             comp.programmingExercise.maxPoints = 10;
