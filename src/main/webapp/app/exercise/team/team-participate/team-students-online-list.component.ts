@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
 import { OnlineTeamStudent, Team } from 'app/exercise/shared/entities/team/team.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -12,14 +12,14 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { faCircle, faHistory } from '@fortawesome/free-solid-svg-icons';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-team-students-online-list',
     templateUrl: './team-students-online-list.component.html',
-    styleUrls: ['./team-students-online-list.component.scss'],
+    styleUrls: ['./team-students-online-list.component.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [TumAetUiButtonDirective, NgClass, FaIconComponent, TumAetUiTooltipDirective],
 })

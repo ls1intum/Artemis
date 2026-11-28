@@ -30,7 +30,7 @@ import { CourseOverviewExercisesService } from 'app/course/overview/services/cou
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { GradeStepApi } from 'app/openapi/api/grade-step-api';
 import type { Grade } from 'app/openapi/model/grade';
-import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
+import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular/chart';
 import { CourseStatisticsResultsComponent } from './course-statistics-results.component';
 import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
 import { CourseStatisticsService } from './course-statistics.service';

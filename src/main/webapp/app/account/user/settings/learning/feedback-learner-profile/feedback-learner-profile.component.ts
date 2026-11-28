@@ -8,13 +8,15 @@ import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { LearnerProfileDTO } from 'app/account/user/settings/learning/dto/learner-profile-dto.model';
-import { TumAetUiButtonComponent, TumAetUiPanelComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { FeedbackOnboardingModalComponent } from 'app/account/user/settings/learning/feedback-learner-profile/onboarding-modal/feedback-onboarding-modal.component';
 
 @Component({
     selector: 'jhi-feedback-learner-profile',
     templateUrl: './feedback-learner-profile.component.html',
-    styleUrls: ['../learner-profile.component.scss'],
+    styleUrls: ['../learner-profile.component.css'],
     imports: [ArtemisTranslatePipe, TranslateDirective, FormsModule, TumAetUiButtonComponent, TumAetUiPanelComponent, TumAetUiSelectComponent, FeedbackOnboardingModalComponent],
 })
 export class FeedbackLearnerProfileComponent implements OnInit {

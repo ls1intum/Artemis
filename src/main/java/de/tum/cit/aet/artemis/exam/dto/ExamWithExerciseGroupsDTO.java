@@ -85,7 +85,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
  * @param courseName                     the course name shown on the exam cover
  * @param exampleSolutionPublicationDate the date example solutions are published
  * @param examSummaryPublicationDate     the date the submission overview becomes visible to students
- * @param course                         the slim course projection (id, title, testCourse, group names)
+ * @param course                         the slim course projection (id, title, testCourse)
  * @param examArchivePath                the archive path; the exam-detail archive button reads it to enable download / cleanup
  * @param started                        whether the exam has started (computed server-side; {@code false} when no start date is set; the test-run screen reads it)
  * @param numberOfExamUsers              the number of registered exam users (transient; set by setExamProperties)

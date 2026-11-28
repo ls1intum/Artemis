@@ -1,0 +1,139 @@
+.plagiarism-sidebar {
+    border-right: 1px solid var(--body-bg);
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    top: 0;
+    width: 240px;
+}
+
+.plagiarism-sidebar .filter-disclaimer {
+    padding: 0.75rem;
+}
+
+.plagiarism-sidebar .filter-disclaimer .disclaimer-icon {
+    margin-right: 0.5rem;
+}
+
+.plagiarism-sidebar .plagiarism-paging {
+    border-top: 1px solid var(--body-bg);
+    display: flex;
+    flex-shrink: 0;
+}
+
+.plagiarism-sidebar .plagiarism-paging-left,
+.plagiarism-sidebar .plagiarism-paging-right {
+    flex-shrink: 0;
+    padding: 0.75rem;
+    opacity: 0.5;
+}
+
+.plagiarism-sidebar .plagiarism-paging-left.disabled,
+.plagiarism-sidebar .plagiarism-paging-right.disabled {
+    opacity: 0.2;
+}
+
+.plagiarism-sidebar .plagiarism-paging-left:hover:not(.disabled),
+.plagiarism-sidebar .plagiarism-paging-right:hover:not(.disabled) {
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+.plagiarism-sidebar .plagiarism-paging-center {
+    align-items: center;
+    display: flex;
+    flex-grow: 1;
+    font-weight: bold;
+    justify-content: center;
+}
+
+.plagiarism-sidebar .plagiarism-info-tab {
+    border-bottom: 1px solid var(--body-bg);
+    flex-shrink: 0;
+    cursor: pointer;
+    padding: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+}
+
+.plagiarism-sidebar .plagiarism-info-tab.selected {
+    background-color: color-mix(in srgb, lightskyblue 50%, transparent);
+    font-weight: bold;
+}
+
+.plagiarism-sidebar .plagiarism-info-tab:hover {
+    background-color: lightskyblue;
+}
+
+.plagiarism-sidebar .plagiarism-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.plagiarism-sidebar .plagiarism-list-item {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem;
+}
+
+.plagiarism-sidebar .plagiarism-list-item-students {
+    font-size: 10px;
+}
+
+.plagiarism-sidebar .plagiarism-list-item-content {
+    align-items: center;
+    display: flex;
+}
+
+.plagiarism-sidebar .plagiarism-list-item-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.plagiarism-sidebar .plagiarism-list-item.selected {
+    background-color: color-mix(in srgb, lightskyblue 50%, transparent);
+}
+
+.plagiarism-sidebar .plagiarism-list-item.selected .plagiarism-name {
+    font-weight: bold;
+}
+
+.plagiarism-sidebar .plagiarism-list-item:hover {
+    background-color: lightskyblue;
+}
+
+.plagiarism-sidebar .plagiarism-empty {
+    align-items: center;
+    display: flex;
+    flex-grow: 1;
+    justify-content: center;
+    opacity: 0.5;
+}
+
+.plagiarism-sidebar .plagiarism-status-indicator {
+    background-color: var(--body-bg);
+    border-radius: 50%;
+    flex-shrink: 0;
+    height: 8px;
+    margin-right: 0.75rem;
+    width: 8px;
+}
+
+.plagiarism-sidebar .plagiarism-status-indicator.confirmed {
+    background-color: var(--tumaet-ui-state-success);
+}
+
+.plagiarism-sidebar .plagiarism-status-indicator.denied {
+    background-color: var(--tumaet-ui-state-danger);
+}
+
+.plagiarism-sidebar .plagiarism-percentage {
+    flex-shrink: 0;
+}

@@ -9,11 +9,15 @@ export class PendingChangesGuard implements CanDeactivate<ComponentCanDeactivate
 
     /**
      * Function which returns whether a component can be deactivated
-     * @param component
+     * @param component the component to leave. Angular passes `null` when the route has no active component, e.g. while it is being destroyed, and there are no
+     *                  pending changes to protect then.
      *
      * @returns boolean | Observable<boolean>
      */
-    canDeactivate(component: ComponentCanDeactivate): boolean {
+    canDeactivate(component: ComponentCanDeactivate | null): boolean {
+        if (!component) {
+            return true;
+        }
         const warning = component.canDeactivateWarning || this.translateService.instant('pendingChanges');
         return component.canDeactivate() ? true : confirm(warning);
     }

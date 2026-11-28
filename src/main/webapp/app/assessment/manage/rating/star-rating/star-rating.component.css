@@ -1,0 +1,37 @@
+:root {
+    --checkedcolor: gold;
+    --uncheckedcolor: gray;
+    --size: 24px;
+    --halfWidth: 12px;
+}
+
+.star {
+    color: var(--unCheckedColor);
+    font-size: var(--size);
+    width: var(--size);
+    display: inline-block;
+    position: relative;
+}
+
+.star:last-child {
+    margin-right: 0;
+}
+
+.star::before {
+    content: '★';
+}
+
+.star.on {
+    color: var(--checkedColor);
+}
+
+.star.half::after {
+    content: '★';
+    color: var(--checkedColor);
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    right: var(--halfWidth);
+    overflow: hidden;
+}

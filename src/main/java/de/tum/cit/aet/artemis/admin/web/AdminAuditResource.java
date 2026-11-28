@@ -51,13 +51,15 @@ public class AdminAuditResource {
     /**
      * GET /audits : get a page of AuditEvents from one of the three audit logs.
      *
-     * @param logType  which audit log to read; defaults to the general (authentication) log so existing callers keep working
-     * @param pageable the pagination information
+     * @param logType   which audit log to read; defaults to the general (authentication) log so existing callers keep working
+     * @param principal only the events of this principal (login) are returned; matched exactly, so the search stays on the index
+     * @param pageable  the pagination information
      * @return the ResponseEntity with status 200 (OK) and the list of AuditEvents in body
      */
     @GetMapping("audits")
-    public ResponseEntity<List<AuditEvent>> getAll(@RequestParam(value = "logType", defaultValue = "GENERAL") AuditLogType logType, Pageable pageable) {
-        Page<AuditEvent> page = auditEventService.findAll(logType, pageable);
+    public ResponseEntity<List<AuditEvent>> getAll(@RequestParam(value = "logType", defaultValue = "GENERAL") AuditLogType logType,
+            @RequestParam(value = "principal", required = false) String principal, Pageable pageable) {
+        Page<AuditEvent> page = auditEventService.findAll(logType, principal, pageable);
         HttpHeaders headers = generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -65,20 +67,22 @@ public class AdminAuditResource {
     /**
      * GET /audits : get a page of AuditEvents between the fromDate and toDate from one of the three audit logs.
      *
-     * @param fromDate the start of the time period of AuditEvents to get
-     * @param toDate   the end of the time period of AuditEvents to get
-     * @param logType  which audit log to read; defaults to the general (authentication) log so existing callers keep working
-     * @param pageable the pagination information
+     * @param fromDate  the start of the time period of AuditEvents to get
+     * @param toDate    the end of the time period of AuditEvents to get
+     * @param logType   which audit log to read; defaults to the general (authentication) log so existing callers keep working
+     * @param principal only the events of this principal (login) are returned; matched exactly, so the search stays on the index
+     * @param pageable  the pagination information
      * @return the ResponseEntity with status 200 (OK) and the list of AuditEvents in body
      */
     @GetMapping(value = "audits", params = { "fromDate", "toDate" })
     public ResponseEntity<List<AuditEvent>> getByDates(@RequestParam(value = "fromDate") LocalDate fromDate, @RequestParam(value = "toDate") LocalDate toDate,
-            @RequestParam(value = "logType", defaultValue = "GENERAL") AuditLogType logType, Pageable pageable) {
+            @RequestParam(value = "logType", defaultValue = "GENERAL") AuditLogType logType, @RequestParam(value = "principal", required = false) String principal,
+            Pageable pageable) {
 
         Instant from = fromDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant to = toDate.atStartOfDay(ZoneId.systemDefault()).plusDays(1).toInstant();
 
-        Page<AuditEvent> page = auditEventService.findByDates(logType, from, to, pageable);
+        Page<AuditEvent> page = auditEventService.findByDates(logType, principal, from, to, pageable);
         HttpHeaders headers = generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }

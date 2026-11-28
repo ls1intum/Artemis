@@ -1,0 +1,42 @@
+/* Layout is Tailwind in the template; the border, highlight and muted text roles have no Tailwind utility in the application. */
+.lecture-unit-row {
+    border: 1px solid var(--border-color);
+    transition: background-color 0.15s ease;
+}
+
+.lecture-unit-row:hover {
+    background-color: color-mix(in srgb, var(--primary) 4%, transparent);
+}
+
+.lecture-unit-row.cdk-drag-preview {
+    background-color: var(--module-bg);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--body-color) 18%, transparent);
+}
+
+.lecture-unit-row.cdk-drag-placeholder {
+    opacity: 0.4;
+}
+
+/* The item that is edited in place stands out, and its form reads as part of it. */
+.lecture-unit-row.lecture-unit-row-editing {
+    border: 2px solid var(--primary);
+    background-color: color-mix(in srgb, var(--primary) 3%, transparent);
+}
+
+.lecture-unit-row.lecture-unit-row-editing:hover {
+    background-color: color-mix(in srgb, var(--primary) 3%, transparent);
+}
+
+.lecture-unit-editor {
+    border-top: 1px solid var(--border-color);
+}
+
+.lecture-unit-grip,
+.lecture-unit-type,
+.lecture-unit-empty {
+    color: var(--text-body-secondary);
+}
+
+.lecture-unit-type-icon {
+    color: var(--primary);
+}

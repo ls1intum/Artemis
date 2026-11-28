@@ -6,7 +6,7 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CommonModule } from '@angular/common';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 export interface InformationBox {
     title: string;
@@ -56,7 +56,7 @@ export type InformationBoxLayout = 'stacked' | 'inline';
     imports: [ArtemisTranslatePipe, TranslateDirective, CommonModule, TumAetUiTooltipDirective],
     selector: 'jhi-information-box',
     templateUrl: './information-box.component.html',
-    styleUrls: ['./information-box.component.scss'],
+    styleUrls: ['./information-box.component.css'],
 })
 export class InformationBoxComponent {
     informationBoxData = input<InformationBox>();

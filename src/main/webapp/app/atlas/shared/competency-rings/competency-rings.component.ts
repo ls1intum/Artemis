@@ -1,11 +1,11 @@
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, input } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-competency-rings',
     templateUrl: './competency-rings.component.html',
-    styleUrls: ['./competency-rings.component.scss'],
+    styleUrls: ['./competency-rings.component.css'],
     standalone: true,
     imports: [TumAetUiTooltipDirective, ArtemisTranslatePipe],
 })

@@ -1,0 +1,25 @@
+/* Layout is Tailwind in the template; the surface, border and muted text roles have no Tailwind utility in the application. */
+.pdf-upload-summary,
+.pdf-upload-target {
+    border: 1px solid var(--border-color);
+}
+
+.pdf-upload-target {
+    transition:
+        border-color 0.2s,
+        background-color 0.2s;
+}
+
+.pdf-upload-target:hover,
+.pdf-upload-target.pdf-upload-target-selected {
+    border-color: var(--primary);
+}
+
+.pdf-upload-target.pdf-upload-target-selected {
+    background-color: color-mix(in srgb, var(--primary) 5%, transparent);
+}
+
+.pdf-upload-file-list,
+.pdf-upload-target-hint {
+    color: var(--text-body-secondary);
+}
