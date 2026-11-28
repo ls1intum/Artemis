@@ -398,9 +398,13 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build", courseId)).andExpect(status().isAccepted());
         awaitBuild();
 
+        // A generator that fails every call stops the build after a few calls instead of using up the attempts of every item: the items it tried failed, the others still wait.
         QuizQuestionPoolProgressDTO failed = poolService.getProgress(courseId);
-        assertThat(failed.failed()).isEqualTo(EXPECTED_ITEMS);
+        assertThat(failed.failed()).isPositive().isLessThan(EXPECTED_ITEMS);
+        assertThat(failed.toGenerate()).isPositive();
         assertThat(failed.judged()).isZero();
+        assertThat(failed.lastBuild()).isNotNull();
+        assertThat(failed.lastBuild().failure()).isNotNull();
 
         generationFails.set(false);
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build", courseId)).andExpect(status().isAccepted())

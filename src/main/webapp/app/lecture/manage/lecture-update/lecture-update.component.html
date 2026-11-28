@@ -76,11 +76,18 @@
                                 class="markdown-editor"
                                 [domainActions]="domainActionsDescription"
                                 [(markdown)]="lecture().description"
-                                (markdownChange)="updateIsChangesMadeToTitleOrPeriodSection()"
+                                (markdownChange)="onDescriptionChange($event)"
+                                [ariaDescribedBy]="isDescriptionTooLong() ? 'lecture-description-length-error' : undefined"
+                                [ariaInvalid]="isDescriptionTooLong()"
                                 [initialEditorHeight]="MarkdownEditorHeight.INLINE"
                                 [resizableMinHeight]="MarkdownEditorHeight.INLINE"
                                 [resizableMaxHeight]="MarkdownEditorHeight.SMALL"
                             />
+                            @if (isDescriptionTooLong()) {
+                                <tumaet-ui-message id="lecture-description-length-error" severity="error" data-testid="lecture-description-length-error">
+                                    <span jhiTranslate="artemisApp.lecture.descriptionMaxLength" [translateValues]="{ max: DESCRIPTION_MAX_LENGTH }"></span>
+                                </tumaet-ui-message>
+                            }
                         </div>
                     }
                     <div class="flex items-center gap-2">
