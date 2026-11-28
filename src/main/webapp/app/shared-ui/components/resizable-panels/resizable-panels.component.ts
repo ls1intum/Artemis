@@ -73,6 +73,8 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
      * Persists split sizes under this localStorage key across reloads. Without a key, sizes stay in memory.
      */
     readonly storageKey = input<string | undefined>(undefined);
+    /** Persists whether the secondary panel is collapsed under this localStorage key. */
+    readonly collapsedStateStorageKey = input<string | undefined>(undefined);
     /**
      * Drag-to-collapse threshold (percent). When the right panel is dragged narrower than this, it snaps shut
      * (and the icon rail / collapse buttons reopen it). Restores the split.js `snapOffset` behaviour that the
@@ -121,6 +123,9 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
 
     private resizeObserver?: ResizeObserver;
     private rightPanelCollapseChangedByUser = false;
+    private readonly storedRightPanelCollapsed = signal<boolean | undefined>(undefined);
+    private restoredCollapseStateStorageKey: string | undefined;
+    private hasRestoredCollapseStateStorageKey = false;
 
     protected readonly faChevronRight = faChevronRight;
 
@@ -145,15 +150,25 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
             });
         });
 
-        // Follow the requested collapsed state whenever it changes, unless the user already
-        // controlled the right panel in this component instance.
+        // Restore a saved preference when its key changes. When there is no saved preference, use the
+        // projected panel's requested start state unless the user has already changed it in this instance.
         effect(() => {
-            const collapsedPanelIndex = this.rightPanels().findIndex((panel) => panel.startsCollapsed());
+            const startsCollapsed = this.rightPanels().some((panel) => panel.startsCollapsed());
+            const storageKey = this.collapsedStateStorageKey();
+            if (!this.hasRestoredCollapseStateStorageKey || this.restoredCollapseStateStorageKey !== storageKey) {
+                untracked(() => {
+                    this.hasRestoredCollapseStateStorageKey = true;
+                    this.restoredCollapseStateStorageKey = storageKey;
+                    this.rightPanelCollapseChangedByUser = false;
+                    this.storedRightPanelCollapsed.set(this.readCollapsedState(storageKey));
+                });
+            }
+            const storedCollapsedState = this.storedRightPanelCollapsed();
             untracked(() => {
                 if (this.rightPanelCollapseChangedByUser) {
                     return;
                 }
-                const collapse = collapsedPanelIndex >= 0;
+                const collapse = storedCollapsedState ?? startsCollapsed;
                 if (collapse === this._isRightPanelCollapsed()) {
                     return;
                 }
@@ -243,6 +258,7 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
         }
         this.rightPanelCollapseChangedByUser = true;
         this._isRightPanelCollapsed.set(false);
+        this.persistCollapsedState(false);
         this.restoreUsableSplit();
         if (restoreFocus) {
             this.focusAfterRender('[role="tab"][aria-selected="true"]');
@@ -258,8 +274,40 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
         const restoreFocus = this.focusIsInRightPanel();
         this.rightPanelCollapseChangedByUser = true;
         this._isRightPanelCollapsed.set(true);
+        this.persistCollapsedState(true);
         if (restoreFocus) {
             this.focusAfterRender('[data-testid="collapsed-panel-tab"]');
+        }
+    }
+
+    private readCollapsedState(key: string | undefined): boolean | undefined {
+        if (!key) {
+            return undefined;
+        }
+        try {
+            const storedState = this.document.defaultView?.localStorage.getItem(key);
+            if (storedState === 'true') {
+                return true;
+            }
+            if (storedState === 'false') {
+                return false;
+            }
+        } catch {
+            // localStorage may be unavailable (private mode / no window); the panel start state applies.
+        }
+        return undefined;
+    }
+
+    private persistCollapsedState(isCollapsed: boolean): void {
+        this.storedRightPanelCollapsed.set(isCollapsed);
+        const key = this.collapsedStateStorageKey();
+        if (!key) {
+            return;
+        }
+        try {
+            this.document.defaultView?.localStorage.setItem(key, String(isCollapsed));
+        } catch {
+            // localStorage may be unavailable (private mode / no window); the in-memory state still applies.
         }
     }
 
