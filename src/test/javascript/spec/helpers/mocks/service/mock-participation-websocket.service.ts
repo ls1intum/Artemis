@@ -10,6 +10,7 @@ export class MockParticipationWebsocketService implements IParticipationWebsocke
     subscribeForParticipationChanges = () => new BehaviorSubject<Participation | undefined>(undefined);
     subscribeForLatestResultOfParticipation = (participationId: number) => new BehaviorSubject<Result | undefined>(undefined);
     unsubscribeForLatestResultOfParticipation = (participationId: number, exercise: Exercise) => {};
+    removeCachedParticipations = (participationIds: number[]) => {};
     notifyAllResultSubscribers = (result: Result) => {};
     resetLocalCache = () => {};
 }
