@@ -56,6 +56,7 @@ api/quiz-exercise-creation-update-resources.ts
 api/result-resources.ts
 api/rating-resources.ts
 api/grade-step-resources.ts
+api/gocast-integration-resources.ts
 api/assessment-upload-resources.ts
 api/quiz-submission-resources.ts
 api/ingestion-browser-resources.ts

@@ -1056,6 +1056,21 @@ paths:
         schema: {type: integer, format: int64}
       responses:
         '200': {description: OK}
+  /api/videosource/courses/{courseId}/binding/approval:
+    post:
+      tags: [gocast-integration]
+      operationId: startApproval
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GocastApprovalStart'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
       tags: [tutorial-group]
@@ -2266,6 +2281,16 @@ paths:
                 type: array
                 items: {type: string, maxLength: 128}
                 maxItems: 500
+  /api/calendar/subscription-token/rotate:
+    post:
+      tags: [calendar]
+      operationId: rotateCalendarEventSubscriptionToken
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema: {type: string}
   /api/assessment/exercises/{exerciseId}/tutor-participations:
     post:
       tags: [tutor-participation]
@@ -2630,6 +2655,31 @@ paths:
         required: true
         schema: {type: integer, format: int64}
       - name: sessionId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: OK}
+  /api/videosource/courses/{courseId}/binding:
+    get:
+      tags: [gocast-integration]
+      operationId: getBinding
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GocastBinding'}
+    delete:
+      tags: [gocast-integration]
+      operationId: unlink
+      parameters:
+      - name: courseId
         in: path
         required: true
         schema: {type: integer, format: int64}
@@ -3489,21 +3539,6 @@ paths:
                 type: array
                 items: {$ref: '#/components/schemas/SimpleLecture'}
                 uniqueItems: true
-  /api/lecture/courses/{courseId}/tumlive-upload-availability:
-    get:
-      tags: [tum-live-upload]
-      operationId: getTumLiveUploadAvailability
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TumLiveUploadAvailability'}
   /api/lecture/courses/{courseId}/tumlive-uploads:
     get:
       tags: [tum-live-upload]
@@ -3521,6 +3556,21 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/TumLiveUploadedUnit'}
+  /api/lecture/courses/{courseId}/tumlive-upload-availability:
+    get:
+      tags: [tum-live-upload]
+      operationId: getTumLiveUploadAvailability
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TumLiveUploadAvailability'}
   /api/lecture/courses/{courseId}/lectures-with-slides:
     get:
       tags: [lecture]
@@ -3937,16 +3987,6 @@ paths:
     get:
       tags: [calendar]
       operationId: getCalendarEventSubscriptionToken
-      responses:
-        '200':
-          description: OK
-          content:
-            text/plain:
-              schema: {type: string}
-  /api/calendar/subscription-token/rotate:
-    post:
-      tags: [calendar]
-      operationId: rotateCalendarEventSubscriptionToken
       responses:
         '200':
           description: OK
@@ -5143,6 +5183,20 @@ components:
         exerciseId: {type: integer, format: int64}
         sourceExerciseId: {type: integer, format: int64}
       required: [jobId]
+    GocastBinding:
+      type: object
+      properties:
+        available: {type: boolean}
+        status:
+          type: string
+          enum: [UNLINKED, PENDING, EXPIRED, ACTIVE, REVOKED]
+        courseId: {type: integer, format: int64}
+        courseName: {type: string}
+        courseSlug: {type: string}
+        courseVisibility: {type: string}
+        expiresAt: {type: string, format: date-time}
+        upstreamUnavailable: {type: boolean}
+      required: [available, status, upstreamUnavailable]
     QuizQuestionWithSolution:
       discriminator:
         propertyName: type
@@ -8346,6 +8400,10 @@ components:
           type: array
           items: {$ref: '#/components/schemas/ParticipationOverview'}
           uniqueItems: true
+    TumLiveUploadAvailability:
+      type: object
+      properties:
+        available: {type: boolean}
     TutorialGroupFreePeriod:
       type: object
       properties:
@@ -8965,10 +9023,6 @@ components:
         students:
           type: array
           items: {$ref: '#/components/schemas/StudentExport'}
-    TumLiveUploadAvailability:
-      type: object
-      properties:
-        available: {type: boolean}
     TumLiveUploadState:
       type: object
       properties:
@@ -9437,6 +9491,12 @@ components:
       properties:
         summary: {type: string}
         detail: {type: string}
+    GocastApprovalStart:
+      type: object
+      properties:
+        approvalUrl: {type: string}
+        expiresAt: {type: string, format: date-time}
+      required: [approvalUrl, expiresAt]
     GradingScaleUpdate:
       type: object
       properties:
