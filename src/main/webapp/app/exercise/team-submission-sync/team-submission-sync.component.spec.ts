@@ -118,10 +118,9 @@ describe('Team Submission Sync Component', () => {
         expect(textSubmissionWithParticipation).toBeDefined();
         expect(textSubmissionWithParticipation?.participation?.exercise).toBeUndefined();
         expect(textSubmissionWithParticipation?.participation?.submissions).toHaveLength(0);
-        expect(websocketSendSpy).toHaveBeenCalledTimes(2);
+        // a text exercise has no patch endpoint on the server and nothing to re-announce: only the submission itself is sent
+        expect(websocketSendSpy).toHaveBeenCalledTimes(1);
         expect(websocketSendSpy).toHaveBeenNthCalledWith(1, '/app/participations/3/team/text-submissions/update', textSubmissionWithParticipation);
-        expect(websocketSendSpy.mock.calls[1][0]).toBe('/app/participations/3/team/text-submissions/patch');
-        expect(websocketSendSpy.mock.calls[1][1]).toBeInstanceOf(SubmissionPatch);
     });
 
     it('should handle submission patch payloads.', () => {
@@ -155,14 +154,14 @@ describe('Team Submission Sync Component', () => {
         expect(sendSpy).toHaveBeenCalledWith(expectedTopic, patch);
     });
 
-    it('should re-broadcast the initial Yjs sync message and emit `reconnected` on every STOMP (re)connect', async () => {
+    it('emits `reconnected` on every STOMP (re)connect of a text exercise without sending a patch or loading Apollon', async () => {
+        // A text exercise has no patch endpoint on the server and nothing to re-announce, so its page never downloads the diagram editor.
         const mock = websocketService as unknown as MockWebsocketService;
-        const expectedTopic = '/app/participations/3/team/text-submissions/patch';
-        const generateInitialSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
+        const loadSpy = vi.spyOn(component as unknown as { loadApollon: () => Promise<unknown> }, 'loadApollon');
         const reconnectedSpy = vi.fn();
         component.reconnected.subscribe(reconnectedSpy);
 
-        // Drop the submissionObservable so the only thing that produces /patch sends is the reconnect path
+        // Drop the submissionObservable so the only thing that could send is the reconnect path
         fixture.componentRef.setInput('submissionObservable', undefined);
         const sendSpy = vi.spyOn(websocketService, 'send');
         vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
@@ -171,33 +170,26 @@ describe('Team Submission Sync Component', () => {
         fixture.detectChanges();
         await flushDynamicImport();
 
-        // BehaviorSubject in MockWebsocketService starts as connected=true → exactly one initial sync + one reconnect emission
-        expect(sendSpy).toHaveBeenCalledTimes(1);
-        expect(sendSpy.mock.calls[0][0]).toBe(expectedTopic);
-        expect(sendSpy.mock.calls[0][1]).toBeInstanceOf(SubmissionPatch);
-        expect((sendSpy.mock.calls[0][1] as SubmissionPatch).patch).toBe('initial-sync-stub');
+        // BehaviorSubject in MockWebsocketService starts as connected=true: one reconnect emission
         expect(reconnectedSpy).toHaveBeenCalledTimes(1);
 
-        // Disconnect — no fresh sync, no fresh reconnect signal
+        // Disconnect: no fresh reconnect signal
         mock.setConnectionState(new ConnectionState(false, true));
         await flushDynamicImport();
-        expect(sendSpy).toHaveBeenCalledTimes(1);
         expect(reconnectedSpy).toHaveBeenCalledTimes(1);
 
-        // Reconnect — initial sync and reconnect signal fire again
+        // Reconnect: the signal fires again
         mock.setConnectionState(new ConnectionState(true, true));
         await flushDynamicImport();
-        expect(sendSpy).toHaveBeenCalledTimes(2);
-        expect((sendSpy.mock.calls[1][1] as SubmissionPatch).patch).toBe('initial-sync-stub');
         expect(reconnectedSpy).toHaveBeenCalledTimes(2);
 
         // A duplicate connected=true must not re-fire (distinctUntilChanged on the `connected` field)
         mock.setConnectionState(new ConnectionState(true, true));
         await flushDynamicImport();
-        expect(sendSpy).toHaveBeenCalledTimes(2);
         expect(reconnectedSpy).toHaveBeenCalledTimes(2);
 
-        generateInitialSyncSpy.mockRestore();
+        expect(sendSpy).not.toHaveBeenCalled();
+        expect(loadSpy).not.toHaveBeenCalled();
     });
 
     it('additionally re-broadcasts the awareness sync for modeling exercises on every STOMP (re)connect', async () => {
@@ -208,6 +200,8 @@ describe('Team Submission Sync Component', () => {
         const expectedTopic = '/app/participations/3/team/modeling-submissions/patch';
         const generateInitialSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialSyncMessage').mockReturnValue('initial-sync-stub');
         const generateInitialAwarenessSyncSpy = vi.spyOn(ApollonEditor, 'generateInitialAwarenessSyncMessage').mockReturnValue('initial-awareness-stub');
+        const reconnectedSpy = vi.fn();
+        component.reconnected.subscribe(reconnectedSpy);
         fixture.componentRef.setInput('submissionObservable', undefined);
         const sendSpy = vi.spyOn(websocketService, 'send');
         vi.spyOn(websocketService, 'subscribe').mockReturnValue(of());
@@ -226,12 +220,14 @@ describe('Team Submission Sync Component', () => {
         await flushDynamicImport();
         expect(sendSpy).toHaveBeenCalledTimes(4);
         expect((sendSpy.mock.calls[3][1] as SubmissionPatch).patch).toBe('initial-awareness-stub');
+        expect(reconnectedSpy).toHaveBeenCalledTimes(2);
 
         generateInitialSyncSpy.mockRestore();
         generateInitialAwarenessSyncSpy.mockRestore();
     });
 
     it('reports an error and sends nothing when the editor cannot be downloaded', async () => {
+        fixture.componentRef.setInput('exerciseType', ExerciseType.MODELING);
         vi.spyOn(component as unknown as { loadApollon: () => Promise<unknown> }, 'loadApollon').mockRejectedValue(new Error('offline'));
         const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
         const reconnectedSpy = vi.fn();
@@ -249,6 +245,7 @@ describe('Team Submission Sync Component', () => {
     });
 
     it('does not send or emit when the component is destroyed while the editor downloads', async () => {
+        fixture.componentRef.setInput('exerciseType', ExerciseType.MODELING);
         let finishDownload!: (module: typeof import('@tumaet/apollon')) => void;
         const download = new Promise<typeof import('@tumaet/apollon')>((resolve) => (finishDownload = resolve));
         vi.spyOn(component as unknown as { loadApollon: () => Promise<unknown> }, 'loadApollon').mockReturnValue(download);

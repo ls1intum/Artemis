@@ -109,7 +109,7 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
         });
     }
 
-    // Re-runs the Yjs handshake on every (re)connect. Apollon broadcasts only incremental updates,
+    // Re-runs the Yjs handshake of a modeling exercise on every (re)connect. Apollon broadcasts only incremental updates,
     // so a peer who missed any edits during a disconnect window would otherwise stay out of sync.
     private setupReconnectSync() {
         this.connectionStateSubscription = this.teamSubmissionWebsocketService.connectionState
@@ -120,17 +120,18 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: async () => {
                     try {
-                        // Loaded here and not at the top of the file: this component is part of the text editor route, and only a team
-                        // exercise ever gets here, so an individual exercise never downloads the editor.
-                        const { ApollonEditor } = await this.loadApollon();
-                        if (this.destroyed) {
-                            // The student left the exercise while the editor downloaded: unsubscribing does not cancel this callback.
-                            return;
-                        }
-                        const initialSync = new SubmissionPatch(ApollonEditor.generateInitialSyncMessage());
-                        this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildSendDestination('/patch'), initialSync);
-
                         if (this.exerciseType() === ExerciseType.MODELING) {
+                            // Only the modeling team sync has a patch endpoint on the server (ParticipationTeamWebsocketService), and the Yjs
+                            // handshake is built by Apollon. The package is loaded here and not at the top of the file: this component is part
+                            // of the text editor route, and a text exercise has nothing to re-announce, so it never downloads the editor.
+                            const { ApollonEditor } = await this.loadApollon();
+                            if (this.destroyed) {
+                                // The student left the exercise while the editor downloaded: unsubscribing does not cancel this callback.
+                                return;
+                            }
+                            const initialSync = new SubmissionPatch(ApollonEditor.generateInitialSyncMessage());
+                            this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildSendDestination('/patch'), initialSync);
+
                             const initialAwarenessSync = new SubmissionPatch(ApollonEditor.generateInitialAwarenessSyncMessage());
                             this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildSendDestination('/patch'), initialAwarenessSync);
                         }
