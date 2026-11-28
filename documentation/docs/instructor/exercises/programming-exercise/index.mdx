@@ -10,8 +10,13 @@ import {CalloutVariant} from "../../../../src/components/Callout/Callout.types";
 import Image, {ImageSize} from "../../../../src/components/Image/Image";
 
 import exerciseWorkflow from '../assets/programming/ExerciseWorkflow.png';
+import trailerInstructor from '../assets/programming/trailer-instructor.mp4';
 
 In a programming exercise, students write code in a Git repository of their own and Artemis grades it automatically by running your test cases against every push. You provide three repositories — a template students start from, a solution, and the tests — and Artemis takes care of handing out repositories, running builds, and turning test results into scores and feedback.
+
+This one-minute trailer gives an overview of the workflow, from creating an exercise to grading and assessing submissions:
+
+<video controls preload="metadata" src={trailerInstructor} title="Programming exercises for instructors" style={{width: '100%', borderRadius: '8px'}} />
 
 Artemis supports a wide range of programming languages. It hosts the repositories and, with Local CI, runs the builds itself ([Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle), Local Version Control and Local CI). Instances that have not migrated yet still run the builds in Jenkins. Jenkins is deprecated and Artemis 11 (planned for March 2027) removes it, so the **Jenkins** columns below only matter for instances that have not yet [migrated to Local CI](/admin/jenkins-to-localci-migration).
 

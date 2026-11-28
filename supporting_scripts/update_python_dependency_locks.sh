@@ -11,6 +11,7 @@ for directory in \
     supporting_scripts/database_approval_check \
     supporting_scripts/hyperion/consistency-check-benchmark \
     supporting_scripts/lecture-transcription \
+    supporting_scripts/trailer \
     .github/python-dependencies; do
     python_version=3.10
     if [[ "$directory" == .github/python-dependencies ]]; then
@@ -20,6 +21,9 @@ for directory in \
         python_version=3.14
     elif [[ "$directory" == supporting_scripts/lecture-transcription ]]; then
         # filelock 4.2.1, the first release without the known lock races, needs Python 3.11.
+        python_version=3.11
+    elif [[ "$directory" == supporting_scripts/trailer ]]; then
+        # numpy 2.4 needs Python 3.11.
         python_version=3.11
     fi
     # Keep paths relative to the lock so Renovate can replay the generated command in that directory.

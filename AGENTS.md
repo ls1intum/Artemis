@@ -15,6 +15,7 @@ see [Work with AI](documentation/docs/developer/work-with-ai.mdx) for native ski
 | Write or debug JUnit or Vitest tests                          | [write-tests](skills/write-tests/SKILL.md)                 |
 | Set up, build, or troubleshoot the local application          | [local-setup](skills/local-setup/SKILL.md)                 |
 | Test a change in a local browser across every affected screen | [browser-qa](skills/browser-qa/SKILL.md)                   |
+| Render, update or add documentation trailers                  | [trailers](skills/trailers/SKILL.md)                       |
 
 Read the relevant guideline for a rule-governed change. Keep procedures in the matching skill.
 When changing a convention, update its skill and supporting documentation in the same change.
@@ -119,6 +120,9 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 - Screenshots in documentation and PRs must be captured from a running Artemis instance with realistic data
   and the actual theme and background colours. Never use synthetic, AI-generated, mocked or isolated-component
   screenshots, or override theme colours or recolour a capture. Automated browser capture of the real application is allowed.
+- The module trailers embedded in the documentation are rendered from documentation screenshots. When a PR
+  changes a screenshot a trailer uses, or the UI it shows, update the trailers in the same PR and describe the
+  change in the PR description. Procedure: [trailers](skills/trailers/SKILL.md).
 - Do not commit plans, design specs or scratch notes. Keep working notes in the issue or PR;
   maintained documentation belongs on the documentation site.
 
