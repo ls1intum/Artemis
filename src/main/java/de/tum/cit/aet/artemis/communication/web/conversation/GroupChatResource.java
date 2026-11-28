@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,6 +42,9 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.AddedToChannelNotification;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.RemovedFromChannelNotification;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -85,6 +89,7 @@ public class GroupChatResource extends ConversationManagementResource {
      * @param groupChatCreationDTO the request body identifying the group chat members by login
      * @return ResponseEntity with status 201 (Created) and with body containing the created group chat
      */
+    @ApiResponse(responseCode = "201", description = "The created group chat", headers = @Header(name = HttpHeaders.LOCATION, description = "Legacy location of the created group chat, /api/group-chats/{id}", schema = @Schema(type = "string")))
     @PostMapping("{courseId}/group-chats")
     @EnforceAtLeastStudent
     public ResponseEntity<GroupChatDTO> startGroupChat(@PathVariable Long courseId, @RequestBody GroupChatCreationDTO groupChatCreationDTO) throws URISyntaxException {
@@ -125,6 +130,7 @@ public class GroupChatResource extends ConversationManagementResource {
      * @param groupChatDTO dto containing the properties of the group chat to be updated
      * @return ResponseEntity with status 200 (Ok) and with body containing the updated group chat
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @PutMapping("{courseId}/group-chats/{groupChatId}")
     @EnforceAtLeastStudent
     public ResponseEntity<GroupChatDTO> updateGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody GroupChatDTO groupChatDTO) {
@@ -149,6 +155,7 @@ public class GroupChatResource extends ConversationManagementResource {
      * @param userLogins  the logins of the course users to be registered to a group chat
      * @return ResponseEntity with status 200 (Ok)
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @PostMapping("{courseId}/group-chats/{groupChatId}/register")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> registerUsersToGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody List<String> userLogins) {
@@ -181,6 +188,7 @@ public class GroupChatResource extends ConversationManagementResource {
      * @param userLogins  the logins of the course users to be deregistered from a group chat
      * @return ResponseEntity with status 200 (Ok)
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @PostMapping("{courseId}/group-chats/{groupChatId}/deregister")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deregisterUsersFromGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody List<String> userLogins) {

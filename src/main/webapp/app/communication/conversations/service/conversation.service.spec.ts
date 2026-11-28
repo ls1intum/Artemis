@@ -111,6 +111,15 @@ describe('ConversationService', () => {
         vi.advanceTimersByTime(0);
     });
 
+    it('marks all channels as read with an empty request and completes on an empty 200', () => {
+        const complete = vi.fn();
+        service.markAllChannelsAsRead(1).subscribe({ complete });
+        const req = httpMock.expectOne({ method: 'POST', url: '/api/communication/courses/1/channels/mark-as-read' });
+        expect(req.request.body).toBeNull();
+        req.flush(null, { status: 200, statusText: 'OK' });
+        expect(complete).toHaveBeenCalledOnce();
+    });
+
     it('markAsRead', () => {
         service
             .markAsRead(1, 1)

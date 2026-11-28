@@ -7,6 +7,7 @@ api/attachment-video-unit-api.ts
 api/attachment-video-unit-playlist-api.ts
 api/bonus-api.ts
 api/calendar-api.ts
+api/channel-api.ts
 api/complaint-api.ts
 api/complaint-response-api.ts
 api/example-submission-api.ts
@@ -14,6 +15,7 @@ api/exercise-unit-api.ts
 api/global-search-api.ts
 api/grade-step-api.ts
 api/grading-scale-api.ts
+api/group-chat-api.ts
 api/hyperion-assessment-criteria-generation-api.ts
 api/hyperion-authoring-run-api.ts
 api/hyperion-code-generation-api.ts
@@ -80,7 +82,7 @@ model/bonus-request.ts
 model/bonus-response.ts
 model/bonus.ts
 model/calendar-event.ts
-model/channel-sub-type-reference-dates.ts
+model/channel-id-and-name.ts
 model/channel.ts
 model/checklist-action-request.ts
 model/checklist-action-response.ts
@@ -139,7 +141,6 @@ model/drop-location-re-evaluate.ts
 model/drop-location.ts
 model/entity-id-ref.ts
 model/exam-for-bonus.ts
-model/exam-seat.ts
 model/exam-with-id-and-course.ts
 model/example-submission-detail.ts
 model/example-submission-request.ts
@@ -175,6 +176,7 @@ model/external-submission-candidate.ts
 model/external-submission-result.ts
 model/feedback-affected-student.ts
 model/feedback-analysis-response.ts
+model/feedback-channel-request.ts
 model/feedback-detail.ts
 model/feedback.ts
 model/generated-assessment-criterion.ts
@@ -194,6 +196,8 @@ model/grading-scale-for-bonus.ts
 model/grading-scale-id.ts
 model/grading-scale-update.ts
 model/grading-scale.ts
+model/group-chat-creation.ts
+model/group-chat.ts
 model/hidden-page-info.ts
 model/hyperion-course-settings.ts
 model/indexed-content-object.ts

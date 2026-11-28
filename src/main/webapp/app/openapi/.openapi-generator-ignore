@@ -31,6 +31,7 @@
 # The following entries are pre-populated based on the input obtained via
 # the option `openapiGeneratorIgnoreList` (--openapi-generator-ignore-list in CLI for example).
 api/presentation-assessment-resources.ts
+api/channel-resources.ts
 api/hyperion-quiz-question-generation-resources.ts
 api/hyperion-authoring-run-resources.ts
 api/tutorial-groups-configuration-resources.ts
@@ -65,6 +66,7 @@ api/quiz-statistics-resources.ts
 api/hyperion-exercise-variant-resources.ts
 api/hyperion-problem-statement-resources.ts
 api/long-feedback-text-resources.ts
+api/group-chat-resources.ts
 api/admin-hyperion-generation-resources.ts
 api/online-unit-resources.ts
 api/quiz-assessment-resources.ts

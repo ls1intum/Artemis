@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import tools.jackson.databind.annotation.JsonDeserialize;
 
 import de.tum.cit.aet.artemis.communication.config.GroupChatCreationDeserializer;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Request body for creating a group chat. {@code memberLogins} are the logins of the starting members (excluding the requesting user).
@@ -18,7 +19,8 @@ import de.tum.cit.aet.artemis.communication.config.GroupChatCreationDeserializer
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonDeserialize(using = GroupChatCreationDeserializer.class)
-public record GroupChatCreationDTO(List<String> memberLogins) {
+public record GroupChatCreationDTO(
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Logins of the starting members, excluding the requesting user") List<String> memberLogins) {
 
     public GroupChatCreationDTO(@Nullable List<String> memberLogins) {
         this.memberLogins = memberLogins == null ? List.of() : memberLogins;
