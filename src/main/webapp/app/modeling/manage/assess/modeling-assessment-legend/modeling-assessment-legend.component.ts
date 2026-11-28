@@ -4,7 +4,7 @@ import { faCheck, faCircleInfo, faInfo, faTimes } from '@fortawesome/free-solid-
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 export interface ModelingAssessmentLegendHighlight {
     color: string;

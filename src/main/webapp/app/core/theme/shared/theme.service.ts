@@ -4,6 +4,7 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 
 export const THEME_LOCAL_STORAGE_KEY = 'artemisapp.theme.preference';
 const THEME_ATTRIBUTE = 'data-theme';
+const DARK_SCHEME_QUERY = '(prefers-color-scheme: dark)';
 
 /**
  * Contains definitions for a theme.
@@ -45,7 +46,7 @@ export class ThemeService {
      * The user preference changes as WritableSignal.
      * If changed, the theme is applied immediately.
      */
-    private _userPreference = signal<Theme | undefined>(undefined);
+    private _userPreference = signal<Theme | undefined>(this.getStoredThemePreference());
 
     /**
      * The user preference changes as ReadonlySignal.
@@ -55,8 +56,10 @@ export class ThemeService {
 
     /**
      * The system preference as WritableSignal.
+     * Like the user preference, it has its real value from the start: the script in `index.html` has already set the
+     * theme of the page from the same two sources, and the first run of the effect below must not change it back.
      */
-    private systemPreference = signal<Theme>(Theme.LIGHT);
+    private systemPreference = signal<Theme>(typeof window.matchMedia === 'function' && window.matchMedia(DARK_SCHEME_QUERY).matches ? Theme.DARK : Theme.LIGHT);
 
     /**
      * The currently applied theme as Signal.
@@ -75,11 +78,11 @@ export class ThemeService {
 
     /**
      * Should be called once on application startup.
-     * Sets up the system preference listener and applies the theme initially
+     * Sets up the system preference listener
      * Sets up a local storage listener to account for changes in other tabs
      */
     initialize() {
-        this.darkSchemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        this.darkSchemeMediaQuery = window.matchMedia(DARK_SCHEME_QUERY);
         if (this.darkSchemeMediaQuery.media !== 'not all') {
             this.darkSchemeMediaQuery.addEventListener('change', () => {
                 if (this.darkSchemeMediaQuery.matches) {
@@ -104,7 +107,14 @@ export class ThemeService {
      * Returns the theme preference stored in local storage or undefined if no preference is stored
      */
     private getStoredThemePreference(): Theme | undefined {
-        const storedIdentifier = this.localStorageService.retrieve<string>(THEME_LOCAL_STORAGE_KEY);
+        let storedIdentifier: string | undefined;
+        try {
+            storedIdentifier = this.localStorageService.retrieve<string>(THEME_LOCAL_STORAGE_KEY);
+        } catch {
+            // The storage is blocked or holds a value that is not JSON. The script of index.html follows the system in
+            // this case, and so does the service. It runs while the service is created, so it must not throw.
+            return undefined;
+        }
         const storedTheme = Theme.all.find((theme) => theme.identifier === storedIdentifier);
 
         // An unknown theme was stored. Let's clear it

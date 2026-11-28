@@ -37,6 +37,13 @@
     animation: notification-scale-in 0.2s ease-out forwards;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .notification-entering {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
+
 @keyframes notification-scale-in {
     from {
         transform: scale(0);
@@ -58,6 +65,13 @@
     transform: scale(1);
     opacity: 1;
     animation: notification-scale-out 0.2s ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .notification-leaving {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
 }
 
 @keyframes notification-scale-out {
@@ -86,6 +100,9 @@
     z-index: 1000;
     overflow: visible;
     pointer-events: none;
+    transition:
+        max-height 0.2s 0.2s ease-in-out,
+        height 0.2s 0.2s ease-in-out;
 }
 
 /*
@@ -95,12 +112,6 @@
  */
 .course-notification-popup-overlay > .notification-animation-wrapper {
     pointer-events: auto;
-}
-
-.course-notification-popup-overlay {
-    transition:
-        max-height 0.2s 0.2s ease-in-out,
-        height 0.2s 0.2s ease-in-out;
 }
 
 /* No notifications: remove the overlay entirely so it never sits on top of the page and blocks clicks. */

@@ -6,7 +6,8 @@ import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unref
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { GradingInstructionSelectionHost, GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Course } from 'app/course/shared/entities/course.model';
 import { round, roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
@@ -186,7 +187,7 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
 
     /**
      * The title of the instruction's criterion, which names a feedback created for it. Dropping an instruction brings the
-     * title along (see DraggedGradingInstruction); ticking it does not, so the criterion is looked up among the exercise's.
+     * title along (see GradingInstructionWithCriterionTitle); ticking it does not, so the criterion is looked up among the exercise's.
      */
     private criterionTitleOf(instruction: GradingInstruction): string | undefined {
         return this.gradingCriteria().find((criterion) => criterion.structuredGradingInstructions?.some((candidate) => candidate.id === instruction.id))?.title;

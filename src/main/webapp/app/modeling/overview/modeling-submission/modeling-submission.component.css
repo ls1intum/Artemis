@@ -22,6 +22,8 @@
 
 .submission-container {
     container-type: inline-size;
+    min-height: 0;
+    flex: 1 1 auto;
 }
 
 jhi-resizeable-container {

@@ -4,7 +4,7 @@ title: TUM AET UI package
 sidebar_label: TUM AET UI package
 slug: /guidelines/tum-aet-ui-kit
 description: Architecture, integration, contribution, testing, and publishing for the TUM AET UI component library.
-last_reviewed: 2026-11-23
+last_reviewed: 2026-11-26
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -31,13 +31,15 @@ For button colours, emphasis, and toolbar sizing, follow
 Package code:
 
 - imports only its declared dependencies;
-- exposes supported contracts through `src/public-api.ts`;
+- exposes supported contracts through one entry point per component directory (`src/lib/<directory>/index.ts`, listed in the `exports` of
+  `package.json`) and through `src/public-api.ts`, which exports the same symbols from the package root;
 - uses package-owned translation keys and `--tumaet-ui-*` theme properties;
 - contains no Artemis routes, services, Artemis-owned theme properties or translation keys, or
   request models.
 
 Artemis-specific adapters live in `src/main/webapp/app/shared-ui/tum-aet-ui-integration`. Artemis
-imports package symbols from `@tumaet/ui-angular`; ESLint rejects deep imports.
+imports package symbols from the entry point of their component (`@tumaet/ui-angular/button`); ESLint rejects the package root and
+every other path.
 
 The package has its own version and GitHub release notes. Repository code owners review its public contract;
 npm organization maintainers approve releases.
@@ -150,14 +152,13 @@ shows it live: resize it, switch the theme and sort the columns. Pages assemble 
 ### Anatomy
 
 ```text
-┌──────────────────────────────────────────────────────────────────────────┐
-│ [⌕ Search users]  0 selected                  Delete  Filter  [+ Create]  │ toolbar    40px, sticky
-│ ☐  ID ▲   Login ⇅   Name ⇅   Email ⇅   Language   Created ⇅   Actions     │ header     30px, sticky
-│ ☐  1037   aturing37  Alan Turing  …                                      │ rows       36px
-│ ☐  1038   ghopper38  Grace Hopper …                    only this part ↕  │ body       scrolls, also sideways
-├──────────────────────────────────────────────────────────────────────────┤
-│ 1–50 of 1,284 users                  Rows [50]   «  ‹  [1] 2 3  ›  »     │ footer     40px, sticky
-└──────────────────────────────────────────────────────────────────────────┘
+ [⌕ Search users]  0 selected                  Delete  Filter  [+ Create]    toolbar    40px, sticky
+──────────────────────────────────────────────────────────────────────────
+ ☐  ID ▲   Login ⇅   Name ⇅   Email ⇅   Language   Created ⇅   Actions       header     30px, sticky
+ ☐  1037   aturing37  Alan Turing  …                                        rows       36px
+ ☐  1038   ghopper38  Grace Hopper …                    only this part ↕    body       scrolls, also sideways
+──────────────────────────────────────────────────────────────────────────
+ 1–50 of 1,284 users                  Rows [50]   «  ‹  [1] 2 3  ›  »       footer     40px, sticky
 ```
 
 | Part    | Size               | Rules                                                                                                                     |
@@ -167,12 +168,14 @@ shows it live: resize it, switch the theme and sort the columns. Pages assemble 
 | Body    | rows of about 36px | The only part that scrolls, vertically and horizontally. Striping and row hover are optional.                             |
 | Footer  | at most 40px       | One line. Range and total on the left, page size and pager on the right. Omit it for lists shown completely.              |
 
-Inside the frame, the tinted header (`--tumaet-ui-table-header-background`) and the frame itself set the table apart, so
-there is no rule below the header or below the last row. A table outside a frame keeps both rules. A table with a `<tfoot>`
-draws a heavier rule above its footer cells instead of below the last row. A sortable header cell changes to
-`--tumaet-ui-table-header-hover-background` on hover, which differs from the row hover in both themes.
+The table has no border of its own: it sits flat on the panel of its page, and the controls of the toolbar start where the
+table starts, with 8px of air between the toolbar and the header. The tinted header
+(`--tumaet-ui-table-header-background`) sets it apart and has rounded outer corners, so there is no rule below the header or below the last row. A table
+outside the layout keeps both rules. A table with a `<tfoot>` draws a heavier rule above its footer cells instead of below the last
+row. A sortable header cell changes to `--tumaet-ui-table-header-hover-background` on hover, which differs from the row hover in both
+themes.
 
-The frame is as tall as its rows, but never taller than the space left below it in its scroll container. A short table
+The table is as tall as its rows, but never taller than the space left below it in its scroll container. A short table
 leaves no empty area, and a long one keeps toolbar and footer in view whatever sits above it.
 
 ### Responsive behaviour
@@ -208,19 +211,36 @@ too wide scrolls sideways instead of breaking into a second line.
 
 ## Consuming the package
 
-Import only from the package root:
+Import each symbol from the entry point of its component, named after the directory of the component:
 
 ```ts
-import { TumAetUiButtonComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 ```
+
+The entry point is what keeps the code of a component out of a page that does not use it. The Angular build bundles with esbuild, which assigns code to
+chunks per file: everything that a lazy route takes from one file is loaded by every entry that reaches that file. A package root that exports all
+components is such a file, so a single import from it brings every component that any route uses into the first download, even when the
+bundler removes the unused exports. With an entry point per component, the first download contains the components of the application shell, and a route loads the
+components that it uses. The package root exports the same symbols, for applications that import a few components or that do not split their code.
+Artemis does not import it: ESLint rejects the root and every path that is not an entry point.
+
+To add a component, create `src/lib/<directory>/index.ts` with explicit `export { ... }` statements (no `export *`), add the entry point to the `exports` of
+`package.json` and the symbols to `src/public-api.ts`. The package contract test (`config/eslint/rules/tum-aet-ui-package.spec.mjs`) fails when
+an entry point is missing or the root exports something else than the entry points. `node supporting_scripts/client/migrate-tum-aet-ui-imports.mjs` rewrites
+imports of the package root to entry points, for example after a rebase.
 
 Storybook AutoDocs derives the component API from those declarations and their source JSDoc.
 Document non-obvious public behavior beside the declaration; do not maintain separate input and
 output tables.
 
 Artemis declares the package through pnpm's `workspace:*` protocol. Application builds and Artemis
-tests consume `packages/tum-aet-ui/dist`; their root commands build the package first. Development serve
-mode maps the package entry point to its source so changes participate in Angular's normal watch and
+tests consume `packages/tum-aet-ui/dist`; their root commands build the package first. The `paths` of the tsconfig files and the aliases of the
+test runners cannot read the `exports` of a package, so they use a directory per entry point, `dist/<entry point>`, and one mapping,
+`@tumaet/ui-angular/* -> dist/*`, serves all of them. The library builder already writes a `package.json` into each of these directories;
+the package build completes it with `main` and `sideEffects` (`write-entry-stubs.mjs`), because Vitest cannot resolve a directory
+without `main`. Development serve
+mode maps the package entry points to their sources so changes participate in Angular's normal watch and
 reload cycle.
 
 ### Theme contract

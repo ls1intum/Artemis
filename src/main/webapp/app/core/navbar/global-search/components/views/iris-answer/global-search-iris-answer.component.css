@@ -199,6 +199,7 @@
 
 /* ── Answer collapse ────────────────────────────────────────────────────────── */
 .iris-answer-region {
+    position: relative;
     padding: 0.625rem 0.75rem 0;
 }
 
@@ -274,10 +275,24 @@
     animation: fade-slide-up 0.3s ease both;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .iris-chips {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
+
 .iris-chips--expanded {
     flex-wrap: wrap;
     padding-bottom: 0.125rem;
     animation: fade-slide-up 0.15s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .iris-chips--expanded {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
 }
 
 .iris-collapse-btn {
@@ -370,10 +385,6 @@
 }
 
 /* ── Inline citation chips (rendered inside the markdown innerHTML) ────────── */
-.iris-answer-region {
-    position: relative;
-}
-
 :host ::ng-deep .iris-cite {
     display: inline-block;
     padding: 0 0.3rem;

@@ -146,10 +146,6 @@ Skip Participations: false
   Authenticated as artemis_admin
 [2/13] Creating course...
   Created course: Test Course 2024-01-15 (ID: 42)
-    Student group: artemis-test1234-students
-    Tutor group: artemis-test1234-tutors
-    Editor group: artemis-test1234-editors
-    Instructor group: artemis-test1234-instructors
 [3/13] Creating users...
   Created 5 students, 2 tutors, 1 editor, 1 instructor
 [4/13] Creating programming exercises...
@@ -236,7 +232,7 @@ Course setup completed successfully!
 - Ensure the course has the quiz feature enabled
 
 ### Participation Failed
-- Students need proper group membership
+- Students need the student role in the course
 - Exercise must be released and not past due date
 
 ### Exam Creation Failed

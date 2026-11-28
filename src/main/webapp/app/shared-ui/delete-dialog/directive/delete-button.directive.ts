@@ -1,4 +1,4 @@
-import { tumAetUiButtonClasses } from '@tumaet/ui-angular';
+import { tumAetUiButtonClasses } from '@tumaet/ui-angular/button';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { DestroyRef, Directive, ElementRef, OnInit, Renderer2, inject, input, output } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';

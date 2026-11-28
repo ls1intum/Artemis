@@ -2,7 +2,7 @@
 id: tum-live-course-connection
 title: Connect a TUM.Live Course
 sidebar_label: TUM.Live Course Connection
-last_reviewed: 2026-11-20
+last_reviewed: 2026-11-26
 ---
 
 # Connect a TUM.Live course
@@ -27,7 +27,7 @@ In a connected course, editors can upload an MP4 to TUM.Live when creating a sin
 
 1. On the new lecture form, select an MP4 under **TUM.Live recording (optional)**. On the new unit form, choose **TUM.Live upload** as the video source and select an MP4.
 2. Select **Save and upload**. Artemis saves the content and starts uploading. When you create a lecture, Artemis also creates a recording unit for the video.
-3. Keep the page open until the transfer is confirmed. You can leave while TUM.Live converts the video. Artemis adds the video to the unit when it is ready and starts processing it for Iris.
+3. Follow the upload percentage and keep the page open until Artemis confirms the transfer. You can leave and reopen the page while TUM.Live converts the video. Artemis shows the confirmed upload or conversion progress and adds the video to the unit when it is ready.
 
 To upload a video to an existing unit, open the unit for editing, choose an MP4 under **TUM.Live recording**, and select **Upload to TUM.Live**.
 
@@ -35,6 +35,6 @@ If Artemis cannot confirm a save, select **Check save status**. If your content 
 
 The upload creates a new lecture in the TUM.Live course. Until it is converted, students can see it in TUM.Live as a planned lecture. To replace the video, upload another one: the unit keeps the old video until the new one is ready, and the old lecture is then deleted in TUM.Live. If you change the unit's video link by hand while an upload converts, your link is kept and the upload is deleted.
 
-A failed or cancelled upload is deleted in TUM.Live. An upload that has not finished after six hours is given up; upload the video again in that case. Artemis sets no size limit, but servers between your browser and TUM.Live can; their error is shown.
+Artemis schedules a failed or cancelled transfer for deletion in TUM.Live. If a proxy rejects the transfer before Artemis receives it, choose **Discard upload** to clear the reservation and try again. Artemis gives up an upload after six hours. Proxies can apply their own size limits and Artemis shows their error.
 
-When you delete a unit or a lecture with a video uploaded from Artemis, Artemis asks whether to delete the video in TUM.Live too. Deleting a course keeps its videos in TUM.Live.
+When you delete a unit or a lecture with a video uploaded from Artemis, Artemis asks whether to delete the video in TUM.Live too. The next background cleanup can delete the recording once no other lecture unit links to it. Deleting a course keeps its videos in TUM.Live.

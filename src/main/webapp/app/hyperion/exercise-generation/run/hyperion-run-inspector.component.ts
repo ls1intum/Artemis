@@ -3,14 +3,11 @@ import { HyperionRunInputComponent } from './hyperion-run-input.component';
 import { EMPTY, catchError, filter, merge, of, switchMap } from 'rxjs';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiCardComponent,
-    TumAetUiDialogComponent,
-    TumAetUiMessageComponent,
-    TumAetUiMessageSeverity,
-    TumAetUiPanelComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiMessageComponent, TumAetUiMessageSeverity } from '@tumaet/ui-angular/message';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

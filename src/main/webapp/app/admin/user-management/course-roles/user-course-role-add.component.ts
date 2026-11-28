@@ -5,7 +5,10 @@ import { Subject, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteSearchEvent, TumAetUiButtonComponent, TumAetUiFormFieldComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteSearchEvent } from '@tumaet/ui-angular/autocomplete';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';
 import {
     COURSE_ROLES_DESCENDING,

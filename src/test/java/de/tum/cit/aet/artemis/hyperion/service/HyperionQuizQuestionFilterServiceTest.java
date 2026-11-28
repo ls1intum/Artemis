@@ -223,7 +223,8 @@ class HyperionQuizQuestionFilterServiceTest {
         String userMessage = prompt.getValue().getInstructions().stream().filter(message -> message instanceof UserMessage).map(message -> message.getText()).findFirst()
                 .orElseThrow();
         assertThat(userMessage).contains("PUT is idempotent.").contains("Question type: single-choice").contains("Which method is idempotent?").contains("- [correct] PUT")
-                .contains("- [wrong] POST").contains("Stated explanation: PUT is idempotent.");
+                .contains("  Explanation: Repeating PUT leaves the same state.").contains("- [wrong] POST\n- [wrong] PATCH")
+                .contains("Explanation of the question: PUT is idempotent.");
     }
 
     @Test
@@ -271,8 +272,9 @@ class HyperionQuizQuestionFilterServiceTest {
     }
 
     private static GeneratedQuizQuestionDTO question() {
-        List<GeneratedQuizAnswerOptionDTO> options = List.of(new GeneratedQuizAnswerOptionDTO("PUT", true, null, null), new GeneratedQuizAnswerOptionDTO("POST", false, null, null),
-                new GeneratedQuizAnswerOptionDTO("PATCH", false, null, null), new GeneratedQuizAnswerOptionDTO("GET", false, null, null));
+        List<GeneratedQuizAnswerOptionDTO> options = List.of(new GeneratedQuizAnswerOptionDTO("PUT", true, null, "Repeating PUT leaves the same state."),
+                new GeneratedQuizAnswerOptionDTO("POST", false, null, null), new GeneratedQuizAnswerOptionDTO("PATCH", false, null, null),
+                new GeneratedQuizAnswerOptionDTO("GET", false, null, null));
         return new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.SINGLE_CHOICE, "HTTP Methods", "Which method is idempotent?", options, null, "PUT is idempotent.");
     }
 

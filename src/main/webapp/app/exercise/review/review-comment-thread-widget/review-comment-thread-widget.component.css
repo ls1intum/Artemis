@@ -345,15 +345,11 @@
 .monaco-review-comment-related-location-go-to {
     width: 1.25rem;
     height: 1.25rem;
-    padding: 0;
+    padding: 0 !important;
     line-height: 1;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-}
-
-.monaco-review-comment-related-location-go-to {
-    padding: 0 !important;
 }
 
 .monaco-review-comment-related-location-go-to fa-icon {

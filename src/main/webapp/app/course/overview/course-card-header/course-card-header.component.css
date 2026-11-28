@@ -4,7 +4,9 @@
     position: relative;
     height: 85px;
     opacity: 1;
-    transition: 0.15s;
+    transition:
+        background-color 0.15s,
+        color 0.15s;
     background-color: var(--background-color-for-hover) !important;
     color: var(--title-color) !important;
 

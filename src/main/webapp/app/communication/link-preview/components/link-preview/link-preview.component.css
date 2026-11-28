@@ -18,6 +18,12 @@
     animation: spin 1s linear infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .spinner {
+        animation-duration: 3s;
+    }
+}
+
 @keyframes spin {
     0% {
         transform: rotate(0deg);

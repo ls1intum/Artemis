@@ -59,7 +59,8 @@ import {
     isAssessmentDetailsTab,
 } from 'app/assessment/manage/assessment-details-header/assessment-details-header.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { FEEDBACK_CREDITS_OUT_OF_BOUNDS, alertUpdateAfterComplaintFailure, isCreditsOutOfBounds } from 'app/assessment/shared/util/feedback-credits-bounds.util';
 
 @Component({
