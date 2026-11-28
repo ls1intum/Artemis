@@ -197,7 +197,9 @@ class OpenAiResponsesChatModelTest {
     }
 
     private static Stream<Map<String, Object>> malformedOutputItems() {
-        return Stream.of(Map.of("type", "function_call", "name", "lookup"), Map.of("type", "message"),
+        return Stream.of(Map.of("type", "function_call", "name", "lookup"), Map.of("type", "function_call", "call_id", "id", "name", 42, "arguments", "{}"),
+                Map.of("type", "function_call", "call_id", "id", "name", "lookup", "arguments", false), Map.of("type", "message"),
+                Map.of("type", "message", "content", List.of(Map.of("type", "output_text", "text", 42))),
                 Map.of("type", "message", "content", List.of(Map.of("type", "refusal", "refusal", "declined"))), Map.of("type", "unknown"));
     }
 
@@ -241,10 +243,16 @@ class OpenAiResponsesChatModelTest {
     }
 
     private static Stream<Arguments> invalidReplayMessages() {
-        return Stream.of(Arguments.of(preservedMessage("broken"), "list of output items"), Arguments.of(preservedMessage(List.of("broken")), "unsupported output item"),
-                Arguments.of(preservedMessage(List.of("{\"type\":\"reasoning\"} {}")), "unsupported output item"),
-                Arguments.of(AssistantMessage.builder().content("").toolCalls(List.of(new AssistantMessage.ToolCall("call", "function", "lookup", "{}"))).build(),
-                        "preserved Responses output metadata"));
+        var malformedItems = Stream
+                .of("{\"type\":\"message\"}", "{\"type\":\"message\",\"content\":null}", "{\"type\":\"message\",\"content\":[null]}", "{\"type\":\"message\",\"content\":[42]}",
+                        "{\"type\":\"message\",\"content\":[{\"type\":\"refusal\",\"text\":\"declined\"}]}", "{\"type\":\"message\",\"content\":[{\"type\":\"output_text\"}]}",
+                        "{\"type\":\"message\",\"content\":[{\"type\":\"output_text\",\"text\":42}]}")
+                .map(item -> Arguments.of(preservedMessage(List.of(item)), "unsupported output item"));
+        return Stream.concat(malformedItems,
+                Stream.of(Arguments.of(preservedMessage("broken"), "list of output items"), Arguments.of(preservedMessage(List.of("broken")), "unsupported output item"),
+                        Arguments.of(preservedMessage(List.of("{\"type\":\"reasoning\"} {}")), "unsupported output item"),
+                        Arguments.of(AssistantMessage.builder().content("").toolCalls(List.of(new AssistantMessage.ToolCall("call", "function", "lookup", "{}"))).build(),
+                                "preserved Responses output metadata")));
     }
 
     private static AssistantMessage preservedMessage(Object output) {

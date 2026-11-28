@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.llm;
 
+import static de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog.preset;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -20,6 +21,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.messages.ToolResponseMessage;
+import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.web.client.ResourceAccessException;
@@ -27,6 +32,7 @@ import org.springframework.web.client.RestClientResponseException;
 
 import com.sun.net.httpserver.HttpServer;
 
+import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -82,11 +88,12 @@ class LlmClientServiceTest {
     @BeforeEach
     void startServer() throws IOException {
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        var requestMapper = JsonMapper.builder().enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS).build();
         server.createContext("/", exchange -> {
             try (exchange) {
                 var headers = exchange.getRequestHeaders();
                 var uri = exchange.getRequestURI();
-                var body = new JsonMapper().readTree(exchange.getRequestBody().readAllBytes());
+                var body = requestMapper.readTree(exchange.getRequestBody().readAllBytes());
                 requests.add(new Captured(uri.getRawPath(), uri.getQuery(), headers.getFirst("Authorization"), headers.getFirst("api-key"), headers.getFirst("OpenAI-Organization"),
                         headers.getFirst("X-Test"), body));
                 if (delayAnswer) {
@@ -139,6 +146,67 @@ class LlmClientServiceTest {
             factory.closeConnections();
         }
         server.stop(0);
+    }
+
+    @Test
+    void structuredOutputOmitsBlankVerbosity() {
+        var options = LlmChatOptions.builder().verbosity(" ").outputSchema("{\"type\":\"object\"}").build();
+        responsesModel().call(new Prompt("Hello", options));
+
+        assertThat(requests.getFirst().body().get("text")).isEqualTo(new JsonMapper().readTree("""
+                {"format":{"type":"json_schema","name":"response","strict":true,"schema":{"type":"object"}}}
+                """));
+    }
+
+    @Test
+    void replayPreservesTheExactValueOfNestedDecimals() {
+        chatResponse = """
+                {"id":"first","model":"m","status":"completed","output":[
+                 {"type":"reasoning","provider_extension":{"weights":[0.123456789012345678901]}}]}
+                """;
+        var model = responsesModel();
+        var assistant = model.call(new Prompt("First")).getResult().getOutput();
+        chatResponse = RESPONSE;
+        model.call(new Prompt(List.of(assistant, new UserMessage("Next"))));
+
+        assertThat(requests).hasSize(2);
+        assertThat(requests.getLast().body().at("/input/0/provider_extension/weights/0").decimalValue()).isEqualByComparingTo("0.123456789012345678901");
+    }
+
+    @Test
+    void replayPreservesExtensionsThatShareFieldNamesWithOtherItemTypes() {
+        var output = """
+                [{"name":{"gateway":"reasoner"},"type":"reasoning","arguments":false,"content":{"provider":"trace"}},
+                 {"type":"message","call_id":9,"name":["speaker"],"arguments":{},"content":[{"type":"output_text","text":"Checking"}]},
+                 {"type":"function_call","call_id":"call-1","name":"lookup","arguments":"{}","content":{"provider":"tool"}}]
+                """;
+        chatResponse = """
+                {"id":"first","model":"m","status":"completed","output":%s}
+                """.formatted(output);
+        var model = responsesModel();
+        var user = new UserMessage("First");
+        var assistant = model.call(new Prompt(user)).getResult().getOutput();
+        assertThat(assistant.getText()).isEqualTo("Checking");
+        assertThat(assistant.getToolCalls()).containsExactly(new AssistantMessage.ToolCall("call-1", "function", "lookup", "{}"));
+        var result = ToolResponseMessage.builder().responses(List.of(new ToolResponseMessage.ToolResponse("call-1", "lookup", "found"))).build();
+        chatResponse = RESPONSE;
+        model.call(new Prompt(List.of(user, assistant, result)));
+
+        assertThat(requests).hasSize(2);
+        var input = requests.getLast().body().get("input");
+        var mapper = new JsonMapper();
+        var expected = mapper.createArrayNode().add(mapper.readTree("""
+                {"type":"message","role":"user","content":"First"}
+                """));
+        mapper.readTree(output).forEach(expected::add);
+        expected.add(mapper.readTree("""
+                {"type":"function_call_output","call_id":"call-1","output":"found"}
+                """));
+        assertThat(input).isEqualTo(expected);
+    }
+
+    private ChatModel responsesModel() {
+        return service(Map.of("main", endpoint(EndpointType.OPENAI, "/v1", null)), Map.of("chat", preset("main", "m", Api.RESPONSES))).chatModel("chat");
     }
 
     @Test

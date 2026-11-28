@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.llm;
 
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -37,6 +38,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonParser;
 import tools.jackson.core.JsonToken;
+import tools.jackson.core.ObjectWriteContext;
 import tools.jackson.databind.DeserializationContext;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.ValueDeserializer;
@@ -124,12 +126,12 @@ public final class OpenAiResponsesChatModel implements ChatModel {
         var reasoning = StringUtils.hasText(effort) ? new Reasoning(effort) : null;
         Double temperature = reasoning == null || "none".equals(effort) ? options.getTemperature() : null;
         Integer limit = options.getMaxCompletionTokens() != null ? options.getMaxCompletionTokens() : options.getMaxTokens();
-        String verbosity = options.getVerbosity();
+        String verbosity = StringUtils.hasText(options.getVerbosity()) ? options.getVerbosity() : null;
         Format format = null;
         if (StringUtils.hasText(options.getOutputSchema())) {
             format = new Format("json_schema", "response", schema(options.getOutputSchema(), "structured output"), true);
         }
-        var text = format != null || StringUtils.hasText(verbosity) ? new Text(verbosity, format) : null;
+        var text = format != null || verbosity != null ? new Text(verbosity, format) : null;
         List<FunctionTool> tools = new ArrayList<>();
         for (ToolCallback callback : Objects.requireNonNullElse(options.getToolCallbacks(), List.<ToolCallback>of())) {
             if (callback == null) {
@@ -204,15 +206,24 @@ public final class OpenAiResponsesChatModel implements ChatModel {
 
     private OutputItem outputItem(String json) {
         try {
-            OutputItem item = mapper.readerFor(OutputItem.class).with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).readValue(json);
-            if (item != null && ("reasoning".equals(item.type()) || MESSAGE.equals(item.type()) || "function_call".equals(item.type()))) {
-                return item;
+            var kind = readItem(json, ItemType.class);
+            if (kind == null || kind.type() == null) {
+                throw unsupported("output item");
             }
+            return switch (kind.type()) {
+                case "reasoning" -> ReasoningOutput.INSTANCE;
+                case MESSAGE -> readItem(json, MessageOutput.class);
+                case "function_call" -> readItem(json, FunctionCall.class);
+                default -> throw unsupported("output item");
+            };
         }
         catch (JacksonException ex) {
             throw new IllegalArgumentException("OpenAI Responses assistant metadata contains an unsupported output item", ex);
         }
-        throw unsupported("output item");
+    }
+
+    private <T> T readItem(String json, Class<T> type) {
+        return mapper.readerFor(type).with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).readValue(json);
     }
 
     private ChatResponse toChatResponse(Response response, String requestedModel) {
@@ -254,11 +265,10 @@ public final class OpenAiResponsesChatModel implements ChatModel {
                 if (json == null) {
                     throw unsupported("null output item");
                 }
-                var item = outputItem(json);
-                switch (item.type()) {
-                    case "function_call" -> calls.add(item.toolCall());
-                    case MESSAGE -> item.appendText(text);
-                    default -> { // Reasoning items are replayed unchanged.
+                switch (outputItem(json)) {
+                    case FunctionCall call -> calls.add(call.toToolCall());
+                    case MessageOutput message -> message.appendText(text);
+                    case ReasoningOutput _ -> { // Reasoning items are replayed unchanged.
                     }
                 }
             }
@@ -326,8 +336,6 @@ public final class OpenAiResponsesChatModel implements ChatModel {
     // A malformed output still carries billable usage. Preserve each item as JSON for exact replay, including provider extensions.
     private static final class OutputItemsDeserializer extends ValueDeserializer<List<String>> {
 
-        private final RawJsonStringDeserializer rawJson = new RawJsonStringDeserializer();
-
         @Override
         public @Nullable List<String> deserialize(JsonParser parser, DeserializationContext context) {
             if (!parser.isExpectedStartArrayToken()) {
@@ -336,25 +344,46 @@ public final class OpenAiResponsesChatModel implements ChatModel {
             }
             List<String> items = new ArrayList<>();
             while (parser.nextToken() != JsonToken.END_ARRAY) {
-                items.add(rawJson.deserialize(parser, context));
+                var item = new StringWriter();
+                try (var generator = context.tokenStreamFactory().createGenerator(ObjectWriteContext.empty(), item)) {
+                    generator.copyCurrentStructureExact(parser);
+                }
+                items.add(item.toString());
             }
             return items;
         }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private record OutputItem(String type, @JsonProperty("call_id") @JsonDeserialize(using = StrictStringDeserializer.class) String callId,
-            @JsonDeserialize(using = StrictStringDeserializer.class) String name, @JsonDeserialize(using = StrictStringDeserializer.class) String arguments,
-            List<Content> content) {
+    private record ItemType(String type) {
+    }
 
-        AssistantMessage.ToolCall toolCall() {
+    private sealed interface OutputItem {
+    }
+
+    private enum ReasoningOutput implements OutputItem {
+        INSTANCE
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record FunctionCall(@JsonProperty("call_id") @JsonDeserialize(using = StrictStringDeserializer.class) String callId,
+            @JsonDeserialize(using = StrictStringDeserializer.class) String name, @JsonDeserialize(using = StrictStringDeserializer.class) String arguments) implements OutputItem {
+
+        FunctionCall {
             if (callId == null || name == null || arguments == null) {
                 throw unsupported("incomplete function call");
             }
-            return new AssistantMessage.ToolCall(callId, "function", name, arguments);
         }
 
-        void appendText(StringBuilder text) {
+        AssistantMessage.ToolCall toToolCall() {
+            return new AssistantMessage.ToolCall(callId, "function", name, arguments);
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record MessageOutput(List<Content> content) implements OutputItem {
+
+        MessageOutput {
             if (content == null) {
                 throw unsupported("missing message content");
             }
@@ -362,8 +391,11 @@ public final class OpenAiResponsesChatModel implements ChatModel {
                 if (part == null || !"output_text".equals(part.type()) || part.text() == null) {
                     throw unsupported("message content");
                 }
-                text.append(part.text());
             }
+        }
+
+        void appendText(StringBuilder text) {
+            content.forEach(part -> text.append(part.text()));
         }
     }
 
