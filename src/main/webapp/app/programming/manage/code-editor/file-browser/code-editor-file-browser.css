@@ -99,7 +99,7 @@
 
 .file-browser ::ng-deep .treeview-container .file-icons {
     opacity: 0;
-    transition: all 100ms ease-in-out;
+    transition: opacity 100ms ease-in-out;
     margin-left: auto;
     flex: 0 0 auto;
 }

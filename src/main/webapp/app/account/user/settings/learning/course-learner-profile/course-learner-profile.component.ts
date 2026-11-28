@@ -6,7 +6,8 @@ import { LearnerProfileApiService } from 'app/account/user/settings/learning/lea
 import { CourseLearnerProfileDTO } from 'app/account/user/settings/learning/dto/course-learner-profile-dto.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
-import { TumAetUiPanelComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { COURSE_LEARNER_PROFILE_OPTIONS } from 'app/account/user/settings/learning/entities/course-learner-profile-options.model';
 import { cloneWith, hydrate } from 'app/foundation/util/deep-clone.util';

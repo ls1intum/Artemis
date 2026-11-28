@@ -1,4 +1,5 @@
-import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiButtonDirective, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular/chart';
 import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';

@@ -1,6 +1,6 @@
 import { isDateLessThanAWeekInTheFuture } from 'app/foundation/util/date.utils';
 import { getSubmissionDueDateInformation } from './submission-due-date-information';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { Component, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { SortService } from 'app/foundation/service/sort.service';

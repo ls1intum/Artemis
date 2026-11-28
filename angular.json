@@ -52,7 +52,7 @@
                             "browser": ""
                         },
                         "loader": {
-                            ".ttf": "file"
+                            ".css": "empty"
                         },
                         "index": "src/main/webapp/index.html",
                         "browser": "src/main/webapp/app/app.main.ts",
@@ -107,8 +107,8 @@
                             "src/main/webapp/content/css/application.css",
                             "src/main/webapp/tailwind.css",
                             "@tumaet/ui-angular/styles.css",
-                            "node_modules/monaco-editor/min/vs/editor/editor.main.css",
-                            "node_modules/@tumaet/apollon/dist/assets/style.css"
+                            "src/main/webapp/vendor-styles/monaco-editor.css",
+                            "src/main/webapp/vendor-styles/apollon.css"
                         ],
                         "scripts": []
                     },
@@ -137,8 +137,8 @@
                             "budgets": [
                                 {
                                     "type": "initial",
-                                    "maximumWarning": "4.5mb",
-                                    "maximumError": "10mb"
+                                    "maximumWarning": "2.1mb",
+                                    "maximumError": "2.2mb"
                                 },
                                 {
                                     "type": "anyComponentStyle",
@@ -162,6 +162,17 @@
                                 {
                                     "replace": "src/main/webapp/app/core/environments/environment.ts",
                                     "with": "src/main/webapp/app/core/environments/environment.override.ts"
+                                }
+                            ]
+                        },
+                        "stats": {
+                            "optimization": false,
+                            "statsJson": true,
+                            "budgets": [
+                                {
+                                    "type": "anyComponentStyle",
+                                    "maximumWarning": "1mb",
+                                    "maximumError": "1.6mb"
                                 }
                             ]
                         },

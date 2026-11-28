@@ -161,7 +161,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
     /**
      * Creates a not-enrolled-user-cleanup test fixture: a saved user with the given authorities/deleted flag and a
      * backdated last login date (set via a bulk update so it is the effective activity signal). An enrolled user is
-     * given a course role, which is what "enrolled" means since course group names were replaced by user course roles.
+     * given a course role, which is what "enrolled" means.
      */
     private User createUser(String login, boolean enrolled, Set<Authority> authorities, boolean deleted, Instant lastLoginDate) {
         User user = userUtilService.createAndSaveUser(login);

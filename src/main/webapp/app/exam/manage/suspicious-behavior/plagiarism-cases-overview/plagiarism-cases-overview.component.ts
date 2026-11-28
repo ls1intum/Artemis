@@ -1,7 +1,8 @@
 import { Component, inject, input } from '@angular/core';
 import { Exercise, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Router } from '@angular/router';
-import { TumAetUiButtonDirective, TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({

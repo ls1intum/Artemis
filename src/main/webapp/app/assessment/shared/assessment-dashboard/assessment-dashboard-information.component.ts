@@ -1,5 +1,6 @@
 import { AssessmentProgressComponent } from './assessment-progress.component';
-import { TumAetUiPanelComponent, TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { Component, computed, input } from '@angular/core';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { Course } from 'app/course/shared/entities/course.model';

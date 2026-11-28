@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { TumAetUiAccordionComponent, TumAetUiAccordionPanelComponent } from '@tumaet/ui-angular';
+import { TumAetUiAccordionComponent, TumAetUiAccordionPanelComponent } from '@tumaet/ui-angular/accordion';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FAQ_ITEMS } from 'app/core/landing/landing-data';
 

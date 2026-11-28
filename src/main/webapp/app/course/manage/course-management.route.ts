@@ -1,3 +1,5 @@
+import { inject } from '@angular/core';
+import { COURSE_MANAGEMENT_EXTENSION_ROUTES } from './course-management-extension-routes';
 import { Routes } from '@angular/router';
 import type { Route, UrlMatchResult, UrlMatcher } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
@@ -386,6 +388,7 @@ export const courseManagementRoutes: Routes = [
                         redirectTo: 'exercises',
                     },
                     preloadTutorRoutes(() => import('app/text/manage/text-exercise/text-exercise.route').then((m) => m.textExerciseRoute)),
+                    preloadTutorRoutes(() => inject(COURSE_MANAGEMENT_EXTENSION_ROUTES, { optional: true }) ?? []),
                     preloadTutorRoutes(() => import('app/programming/manage/programming-exercise-management.route').then((m) => m.routes)),
                     preloadTutorRoutes(() => import('app/quiz/manage/quiz-management.route').then((m) => m.quizManagementRoute)),
                     preloadTutorRoutes(() => import('app/fileupload/manage/file-upload-exercise-management.route').then((m) => m.routes)),

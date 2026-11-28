@@ -3,8 +3,12 @@ package de.tum.cit.aet.artemis.admin.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -48,33 +52,64 @@ public class AuditEventService {
     /**
      * Finds a page of audit events in the given log.
      *
-     * @param logType  which audit log to read
-     * @param pageable the pagination information
+     * @param logType   which audit log to read
+     * @param principal only the events of this principal (login) are returned, or all events if it is null or blank
+     * @param pageable  the pagination information
      * @return a page of audit events
      */
-    public Page<AuditEvent> findAll(AuditLogType logType, Pageable pageable) {
+    public Page<AuditEvent> findAll(AuditLogType logType, @Nullable String principal, Pageable pageable) {
+        Collection<String> principals = principalSpellings(principal);
         return switch (logType) {
-            case GENERAL -> persistenceAuditEventRepository.findAllWithData(pageable).map(auditEventConverter::convertToAuditEvent);
-            case SECURITY -> securityAuditEventRepository.findAllWithData(pageable).map(auditEventConverter::convertToAuditEvent);
-            case APPLICATION -> applicationAuditEventRepository.findAllWithData(pageable).map(auditEventConverter::convertToAuditEvent);
+            case GENERAL -> (principals.isEmpty() ? persistenceAuditEventRepository.findAllWithData(pageable)
+                    : persistenceAuditEventRepository.findAllWithDataByPrincipalIn(principals, pageable)).map(auditEventConverter::convertToAuditEvent);
+            case SECURITY ->
+                (principals.isEmpty() ? securityAuditEventRepository.findAllWithData(pageable) : securityAuditEventRepository.findAllWithDataByPrincipalIn(principals, pageable))
+                        .map(auditEventConverter::convertToAuditEvent);
+            case APPLICATION -> (principals.isEmpty() ? applicationAuditEventRepository.findAllWithData(pageable)
+                    : applicationAuditEventRepository.findAllWithDataByPrincipalIn(principals, pageable)).map(auditEventConverter::convertToAuditEvent);
         };
     }
 
     /**
      * Finds a page of audit events in the given log whose date lies in the given range.
      *
-     * @param logType  which audit log to read
-     * @param fromDate the start of the range
-     * @param toDate   the end of the range
-     * @param pageable the pagination information
+     * @param logType   which audit log to read
+     * @param principal only the events of this principal (login) are returned, or all events if it is null or blank
+     * @param fromDate  the start of the range
+     * @param toDate    the end of the range
+     * @param pageable  the pagination information
      * @return a page of audit events
      */
-    public Page<AuditEvent> findByDates(AuditLogType logType, Instant fromDate, Instant toDate, Pageable pageable) {
+    public Page<AuditEvent> findByDates(AuditLogType logType, @Nullable String principal, Instant fromDate, Instant toDate, Pageable pageable) {
+        Collection<String> principals = principalSpellings(principal);
         return switch (logType) {
-            case GENERAL -> persistenceAuditEventRepository.findAllWithDataByAuditEventDateBetween(fromDate, toDate, pageable).map(auditEventConverter::convertToAuditEvent);
-            case SECURITY -> securityAuditEventRepository.findAllWithDataByAuditEventDateBetween(fromDate, toDate, pageable).map(auditEventConverter::convertToAuditEvent);
-            case APPLICATION -> applicationAuditEventRepository.findAllWithDataByAuditEventDateBetween(fromDate, toDate, pageable).map(auditEventConverter::convertToAuditEvent);
+            case GENERAL -> (principals.isEmpty() ? persistenceAuditEventRepository.findAllWithDataByAuditEventDateBetween(fromDate, toDate, pageable)
+                    : persistenceAuditEventRepository.findAllWithDataByPrincipalInAndAuditEventDateBetween(principals, fromDate, toDate, pageable))
+                    .map(auditEventConverter::convertToAuditEvent);
+            case SECURITY -> (principals.isEmpty() ? securityAuditEventRepository.findAllWithDataByAuditEventDateBetween(fromDate, toDate, pageable)
+                    : securityAuditEventRepository.findAllWithDataByPrincipalInAndAuditEventDateBetween(principals, fromDate, toDate, pageable))
+                    .map(auditEventConverter::convertToAuditEvent);
+            case APPLICATION -> (principals.isEmpty() ? applicationAuditEventRepository.findAllWithDataByAuditEventDateBetween(fromDate, toDate, pageable)
+                    : applicationAuditEventRepository.findAllWithDataByPrincipalInAndAuditEventDateBetween(principals, fromDate, toDate, pageable))
+                    .map(auditEventConverter::convertToAuditEvent);
         };
+    }
+
+    /**
+     * The spellings of a login to search for. A login is stored in lower case when a user signs in, but a failed attempt keeps the login as it was typed, so the term is
+     * searched as the administrator typed it (trimmed) and lower cased. Both are compared for equality. That keeps the search on the index on principal and date; a contains
+     * search, or a comparison that lower cases the stored principal, could not use it and would read the whole date range of the largest log.
+     *
+     * @param principal the term typed by the administrator
+     * @return one or two spellings to match, or an empty collection if no principal is searched
+     */
+    private static Collection<String> principalSpellings(@Nullable String principal) {
+        if (principal == null || principal.isBlank()) {
+            return List.of();
+        }
+        String typed = principal.strip();
+        String lowerCased = typed.toLowerCase(Locale.ENGLISH);
+        return typed.equals(lowerCased) ? List.of(typed) : List.of(typed, lowerCased);
     }
 
     /**

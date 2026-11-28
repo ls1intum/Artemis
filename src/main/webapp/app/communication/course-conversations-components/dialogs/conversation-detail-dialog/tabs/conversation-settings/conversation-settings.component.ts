@@ -2,8 +2,9 @@ import { Component, OnDestroy, OnInit, inject, input, output, signal } from '@an
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { TumAetUiButtonDirective, TumAetUiDialogService } from '@tumaet/ui-angular';
-import type { TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import type { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { onError } from 'app/foundation/util/global.utils';
 import { Subject, takeUntil } from 'rxjs';

@@ -1389,7 +1389,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     /**
      * Pins the traced client read contract of the creation response: the redirect and the access-rights computation
-     * need the id and the nested course with its group names, the AI generation path routes into the template editor
+     * need the id and the nested course, the AI generation path routes into the template editor
      * via {@code templateParticipation.id}, and the constant discriminator drives the client-side type switches.
      *
      * @param response          the body of {@code POST programming-exercises/setup}

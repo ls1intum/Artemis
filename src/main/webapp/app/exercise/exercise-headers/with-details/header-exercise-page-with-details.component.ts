@@ -1,7 +1,7 @@
 import { DifficultyLevelComponent } from 'app/exercise/difficulty-level/difficulty-level.component';
 import { getSubmissionDueDateInformation } from '../exercise-headers-information/submission-due-date-information';
 import { InformationBox, InformationBoxComponent } from 'app/shared-ui/information-box/information-box.component';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import dayjs from 'dayjs/esm';
