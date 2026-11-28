@@ -27,7 +27,7 @@ vi.mock('y-monaco', () => {
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Injector, Provider, Signal, WritableSignal, signal } from '@angular/core';
 import { Observable, Subject, of, throwError } from 'rxjs';
-import { FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
+import { CodeEditorFileSyncService, FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
 import { DomainChange, DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -36,7 +36,10 @@ import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service'
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, provideRouter, withRouterConfig } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
+import { provideLocationMocks } from '@angular/common/testing';
+import { codeEditorManagementRoutes } from '../code-editor-management-routes';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
@@ -577,37 +580,6 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         expect(comp.exercise()!.title).toBe('Current exercise');
     });
 
-    it.each([false, true])('saves before route loading can remove the editor and cancels on failure (%s)', async (failure) => {
-        const routeParams = new Subject<Record<string, string>>();
-        (TestBed.inject(ActivatedRoute) as any).params = routeParams;
-        let finishSave!: () => void;
-        let failSave!: () => void;
-        const saveBeforeSwitching = vi.fn().mockReturnValue(
-            new Promise<void>((resolve, reject) => {
-                finishSave = resolve;
-                failSave = () => reject(new Error('save failed'));
-            }),
-        );
-        setCodeEditorContainer(comp, { actions: () => ({ saveBeforeSwitching }) });
-        comp.loadingState.set(LOADING_STATE.CLEAR);
-        const loadExercise = vi.spyOn(comp, 'loadExercise').mockReturnValue(new Subject<ProgrammingExercise>());
-        const setDomain = TestBed.inject(DomainService).setDomain as ReturnType<typeof vi.fn>;
-
-        comp.ngOnInit();
-        routeParams.next({ exerciseId: '42', repositoryType: RepositoryType.TESTS, repositoryId: '0' });
-        expect(saveBeforeSwitching).toHaveBeenCalledOnce();
-        expect(comp.loadingState()).toBe(LOADING_STATE.CLEAR);
-        expect(loadExercise).not.toHaveBeenCalled();
-        expect(setDomain).not.toHaveBeenCalled();
-        if (failure) failSave();
-        else finishSave();
-        await Promise.resolve();
-
-        expect(comp.loadingState()).toBe(failure ? LOADING_STATE.CLEAR : LOADING_STATE.INITIALIZING);
-        expect(loadExercise).toHaveBeenCalledTimes(failure ? 0 : 1);
-        expect(setDomain).not.toHaveBeenCalled();
-    });
-
     describe('Consistency Checks', () => {
         const error1 = new ConsistencyCheckError();
         error1.programmingExercise = { id: 42 } as any;
@@ -1090,6 +1062,69 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         await switching;
         if (failure) expect(setDomain).not.toHaveBeenCalled();
         else expect(setDomain).toHaveBeenCalledExactlyOnceWith(domain);
+    });
+});
+
+describe('CodeEditorInstructorAndEditorContainerComponent - navigation', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    it('keeps the route and repository on a failed save and allows retrying the same destination', async () => {
+        const editorRoute = codeEditorManagementRoutes.find((route) => route.path === ':repositoryType/:repositoryId')!;
+        await TestBed.configureTestingModule({
+            imports: [CodeEditorInstructorAndEditorContainerComponent],
+            providers: [
+                ...getBaseProviders().filter(
+                    (provider) => typeof provider !== 'object' || !('provide' in provider) || ![Router, ActivatedRoute, Location].includes(provider.provide),
+                ),
+                provideRouter(
+                    [{ path: 'exercises/:exerciseId/code-editor', children: [{ ...editorRoute, canActivate: [] }] }],
+                    withRouterConfig({ onSameUrlNavigation: 'reload' }),
+                ),
+                provideLocationMocks(),
+                { provide: DomainService, useClass: DomainService },
+                { provide: CodeEditorFileSyncService, useValue: { reset: vi.fn(), init: vi.fn() } },
+            ],
+        })
+            .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, { set: { template: '', imports: [], providers: [] } })
+            .compileComponents();
+        const exercise = createMockExercise();
+        exercise.templateParticipation!.repositoryUri = 'https://example.org/template.git';
+        exercise.solutionParticipation!.repositoryUri = 'https://example.org/solution.git';
+        vi.spyOn(CodeEditorInstructorAndEditorContainerComponent.prototype, 'loadExercise').mockReturnValue(of(exercise));
+        const harness = await RouterTestingHarness.create();
+        const originalUrl = '/exercises/42/code-editor/TEMPLATE/420';
+        const destination = '/exercises/42/code-editor/SOLUTION/421';
+        const component = await harness.navigateByUrl(originalUrl, CodeEditorInstructorAndEditorContainerComponent);
+        let failSave!: () => void;
+        let saveStarted!: () => void;
+        const started = new Promise<void>((resolve) => (saveStarted = resolve));
+        const saveBeforeSwitching = vi
+            .fn()
+            .mockResolvedValue(undefined)
+            .mockImplementationOnce(
+                () =>
+                    new Promise<void>((_resolve, reject) => {
+                        failSave = () => reject(new Error('save failed'));
+                        saveStarted();
+                    }),
+            );
+        setCodeEditorContainer(component, { ...createDefaultContainerStub(), actions: () => ({ saveBeforeSwitching }) });
+        const router = TestBed.inject(Router);
+        const navigation = router.navigateByUrl(destination);
+        await started;
+        expect(router.url).toBe(originalUrl);
+        expect(component.loadingState()).toBe(LOADING_STATE.CLEAR);
+        expect(component.selectedParticipation?.id).toBe(420);
+        failSave();
+        expect(await navigation).toBe(false);
+        expect(router.url).toBe(originalUrl);
+        expect(component.selectedParticipation?.id).toBe(420);
+
+        expect(await router.navigateByUrl(destination)).toBe(true);
+        await harness.fixture.whenStable();
+        expect(router.url).toBe(destination);
+        expect(component.selectedParticipation?.id).toBe(421);
+        expect(component.loadingState()).toBe(LOADING_STATE.CLEAR);
     });
 });
 

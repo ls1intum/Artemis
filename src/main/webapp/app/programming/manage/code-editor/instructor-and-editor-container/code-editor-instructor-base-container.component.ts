@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
-import { EMPTY, Observable, Subject, Subscription, from, of, throwError } from 'rxjs';
+import { EMPTY, Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -126,13 +126,6 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         }
         this.paramSub = this.route.params
             .pipe(
-                switchMap((params) => {
-                    const actions = this.codeEditorContainer()?.actions();
-                    return (actions ? from(actions.saveBeforeSwitching()) : of(undefined)).pipe(
-                        map(() => params),
-                        catchError(() => EMPTY),
-                    );
-                }),
                 tap(() => this.loadingState.set(LOADING_STATE.INITIALIZING)),
                 switchMap((params) => {
                     const exerciseId = Number(params['exerciseId']);
@@ -380,15 +373,20 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
      */
     async saveChangesAndSelectDomain(domain: DomainChange) {
         if (!this.canSwitchRepository()) return;
-        if (this.codeEditorContainer() != undefined) {
-            // A missing actions component or failed save must prevent switching and losing unsaved edits.
-            try {
-                await this.codeEditorContainer()!.actions()!.saveBeforeSwitching();
-            } catch {
-                return;
-            }
-        }
+        if (this.codeEditorContainer() && !(await this.saveBeforeLeaving())) return;
         this.domainService.setDomain(domain);
+    }
+
+    async saveBeforeLeaving(): Promise<boolean> {
+        try {
+            const container = this.codeEditorContainer();
+            if (container) {
+                await container.actions()!.saveBeforeSwitching();
+            }
+            return true;
+        } catch {
+            return false;
+        }
     }
 
     /**
