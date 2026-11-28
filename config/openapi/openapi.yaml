@@ -798,7 +798,7 @@ paths:
       requestBody:
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/PresentationAssessment'}
+            schema: {$ref: '#/components/schemas/PresentationAssessmentRequest'}
         required: true
       responses:
         '200':
@@ -1930,6 +1930,26 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/VariantJobStart'}
+  /api/hyperion/courses/{courseId}/quiz-question-pool/select:
+    post:
+      tags: [hyperion-quiz-question-pool]
+      operationId: selectQuizQuestionPoolQuestions
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/QuizQuestionPoolSelectionRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizQuestionPoolSelection'}
   /api/hyperion/courses/{courseId}/quiz-question-pool/build:
     post:
       tags: [hyperion-quiz-question-pool]
@@ -2396,7 +2416,7 @@ paths:
       requestBody:
         content:
           application/json:
-            schema: {$ref: '#/components/schemas/PresentationAssessment'}
+            schema: {$ref: '#/components/schemas/PresentationAssessmentRequest'}
         required: true
       responses:
         '200':
@@ -3695,6 +3715,23 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/ExerciseGenerationEffortProfile'}
+  /api/hyperion/courses/{courseId}/quiz-question-pool/selection-candidates:
+    get:
+      tags: [hyperion-quiz-question-pool]
+      operationId: getQuizQuestionPoolSelectionCandidates
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/QuizQuestionPoolSelectionCandidate'}
   /api/hyperion/courses/{courseId}/quiz-question-pool/questions:
     get:
       tags: [hyperion-quiz-question-pool]
@@ -4383,6 +4420,50 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/RatingListItem'}
+  /api/assessment/courses/{courseId}/presentation-assessments/{assessmentId}/rubric:
+    get:
+      tags: [presentation-assessment]
+      operationId: getPresentationRubric
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: assessmentId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PresentationRubric'}
+  /api/assessment/courses/{courseId}/presentation-assessments/{assessmentId}/instances/{instanceId}/ratings:
+    get:
+      tags: [presentation-assessment]
+      operationId: getPresentationRubricRatings
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: assessmentId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: instanceId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/PresentationRubricRating'}
   /api/assessment/courses/{courseId}/presentation-assessments/student-rows:
     get:
       tags: [presentation-assessment]
@@ -5448,6 +5529,32 @@ components:
         id: {type: integer, format: int64}
         title: {type: string}
         taxonomy: {$ref: '#/components/schemas/CompetencyTaxonomy'}
+    QuizQuestionPoolSelectionRequest:
+      type: object
+      description: A request to draw questions from the quiz question pool for a new
+        quiz
+      properties:
+        competencyIds:
+          type: array
+          description: Ids of the competencies the quiz covers
+          items: {type: integer, format: int64}
+          minItems: 1
+        lectureUnitIds:
+          type: array
+          description: Ids of the lecture units to draw from; every linked unit when
+            absent
+          items: {type: integer, format: int64}
+        count: {type: integer, format: int32, description: Number of questions to
+            draw, maximum: 100, minimum: 1}
+        questionTypes:
+          type: array
+          description: Question types to draw; every type when absent
+          items: {$ref: '#/components/schemas/QuizQuestionGenerationType'}
+        difficulties:
+          type: array
+          description: Difficulties to draw; every difficulty when absent
+          items: {$ref: '#/components/schemas/QuizQuestionDifficulty'}
+      required: [competencyIds, count]
     CreateOrUpdateTutorialGroupSessionRequest:
       type: object
       properties:
@@ -5625,14 +5732,18 @@ components:
         id: {type: integer, format: int64}
         presentationDate: {type: string, format: date-time}
         resultPoints: {type: number, format: double, maximum: 10000, minimum: 0}
+        passed: {type: boolean}
         studentLogin: {type: string, minLength: 1}
         language: {type: string, maxLength: 10, minLength: 0}
-        mode:
-          type: string
-          enum: [ONLINE, IN_PERSON]
+        mode: {$ref: '#/components/schemas/PresentationAssessmentMode'}
         location: {type: string, maxLength: 255, minLength: 0}
         meetingLink: {type: string, maxLength: 1000, minLength: 0, pattern: '^https?://\S+$'}
         remark: {type: string, maxLength: 1000, minLength: 0}
+        ratings:
+          type: array
+          items: {$ref: '#/components/schemas/PresentationRubricRating'}
+          maxItems: 20
+          minItems: 1
       required: [language, mode, presentationDate, studentLogin]
     SubmissionWithParticipation:
       type: object
@@ -5865,6 +5976,13 @@ components:
         entityId: {type: integer, format: int64}
         title: {type: string}
         lectureId: {type: integer, format: int64}
+    PresentationRubric:
+      type: object
+      properties:
+        criteria:
+          type: array
+          items: {$ref: '#/components/schemas/PresentationRubricCriterion'}
+        assessedInstanceCount: {type: integer, format: int64}
     ParticipationExercise:
       type: object
       properties:
@@ -6442,18 +6560,22 @@ components:
       properties:
         presentationDate: {type: string, format: date-time}
         resultPoints: {type: number, format: double, maximum: 10000, minimum: 0}
+        passed: {type: boolean}
         studentLogins:
           type: array
           items: {type: string, minLength: 1}
           maxItems: 500
           minItems: 0
         language: {type: string, maxLength: 10, minLength: 0}
-        mode:
-          type: string
-          enum: [ONLINE, IN_PERSON]
+        mode: {$ref: '#/components/schemas/PresentationAssessmentMode'}
         location: {type: string, maxLength: 255, minLength: 0}
         meetingLink: {type: string, maxLength: 1000, minLength: 0, pattern: '^https?://\S+$'}
         remark: {type: string, maxLength: 1000, minLength: 0}
+        ratings:
+          type: array
+          items: {$ref: '#/components/schemas/PresentationRubricRating'}
+          maxItems: 20
+          minItems: 1
       required: [language, mode, presentationDate, studentLogins]
     MultipleChoiceQuizQuestionWithoutSolution:
       required: [type]
@@ -6575,6 +6697,11 @@ components:
     CompetencyTaxonomy:
       type: string
       enum: [REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE]
+    PresentationRubricLevel:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        description: {type: string, maxLength: 1000, minLength: 0}
     QuizExerciseForStudentResponse:
       discriminator:
         propertyName: quizQuestionsType
@@ -6639,6 +6766,9 @@ components:
           items: {$ref: '#/components/schemas/ShortAnswerSolution'}
         similarityValue: {type: integer, format: int32}
         matchLetterCase: {type: boolean}
+    InitialCommitAuthorMode:
+      type: string
+      enum: [EXERCISE_CREATOR, PLACEHOLDER, CUSTOM]
     StudentExport:
       type: object
       properties:
@@ -6698,6 +6828,13 @@ components:
           additionalProperties: {type: string}
           description: Action-specific context parameters
       required: [actionType, problemStatementMarkdown]
+    PresentationRubricRating:
+      type: object
+      properties:
+        criterionId: {type: integer, format: int64}
+        levelId: {type: integer, format: int64}
+        comment: {type: string, maxLength: 1000, minLength: 0}
+      required: [criterionId, levelId]
     GeneratedQuizQuestion:
       type: object
       description: One generated quiz question
@@ -7295,6 +7432,18 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    PresentationRubricCriterion:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        name: {type: string, maxLength: 255, minLength: 0}
+        description: {type: string, maxLength: 1000, minLength: 0}
+        weight: {type: integer, format: int32, maximum: 100, minimum: 1}
+        scale: {$ref: '#/components/schemas/PresentationRubricScale'}
+        levels:
+          type: array
+          items: {$ref: '#/components/schemas/PresentationRubricLevel'}
+      required: [levels, name, scale, weight]
     ExerciseGenerationRetainedFile:
       type: object
       description: A file of a generated candidate that was not saved to the exercise
@@ -8415,6 +8564,22 @@ components:
         failure: {type: string, description: 'Why the build stopped early, absent
             when it ran through'}
       required: [id, startedAt, trigger]
+    PresentationAssessmentRequest:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string, maxLength: 255, minLength: 0}
+        description: {type: string, maxLength: 1000, minLength: 0}
+        gradingMethod: {$ref: '#/components/schemas/PresentationGradingMethod'}
+        maxPoints: {type: number, format: double, exclusiveMinimum: 0, maximum: 10000}
+        courseId: {type: integer, format: int64}
+        exerciseId: {type: integer, format: int64}
+        rubricCriteria:
+          type: array
+          items: {$ref: '#/components/schemas/PresentationRubricCriterion'}
+          maxItems: 20
+          minItems: 1
+      required: [gradingMethod, title]
     GradingCriterion:
       type: object
       properties:
@@ -8574,10 +8739,10 @@ components:
         id: {type: integer, format: int64}
         presentationDate: {type: string, format: date-time}
         resultPoints: {type: number, format: double, maximum: 10000, minimum: 0}
+        passed: {type: boolean}
+        rubricScore: {type: number, format: double}
         language: {type: string, maxLength: 10, minLength: 0}
-        mode:
-          type: string
-          enum: [ONLINE, IN_PERSON]
+        mode: {$ref: '#/components/schemas/PresentationAssessmentMode'}
         location: {type: string, maxLength: 255, minLength: 0}
         meetingLink: {type: string, maxLength: 1000, minLength: 0}
         remark: {type: string, maxLength: 1000, minLength: 0}
@@ -8660,6 +8825,19 @@ components:
         difficulty: {type: integer, format: int32, description: Difficulty as a value
             from 0 to 100, maximum: 100, minimum: 0}
       required: [difficulty, language, numberOfQuestions, questionTypes]
+    QuizQuestionPoolSelectionCandidate:
+      type: object
+      description: How many questions a draw may take from one cell of the quiz question
+        pool
+      properties:
+        competencyId: {type: integer, format: int64, description: Id of the competency}
+        lectureUnitId: {type: integer, format: int64, description: Id of the lecture
+            unit}
+        questionType: {$ref: '#/components/schemas/QuizQuestionGenerationType', description: Question
+            type}
+        difficulty: {$ref: '#/components/schemas/QuizQuestionDifficulty', description: Difficulty}
+        count: {type: integer, format: int64, description: Questions a draw may take}
+      required: [difficulty, questionType]
     ProgrammingFeedback:
       type: object
       properties:
@@ -8720,13 +8898,13 @@ components:
       type: object
       properties:
         id: {type: integer, format: int64}
-        title: {type: string, maxLength: 255, minLength: 0}
-        description: {type: string, maxLength: 1000, minLength: 0}
-        maxPoints: {type: number, format: double, exclusiveMinimum: 0, maximum: 10000}
+        title: {type: string}
+        description: {type: string}
+        gradingMethod: {$ref: '#/components/schemas/PresentationGradingMethod'}
+        maxPoints: {type: number, format: double}
         courseId: {type: integer, format: int64}
         exerciseId: {type: integer, format: int64}
         exerciseTitle: {type: string}
-      required: [maxPoints, title]
     ExerciseOverview:
       type: object
       properties:
@@ -8995,6 +9173,7 @@ components:
         connected: {type: boolean}
         pendingRef: {type: string}
         pendingSince: {type: string, format: date-time}
+        transferAccepted: {type: boolean}
         converting: {type: boolean}
         progress: {type: integer, format: int32}
         attachedRef: {type: string}
@@ -9002,6 +9181,21 @@ components:
     Kind:
       type: string
       enum: [CREATE, ADAPT, VARIANT]
+    QuizQuestionPoolSelection:
+      type: object
+      description: The questions one draw took from the quiz question pool
+      properties:
+        questions:
+          type: array
+          description: The drawn questions in draw order
+          items: {$ref: '#/components/schemas/QuizQuestionPoolItem'}
+        requested: {type: integer, format: int32, description: How many questions
+            the draw asked for}
+        competencyIdsWithoutQuestions:
+          type: array
+          description: Requested competencies for which the pool holds no eligible
+            question
+          items: {type: integer, format: int64}
     TumLiveUploadStart:
       type: object
       properties:
@@ -9060,9 +9254,9 @@ components:
         subTypeReferenceId: {type: integer, format: int64}
         subTypeReferenceStartDate: {type: string, format: date-time}
         subTypeReferenceEndDate: {type: string, format: date-time}
-        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
         subTypeReferenceDates: {$ref: '#/components/schemas/ChannelSubTypeReferenceDates',
           writeOnly: true}
+        subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
     Grade:
       type: object
       properties:

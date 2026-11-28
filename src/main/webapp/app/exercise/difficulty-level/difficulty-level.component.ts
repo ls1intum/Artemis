@@ -1,4 +1,4 @@
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';

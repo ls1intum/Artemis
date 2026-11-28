@@ -1,4 +1,4 @@
-import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { TumLiveTransferEvent } from '../services/tum-live-upload.service';
 import { RecordingNavigation } from '../tum-live-upload/tum-live-creation';
 import { TumLiveUploadComponent } from '../tum-live-upload/tum-live-upload.component';

@@ -179,11 +179,11 @@ class AuthorizationArchitectureTest extends AbstractArchitectureTest {
      * when authorization is handled in the method body.
      */
     private static final Set<String> UNAUTHENTICATED_ENDPOINT_BASELINE = Set.of("de.tum.cit.aet.artemis.calendar.web.LegacyCalendarResource#getLegacyCalendarEventSubscriptionFile",
-            "de.tum.cit.aet.artemis.calendar.web.CalendarResource#getCalendarEventSubscriptionFile", "de.tum.cit.aet.artemis.core.web.SharingSupportResource#getConfig",
-            "de.tum.cit.aet.artemis.core.web.SharingSupportResource#isSharingEnabled",
+            "de.tum.cit.aet.artemis.calendar.web.CalendarResource#getCalendarEventSubscriptionFile", "de.tum.cit.aet.artemis.sharing.web.SharingSupportResource#getConfig",
+            "de.tum.cit.aet.artemis.sharing.web.SharingSupportResource#isSharingEnabled",
             "de.tum.cit.aet.artemis.iris.web.IrisTutorSuggestionSessionResource#getCurrentSessionOrCreateIfNotExists",
             "de.tum.cit.aet.artemis.iris.web.IrisTutorSuggestionSessionResource#createSessionForPost",
-            "de.tum.cit.aet.artemis.programming.web.ExerciseSharingResource#exportExerciseToSharing");
+            "de.tum.cit.aet.artemis.sharing.web.ExerciseSharingResource#exportExerciseToSharing");
 
     /**
      * Every REST endpoint must declare an Artemis authorization annotation so authorization can never be silently

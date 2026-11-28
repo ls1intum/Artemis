@@ -27,6 +27,7 @@ ext {
         "plagiarism"    :          ["INSTRUCTION": 0.905, "CLASS":  2],
         "programming"   :          ["INSTRUCTION": 0.832, "CLASS":  7],
         "quiz"          :          ["INSTRUCTION": 0.855, "CLASS":  5],
+        "sharing"       :          ["INSTRUCTION": 0.900, "CLASS":  0],
         "text"          :          ["INSTRUCTION": 0.922, "CLASS":  1],
         "tutorialgroup" :          ["INSTRUCTION": 0.880, "CLASS":  3],
         "videosource"   :          ["INSTRUCTION": 0.890, "CLASS":  0],
@@ -183,6 +184,7 @@ private JacocoCoverageVerification registerJacocoTestCoverageVerification(String
 private void prepareJacocoReportTask(JacocoReportBase task, String moduleName, JacocoReportBase rootTask) {
     task.group = rootTask.group
     task.executionData = rootTask.executionData
+    task.mustRunAfter(project.tasks.named('test'))
 
     def classPath
     if (moduleName == "aggregated") {

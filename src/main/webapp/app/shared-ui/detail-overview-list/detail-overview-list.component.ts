@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { Component, TemplateRef, ViewEncapsulation, computed, inject, input } from '@angular/core';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';

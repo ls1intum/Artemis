@@ -6,6 +6,7 @@ import { TestBed } from '@angular/core/testing';
 import { BrowserFingerprintService } from 'app/account/fingerprint/browser-fingerprint.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
 // Mock FingerprintJS
 vi.mock('@fingerprintjs/fingerprintjs', () => ({
@@ -141,6 +142,23 @@ describe('BrowserFingerprintService', () => {
 
             expect(service.browserSessionId.value).toBeDefined();
             expect(sessionStoreSpy).toHaveBeenCalledWith(BROWSER_SESSION_KEY, expect.any(String));
+        });
+    });
+
+    describe('when the library fails to load', () => {
+        it('should leave the fingerprint unset and not reject, while the identifiers are still set', async () => {
+            vi.mocked(FingerprintJS.load).mockRejectedValueOnce(new Error('Failed to fetch dynamically imported module'));
+            const unhandledRejection = vi.fn();
+            process.on('unhandledRejection', unhandledRejection);
+
+            service.initialize(true);
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            process.off('unhandledRejection', unhandledRejection);
+            expect(unhandledRejection).not.toHaveBeenCalled();
+            expect(service.browserFingerprint.value).toBeUndefined();
+            expect(service.browserInstanceId.value).toBeDefined();
+            expect(service.browserSessionId.value).toBeDefined();
         });
     });
 });

@@ -3,7 +3,9 @@ import { Component, Signal, WritableSignal, computed, effect, inject, input, sig
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faPenToSquare, faPlus, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { LectureSeriesDraftEditModalComponent } from 'app/lecture/manage/lecture-series-edit-modal/lecture-series-draft-edit-modal.component';
 import { LectureApi } from 'app/openapi/api/lecture-api';
 import { toLectureSeriesCreateRequest } from 'app/lecture/shared/util/generated-lecture.util';

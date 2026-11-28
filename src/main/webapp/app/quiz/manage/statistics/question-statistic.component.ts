@@ -10,7 +10,7 @@ import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CanBecomeInvalid } from 'app/quiz/shared/entities/drop-location.model';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
-import { TumAetUiChartDatumContext } from '@tumaet/ui-angular';
+import { TumAetUiChartDatumContext } from '@tumaet/ui-angular/chart';
 import { QuizQuestionStatisticResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
 export const redColor = '#d9534f';
