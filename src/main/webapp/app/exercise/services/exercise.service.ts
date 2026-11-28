@@ -25,7 +25,7 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
 import { ExerciseDeletionSummaryDTO } from 'app/exercise/shared/entities/exercise-deletion-summary.model';
 import { EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { summaryCategories, summaryCategory, summaryItem } from 'app/shared-ui/delete-dialog/entity-summary.util';
-import { UMLModel } from '@tumaet/apollon';
+import { UMLModel } from '@tumaet/apollon/model';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { validateStrictDateSequence } from 'app/exercise/util/exercise.utils';
 import { FileUploadExerciseApi } from 'app/openapi/api/file-upload-exercise-api';

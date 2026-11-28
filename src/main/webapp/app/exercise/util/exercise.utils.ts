@@ -10,6 +10,7 @@ import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warni
 import type { ExerciseServicable, ExerciseUpdateRequestOptions } from 'app/exercise/services/exercise.service';
 import { filter, map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
 import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
+import type { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
@@ -199,11 +200,31 @@ export const isStartPracticeAvailable = (exercise: Exercise, participation?: Stu
  * The assignment delivers the participations of the team only. The practice participation of the student is individual, it belongs to the student rather than to the team,
  * so it has to survive the replacement.
  * @param current the participations the exercise currently has
- * @param delivered the participations that the team assignment delivers
+ * @param delivered the participations that the team assignment delivers, missing when the student was unassigned because the server leaves an empty list out of the JSON
  */
-export const withPracticeParticipations = (current: StudentParticipation[] | undefined, delivered: StudentParticipation[]): StudentParticipation[] => {
-    const practiceParticipations = (current ?? []).filter((participation) => isPracticeMode(participation) && !delivered.some((other) => other.id === participation.id));
-    return [...delivered, ...practiceParticipations];
+export const withPracticeParticipations = (current: StudentParticipation[] | undefined, delivered: StudentParticipation[] | undefined): StudentParticipation[] => {
+    const deliveredParticipations = delivered ?? [];
+    const practiceParticipations = (current ?? []).filter(
+        (participation) => isPracticeMode(participation) && !deliveredParticipations.some((other) => other.id === participation.id),
+    );
+    return [...deliveredParticipations, ...practiceParticipations];
+};
+
+/**
+ * The participations of a team exercise after a team assignment arrived. The server leaves an empty list of participations out of the JSON, which happens for two different
+ * messages that the team tells apart: an unassignment has no team, so the participations of the team the student left are dropped, whereas a team without participations,
+ * for example a new one, leaves the participations of the student as they are, which also keeps a replayed message of that kind from erasing a participation the student started since.
+ * @param current the participations the exercise currently has
+ * @param assignment the team assignment that arrived
+ */
+export const participationsAfterTeamAssignment = (
+    current: StudentParticipation[] | undefined,
+    assignment: Pick<TeamAssignmentPayload, 'teamId' | 'studentParticipations'>,
+): StudentParticipation[] | undefined => {
+    if (assignment.studentParticipations === undefined && assignment.teamId !== undefined) {
+        return current;
+    }
+    return withPracticeParticipations(current, assignment.studentParticipations);
 };
 
 /**

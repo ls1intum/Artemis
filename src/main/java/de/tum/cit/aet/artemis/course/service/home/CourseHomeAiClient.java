@@ -15,7 +15,7 @@ public interface CourseHomeAiClient extends AutoCloseable {
         }
     }
 
-    CompletableFuture<Optional<String>> generate(Input input);
+    CompletableFuture<Optional<String>> generate(String preset, Input input);
 
     @Override
     void close();
