@@ -97,7 +97,7 @@ matter how good the change is:
 - **Bean instantiations** (`.github/workflows/ci-bean-instantiations.yml`). Adding a
   `@Configuration` or a new bean can trip it. The failure is reported from a step whose name does
   not mention counting, which makes it hard to recognise.
-- **Query Quality Check** (`.github/workflows/ci-quality.yml`). A new `@EntityGraph` with more
+- **Query Quality Check**, a step of **Server Code Quality** (`.github/workflows/ci-quality.yml`). A new `@EntityGraph` with more
   fetch paths than the baseline allows fails. Reuse an existing counted method where possible;
   `supporting_scripts/find_slow_queries.py` is the local check.
 
