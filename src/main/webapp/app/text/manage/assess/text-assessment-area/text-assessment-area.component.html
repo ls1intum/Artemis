@@ -10,7 +10,6 @@
             (didChange)="textBlockRefsChangeEmit()"
             (didDelete)="removeTextBlockRef($event)"
             [highlightDifferences]="highlightDifferences()"
-            [criteria]="criteria()"
             [focusFeedback]="ref.block === blockToFocus()"
             (didHandleFocusFeedback)="didHandleFocusFeedback($event)"
         />
@@ -23,14 +22,15 @@
         (textBlockRefAdded)="addTextBlockRef($event)"
         [submission]="submission()"
         [allFeedbacks]="allFeedbacks()"
-        [criteria]="criteria()"
     />
 }
-<div>
-    <tumaet-ui-tag severity="info" class="mb-2! inline-block" data-testid="text-assessment-word-count">
-        <span jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount() }"></span>
-    </tumaet-ui-tag>
-    <tumaet-ui-tag severity="info" class="mb-2! inline-block" data-testid="text-assessment-character-count">
-        <span jhiTranslate="artemisApp.textExercise.characterCount" [translateValues]="{ count: characterCount() }"></span>
-    </tumaet-ui-tag>
-</div>
+@if (showCounts()) {
+    <div>
+        <tumaet-ui-tag severity="info" class="mb-2! inline-block" data-testid="text-assessment-word-count">
+            <span jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount() }"></span>
+        </tumaet-ui-tag>
+        <tumaet-ui-tag severity="info" class="mb-2! inline-block" data-testid="text-assessment-character-count">
+            <span jhiTranslate="artemisApp.textExercise.characterCount" [translateValues]="{ count: characterCount() }"></span>
+        </tumaet-ui-tag>
+    </div>
+}

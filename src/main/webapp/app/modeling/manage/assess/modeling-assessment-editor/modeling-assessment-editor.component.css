@@ -31,10 +31,7 @@
     flex: 1;
 }
 
-/*
- * A column, so the complaint below the diagram takes its height from the canvas rather than from the page: the
- * editor gets smaller and nothing has to scroll to reach the complaint.
- */
+/* A column, so the diagram takes its height from the canvas rather than from the page */
 .modeling-assessment-page__canvas {
     display: flex;
     width: 100%;
@@ -51,18 +48,6 @@
     min-width: 0;
     min-height: 0;
     flex: 1 1 auto;
-}
-
-.modeling-assessment-page__complaint {
-    display: flex;
-    min-height: 0;
-
-    /* Never more than a third of the column: a long complaint scrolls inside itself and leaves the diagram usable. */
-    max-height: 33%;
-    flex: 0 0 auto;
-    flex-direction: column;
-    gap: 0.5rem;
-    overflow-y: auto;
 }
 
 .modeling-assessment-page__details {

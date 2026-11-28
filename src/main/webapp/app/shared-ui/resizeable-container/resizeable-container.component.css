@@ -38,6 +38,9 @@
 
 .left.border-0 {
     border-radius: var(--resizeable-container-border-radius, 0.15rem);
+
+    /* The splitter inside (the general feedback split) has square corners, so the rounded card clips them instead of showing its white behind them */
+    overflow: hidden;
 }
 
 .left.border-0 .left-body {
@@ -54,7 +57,9 @@
     min-height: 45px;
 }
 
-.left .pane-body {
+/* Only beside the problem statement does the left side scroll on its own. Without it, e.g. in the course view, the
+   page around it already scrolls, and a second scroll area would only nest inside that one. */
+.left.left--scrolls .pane-body {
     max-height: 100vh;
     overflow-y: auto;
 }
@@ -93,7 +98,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    min-height: 45px; /* as tall as the header of the left pane */
+    min-height: 45px;
     cursor: pointer;
 }
 

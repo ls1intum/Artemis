@@ -42,9 +42,7 @@ import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-resp
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
-import { ScoreDisplayComponent } from 'app/exercise/score-display/score-display.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
-import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -175,9 +173,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 MockComponent(ManualTextblockSelectionComponent),
                 MockComponent(ConfirmIconComponent),
                 MockComponent(AssessmentLayoutComponent),
-                MockComponent(ScoreDisplayComponent),
                 MockComponent(AssessmentInstructionsComponent),
-                MockComponent(ResizeableContainerComponent),
                 MockComponent(UnreferencedFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
@@ -358,7 +354,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         // Call validateFeedback which updates the total score
         component.validateFeedback();
 
-        expect(component.totalScore()).toBe(42);
+        expect(component.scoreSummary().total).toBe(42);
     });
 
     it('should save the assessment with correct parameters', async () => {
@@ -724,13 +720,13 @@ describe('TextSubmissionAssessmentComponent', () => {
         const feedbacks: Feedback[] = [
             { id: 1, reference: 'missing-strategy-block', credits: 1, detailText: 'Correct strategy explanation', type: FeedbackType.MANUAL },
             { id: 2, reference: 'missing-bridge-block', credits: 1, detailText: 'Correct bridge explanation', type: FeedbackType.MANUAL },
-            { id: 3, reference: submission.blocks![0].id, credits: 1, type: FeedbackType.MANUAL },
+            { id: 3, reference: submission.blocks![0].id, credits: 1, detailText: 'Correct conclusion', type: FeedbackType.MANUAL },
             { id: 4, credits: 0, detailText: 'General feedback', type: FeedbackType.MANUAL_UNREFERENCED },
         ];
         getLatestSubmissionResult(submission)!.feedbacks = feedbacks;
         component['setPropertiesFromServerResponse']({ participation, correctionRound: 0 });
 
-        expect(component.totalScore()).toBe(3);
+        expect(component.scoreSummary().total).toBe(3);
         expect(component.allAssessmentFeedbacks()).toHaveLength(4);
         expect(component.unreferencedFeedback()).toEqual([
             { ...feedbacks[0], reference: undefined, type: FeedbackType.MANUAL_UNREFERENCED },
@@ -743,7 +739,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         component.validateFeedback();
         expect(component.assessmentsAreValid()).toBe(true);
-        expect(component.totalScore()).toBe(3);
+        expect(component.scoreSummary().total).toBe(3);
         component.save();
 
         expect(saveSpy.mock.calls[0][2]).toEqual(expect.arrayContaining(component.allAssessmentFeedbacks()));
@@ -823,7 +819,7 @@ describe('TextSubmissionAssessmentComponent', () => {
 
         expect(component.unreferencedFeedback()).toEqual([]);
         expect(component.textBlockRefs.filter(({ feedback }) => !!feedback)).toHaveLength(suggestions.length);
-        expect(component.totalScore()).toBe(suggestions.length);
+        expect(component.scoreSummary().total).toBe(suggestions.length);
         expect(component.textBlockRefs.map(({ block }) => block!.text).join('')).toBe(submission.text);
     });
 

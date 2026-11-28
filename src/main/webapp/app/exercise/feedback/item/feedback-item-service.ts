@@ -1,5 +1,5 @@
 import { Service, inject } from '@angular/core';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, getFeedbackBodyText } from 'app/assessment/shared/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -62,13 +62,11 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
 
 /** Build the common grading-instruction feedback shown for every exercise type. */
 export function gradingInstructionFeedbackItem(feedback: Feedback, name: string): FeedbackItem {
-    const gradingInstruction = feedback.gradingInstruction!;
-
     return {
         type: feedback.isSubsequent ? 'Subsequent' : 'Reviewer',
         name: name,
         title: feedback.text,
-        text: gradingInstruction.feedback + (feedback.detailText ? `\n${feedback.detailText}` : ''),
+        text: getFeedbackBodyText(feedback),
         positive: feedback.positive,
         credits: feedback.credits,
         feedbackReference: feedback,

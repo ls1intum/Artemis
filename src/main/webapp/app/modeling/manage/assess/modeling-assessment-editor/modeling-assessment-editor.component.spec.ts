@@ -109,6 +109,12 @@ describe('ModelingAssessmentEditorComponent', () => {
                 provideHttpClientTesting(),
             ],
         });
+        // The editor imports the modeling assessment itself, so the mock above does not replace it there. Rendering the real
+        // Apollon editor in jsdom makes every change of the submission take minutes inside the nested workspace panels.
+        TestBed.overrideComponent(ModelingAssessmentEditorComponent, {
+            remove: { imports: [ModelingAssessmentComponent] },
+            add: { imports: [MockComponent(ModelingAssessmentComponent)] },
+        });
 
         fixture = TestBed.createComponent(ModelingAssessmentEditorComponent);
         component = fixture.componentInstance;
@@ -171,7 +177,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         } as unknown as ModelingSubmission;
     };
 
-    it('should place the complaint banner and form beside the diagram, not in the scrolling feedback pane', async () => {
+    it('should show the complaint as a tab of the details panel, not beside the diagram or as an alert', async () => {
         vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(getSubmissionWithData()));
         vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(
             of({ body: { id: 1, complaintText: 'Why only 80%?' } as ComplaintDTO } as HttpResponse<ComplaintDTO>),
@@ -185,11 +191,11 @@ describe('ModelingAssessmentEditorComponent', () => {
         expect(layout.showComplaintSection()).toBe(false);
 
         const canvas = fixture.debugElement.query(By.css('[assessmentWorkspaceCanvas]'));
-        expect(canvas.query(By.directive(ComplaintsForTutorComponent))).not.toBeNull();
+        expect(canvas.query(By.directive(ComplaintsForTutorComponent))).toBeNull();
 
         const pane = fixture.debugElement.query(By.css('[assessmentWorkspaceDetails]'));
         expect(pane).not.toBeNull();
-        expect(pane.query(By.directive(ComplaintsForTutorComponent))).toBeNull();
+        expect(pane.query(By.css('jhi-complaints-for-tutor-form'))).not.toBeNull();
         expect(fixture.debugElement.query(By.directive(AssessmentComplaintAlertComponent))).toBeNull();
     });
 
@@ -383,7 +389,8 @@ describe('ModelingAssessmentEditorComponent', () => {
             (submission.participation!.exercise as Exercise).exerciseGroup!.exam!.course!.athenaGradingFeedbackEnabled = true;
             submission.results![0].feedbacks = [];
             vi.spyOn(modelingSubmissionService, 'getSubmission').mockReturnValue(of(submission));
-            const suggestion = { ...new Feedback(), reference: 'element:1', credits: 2, type: FeedbackType.MANUAL };
+            // Like every suggestion Athena returns, it comes with points and a description
+            const suggestion = { ...new Feedback(), reference: 'element:1', credits: 2, detailText: 'The association is missing.', type: FeedbackType.MANUAL };
             vi.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([suggestion]));
 
             component.ngOnInit();
@@ -910,7 +917,7 @@ describe('ModelingAssessmentEditorComponent', () => {
         const handleFeedbackSpy = vi.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
         component.onFeedbackChanged(feedbacks);
         expect(component.referencedFeedback).toHaveLength(1);
-        expect(component.totalScore()).toBe(3);
+        expect(component.scoreSummary().total).toBe(3);
         expect(handleFeedbackSpy).toHaveBeenCalled();
     });
 

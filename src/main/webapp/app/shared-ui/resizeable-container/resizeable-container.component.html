@@ -4,6 +4,7 @@
         class="left rounded-[0.15rem] bg-surface-raised"
         [class]="isExerciseParticipation() ? 'border-0' : 'border border-(--border-color)'"
         data-testid="resizeable-container-left"
+        [class.left--scrolls]="showRightPanel()"
     >
         @if (!isExerciseParticipation()) {
             <div class="pane-header bg-(--primary) text-white">
