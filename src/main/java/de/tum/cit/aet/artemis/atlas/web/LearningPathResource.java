@@ -61,6 +61,13 @@ import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Conditional(AtlasEnabled.class)
 @FeatureToggle(Feature.LearningPaths)
@@ -71,6 +78,23 @@ import de.tum.cit.aet.artemis.course.service.CourseService;
 public class LearningPathResource {
 
     private static final Logger log = LoggerFactory.getLogger(LearningPathResource.class);
+
+    // The access rules below are enforced by the annotations and checks of each handler. They are repeated in the specification so that the
+    // generated client documents them; the generated client itself enforces nothing.
+    private static final String GATE = " Requires the Atlas module and the LearningPaths feature toggle.";
+
+    private static final String INSTRUCTOR = "Requires at least the instructor role in the course." + GATE;
+
+    private static final String COURSE_STUDENT = "Requires at least the student role in the course and learning paths enabled in the course. Applies to the current user only."
+            + GATE;
+
+    private static final String OWNER = "Only the student who owns the learning path may call this operation." + GATE;
+
+    private static final String OWNER_OR_INSTRUCTOR = "The student who owns the learning path or an instructor of its course may call this operation." + GATE;
+
+    private static final String FORBIDDEN = "The caller lacks the required role or access to the learning path, or the LearningPaths feature toggle is disabled.";
+
+    private static final String NOT_ENABLED = "Learning paths are not enabled for the course.";
 
     private final CourseService courseService;
 
@@ -120,6 +144,10 @@ public class LearningPathResource {
     @FeatureUsage(UserFeature.LEARNING_PATH_MANAGEMENT)
     @PutMapping("courses/{courseId}/learning-paths/enable")
     @EnforceAtLeastInstructorInCourse
+    @Operation(summary = "Enable learning paths for a course", description = "Enables learning paths and generates one for every student of the course. " + INSTRUCTOR)
+    @ApiResponse(responseCode = "200", description = "Learning paths were enabled. The response has no body.", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Learning paths are already enabled for the course.", content = @Content)
+    @ApiResponse(responseCode = "403", description = FORBIDDEN, content = @Content)
     public ResponseEntity<Void> enableLearningPathsForCourse(@PathVariable long courseId) {
         log.debug("REST request to enable learning paths for course with id: {}", courseId);
         Course course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
@@ -141,6 +169,10 @@ public class LearningPathResource {
     @FeatureUsage(UserFeature.LEARNING_PATH_MANAGEMENT)
     @PutMapping("courses/{courseId}/learning-paths/generate-missing")
     @EnforceAtLeastInstructorInCourse
+    @Operation(summary = "Generate missing learning paths", description = "Generates a learning path for every student of the course who has none yet. " + INSTRUCTOR)
+    @ApiResponse(responseCode = "200", description = "The missing learning paths were generated. The response has no body.", content = @Content)
+    @ApiResponse(responseCode = "400", description = NOT_ENABLED, content = @Content)
+    @ApiResponse(responseCode = "403", description = FORBIDDEN, content = @Content)
     public ResponseEntity<Void> generateMissingLearningPathsForCourse(@PathVariable long courseId) {
         log.debug("REST request to generate missing learning paths for course with id: {}", courseId);
         Course course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
@@ -159,7 +191,20 @@ public class LearningPathResource {
     @FeatureUsage(UserFeature.LEARNING_PATH_MANAGEMENT)
     @GetMapping("courses/{courseId}/learning-paths")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<SearchResultPageDTO<LearningPathInformationDTO>> getLearningPathsOnPage(@PathVariable long courseId, SearchTermPageableSearchDTO<String> search) {
+    @Operation(summary = "Search the learning paths of a course", description = "Returns one page of the learning paths of the course whose student login or name matches the search term. "
+            + INSTRUCTOR)
+    // The search is bound from five flat query parameters, described explicitly because the inherited generic sortedColumn cannot be introspected.
+    @Parameter(name = "page", in = ParameterIn.QUERY, required = true, description = "The one-based page number", schema = @Schema(type = "integer", format = "int32"))
+    @Parameter(name = "pageSize", in = ParameterIn.QUERY, required = true, description = "The positive number of learning paths per page", schema = @Schema(type = "integer", format = "int32"))
+    @Parameter(name = "sortedColumn", in = ParameterIn.QUERY, required = true, description = "The column to sort by: ID, USER_LOGIN, USER_NAME or PROGRESS", schema = @Schema(type = "string"))
+    @Parameter(name = "sortingOrder", in = ParameterIn.QUERY, description = "The sort direction. Any value other than ASCENDING, including none, sorts descending", schema = @Schema(type = "string", allowableValues = {
+            "ASCENDING", "DESCENDING" }))
+    @Parameter(name = "searchTerm", in = ParameterIn.QUERY, description = "The login or name fragment to match. Empty or absent matches every learning path", schema = @Schema(type = "string", defaultValue = ""))
+    @ApiResponse(responseCode = "200", description = "The requested page. resultsOnPage is omitted when the page is empty.")
+    @ApiResponse(responseCode = "400", description = NOT_ENABLED, content = @Content)
+    @ApiResponse(responseCode = "403", description = FORBIDDEN, content = @Content)
+    public ResponseEntity<SearchResultPageDTO<LearningPathInformationDTO>> getLearningPathsOnPage(@PathVariable long courseId,
+            @Parameter(hidden = true) SearchTermPageableSearchDTO<String> search) {
         log.debug("REST request to get learning paths for course with id: {}", courseId);
         courseService.checkLearningPathsEnabledElseThrow(courseId);
         return ResponseEntity.ok(learningPathService.getAllOfCourseOnPageWithSize(search, courseId));
@@ -174,6 +219,9 @@ public class LearningPathResource {
     @FeatureUsage(UserFeature.LEARNING_PATH_MANAGEMENT)
     @GetMapping("courses/{courseId}/learning-path/average-progress")
     @EnforceAtLeastInstructorInCourse
+    @Operation(summary = "Get the average learning path progress of a course", description = INSTRUCTOR)
+    @ApiResponse(responseCode = "200", description = "The average progress of the students of the course")
+    @ApiResponse(responseCode = "403", description = FORBIDDEN, content = @Content)
     public ResponseEntity<LearningPathAverageProgressDTO> getAverageProgressForCourse(@PathVariable long courseId) {
         log.debug("REST request to get average learning path progress for course: {}", courseId);
 
@@ -190,6 +238,9 @@ public class LearningPathResource {
     @FeatureUsage(UserFeature.LEARNING_PATH_MANAGEMENT)
     @GetMapping("courses/{courseId}/learning-path-health")
     @EnforceAtLeastInstructorInCourse
+    @Operation(summary = "Get the health of the learning paths of a course", description = INSTRUCTOR)
+    @ApiResponse(responseCode = "200", description = "The health status. A healthy course has an empty status, which is omitted from the response.")
+    @ApiResponse(responseCode = "403", description = FORBIDDEN, content = @Content)
     public ResponseEntity<LearningPathHealthDTO> getHealthStatusForCourse(@PathVariable long courseId) {
         log.debug("REST request to get health status of learning paths in course with id: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -204,6 +255,10 @@ public class LearningPathResource {
      */
     @GetMapping("learning-paths/{learningPathId}")
     @EnforceAtLeastStudent
+    @Operation(summary = "Get a learning path", description = OWNER)
+    @ApiResponse(responseCode = "200", description = "The learning path")
+    @ApiResponse(responseCode = "403", description = FORBIDDEN, content = @Content)
+    @ApiResponse(responseCode = "404", description = "The learning path does not exist.", content = @Content)
     public ResponseEntity<LearningPathInformationDTO> getLearningPath(@PathVariable long learningPathId) {
         log.debug("REST request to get learning path with id: {}", learningPathId);
         final var learningPath = learningPathRepository.findWithEagerUserByIdElseThrow(learningPathId);
@@ -222,6 +277,10 @@ public class LearningPathResource {
      */
     @GetMapping("learning-paths/{learningPathId}/competency-graph")
     @EnforceAtLeastStudent
+    @Operation(summary = "Get the competency graph of a learning path", description = "Node values are the mastery progress of the owner (MASTERY_PROGRESS). "
+            + OWNER_OR_INSTRUCTOR)
+    @ApiResponse(responseCode = "200", description = "The competency graph. Empty node or edge lists are omitted.")
+    @ApiResponse(responseCode = "403", description = FORBIDDEN, content = @Content)
     public ResponseEntity<LearningPathCompetencyGraphDTO> getLearningPathCompetencyGraph(@PathVariable long learningPathId) {
         log.debug("REST request to get competency graph for learning path with id: {}", learningPathId);
         LearningPath learningPath = learningPathRepositoryService.findWithEagerUserAndCourseAndCompetenciesByIdElseThrow(learningPathId);
@@ -242,6 +301,10 @@ public class LearningPathResource {
     @GetMapping("courses/{courseId}/learning-path/competency-instructor-graph")
     @FeatureToggle(Feature.LearningPaths)
     @EnforceAtLeastInstructorInCourse
+    @Operation(summary = "Get the competency graph of a course", description = "Node values are the average mastery progress of the students (AVERAGE_MASTERY_PROGRESS). "
+            + INSTRUCTOR)
+    @ApiResponse(responseCode = "200", description = "The competency graph. Empty node or edge lists are omitted.")
+    @ApiResponse(responseCode = "403", description = FORBIDDEN, content = @Content)
     public ResponseEntity<LearningPathCompetencyGraphDTO> getLearningPathCompetencyInstructorGraph(@PathVariable long courseId) {
         log.debug("REST request to get competency instructor graph for learning path with id: {}", courseId);
 
@@ -260,6 +323,9 @@ public class LearningPathResource {
      */
     @GetMapping("learning-paths/{learningPathId}/relative-navigation")
     @EnforceAtLeastStudent
+    @Operation(summary = "Get the navigation of a learning path relative to a learning object", description = OWNER)
+    @ApiResponse(responseCode = "200", description = "The navigation. A missing predecessor, current or successor learning object is omitted.")
+    @ApiResponse(responseCode = "403", description = FORBIDDEN, content = @Content)
     public ResponseEntity<LearningPathNavigationDTO> getRelativeLearningPathNavigation(@PathVariable @Valid long learningPathId, @RequestParam long learningObjectId,
             @RequestParam LearningObjectType learningObjectType, @RequestParam long competencyId, @RequestParam(defaultValue = "false") boolean repeatedTest) {
         log.debug("REST request to get navigation for learning path with id: {} relative to learning object with id: {} and type: {} in competency with id: {}", learningPathId,
@@ -280,6 +346,10 @@ public class LearningPathResource {
      */
     @GetMapping("learning-paths/{learningPathId}/navigation")
     @EnforceAtLeastStudent
+    @Operation(summary = "Get the navigation of a learning path", description = "The current learning object is the next uncompleted one, or the last completed one if all are completed. "
+            + OWNER)
+    @ApiResponse(responseCode = "200", description = "The navigation. A missing predecessor, current or successor learning object is omitted.")
+    @ApiResponse(responseCode = "403", description = FORBIDDEN, content = @Content)
     public ResponseEntity<LearningPathNavigationDTO> getLearningPathNavigation(@PathVariable long learningPathId) {
         log.debug("REST request to get navigation for learning path with id: {}", learningPathId);
         var learningPath = learningPathService.findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(learningPathId);
@@ -295,6 +365,9 @@ public class LearningPathResource {
      */
     @GetMapping("learning-paths/{learningPathId}/navigation-overview")
     @EnforceAtLeastStudent
+    @Operation(summary = "Get the navigation overview of a learning path", description = OWNER)
+    @ApiResponse(responseCode = "200", description = "The learning objects in recommended order. An empty list is omitted.")
+    @ApiResponse(responseCode = "403", description = FORBIDDEN, content = @Content)
     public ResponseEntity<LearningPathNavigationOverviewDTO> getLearningPathNavigationOverview(@PathVariable @Valid long learningPathId) {
         log.debug("REST request to get navigation overview for learning path with id: {}", learningPathId);
         return ResponseEntity.ok(learningPathService.getLearningPathNavigationOverview(learningPathId));
@@ -308,6 +381,11 @@ public class LearningPathResource {
      */
     @GetMapping("courses/{courseId}/learning-path/me")
     @EnforceAtLeastStudentInCourse
+    @Operation(summary = "Get your learning path in a course", description = COURSE_STUDENT)
+    @ApiResponse(responseCode = "200", description = "The learning path of the current user")
+    @ApiResponse(responseCode = "400", description = NOT_ENABLED, content = @Content)
+    @ApiResponse(responseCode = "403", description = FORBIDDEN, content = @Content)
+    @ApiResponse(responseCode = "404", description = "The current user has no learning path in the course yet.", content = @Content)
     public ResponseEntity<LearningPathDTO> getLearningPathForCurrentUser(@PathVariable long courseId) {
         log.debug("REST request to get learning path of current user for course with id: {}", courseId);
         courseService.checkLearningPathsEnabledElseThrow(courseId);
@@ -322,6 +400,10 @@ public class LearningPathResource {
      */
     @PatchMapping("learning-paths/{learningPathId}/start")
     @EnforceAtLeastStudent
+    @Operation(summary = "Start your learning path", description = OWNER)
+    @ApiResponse(responseCode = "204", description = "The learning path was started. The response has no body.", content = @Content)
+    @ApiResponse(responseCode = "403", description = FORBIDDEN, content = @Content)
+    @ApiResponse(responseCode = "409", description = "The learning path was already started.", content = @Content)
     public ResponseEntity<Void> startLearningPathForCurrentUser(@PathVariable long learningPathId) {
         log.debug("REST request to start learning path with id: {}", learningPathId);
         learningPathService.startLearningPathForCurrentUser(learningPathId);
@@ -332,10 +414,16 @@ public class LearningPathResource {
      * POST courses/:courseId/learning-path : Generates a learning path in the course for the logged-in user.
      *
      * @param courseId the id of the course for which the learning path should be created
-     * @return the ResponseEntity with status 200 (OK) and with body the id of the learning path
+     * @return the ResponseEntity with status 201 (Created), the location of the new learning path and with body the learning path
+     * @throws URISyntaxException if the location URI is invalid
      */
     @PostMapping("courses/{courseId}/learning-path")
     @EnforceAtLeastStudentInCourse
+    @Operation(summary = "Generate your learning path in a course", description = COURSE_STUDENT)
+    @ApiResponse(responseCode = "201", description = "The learning path was generated.", headers = @Header(name = "Location", description = "The path of the new learning path, /api/atlas/learning-paths/{learningPathId}", schema = @Schema(type = "string")))
+    @ApiResponse(responseCode = "400", description = NOT_ENABLED, content = @Content)
+    @ApiResponse(responseCode = "403", description = FORBIDDEN, content = @Content)
+    @ApiResponse(responseCode = "409", description = "The current user already has a learning path in the course.", content = @Content)
     public ResponseEntity<LearningPathDTO> generateLearningPathForCurrentUser(@PathVariable long courseId) throws URISyntaxException {
         log.debug("REST request to generate learning path for current user in course with id: {}", courseId);
         courseService.checkLearningPathsEnabledElseThrow(courseId);
@@ -351,6 +439,10 @@ public class LearningPathResource {
      */
     @GetMapping("learning-paths/{learningPathId}/competency-progress")
     @EnforceAtLeastStudent
+    @Operation(summary = "Get the competency progress of a learning path", description = "Recomputes and stores the progress of the owner in every competency of the learning path. "
+            + OWNER_OR_INSTRUCTOR)
+    @ApiResponse(responseCode = "200", description = "The progress in each competency, in no particular order")
+    @ApiResponse(responseCode = "403", description = FORBIDDEN, content = @Content)
     public ResponseEntity<Set<CompetencyProgressForLearningPathDTO>> getCompetencyProgressForLearningPath(@PathVariable long learningPathId) {
         log.debug("REST request to get competency progress for learning path: {}", learningPathId);
         final var learningPath = learningPathRepositoryService.findWithEagerUserAndCourseAndCompetenciesByIdElseThrow(learningPathId);
@@ -373,6 +465,9 @@ public class LearningPathResource {
      */
     @GetMapping("learning-paths/{learningPathId}/competencies")
     @EnforceAtLeastStudent
+    @Operation(summary = "Get the competencies of a learning path in recommended order", description = OWNER_OR_INSTRUCTOR)
+    @ApiResponse(responseCode = "200", description = "The competencies in recommended order")
+    @ApiResponse(responseCode = "403", description = FORBIDDEN, content = @Content)
     public ResponseEntity<List<CompetencyNameDTO>> getCompetencyOrderForLearningPath(@PathVariable long learningPathId) {
         log.debug("REST request to get competency order for learning path: {}", learningPathId);
         final var learningPath = learningPathService.findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(learningPathId);
@@ -395,6 +490,10 @@ public class LearningPathResource {
      */
     @GetMapping("learning-paths/{learningPathId}/competencies/{competencyId}/learning-objects")
     @EnforceAtLeastStudent
+    @Operation(summary = "Get the learning objects of a competency in recommended order", description = "Completed learning objects come first, followed by the pending ones needed to master the competency. "
+            + OWNER_OR_INSTRUCTOR)
+    @ApiResponse(responseCode = "200", description = "The learning objects in recommended order")
+    @ApiResponse(responseCode = "403", description = FORBIDDEN, content = @Content)
     public ResponseEntity<List<LearningPathNavigationObjectDTO>> getLearningObjectsForCompetency(@PathVariable long learningPathId, @PathVariable long competencyId) {
         log.debug("REST request to get learning objects for competency: {} in learning path: {}", competencyId, learningPathId);
         final var learningPath = learningPathRepositoryService.findWithEagerUserAndCourseAndCompetenciesByIdElseThrow(learningPathId);

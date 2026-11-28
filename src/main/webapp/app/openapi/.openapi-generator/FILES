@@ -25,6 +25,7 @@ api/hyperion-programming-variant-api.ts
 api/hyperion-quiz-question-generation-api.ts
 api/hyperion-quiz-question-pool-api.ts
 api/ingestion-browser-api.ts
+api/learning-path-api.ts
 api/lecture-api.ts
 api/lecture-transcription-api.ts
 api/lecture-unit-api.ts
@@ -89,7 +90,11 @@ model/checklist-analysis-response.ts
 model/code-generation-job-start.ts
 model/code-generation-request.ts
 model/competency-exercise-link.ts
+model/competency-graph-edge.ts
+model/competency-graph-node.ts
 model/competency-link.ts
+model/competency-name.ts
+model/competency-progress-for-learning-path.ts
 model/competency.ts
 model/complaint-request.ts
 model/complaint-response-update.ts
@@ -205,6 +210,14 @@ model/ingestion-type-count.ts
 model/leaderboard-entry.ts
 model/leaderboard-setting.ts
 model/leaderboard-with-current-user-entry.ts
+model/learning-path-average-progress.ts
+model/learning-path-competency-graph.ts
+model/learning-path-health.ts
+model/learning-path-information.ts
+model/learning-path-navigation-object.ts
+model/learning-path-navigation-overview.ts
+model/learning-path-navigation.ts
+model/learning-path.ts
 model/lecture-details-attachment-unit.ts
 model/lecture-details-attachment.ts
 model/lecture-details-competency-link.ts
@@ -254,10 +267,15 @@ model/point-counter.ts
 model/presentation-assessment-instance-request.ts
 model/presentation-assessment-instance.ts
 model/presentation-assessment-instances-batch-create.ts
+model/presentation-assessment-request.ts
 model/presentation-assessment-statistics.ts
 model/presentation-assessment-student-row.ts
 model/presentation-assessment-student.ts
 model/presentation-assessment.ts
+model/presentation-rubric-criterion.ts
+model/presentation-rubric-level.ts
+model/presentation-rubric-rating.ts
+model/presentation-rubric.ts
 model/problem-statement-generation-request.ts
 model/problem-statement-generation-response.ts
 model/problem-statement-global-refinement-request.ts
@@ -346,6 +364,7 @@ model/rewrite-faq-response.ts
 model/score.ts
 model/search-result-page-dto-feedback-detail.ts
 model/search-result-page-dto-grading-scale.ts
+model/search-result-page-dto-learning-path-information.ts
 model/search-result-page-dto-quiz-exercise-for-search.ts
 model/search-result-page-dto-simple-lecture.ts
 model/short-answer-mapping-create.ts
@@ -426,6 +445,7 @@ model/tutorial-group-summary-schedule.ts
 model/tutorial-group-summary-session.ts
 model/tutorial-group-summary.ts
 model/update-quiz-exercise.ts
+model/user-name-and-login.ts
 model/user-name.ts
 model/user-public-info.ts
 model/variant-generation-request.ts
