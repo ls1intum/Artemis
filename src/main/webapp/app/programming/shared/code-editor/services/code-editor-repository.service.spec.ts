@@ -1,9 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { Subject, firstValueFrom, of } from 'rxjs';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import {
+    CodeEditorRepositoryFileService,
+    CodeEditorRepositoryService,
+    ConnectionError,
+    FileCommitError,
+} from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { DomainType, FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -60,6 +65,27 @@ describe('CodeEditorRepositoryFileService', () => {
         upload.flush(null);
         httpTestingController.expectOne({ method: 'POST', url: `${participationUrl}/commit` }).flush(null);
         expect(await result).toEqual({ 'escaped.txt': undefined });
+    });
+
+    it.each([false, true])('should retain uploaded files and the original error when committing fails (raw: %s)', (raw) => {
+        const content = raw ? '\u0001'.repeat(4 * 1024 * 1024) : 'content';
+        const submission = { 'file.txt': null };
+        const next = vi.fn();
+        const error = vi.fn();
+        service.updateFiles([{ fileName: 'file.txt', fileContent: content }], true).subscribe({ next, error });
+        httpTestingController.expectOne(raw ? `${participationUrl}/file?file=file.txt` : `${participationUrl}/files?commit=no`).flush(raw ? null : submission);
+        expect(next).not.toHaveBeenCalled();
+        const commit = httpTestingController.expectOne(`${participationUrl}/commit`);
+        if (raw) {
+            commit.error(new ProgressEvent('error'));
+        } else {
+            commit.flush({ detail: 'commit failed' }, { status: 500, statusText: 'Internal Server Error' });
+        }
+        expect(next).not.toHaveBeenCalled();
+        expect(error).toHaveBeenCalledExactlyOnceWith(expect.any(FileCommitError));
+        const failure: FileCommitError = error.mock.calls[0][0];
+        expect(failure.submission).toEqual(raw ? { 'file.txt': undefined } : submission);
+        expect(failure.cause).toBeInstanceOf(raw ? ConnectionError : HttpErrorResponse);
     });
 
     it('should preserve ordering when a queued operation is cancelled', () => {

@@ -24,6 +24,7 @@ import {
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
     ConnectionError,
+    FileCommitError,
     MAX_FILE_UPDATE_BATCH_SIZE_BYTES,
     checkIfSubmissionIsError,
 } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
@@ -345,16 +346,24 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                     if (this.destroyed || this.repositoryFileService.getRestResourceUrl() !== repositoryTarget) {
                         return EMPTY;
                     }
+                    if (error instanceof FileCommitError) {
+                        for (const [fileName, fileError] of Object.entries(error.submission)) {
+                            combinedSubmission[fileName] = fileError;
+                        }
+                    }
                     if (!resultsReported) {
                         reportResults(combinedSubmission);
                     }
-                    this.editorState.set(EditorState.UNSAVED_CHANGES);
+                    const hasUnsavedFiles = Object.entries(this.unsavedFiles()).some(
+                        ([fileName, content]) => !Object.hasOwn(combinedSubmission, fileName) || !!combinedSubmission[fileName] || content !== unsavedFilesValue[fileName],
+                    );
+                    this.editorState.set(hasUnsavedFiles ? EditorState.UNSAVED_CHANGES : EditorState.CLEAN);
                     if (error.message === ConnectionError.message) {
                         this.onError.emit('saveFailed' + error.message);
                     } else {
                         this.onError.emit('saveFailed');
                     }
-                    return throwError(() => error);
+                    return throwError(() => (error instanceof FileCommitError ? error.cause : error));
                 }),
             );
             return this.repositoryFileService

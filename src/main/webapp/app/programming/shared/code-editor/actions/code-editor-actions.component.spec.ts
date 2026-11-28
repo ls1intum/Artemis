@@ -6,7 +6,12 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { Observable, Subject, of } from 'rxjs';
 import { isEqual as _isEqual } from 'lodash-es';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import {
+    CodeEditorRepositoryFileService,
+    CodeEditorRepositoryService,
+    ConnectionError,
+    FileCommitError,
+} from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/actions/code-editor-actions.component';
@@ -19,7 +24,7 @@ import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-to
 import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { TranslateService } from '@ngx-translate/core';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
@@ -374,6 +379,28 @@ describe('CodeEditorActionsComponent', () => {
         expect(onSavedFilesSpy).toHaveBeenCalledExactlyOnceWith(edited ? { 'second.txt': null } : { 'first.txt': null, 'second.txt': null });
         expect(onErrorSpy).toHaveBeenCalledExactlyOnceWith('saveFailed');
         expect(comp.editorState()).toBe(EditorState.UNSAVED_CHANGES);
+    });
+
+    it.each([false, true])('should report uploaded files without completing the commit after a commit failure (edited: %s)', (edited) => {
+        const response = new Subject<FileSubmission>();
+        const onSavedFilesSpy = vi.spyOn(comp.onSavedFiles, 'emit');
+        const onCommitSpy = vi.spyOn(comp.onCommit, 'emit');
+        const onErrorSpy = vi.spyOn(comp.onError, 'emit');
+        fixture.componentRef.setInput('unsavedFiles', { 'first.txt': 'original', 'second.txt': 'content' });
+        updateFilesStub.mockReturnValue(response);
+        comp.commit();
+        if (edited) {
+            fixture.componentRef.setInput('unsavedFiles', { 'first.txt': 'newer edit', 'second.txt': 'content' });
+        }
+        const cause = new HttpErrorResponse({ status: 400, error: { detail: 'submitAfterDueDate' } });
+        response.error(new FileCommitError({ 'first.txt': null, 'second.txt': null }, cause));
+
+        expect(onSavedFilesSpy).toHaveBeenCalledExactlyOnceWith(edited ? { 'second.txt': null } : { 'first.txt': null, 'second.txt': null });
+        expect(onCommitSpy).not.toHaveBeenCalled();
+        expect(comp.isBuilding()).toBe(false);
+        expect(comp.commitState()).toBe(CommitState.UNCOMMITTED_CHANGES);
+        expect(comp.editorState()).toBe(edited ? EditorState.UNSAVED_CHANGES : EditorState.CLEAN);
+        expect(onErrorSpy.mock.calls.map(([error]) => error)).toEqual(['saveFailed', 'submitFailed', 'submitAfterDueDate']);
     });
 
     it('should stop before the final committing batch when an earlier file update reports an error', () => {

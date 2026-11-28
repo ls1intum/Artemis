@@ -71,6 +71,15 @@ export interface ICodeEditorRepositoryService {
     resetRepository: () => Observable<void>;
 }
 
+export class FileCommitError extends Error {
+    constructor(
+        readonly submission: FileSubmission,
+        override readonly cause: Error,
+    ) {
+        super(cause.message, { cause });
+    }
+}
+
 export class ConnectionError extends Error {
     constructor() {
         super('InternetDisconnected');
@@ -331,7 +340,12 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         }
         return update.pipe(
             switchMap((submission) =>
-                thenCommit && !Object.values(submission).some((error) => !!error) ? this.repositoryService.commit(restResourceUrl).pipe(map(() => submission)) : of(submission),
+                thenCommit && !Object.values(submission).some((error) => !!error)
+                    ? this.repositoryService.commit(restResourceUrl).pipe(
+                          map(() => submission),
+                          catchError((error: Error) => throwError(() => new FileCommitError(submission, error))),
+                      )
+                    : of(submission),
             ),
             handleErrorResponse(this.conflictService),
             tap((fileSubmission: FileSubmission | FileSubmissionError) => {

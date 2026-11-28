@@ -7,7 +7,7 @@ import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programmin
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
-import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import { CodeEditorRepositoryFileService, ConnectionError, FileCommitError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
 import { BehaviorSubject, Subject, of } from 'rxjs';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
@@ -1580,6 +1580,31 @@ describe('CodeEditorMonacoComponent', () => {
         expect(onSavedFilesSpy).toHaveBeenCalledWith({ 'src/Foo.java': undefined });
         expect(onInlineFixCommittedSpy).toHaveBeenCalled();
         expect(markAppliedSpy).toHaveBeenCalledWith(42);
+    });
+
+    it.each([false, true])('should retain uploaded inline-fix results without marking a failed commit applied (edited: %s)', (edited) => {
+        const fileName = 'src/Foo.java';
+        const content = 'class Foo {}';
+        fixture.componentRef.setInput('selectedFile', fileName);
+        comp.fileSession.set({ [fileName]: { code: content, cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 } });
+        fixture.detectChanges();
+        vi.spyOn(comp.editor(), 'getText').mockReturnValue(content);
+        const response = new Subject<FileSubmission>();
+        vi.spyOn(codeEditorRepositoryFileService, 'updateFiles').mockReturnValue(response);
+        const saved = vi.spyOn(comp.onSavedFiles, 'emit');
+        const committed = vi.spyOn(comp.onInlineFixCommitted, 'emit');
+        const error = vi.spyOn(comp.onError, 'emit');
+        const applied = vi.spyOn(internals(comp).exerciseReviewCommentService, 'markInlineFixAppliedInContext').mockImplementation(() => {});
+        internals(comp).persistInlineFixApplication({ comments: [{ id: 42, type: CommentType.CONSISTENCY_CHECK }] } as CommentThread);
+        if (edited) {
+            comp.fileSession.set({ [fileName]: { code: 'newer edit', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 } });
+        }
+        response.error(new FileCommitError({ [fileName]: null }, new ConnectionError()));
+        if (edited) expect(saved).not.toHaveBeenCalled();
+        else expect(saved).toHaveBeenCalledExactlyOnceWith({ [fileName]: undefined });
+        expect(committed).not.toHaveBeenCalled();
+        expect(applied).not.toHaveBeenCalled();
+        expect(error).toHaveBeenCalledExactlyOnceWith('saveFailedInternetDisconnected');
     });
 
     it('should persist an inline fix only after all pending autosave batches', () => {

@@ -32,7 +32,12 @@ import { FileTypeService } from 'app/programming/shared/services/file-type.servi
 import { EditorPosition } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { CodeEditorRepositoryFileService, ConnectionError, checkIfSubmissionIsError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import {
+    CodeEditorRepositoryFileService,
+    ConnectionError,
+    FileCommitError,
+    checkIfSubmissionIsError,
+} from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange, RepositoryType } from '../model/code-editor.model';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
@@ -870,6 +875,11 @@ export class CodeEditorMonacoComponent implements OnDestroy {
 
         const currentText = this.editor().getText();
         const repositoryTarget = this.repositoryFileService.getRestResourceUrl();
+        const reportSavedFile = () => {
+            if (this.fileSession()[fileName]?.code === currentText) {
+                this.onSavedFiles.emit({ [fileName]: undefined });
+            }
+        };
         this.repositoryFileService
             .runExclusive(() => this.repositoryFileService.updateFiles([{ fileName, fileContent: currentText }], true, repositoryTarget))
             .pipe(take(1))
@@ -880,14 +890,15 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                         this.onError.emit('saveFailed');
                         return;
                     }
-                    if (this.fileSession()[fileName]?.code === currentText) {
-                        this.onSavedFiles.emit({ [fileName]: undefined });
-                    }
+                    reportSavedFile();
                     this.onInlineFixCommitted.emit();
                     this.exerciseReviewCommentService.markInlineFixAppliedInContext(commentId);
                 },
                 error: (error: Error) => {
                     if (this.repositoryFileService.getRestResourceUrl() !== repositoryTarget) return;
+                    if (error instanceof FileCommitError && Object.hasOwn(error.submission, fileName) && !error.submission[fileName]) {
+                        reportSavedFile();
+                    }
                     if (error.message === ConnectionError.message) {
                         this.onError.emit('saveFailed' + error.message);
                     } else {
