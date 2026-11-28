@@ -98,7 +98,7 @@ class LlmClientServiceTest {
     @Test
     void endpointWithoutKeySendsNoAuthorizationHeader() {
         var service = service(Map.of("local", endpoint(EndpointType.OPENAI, "http://localhost:11434/v1", null)),
-                Map.of("local", new Preset("local", "gpt-oss:20b", Api.RESPONSES, null, null, null, null, null, null, null, null)));
+                Map.of("local", new Preset("local", "qwen/qwen3.8-27b", Api.RESPONSES, null, null, null, null, null, null, null, null)));
 
         service.chatModel("local").call(new Prompt("Hello"));
 
