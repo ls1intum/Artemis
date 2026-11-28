@@ -19,7 +19,7 @@ export class CourseOverviewGuard implements CanActivate {
      * error (e.g. 403 for an unregistered user) activation is allowed; the container's loadCourse then handles it
      * (course registration redirect / alert).
      *
-     * @return true if the client is allowed to access the route, a redirect to the exercises tab if the tab is unavailable,
+     * @return true if the client is allowed to access the route, a redirect to Home if the tab is unavailable,
      * and false if the route carries no course id or path
      */
     canActivate(route: ActivatedRouteSnapshot): Observable<boolean | UrlTree> {
@@ -40,13 +40,14 @@ export class CourseOverviewGuard implements CanActivate {
     }
 
     /**
-     * Decides whether the given tab may be opened, and returns a redirect to the exercises tab otherwise.
+     * Decides whether the given tab may be opened, and returns a redirect to Home otherwise.
      * Kept as a single place so the rules are not duplicated.
      */
     decideAccess(courseId: number, tabs: CourseAvailableTabs, type?: string): true | UrlTree {
         let hasAccess: boolean;
         switch (type) {
             // Should always be accessible
+            case CourseOverviewRoutePath.HOME:
             case CourseOverviewRoutePath.EXERCISES:
                 hasAccess = true;
                 break;
@@ -81,6 +82,6 @@ export class CourseOverviewGuard implements CanActivate {
             default:
                 hasAccess = false;
         }
-        return hasAccess || this.router.createUrlTree([`/courses/${courseId}/exercises`]);
+        return hasAccess || this.router.createUrlTree([`/courses/${courseId}/home`]);
     }
 }

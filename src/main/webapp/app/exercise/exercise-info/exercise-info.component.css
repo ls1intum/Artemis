@@ -1,0 +1,38 @@
+.panel-wrapper {
+    display: inline-flex;
+    flex-direction: column;
+    border: 1px solid var(--tumaet-ui-control-border-color);
+    border-radius: 3px;
+}
+
+.panel-wrapper .panel-header {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+}
+
+.panel-wrapper .vertLine {
+    width: 100%;
+    height: 1px;
+    background-color: var(--tumaet-ui-control-border-color);
+}
+
+.panel-wrapper .panel-body {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    padding: 10px;
+}
+
+.panel-wrapper .panel-body .label-column {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.panel-wrapper .panel-body .value-column {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}

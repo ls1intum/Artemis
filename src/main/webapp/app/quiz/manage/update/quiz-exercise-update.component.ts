@@ -1,4 +1,13 @@
-import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiFormFieldComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiInputNumberComponent } from '@tumaet/ui-angular/input-number';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { isExamExerciseRoute } from 'app/exercise/util/exercise-detail-route-context';
 import { JsonPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnInit, ViewEncapsulation, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
@@ -16,8 +25,6 @@ import { QuizBatch, QuizExercise, QuizMode, resetQuizForExam, resetQuizForImport
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { Duration } from '../interfaces/quiz-exercise-interfaces';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService } from 'primeng/dynamicdialog';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ComponentCanDeactivate } from 'app/foundation/guard/can-deactivate.model';
@@ -39,6 +46,7 @@ import {
     faArrowLeft,
     faCircleNotch,
     faClock,
+    faExclamationTriangle,
     faFloppyDisk,
     faGear,
     faGraduationCap,
@@ -53,7 +61,6 @@ import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.uti
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
-import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
@@ -65,19 +72,15 @@ import { CompetencySelectionComponent } from 'app/atlas/shared/competency-select
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
-import { TextareaModule } from 'primeng/textarea';
 import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-date-notice/exercise-group-date-notice.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
-import { CheckboxModule } from 'primeng/checkbox';
-import { InputTextModule } from 'primeng/inputtext';
-import { InputNumberModule } from 'primeng/inputnumber';
-import { Select } from 'primeng/select';
 import { QuizAiGenerationService } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.service';
 import { QuizAiGenerationModalComponent } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
 import { GeneratedQuestion, GeneratedQuestionType } from 'app/hyperion/quiz/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { QuizQuestionHandoffService } from 'app/quiz/manage/update/quiz-question-handoff.service';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
-import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { translateValidationReasons } from 'app/exercise/util/exercise-validation.util';
 
@@ -88,8 +91,8 @@ const MAX_TIMEOUT_DELAY = 2_147_483_647;
     selector: 'jhi-quiz-exercise-detail',
     templateUrl: './quiz-exercise-update.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil],
-    styleUrls: ['./quiz-exercise-update.component.scss', '../../shared/quiz.scss'],
+    providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil, TumAetUiConfirmationService],
+    styleUrls: ['./quiz-exercise-update.component.css', '../../shared/quiz.css'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         TumAetUiButtonDirective,
@@ -101,22 +104,22 @@ const MAX_TIMEOUT_DELAY = 2_147_483_647;
         CategorySelectorComponent,
         CompetencySelectionComponent,
         QuizQuestionListEditComponent,
-        NgbTooltip,
         TumAetUiTooltipDirective,
         FaIconComponent,
         ArtemisTranslatePipe,
         RouterLink,
-        TextareaModule,
-        CheckboxModule,
-        InputTextModule,
-        InputNumberModule,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiInputNumberComponent,
+        TumAetUiMessageComponent,
+        TumAetUiConfirmDialogComponent,
         TumAetUiDatePickerComponent,
         TumAetUiFormFieldComponent,
         ExerciseGroupDateNoticeComponent,
         ExerciseGroupTimelineLockComponent,
         QuizAiGenerationModalComponent,
         JsonPipe,
-        Select,
+        TumAetUiSelectComponent,
     ],
 })
 export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, ComponentCanDeactivate {
@@ -128,11 +131,12 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private alertService = inject(AlertService);
     private exerciseGroupService = inject(ExerciseGroupService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private dialogService = inject(DialogService);
+    private confirmationService = inject(TumAetUiConfirmationService);
     private calendarService = inject(CalendarService);
     private location = inject(Location);
     private profileService = inject(ProfileService);
     private quizAiGenerationService = inject(QuizAiGenerationService);
+    private quizQuestionHandoffService = inject(QuizQuestionHandoffService);
     private destroyRef = inject(DestroyRef);
 
     readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
@@ -267,21 +271,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
     override readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     override readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
-
-    readonly defaultSecondLayerDialogOptions = {
-        width: '40rem',
-        breakpoints: {
-            '768px': '95vw',
-        },
-        modal: true,
-        closable: true,
-        closeOnEscape: true,
-        dismissableMask: false,
-        draggable: false,
-        resizable: false,
-        showHeader: false,
-        styleClass: 'second-layer-modal-bg',
-    };
 
     /**
      * Initialize variables and load course and quiz from server.
@@ -438,6 +427,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.watchSavedQuizStart();
 
         this.cacheValidation();
+
+        if (!this.quizExercise().id && !this.isImport()) {
+            this.appendAiGeneratedQuestions(this.quizQuestionHandoffService.take(this.courseId()));
+        }
     }
 
     openAiGenerationModal(): void {
@@ -688,25 +681,13 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         const shortAnswerItemsExceedLimit = this.checkItemCountShortAnswer(shortAnswerQuestions as ShortAnswerQuestion[]);
 
         if (dragAndDropItemsExceedLimit || shortAnswerItemsExceedLimit) {
-            const keys = {
-                titleKey: 'artemisApp.quizWarning.title',
-                questionKey: 'artemisApp.quizWarning.question',
-                descriptionKey: 'artemisApp.quizWarning.description',
-                confirmButtonKey: 'artemisApp.quizWarning.confirmButton',
-            };
-            const ref = this.dialogService.open(
-                GenericConfirmationDialogComponent,
-                cloneWith(this.defaultSecondLayerDialogOptions, {
-                    data: {
-                        translationKeys: keys,
-                        canBeUndone: true,
-                    },
-                }),
-            );
-            ref?.onClose.subscribe((confirmed: boolean | undefined) => {
-                if (confirmed) {
-                    this.save();
-                }
+            this.confirmationService.confirm({
+                header: this.translateService.instant('artemisApp.quizWarning.title'),
+                message: `${this.translateService.instant('artemisApp.quizWarning.question')}: ${this.translateService.instant('artemisApp.quizWarning.description')}`,
+                icon: faExclamationTriangle,
+                acceptLabel: this.translateService.instant('artemisApp.quizWarning.confirmButton'),
+                rejectLabel: this.translateService.instant('entity.action.cancel'),
+                accept: () => this.save(),
             });
         } else {
             this.save();
@@ -1046,7 +1027,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             answerOption.isCorrect = generatedOption.correct;
             answerOption.hint = generatedOption.hint;
             answerOption.explanation = generatedOption.explanation;
-            answerOption.question = question;
             return answerOption;
         });
         question.hasCorrectOption = question.answerOptions.some((answerOption) => !!answerOption.isCorrect);

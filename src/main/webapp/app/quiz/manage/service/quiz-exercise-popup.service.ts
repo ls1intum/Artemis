@@ -1,14 +1,16 @@
 import { Service, Type, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 @Service()
 export class QuizExercisePopupService {
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
     private router = inject(Router);
+    private translateService = inject(TranslateService);
 
-    private dialogRef: DynamicDialogRef | undefined;
+    private dialogRef: TumAetUiDialogRef | undefined;
 
     /**
      * Open the dialog with the given content for the given exercise.
@@ -16,8 +18,8 @@ export class QuizExercisePopupService {
      * @param quizExercise the quiz exercise for which the dialog should be shown
      * @param files required for the form data upload
      */
-    open(component: Type<unknown>, quizExercise: QuizExercise, files: Map<string, File>): Promise<DynamicDialogRef | undefined> {
-        return new Promise<DynamicDialogRef | undefined>((resolve) => {
+    open(component: Type<unknown>, quizExercise: QuizExercise, files: Map<string, File>): Promise<TumAetUiDialogRef | undefined> {
+        return new Promise<TumAetUiDialogRef | undefined>((resolve) => {
             if (!this.dialogRef) {
                 this.dialogRef = this.quizExerciseDialogRef(component, quizExercise, files);
             }
@@ -31,19 +33,13 @@ export class QuizExercisePopupService {
      * @param quizExercise the quiz exercise for which the dialog should be shown
      * @param files required for the form data upload
      */
-    quizExerciseDialogRef(component: Type<unknown>, quizExercise: QuizExercise, files: Map<string, File>): DynamicDialogRef | undefined {
+    quizExerciseDialogRef(component: Type<unknown>, quizExercise: QuizExercise, files: Map<string, File>): TumAetUiDialogRef | undefined {
         const ref = this.dialogService.open(component, {
-            width: '50rem',
-            breakpoints: {
-                '850px': '95vw',
-            },
-            modal: true,
-            closable: true,
+            size: 'medium',
             closeOnEscape: true,
             dismissableMask: false,
-            draggable: false,
-            resizable: false,
             showHeader: false,
+            ariaLabel: this.translateService.instant('artemisApp.quizExercise.re-evaluate.warning.warning'),
             data: { quizExercise, files },
         });
         ref?.onClose.subscribe((result) => {

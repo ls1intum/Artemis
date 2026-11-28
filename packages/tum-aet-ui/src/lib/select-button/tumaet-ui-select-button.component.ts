@@ -28,7 +28,7 @@ function displayLabel(value: unknown): string | undefined {
 @Component({
     selector: 'tumaet-ui-select-button',
     templateUrl: './tumaet-ui-select-button.component.html',
-    styleUrl: './tumaet-ui-select-button.component.scss',
+    styleUrl: './tumaet-ui-select-button.component.css',
     imports: [NgTemplateOutlet],
     host: {
         role: 'group',

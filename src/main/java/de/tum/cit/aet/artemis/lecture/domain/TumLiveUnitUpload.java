@@ -47,6 +47,10 @@ public class TumLiveUnitUpload extends DomainObject {
     @Column(name = "pending_stream_id")
     private Long pendingStreamId;
 
+    /** Whether TUM.Live acknowledged the file for the current pending reference. */
+    @Column(name = "pending_transfer_accepted", nullable = false)
+    private boolean pendingTransferAccepted;
+
     @Column(name = "pending_since")
     private ZonedDateTime pendingSince;
 
@@ -117,6 +121,10 @@ public class TumLiveUnitUpload extends DomainObject {
         this.pendingStreamId = pendingStreamId;
     }
 
+    public boolean isPendingTransferAccepted() {
+        return pendingTransferAccepted;
+    }
+
     public ZonedDateTime getPendingSince() {
         return pendingSince;
     }
@@ -157,6 +165,7 @@ public class TumLiveUnitUpload extends DomainObject {
         this.pendingCourseSlug = courseSlug;
         this.pendingCheckedAt = since;
         this.pendingStreamId = null;
+        this.pendingTransferAccepted = false;
         this.expectedVideoSource = expectedVideoSource;
         this.pendingSince = since;
         this.lastError = null;
@@ -188,6 +197,7 @@ public class TumLiveUnitUpload extends DomainObject {
         this.pendingRef = null;
         this.pendingGrantId = null;
         this.pendingStreamId = null;
+        this.pendingTransferAccepted = false;
         this.pendingSince = null;
         this.pendingCheckedAt = null;
         this.pendingCourseSlug = null;

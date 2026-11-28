@@ -8,49 +8,51 @@ import { TumAetUiChartLegendPosition } from './tumaet-ui-chart.types';
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { class: 'tumaet-ui-chart-legend', '[attr.data-position]': 'position()' },
     styles: `
-        :host {
-            display: block;
-            align-self: center;
-            font-size: var(--tumaet-ui-font-size-xs);
-            color: var(--tumaet-ui-text-color);
-        }
-        .tumaet-ui-chart-legend-list {
-            display: flex;
-            flex-direction: column;
-            gap: calc(var(--tumaet-ui-spacing) * 1);
-            margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-        :host([data-position='top']) .tumaet-ui-chart-legend-list,
-        :host([data-position='bottom']) .tumaet-ui-chart-legend-list {
-            flex-direction: row;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .tumaet-ui-chart-legend-item {
-            display: flex;
-            align-items: center;
-            gap: calc(var(--tumaet-ui-spacing) * 1);
-            white-space: nowrap;
-            /* WCAG 2.2 target size: a legend entry is a control, so it needs at least 24px to hit. */
-            min-height: 24px;
-            padding: 0 calc(var(--tumaet-ui-spacing) * 1);
-            border: 0;
-            background: none;
-            color: inherit;
-            font: inherit;
-            cursor: pointer;
-        }
-        .tumaet-ui-chart-legend-item[aria-pressed='false'] {
-            opacity: 0.45;
-            text-decoration: line-through;
-        }
-        .tumaet-ui-chart-legend-swatch {
-            width: 10px;
-            height: 10px;
-            border-radius: var(--tumaet-ui-radius-sm);
-            flex: none;
+        @layer tumaet-ui {
+            :host {
+                display: block;
+                align-self: center;
+                font-size: var(--tumaet-ui-font-size-xs);
+                color: var(--tumaet-ui-text-color);
+            }
+            .tumaet-ui-chart-legend-list {
+                display: flex;
+                flex-direction: column;
+                gap: calc(var(--tumaet-ui-spacing) * 1);
+                margin: 0;
+                padding: 0;
+                list-style: none;
+            }
+            :host([data-position='top']) .tumaet-ui-chart-legend-list,
+            :host([data-position='bottom']) .tumaet-ui-chart-legend-list {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            .tumaet-ui-chart-legend-item {
+                display: flex;
+                align-items: center;
+                gap: calc(var(--tumaet-ui-spacing) * 1);
+                white-space: nowrap;
+                /* WCAG 2.2 target size: a legend entry is a control, so it needs at least 24px to hit. */
+                min-height: 24px;
+                padding: 0 calc(var(--tumaet-ui-spacing) * 1);
+                border: 0;
+                background: none;
+                color: inherit;
+                font: inherit;
+                cursor: pointer;
+            }
+            .tumaet-ui-chart-legend-item[aria-pressed='false'] {
+                opacity: 0.45;
+                text-decoration: line-through;
+            }
+            .tumaet-ui-chart-legend-swatch {
+                width: 10px;
+                height: 10px;
+                border-radius: var(--tumaet-ui-radius-sm);
+                flex: none;
+            }
         }
     `,
     template: `

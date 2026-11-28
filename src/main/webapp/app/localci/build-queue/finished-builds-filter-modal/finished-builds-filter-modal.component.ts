@@ -6,15 +6,12 @@ import { HttpParams } from '@angular/common/http';
 import { FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
 import { FormsModule } from '@angular/forms';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
-import {
-    TumAetUiAutoCompleteComponent,
-    TumAetUiAutoCompleteSearchEvent,
-    TumAetUiButtonComponent,
-    TumAetUiDatePickerComponent,
-    TumAetUiDialogComponent,
-    TumAetUiInputDirective,
-    TumAetUiRadioButtonComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent, TumAetUiAutoCompleteSearchEvent } from '@tumaet/ui-angular/autocomplete';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiRadioButtonComponent } from '@tumaet/ui-angular/radio-button';
 export class FinishedBuildJobFilter {
     status?: string = undefined;
     buildAgentAddress?: string = undefined;
@@ -131,7 +128,7 @@ export enum FinishedBuildJobFilterKey {
         TumAetUiAutoCompleteComponent,
     ],
     templateUrl: './finished-builds-filter-modal.component.html',
-    styleUrl: './finished-builds-filter-modal.component.scss',
+    styleUrl: './finished-builds-filter-modal.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FinishedBuildsFilterModalComponent {

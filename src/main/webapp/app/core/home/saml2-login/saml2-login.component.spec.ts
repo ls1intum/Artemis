@@ -149,6 +149,17 @@ describe('Saml2LoginComponent', () => {
             expect(warningSpy).toHaveBeenCalledWith('Forbidden: User is disabled');
         });
 
+        it('should show the translation key of an account that the identity provider does not manage', async () => {
+            const headers = new HttpHeaders().set('X-artemisApp-error', 'home.errors.internalAccount');
+            vi.spyOn(loginService, 'loginSAML2').mockRejectedValue(new HttpErrorResponse({ status: 403, headers }));
+            const warningSpy = vi.spyOn(alertService, 'warning').mockReturnValue({} as any);
+
+            await component.loginSAML2();
+            await fixture.whenStable();
+
+            expect(warningSpy).toHaveBeenCalledWith('home.errors.internalAccount');
+        });
+
         it('should not show warning on other error status codes', async () => {
             const error500 = new HttpErrorResponse({ status: 500 });
             vi.spyOn(loginService, 'loginSAML2').mockRejectedValue(error500);

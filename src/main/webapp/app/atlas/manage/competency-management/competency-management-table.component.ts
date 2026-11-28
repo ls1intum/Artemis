@@ -1,11 +1,9 @@
-import {
-    TumAetUiButtonDirective,
-    TumAetUiInputDirective,
-    TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import dayjs from 'dayjs/esm';
 import { Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
@@ -17,13 +15,11 @@ import { onError } from 'app/foundation/util/global.utils';
 import { Subject } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { faFileImport, faPencilAlt, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import {
     ImportAllCompetenciesComponent,
     ImportAllCompetenciesDialogData,
     ImportAllFromCourseResult,
 } from 'app/atlas/manage/competency-management/import-all-competencies.component';
-import { DialogService } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
@@ -39,9 +35,9 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
     templateUrl: './competency-management-table.component.html',
     imports: [
         TumAetUiButtonDirective,
-        NgbDropdown,
-        NgbDropdownMenu,
-        NgbDropdownToggle,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
         MarkdownDirective,
         TranslateDirective,
         FontAwesomeModule,
@@ -59,7 +55,7 @@ export class CompetencyManagementTableComponent {
     private readonly competencyService: CompetencyService = inject(CompetencyService);
     private readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
     private readonly alertService: AlertService = inject(AlertService);
-    private readonly dialogService = inject(DialogService);
+    private readonly dialogService = inject(TumAetUiDialogService);
     private readonly translateService = inject(TranslateService);
 
     courseId = input.required<number>();
@@ -174,21 +170,17 @@ export class CompetencyManagementTableComponent {
         const dialogData: ImportAllCompetenciesDialogData = {
             //unary operator is necessary as otherwise courseId is seen as a string and will not match.
             disabledIds: [this.courseId()],
-            competencyType: this.competencyType(),
         };
-        const dialogRef = this.dialogService.open(ImportAllCompetenciesComponent, {
+        const dialogRef = this.dialogService.open<ImportAllCompetenciesComponent, ImportAllFromCourseResult, ImportAllCompetenciesDialogData>(ImportAllCompetenciesComponent, {
             header: this.translateService.instant(`artemisApp.${this.competencyType()}.importAll.title`),
-            style: { width: '90vw', maxWidth: '60rem', height: '85vh' },
-            contentStyle: { height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' },
-            modal: true,
+            size: 'large',
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
-            draggable: false,
             data: dialogData,
         });
 
-        dialogRef?.onClose.subscribe((result: ImportAllFromCourseResult | undefined) => {
+        dialogRef.onClose.subscribe((result: ImportAllFromCourseResult | undefined) => {
             if (result) {
                 const courseTitle = result.courseForImportDTO.title ?? '';
 

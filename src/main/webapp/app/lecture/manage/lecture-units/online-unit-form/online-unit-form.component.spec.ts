@@ -6,9 +6,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/online-unit.service';
-import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resource-dto.model';
-import { HttpResponse } from '@angular/common/http';
+import { OnlineUnitApi } from 'app/openapi/api/online-unit-api';
+import type { OnlineResource } from 'app/openapi/model/online-resource';
 import { of } from 'rxjs';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -33,7 +32,7 @@ describe('OnlineUnitFormComponent', () => {
                 MockComponent(CompetencySelectionComponent),
             ],
             providers: [
-                MockProvider(OnlineUnitService),
+                MockProvider(OnlineUnitApi),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => null } } } },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -147,15 +146,12 @@ describe('OnlineUnitFormComponent', () => {
     });
 
     it('should update when link changes', () => {
-        const onlineUnitService = TestBed.inject(OnlineUnitService);
-        const resourceDto = new OnlineResourceDTO();
-        resourceDto.title = 'Cum sociis natoque penatibus';
-        resourceDto.description = 'Pellentesque habitant morbi tristique senectus et netus.';
-        const response: HttpResponse<OnlineResourceDTO> = new HttpResponse({
-            body: resourceDto,
-            status: 200,
-        });
-        const getOnlineResourceStub = vi.spyOn(onlineUnitService, 'getOnlineResource').mockReturnValue(of(response));
+        const onlineUnitApi = TestBed.inject(OnlineUnitApi);
+        const resourceDto: OnlineResource = {
+            title: 'Cum sociis natoque penatibus',
+            description: 'Pellentesque habitant morbi tristique senectus et netus.',
+        };
+        const getOnlineResourceStub = vi.spyOn(onlineUnitApi, 'getOnlineResource').mockReturnValue(of(resourceDto));
 
         onlineUnitFormComponentFixture.detectChanges();
         onlineUnitFormComponentFixture.componentRef.setInput('isEditMode', true);
@@ -205,10 +201,8 @@ describe('OnlineUnitFormComponent', () => {
         });
 
         it('should keep the name and description when the link changes and fill in only empty fields', () => {
-            const resourceDto = new OnlineResourceDTO();
-            resourceDto.title = 'Artemis documentation';
-            resourceDto.description = 'Guides for students and instructors';
-            vi.spyOn(TestBed.inject(OnlineUnitService), 'getOnlineResource').mockReturnValue(of(new HttpResponse({ body: resourceDto, status: 200 })));
+            const resourceDto: OnlineResource = { title: 'Artemis documentation', description: 'Guides for students and instructors' };
+            vi.spyOn(TestBed.inject(OnlineUnitApi), 'getOnlineResource').mockReturnValue(of(resourceDto));
             onlineUnitFormComponent.descriptionControl!.setValue('');
 
             onlineUnitFormComponent.sourceControl!.setValue('docs.artemis.tum.de');

@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { combineLatest } from 'rxjs';
+import { EMPTY, Subject, catchError, combineLatest, map, switchMap, takeUntil, timer } from 'rxjs';
 import dayjs from 'dayjs/esm';
 
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
@@ -11,22 +12,18 @@ import { AuditsQuery, AuditsService } from './audits.service';
 import { AuditLogType } from './audit-log-type.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import {
-    TumAetUiDatePickerComponent,
-    TumAetUiPaginatorComponent,
-    TumAetUiTabComponent,
-    TumAetUiTabListComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-    TumAetUiTabsComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
+import { TumAetUiSearchFieldComponent } from '@tumaet/ui-angular/search-field';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular/tabs';
 
 /**
  * Admin component for viewing system audit logs.
- * Shows audit events with filtering by date range and pagination.
+ * Shows audit events with a search for one login, filtering by date range and pagination.
  */
 @Component({
     selector: 'jhi-audit',
@@ -38,9 +35,11 @@ import {
         TranslateDirective,
         TumAetUiPaginatorComponent,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         TumAetUiTableDirective,
         TumAetUiDatePickerComponent,
+        TumAetUiSearchFieldComponent,
         TumAetUiTabsComponent,
         TumAetUiTabListComponent,
         TumAetUiTabComponent,
@@ -54,6 +53,12 @@ export class AuditsComponent implements OnInit {
 
     /** Audit log entries */
     readonly audits = signal<Audit[]>([]);
+
+    /** How many days back the date range starts when the page is opened. */
+    private static readonly DEFAULT_RANGE_DAYS = 7;
+
+    /** How long the search field has to be left alone before its term is sent to the server. */
+    private static readonly SEARCH_DEBOUNCE_MS = 300;
 
     /**
      * Payload keys the generic list leaves out: `message` and `remoteAddress` are rendered above with their own
@@ -101,6 +106,20 @@ export class AuditsComponent implements OnInit {
     /** Date range filter - to date */
     readonly toDate = signal('');
 
+    /** What the search field shows, updated on every keystroke. */
+    protected readonly searchInput = signal('');
+
+    /** The login the entries are filtered by: the search term once it has settled, as it is in the URL. Empty for no search. */
+    readonly search = signal('');
+
+    private readonly searchTerm = new Subject<string>();
+
+    /** Emits when the URL replaces the search, so that a term that is still waiting to be applied does not overwrite it. */
+    private readonly discardPendingSearch = new Subject<void>();
+
+    /** The queries to load. Only the response of the latest one is shown: a slow response to an older query must not replace the newer entries. */
+    private readonly loadRequest = new Subject<AuditsQuery>();
+
     /** Sort predicate */
     readonly predicate = signal('');
 
@@ -141,9 +160,33 @@ export class AuditsComponent implements OnInit {
 
     private readonly dateFormat = 'yyyy-MM-dd';
 
+    constructor() {
+        // The term drives a request, so it is applied once the administrator stops typing. A new term restarts the wait, and a term the URL replaced in the meantime is
+        // dropped. Terms are not de-duplicated here, because only the applied search knows what the page shows: see applySearch.
+        this.searchTerm
+            .pipe(
+                switchMap((term) =>
+                    timer(AuditsComponent.SEARCH_DEBOUNCE_MS).pipe(
+                        takeUntil(this.discardPendingSearch),
+                        map(() => term),
+                    ),
+                ),
+                takeUntilDestroyed(),
+            )
+            .subscribe((term) => this.applySearch(term));
+
+        this.loadRequest
+            .pipe(
+                // a failed request is reported by the HTTP error handling, and must not end the stream for the requests that follow
+                switchMap((query) => this.auditsService.query(query).pipe(catchError(() => EMPTY))),
+                takeUntilDestroyed(),
+            )
+            .subscribe((res: HttpResponse<Audit[]>) => this.onSuccess(res.body, res.headers));
+    }
+
     ngOnInit(): void {
         this.toDate.set(this.today());
-        this.fromDate.set(this.previousMonth());
+        this.fromDate.set(this.previousWeek());
         this.handleNavigation();
     }
 
@@ -156,6 +199,7 @@ export class AuditsComponent implements OnInit {
                 // not try to parse a blank value back into a date.
                 from: this.fromDate() || undefined,
                 to: this.toDate() || undefined,
+                search: this.search() || undefined,
                 logType: this.logType(),
             },
         });
@@ -255,6 +299,22 @@ export class AuditsComponent implements OnInit {
         return parsed.isValid() ? parsed : undefined;
     }
 
+    /** Takes the text of the search field. The request follows once the text has settled, see the constructor. */
+    onSearchInput(value: string): void {
+        this.searchInput.set(value);
+        this.searchTerm.next(value.trim());
+    }
+
+    /** Applies a settled search term and starts again on the first page, because the page numbers of another result do not carry over. */
+    private applySearch(term: string): void {
+        if (term === this.search()) {
+            return;
+        }
+        this.search.set(term);
+        this.page.set(1);
+        this.transition();
+    }
+
     /**
      * Switches to another audit log. Resets to the first page, because page numbers do not carry over between logs.
      *
@@ -292,13 +352,10 @@ export class AuditsComponent implements OnInit {
         this.transition();
     }
 
-    private previousMonth(): string {
-        let date = new Date();
-        if (date.getMonth() === 0) {
-            date = new Date(date.getFullYear() - 1, 11, date.getDate());
-        } else {
-            date = new Date(date.getFullYear(), date.getMonth() - 1, date.getDate());
-        }
+    /** The default start of the range: a week back keeps the first page quick on the log with the most entries, and the range can be widened. */
+    private previousWeek(): string {
+        const date = new Date();
+        date.setDate(date.getDate() - AuditsComponent.DEFAULT_RANGE_DAYS);
         return this.datePipe.transform(date, this.dateFormat)!;
     }
 
@@ -330,6 +387,14 @@ export class AuditsComponent implements OnInit {
                 this.toDate.set(to ? this.datePipe.transform(to, this.dateFormat)! : '');
             }
             this.syncPickerValues();
+            // The URL is the source of the search: a reload or the back button brings its term into the field. The navigation that follows a term
+            // the page applied itself carries that same term, and leaves the field alone, so that characters typed in the meantime are not lost.
+            const search = params.get('search') ?? '';
+            if (search !== this.search()) {
+                this.discardPendingSearch.next();
+                this.search.set(search);
+                this.searchInput.set(search);
+            }
             const logTypeParam = params.get('logType');
             // Set the log on every emission rather than only for a valid parameter: Angular reuses this component across
             // query-parameter-only navigations, so leaving the signal untouched would keep querying the previously
@@ -353,7 +418,11 @@ export class AuditsComponent implements OnInit {
             query.fromDate = this.fromDate();
             query.toDate = this.toDate();
         }
-        this.auditsService.query(query).subscribe((res: HttpResponse<Audit[]>) => this.onSuccess(res.body, res.headers));
+        // Only a search term is sent: an empty one would be sent as a blank principal, which finds nothing
+        if (this.search()) {
+            query.principal = this.search();
+        }
+        this.loadRequest.next(query);
     }
 
     private sort(): string[] {

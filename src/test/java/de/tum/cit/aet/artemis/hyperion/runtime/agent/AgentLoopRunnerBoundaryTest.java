@@ -52,7 +52,7 @@ class AgentLoopRunnerBoundaryTest {
         when(model.call(any(Prompt.class))).thenReturn(text("Completed"));
         AgentLoopRunner deployment = runner(List.of(model), 128000);
         assertThat(deployment.forSettings(null)).isSameAs(deployment);
-        var profile = new HyperionGenerationSettings("small", "Small", 2, Duration.ofMinutes(5), 1000, false, "FRESH", 64000,
+        var profile = new HyperionGenerationSettings("small", "Small", 2, Duration.ofMinutes(5), 1000, false, "FRESH", 64000, "testpreset",
                 OpenAiChatOptions.builder().model("profile").maxCompletionTokens(2048).build(), false, true);
         var result = deployment.forSettings(profile).runTextSession("System", List.of(new UserMessage("Earlier")), "Continue", 2, () -> false, null, null);
         assertThat(result.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
@@ -70,7 +70,7 @@ class AgentLoopRunnerBoundaryTest {
         ChatModel model = mock(ChatModel.class);
         when(model.getOptions()).thenReturn(ChatOptions.builder().model("legacy").maxTokens(3000).build());
         when(model.call(any(Prompt.class))).thenReturn(text("Done"));
-        var profile = new HyperionGenerationSettings("default", null, 2, Duration.ofMinutes(5), 1000, false, "FRESH", 64000, null, true, false);
+        var profile = new HyperionGenerationSettings("default", null, 2, Duration.ofMinutes(5), 1000, false, "FRESH", 64000, "testpreset", null, true, false);
         var result = runner(List.of(model), 128000).forSettings(profile).runTextSession("System", null, "User", 2, () -> false, null, ignored -> {
         });
         assertThat(result.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);

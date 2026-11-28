@@ -62,7 +62,7 @@ class MetricsBeanLifecycleTest {
     private final BuildJobTestRepository jobs = mock(BuildJobTestRepository.class);
 
     @ParameterizedTest
-    @CsvSource(value = { "UP,1", "DOWN,0", "OUT_OF_SERVICE,-1", "UNKNOWN,-2", "CUSTOM,-3", "NULL,-3" }, nullValues = "NULL")
+    @CsvSource(value = { "UP,1", "DOWN,0", "DEGRADED,0", "OUT_OF_SERVICE,-1", "UNKNOWN,-2", "CUSTOM,-3", "NULL,-3" }, nullValues = "NULL")
     void healthGaugesExposeStatusMappingEvenWhenScheduledMetricsAreDisabled(String status, double expected) {
         var indicator = mock(HealthIndicator.class);
         when(indicator.health()).thenReturn(status == null ? null : Health.status(status).build());

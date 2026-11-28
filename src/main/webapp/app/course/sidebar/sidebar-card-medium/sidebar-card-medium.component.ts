@@ -10,7 +10,7 @@ import { SidebarCardElement, SidebarTypes } from 'app/foundation/types/sidebar';
 @Component({
     selector: 'jhi-medium-sidebar-card',
     templateUrl: './sidebar-card-medium.component.html',
-    styleUrls: ['./sidebar-card-medium.component.scss'],
+    styleUrls: ['./sidebar-card-medium.component.css'],
     imports: [NgClass, SidebarCardItemComponent, RouterLink, RouterLinkActive, ProgrammingExerciseStudentTriggerBuildButtonComponent],
 })
 export class SidebarCardMediumComponent {

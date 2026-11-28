@@ -9,7 +9,7 @@ import { LeagueIconComponent } from 'app/quiz/overview/course-training/course-tr
     standalone: true,
     imports: [TranslateDirective, FontAwesomeModule, LeagueIconComponent],
     templateUrl: './league-badge.component.html',
-    styleUrl: './league-badge.component.scss',
+    styleUrl: './league-badge.component.css',
 })
 export class LeagueBadgeComponent {
     league = input<string>('');

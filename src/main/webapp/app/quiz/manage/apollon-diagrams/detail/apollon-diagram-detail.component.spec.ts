@@ -19,7 +19,7 @@ import { ApollonEditor, UMLDiagramType, UMLModel } from '@tumaet/apollon';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
 import { AUTOSAVE_EXERCISE_INTERVAL } from 'app/foundation/constants/exercise-exam-constants';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 
 function setupCanvasAndImageMocks() {
     const createMockCanvas = () => {
@@ -120,7 +120,7 @@ describe('ApollonDiagramDetail Component', () => {
                 AlertService,
                 JhiLanguageHelper,
                 ApollonDiagramService,
-                { provide: DialogService, useValue: mockDialogService },
+                { provide: TumAetUiDialogService, useValue: mockDialogService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },

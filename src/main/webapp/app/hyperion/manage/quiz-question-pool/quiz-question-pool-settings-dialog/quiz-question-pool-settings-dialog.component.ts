@@ -1,6 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, input, linkedSignal, model, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiInputNumberComponent, TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputNumberComponent } from '@tumaet/ui-angular/input-number';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -18,7 +21,7 @@ const MAX_CORRECT_OPTIONS = 4;
 
 /**
  * Lets an instructor edit the pool settings of a course in a dialog: the single-choice count per lecture unit, the optional
- * multiple-choice count with its range of correct options and the difficulty mix. Edits stay in the dialog's
+ * multiple-choice count with its range of correct options, the difficulty mix and the overnight builds. Edits stay in the dialog's
  * draft until it emits them to save.
  */
 @Component({
@@ -66,6 +69,10 @@ export class QuizQuestionPoolSettingsDialogComponent {
             this.correctOptionRangeOrdered()
         );
     });
+
+    setPoolGenerationEnabled(enabled: boolean): void {
+        this.change({ poolGenerationEnabled: enabled });
+    }
 
     setSingleChoiceQuestionsPerLectureUnit(questions: number | undefined): void {
         this.change({ singleChoiceQuestionsPerLectureUnit: questions ?? 0 });

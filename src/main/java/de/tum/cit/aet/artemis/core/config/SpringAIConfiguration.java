@@ -1,19 +1,14 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import java.util.List;
+import java.time.Duration;
 
 import javax.sql.DataSource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.ChatMemoryRepository;
-import org.springframework.ai.chat.memory.MessageWindowChatMemory;
-import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepository;
-import org.springframework.ai.chat.memory.repository.jdbc.JdbcChatMemoryRepositoryDialect;
-import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.ai.session.DefaultSessionService;
+import org.springframework.ai.session.SessionRepository;
+import org.springframework.ai.session.SessionService;
+import org.springframework.ai.session.jdbc.JdbcSessionRepository;
+import org.springframework.ai.session.jdbc.JdbcSessionRepositoryDialect;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
@@ -24,73 +19,45 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * Configuration for Spring AI chat clients.
- * This configuration is enabled when either Atlas or Hyperion modules are enabled.
- * Manual configuration without auto-configuration.
+ * The session memory of Spring AI, enabled when either Atlas or Hyperion is enabled. It stores the conversations of the Atlas chat agent. Chat models come from the LLM
+ * presets, see {@link de.tum.cit.aet.artemis.core.service.llm.LlmClientService}.
  */
 @Configuration
 @Conditional(SpringAIConfiguration.SpringAIEnabled.class)
 @Lazy
 public class SpringAIConfiguration {
 
-    private static final Logger log = LoggerFactory.getLogger(SpringAIConfiguration.class);
-
-    private final int maxMessages;
-
-    public SpringAIConfiguration(@Value("${spring.ai.chat.memory.max-messages: 20}") int maxMessages) {
-        this.maxMessages = maxMessages;
-    }
+    /**
+     * The expiry that a session gets when it is created. Spring AI does not enforce it when it reads a session, and nothing in Artemis deletes expired sessions, so the
+     * conversations of the chat agent stay as long as they did in the chat memory before. The value only has to be far away.
+     */
+    private static final Duration SESSION_TIME_TO_LIVE = Duration.ofDays(3650);
 
     /**
-     * Creates a JDBC-based chat memory repository for persistent storage.
+     * Creates a JDBC-based session repository for persistent storage. The tables are created by Liquibase, not by Spring AI.
      * Uses an auto-detected JDBC dialect based on the configured DataSource.
-     * This bean is only created if no other ChatMemoryRepository bean exists,
      *
      * @param dataSource the datasource to use for JDBC operations
-     * @return configured ChatMemoryRepository
+     * @return configured SessionRepository
      */
     @Bean
     @Lazy
-    public ChatMemoryRepository chatMemoryRepository(DataSource dataSource) {
+    public SessionRepository sessionRepository(DataSource dataSource) {
         JdbcTemplate jdbcTemplate = new JdbcTemplate(dataSource);
-        return JdbcChatMemoryRepository.builder().jdbcTemplate(jdbcTemplate).dialect(JdbcChatMemoryRepositoryDialect.from(dataSource)).build();
+        // The mapper is the one of Spring AI on purpose: it writes the format of the stored events, which must not change with the settings of the Artemis mapper
+        return JdbcSessionRepository.builder().jdbcTemplate(jdbcTemplate).dialect(JdbcSessionRepositoryDialect.from(dataSource)).build();
     }
 
     /**
-     * Creates a message window-based chat memory that retains the last N messages.
-     * This provides context-aware conversations while limiting memory usage.
+     * Creates the session service that the chat agent reads and writes its conversations with.
      *
-     * @param chatMemoryRepository the repository for storing conversation history
-     * @return configured ChatMemory with windowed message retention
+     * @param sessionRepository the repository for storing the conversations
+     * @return the session service
      */
     @Bean
     @Lazy
-    public ChatMemory chatMemory(ChatMemoryRepository chatMemoryRepository) {
-        return MessageWindowChatMemory.builder().chatMemoryRepository(chatMemoryRepository).maxMessages(maxMessages).build();
-    }
-
-    /**
-     * Default Chat Client for AI features.
-     * Uses the manually configured Azure OpenAI model if available.
-     * Includes memory advisor for conversation context retention.
-     *
-     * @param chatModels chat models that can be used (optional)
-     * @return a configured ChatClient with default options, or null if model is not available
-     */
-    @Bean
-    @Lazy
-    public ChatClient chatClient(List<ChatModel> chatModels) {
-        if (chatModels == null || chatModels.isEmpty()) {
-            return null;
-        }
-
-        for (ChatModel model : chatModels) {
-            log.info("Found chat model {} with options {}", model.getClass().getSimpleName(), model.getOptions());
-        }
-        ChatModel chatModel = chatModels.getFirst(); // Use the first available model
-        ChatClient.Builder builder = ChatClient.builder(chatModel);
-
-        return builder.build();
+    public SessionService sessionService(SessionRepository sessionRepository) {
+        return DefaultSessionService.builder().sessionRepository(sessionRepository).defaultTimeToLive(SESSION_TIME_TO_LIVE).build();
     }
 
     /**

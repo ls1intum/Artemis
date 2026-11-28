@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -64,6 +65,14 @@ public class TokenProvider {
      * it had already produced from being extended.
      */
     public static final String PASSKEY_CREDENTIAL_ID = "passkey-credential-id";
+
+    /**
+     * Key in the details of a request authentication under which the moment the session was originally established is
+     * kept, as an {@link Instant}. It is the token's {@code iat} claim, which silent rotation preserves, so it identifies
+     * the login rather than the latest rotation. Operations that create a credential compare it to the time the account's
+     * credentials last changed, see {@code SessionFreshnessService}.
+     */
+    public static final String SESSION_STARTED_AT = "session-started-at";
 
     private static final String TOOLS_KEY = "tools";
 
@@ -285,7 +294,18 @@ public class TokenProvider {
      */
     @Nullable
     public Authentication getAuthentication(String token) {
-        Claims claims = parseClaims(token);
+        return getAuthentication(token, parseClaims(token));
+    }
+
+    /**
+     * Same as {@link #getAuthentication(String)} for a token whose claims were already parsed and verified, so that the token is not parsed again.
+     *
+     * @param token  JWT Authorization Token
+     * @param claims the verified claims of the token
+     * @return UsernamePasswordAuthenticationToken with principal, token and authorities that were stored in the token or null if no authorities were found
+     */
+    @Nullable
+    Authentication getAuthentication(String token, Claims claims) {
         var authorityClaim = claims.get(AUTHORITIES_KEY);
         if (authorityClaim == null) {
             // leads to a 401 unauthorized error
@@ -305,6 +325,10 @@ public class TokenProvider {
         String passkeyCredentialId = claims.get(PASSKEY_CREDENTIAL_ID, String.class);
         if (passkeyCredentialId != null) {
             details.put(PASSKEY_CREDENTIAL_ID, passkeyCredentialId);
+        }
+        Date issuedAt = claims.getIssuedAt();
+        if (issuedAt != null) {
+            details.put(SESSION_STARTED_AT, issuedAt.toInstant());
         }
         authentication.setDetails(Map.copyOf(details));
         return authentication;
@@ -361,7 +385,7 @@ public class TokenProvider {
         catch (IllegalArgumentException e) {
             log.error("Token validation error {}", e.getMessage());
         }
-        log.debug("Invalid JWT token: {} from source {}", authToken, source);
+        log.debug("Invalid JWT token from source {}", source);
         return false;
     }
 

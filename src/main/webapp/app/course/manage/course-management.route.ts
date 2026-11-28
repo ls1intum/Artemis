@@ -1,9 +1,13 @@
+import { inject } from '@angular/core';
+import { COURSE_MANAGEMENT_EXTENSION_ROUTES } from './course-management-extension-routes';
 import { Routes } from '@angular/router';
 import type { Route, UrlMatchResult, UrlMatcher } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 import { TutorialGroupManagementCourseResolver } from 'app/tutorialgroup/manage/service/tutorial-group-management-course-resolver.service';
 import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard';
+import { featureToggleGuard } from 'app/foundation/feature-toggle/feature-toggle.guard';
+import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { LocalCIGuard } from 'app/localci/shared/localci-guard.service';
 import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 import { HyperionGuard } from 'app/hyperion/shared/hyperion-guard.service';
@@ -136,7 +140,7 @@ export const courseManagementRoutes: Routes = [
                     authorities: IS_AT_LEAST_EDITOR,
                     pageTitle: 'artemisApp.hyperion.quizQuestionPool.title',
                 },
-                canActivate: [UserRouteAccessService, HyperionGuard],
+                canActivate: [UserRouteAccessService, HyperionGuard, featureToggleGuard(FeatureToggle.SmartQuizzes)],
             },
             {
                 path: ':courseId/athena-settings',
@@ -384,6 +388,7 @@ export const courseManagementRoutes: Routes = [
                         redirectTo: 'exercises',
                     },
                     preloadTutorRoutes(() => import('app/text/manage/text-exercise/text-exercise.route').then((m) => m.textExerciseRoute)),
+                    preloadTutorRoutes(() => inject(COURSE_MANAGEMENT_EXTENSION_ROUTES, { optional: true }) ?? []),
                     preloadTutorRoutes(() => import('app/programming/manage/programming-exercise-management.route').then((m) => m.routes)),
                     preloadTutorRoutes(() => import('app/quiz/manage/quiz-management.route').then((m) => m.quizManagementRoute)),
                     preloadTutorRoutes(() => import('app/fileupload/manage/file-upload-exercise-management.route').then((m) => m.routes)),

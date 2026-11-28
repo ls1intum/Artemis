@@ -1,10 +1,9 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabPanelComponent, TumAetUiTabPanelsComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular/tabs';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { faBan, faDownload, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { KeyValuePipe } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -48,31 +47,29 @@ export const isExportDialogCancelledResult = (result: ExportDialogCloseResult): 
 @Component({
     selector: 'jhi-csv-export-modal',
     templateUrl: './export-modal.component.html',
-    styleUrls: ['./export-modal.component.scss'],
     imports: [
-        FormsModule,
         TranslateDirective,
-        NgbNav,
-        NgbNavItem,
-        NgbNavLink,
-        NgbNavLinkBase,
-        NgbNavContent,
         TumAetUiButtonDirective,
-        NgbNavOutlet,
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
+        TumAetUiTabPanelsComponent,
+        TumAetUiTabPanelComponent,
         FaIconComponent,
         KeyValuePipe,
         ArtemisTranslatePipe,
     ],
 })
 export class ExportModalComponent implements OnInit {
-    private dialogRef = inject(DynamicDialogRef);
+    private dialogRef = inject<TumAetUiDialogRef<ExportDialogCloseResult>>(TumAetUiDialogRef);
     private translateService = inject(TranslateService);
 
     readonly CsvFieldSeparator = CsvFieldSeparator;
     readonly CsvQuoteStrings = CsvQuoteStrings;
     readonly CsvDecimalSeparator = CsvDecimalSeparator;
 
-    activeTab = 1;
+    /** The active export format: 1 is Excel, 2 is CSV. */
+    readonly activeTab = signal<number | string | undefined>(1);
     readonly options = signal<CsvExportOptions>(undefined!);
 
     // Icons
@@ -136,7 +133,7 @@ export class ExportModalComponent implements OnInit {
      * Closes the export modal and passes the selected csv options back in case the active page is not set to 1.
      */
     onFinish() {
-        if (this.activeTab === 1) {
+        if (this.activeTab() === 1) {
             // Excel export
             this.dialogRef.close();
         } else {

@@ -1,3 +1,4 @@
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { onError } from 'app/foundation/util/global.utils';
 import { finalize, switchMap, take } from 'rxjs/operators';
@@ -10,11 +11,12 @@ import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-edit-prerequisite',
     templateUrl: './edit-prerequisite.component.html',
-    imports: [PrerequisiteFormComponent, TranslateDirective],
+    imports: [PrerequisiteFormComponent, TranslateDirective, TumAetUiProgressSpinnerComponent, ArtemisTranslatePipe],
 })
 export class EditPrerequisiteComponent extends EditCourseCompetencyComponent implements OnInit {
     private prerequisiteService = inject(PrerequisiteService);

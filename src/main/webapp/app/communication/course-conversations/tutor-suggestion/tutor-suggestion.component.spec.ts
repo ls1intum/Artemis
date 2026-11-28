@@ -693,6 +693,26 @@ describe('TutorSuggestionComponent', () => {
         });
     });
 
+    describe('suggestion rendering', () => {
+        it('renders the suggestion text as plain text', () => {
+            fixture.detectChanges();
+            component['irisEnabled'].set(true);
+            component.suggestion.set({
+                id: 5,
+                sender: 'ARTIFACT',
+                sentAt: dayjs(),
+                content: [{ id: 1, textContent: '<img src="x" alt="probe"><b>bold</b>' }],
+            } as unknown as IrisMessage);
+            fixture.detectChanges();
+
+            const line = fixture.nativeElement.querySelector('.iris-suggestion-text') as HTMLElement;
+            expect(line).not.toBeNull();
+            expect(line.querySelector('img')).toBeNull();
+            expect(line.querySelector('b')).toBeNull();
+            expect(line.textContent).toBe('<img src="x" alt="probe"><b>bold</b>');
+        });
+    });
+
     function setUpForRequestSuggestion() {
         vi.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of([])));
         vi.spyOn(chatService, 'currentError').mockReturnValue(of());

@@ -11,12 +11,15 @@ vi.mock('y-monaco', () => ({
     }),
 }));
 
+import { MockComponent } from 'ng-mocks';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
+import { DiffReviewBannerComponent } from 'app/programming/shared/diff-review-banner/diff-review-banner.component';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -93,7 +96,12 @@ describe('ProgrammingExerciseProblemComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(ProgrammingExerciseProblemComponent, {
+                remove: { imports: [ProgrammingExerciseEditableInstructionComponent] },
+                add: { imports: [MockComponent(ProgrammingExerciseEditableInstructionComponent)] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseProblemComponent);
         comp = fixture.componentInstance;
@@ -110,6 +118,33 @@ describe('ProgrammingExerciseProblemComponent', () => {
     afterEach(() => {
         vi.restoreAllMocks();
         vi.clearAllMocks();
+    });
+
+    it('binds the shared diff banner to the problem form state and callbacks', () => {
+        fixture.componentRef.setInput(
+            'programmingExerciseCreationConfig',
+            cloneWith(programmingExerciseCreationConfigMock, { problemStatementLoaded: true, templateParticipationResultLoaded: true }),
+        );
+        comp.showDiff.set(true);
+        comp.allowSplitView.set(true);
+        comp.addedLineCount.set(6);
+        comp.removedLineCount.set(2);
+        const revert = vi.spyOn(comp, 'revertAllChanges').mockImplementation(() => {});
+        const done = vi.spyOn(comp, 'closeDiffView').mockImplementation(() => {});
+        fixture.detectChanges();
+        const banner = fixture.debugElement.query(By.directive(DiffReviewBannerComponent)).componentInstance as DiffReviewBannerComponent;
+        expect(banner.actionsDisabled()).toBe(false);
+        expect(banner.addedLineCount()).toBe(6);
+        expect(banner.removedLineCount()).toBe(2);
+        banner.allowSplitView.set(false);
+        expect(comp.allowSplitView()).toBe(false);
+        banner.revertRequested.emit();
+        banner.doneRequested.emit();
+        expect(revert).toHaveBeenCalledOnce();
+        expect(done).toHaveBeenCalledOnce();
+        comp.aiOps.isGeneratingOrRefining.set(true);
+        fixture.detectChanges();
+        expect(banner.actionsDisabled()).toBe(true);
     });
 
     it('should initialize and store exercise', () => {

@@ -1,5 +1,5 @@
 import { Directive, OnInit, WritableSignal, inject, isSignal } from '@angular/core';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 
 function isWritableSignal(value: unknown): value is WritableSignal<unknown> {
@@ -8,8 +8,8 @@ function isWritableSignal(value: unknown): value is WritableSignal<unknown> {
 
 @Directive()
 export abstract class AbstractDialogComponent implements OnInit {
-    dialogRef = inject(DynamicDialogRef, { optional: true });
-    dialogConfig = inject(DynamicDialogConfig, { optional: true });
+    dialogRef = inject(TumAetUiDialogRef, { optional: true });
+    dialogConfig = inject(TumAetUiDialogConfig, { optional: true });
     isInitialized = false;
 
     ngOnInit() {
@@ -17,7 +17,7 @@ export abstract class AbstractDialogComponent implements OnInit {
     }
 
     initialize(requiredInputs?: string[]) {
-        // Apply data from DynamicDialogConfig to component properties
+        // Apply data from the dialog config to component properties
         if (this.dialogConfig?.data) {
             // Reflect over the component's own signal inputs / plain properties by key. There is no static type for
             // "this component's dynamic keys", so a minimal index-signature view is used instead of `any`.
@@ -52,7 +52,7 @@ export abstract class AbstractDialogComponent implements OnInit {
     }
 
     dismiss() {
-        this.dialogRef?.destroy();
+        this.dialogRef?.dismiss();
     }
 
     close(result?: unknown) {

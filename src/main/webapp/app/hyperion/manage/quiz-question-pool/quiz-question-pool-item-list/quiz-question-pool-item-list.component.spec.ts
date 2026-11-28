@@ -61,6 +61,7 @@ describe('QuizQuestionPoolItemListComponent', () => {
             decision: judged
                 ? { accepted: options.accepted ?? true, aggregateScore: 1 - Math.max(...allVerdicts.map((v) => v.severity)), verdicts: allVerdicts, rationale: 'checked' }
                 : undefined,
+            materialChanged: false,
             updatedAt: '2026-10-13T10:00:00Z',
         };
     }
@@ -171,6 +172,23 @@ describe('QuizQuestionPoolItemListComponent', () => {
         component.toggleRationale(2);
         fixture.detectChanges();
         expect(fixture.debugElement.query(By.css('[data-testid="pool-rationale-2"]'))).toBeNull();
+    });
+
+    it('should show the explanations of a question that has some', () => {
+        const questions = defaultQuestions();
+        const explained = questions.find((item) => item.id === 2)!;
+        explained.question = { ...explained.question!, options: explained.question!.options.map((option) => ({ ...option, explanation: 'Because.' })) };
+        setup(questions);
+
+        expect(component.needsReviewViews()[0].hasExplanations).toBe(true);
+        expect(component.acceptedViews().every((item) => !item.hasExplanations)).toBe(true);
+        component.toggleExplanations(2);
+        fixture.detectChanges();
+        expect(component.needsReviewViews()[0].explanationsShown).toBe(true);
+        expect(fixture.debugElement.queryAll(By.css('[data-testid="pool-item-2"] [data-testid="quiz-ai-generated-option-explanation"]')).length).toBeGreaterThan(0);
+        component.toggleExplanations(2);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.css('[data-testid="quiz-ai-generated-option-explanation"]'))).toBeNull();
     });
 
     it('should emit from the buttons and hide them without review rights', () => {

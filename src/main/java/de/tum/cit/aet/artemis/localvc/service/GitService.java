@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguratio
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
@@ -30,7 +31,6 @@ import org.eclipse.jgit.api.LsRemoteCommand;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand;
-import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
@@ -39,6 +39,7 @@ import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -80,14 +81,6 @@ public class GitService extends AbstractGitService {
 
     @Value("${artemis.repo-clone-path}")
     private Path repoClonePath;
-
-    @Value("${artemis.git.name}")
-    private String artemisGitName;
-
-    @Value("${artemis.git.email}")
-    private String artemisGitEmail;
-
-    private final WorkingCopyLocks workingCopyLocks = new WorkingCopyLocks();
 
     /**
      * Get the URI for a {@link LocalVCRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS
@@ -313,15 +306,23 @@ public class GitService extends AbstractGitService {
                 log.debug("Cloning from {} to {}", gitUriAsString, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
-                CloneCommand clone = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile());
+                CloneCommand clone = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile()).setTransportConfigCallback(_ -> {
+                    // The first fetch must finish GC before callers can copy or delete this checkout.
+                    try (Git initializedCheckout = Git.open(localPath.toFile())) {
+                        var config = initializedCheckout.getRepository().getConfig();
+                        config.setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
+                        config.save();
+                    }
+                    catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
                 if (selectCloneBranch) {
                     clone.setBranch(defaultBranch);
                 }
-                try (Git ignored = clone.call()) {
-                    // Git instance automatically closed by try-with-resources
-                }
+                cloneWithoutSymbolicLinks(clone);
             }
-            catch (IOException | URISyntaxException | GitAPIException | InvalidPathException e) {
+            catch (IOException | UncheckedIOException | URISyntaxException | GitAPIException | InvalidPathException e) {
                 // cleanup the folder to avoid problems in the future.
                 // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid another try-catch block.
                 // 'deleteQuietly' also returns false when there was nothing to delete (JGit's CloneCommand already cleans up
@@ -416,9 +417,12 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if the commit failed.
      */
     public void commit(Repository repo, String message) throws GitAPIException {
-        try (Git git = new Git(repo)) {
-            GitService.commit(git).setMessage(message).setAllowEmpty(true).setCommitter(artemisGitName, artemisGitEmail).call();
-        }
+        workingCopyLocks.withLock(workingCopyPath(repo), () -> {
+            try (Git git = new Git(repo)) {
+                GitService.commit(git).setMessage(message).setAllowEmpty(true).setCommitter(artemisGitName, artemisGitEmail).call();
+            }
+            return null;
+        });
     }
 
     /**
@@ -446,18 +450,31 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if the commit failed.
      */
     public String commitAndPush(Repository repo, String message, boolean emptyCommit, @Nullable User user) throws GitAPIException {
-        String name = user != null ? user.getName() : artemisGitName;
-        String email = user != null ? user.getEmail() : artemisGitEmail;
-        try (Git git = new Git(repo)) {
-            RevCommit commit = GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(name, email).call();
-            log.debug("commitAndPush -> Push {}", repo.getLocalPath());
-            setRemoteUrl(repo);
-            pushCommand(git).call();
-            // Returned rather than discarded so callers can identify the commit they just created. Reading the repository head
-            // afterwards is not equivalent: the online editor shares one working copy per repository, so a concurrent commit
-            // to the same repository can move the head between the commit and the read.
-            return commit.getName();
-        }
+        return commitAndPushAs(repo, message, emptyCommit, user != null ? new PersonIdent(user.getName(), user.getEmail()) : getPlaceholderIdentity());
+    }
+
+    /**
+     * Commits as the given identity, at the time of the commit, and pushes it to the remote.
+     *
+     * @param repo        Local Repository Object.
+     * @param message     Commit Message
+     * @param emptyCommit whether the git service should also produce an empty commit
+     * @param identity    The identity that commits and authors
+     * @return the id of the commit that was created
+     */
+    public String commitAndPushAs(Repository repo, String message, boolean emptyCommit, PersonIdent identity) throws GitAPIException {
+        return workingCopyLocks.withLock(workingCopyPath(repo), () -> {
+            try (Git git = new Git(repo)) {
+                RevCommit commit = GitService.commit(git).setMessage(message).setAllowEmpty(emptyCommit).setCommitter(identity.getName(), identity.getEmailAddress()).call();
+                log.debug("commitAndPush -> Push {}", repo.getLocalPath());
+                setRemoteUrl(repo);
+                pushCommand(git).call();
+                // Returned rather than discarded so callers can identify the commit they just created. Reading the repository head
+                // afterwards is not equivalent: the online editor shares one working copy per repository, so a concurrent commit
+                // to the same repository can move the head between the commit and the read.
+                return commit.getName();
+            }
+        });
     }
 
     /**
@@ -470,12 +487,14 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if the commit fails
      */
     public String commitStagedChanges(Repository repo, String message, @Nullable User user) throws GitAPIException {
-        String name = user != null ? user.getName() : artemisGitName;
-        String email = user != null ? user.getEmail() : artemisGitEmail;
-        try (Git git = new Git(repo)) {
-            RevCommit commit = GitService.commit(git).setMessage(message).setCommitter(name, email).call();
-            return commit.getName();
-        }
+        return workingCopyLocks.withLock(workingCopyPath(repo), () -> {
+            String name = user != null ? user.getName() : artemisGitName;
+            String email = user != null ? user.getEmail() : artemisGitEmail;
+            try (Git git = new Git(repo)) {
+                RevCommit commit = GitService.commit(git).setMessage(message).setCommitter(name, email).call();
+                return commit.getName();
+            }
+        });
     }
 
     /**
@@ -514,60 +533,29 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if resetting or force-pushing fails
      */
     public void resetToCommitAndForcePush(Repository repo, String commitHash, String expectedCurrentHash, String branch) throws GitAPIException {
-        if (StringUtils.isBlank(expectedCurrentHash)) {
-            throw new TransportException("Refusing to force-push " + branch + " without an expected remote HEAD lease");
-        }
-        boolean pushed = false;
-        try (Git git = new Git(repo)) {
-            setRemoteUrl(repo);
-            git.reset().setMode(ResetCommand.ResetType.HARD).setRef(commitHash).call();
-            String remoteRef = "refs/heads/" + branch;
-            log.debug("resetToCommitAndForcePush -> Force-push {} back to {} on branch {} if remote still is {}", repo.getLocalPath(), commitHash, branch, expectedCurrentHash);
-            Iterable<PushResult> pushResults = pushCommand(git).setForce(true).setRefSpecs(new RefSpec("HEAD:" + remoteRef))
-                    .setRefLeaseSpecs(new RefLeaseSpec(remoteRef, expectedCurrentHash)).call();
-            assertPushAccepted(pushResults, remoteRef);
-            pushed = true;
-        }
-        finally {
-            if (!pushed) {
-                resetToOriginHead(repo);
+        workingCopyLocks.withLock(workingCopyPath(repo), () -> {
+            if (StringUtils.isBlank(expectedCurrentHash)) {
+                throw new TransportException("Refusing to force-push " + branch + " without an expected remote HEAD lease");
             }
-        }
-    }
-
-    /**
-     * Stages all changes in the repository, including new, modified, and deleted files.
-     *
-     * <p>
-     * The method first updates the index for deleted files (using {@code setUpdate(true)})
-     * and then stages new or modified files. It returns {@code true} if any files were staged
-     * (i.e., if there were changes in the working tree that were added to the index),
-     * or {@code false} if the repository was already clean.
-     *
-     * <p>
-     * This operation is safe for both normal and bare repositories.
-     *
-     * @param repo the local {@link Repository} to stage changes in.
-     * @return {@code true} if any changes were staged, {@code false} if nothing changed.
-     * @throws GitAPIException if staging fails.
-     */
-    public boolean stageAllChanges(Repository repo) throws GitAPIException {
-        try (Git git = new Git(repo)) {
-            // Check repository status before staging
-            Status preStatus = git.status().call();
-            boolean hasChanges = !preStatus.isClean();
-
-            if (hasChanges) {
-                // Stage deleted files
-                git.add().setUpdate(true).addFilepattern(".").call();
-
-                // Stage new and modified files
-                git.add().addFilepattern(".").call();
+            boolean pushed = false;
+            try (Git git = new Git(repo)) {
+                setRemoteUrl(repo);
+                git.reset().setMode(ResetCommand.ResetType.HARD).setRef(commitHash).call();
+                String remoteRef = "refs/heads/" + branch;
+                log.debug("resetToCommitAndForcePush -> Force-push {} back to {} on branch {} if remote still is {}", repo.getLocalPath(), commitHash, branch, expectedCurrentHash);
+                Iterable<PushResult> pushResults = pushCommand(git).setForce(true).setRefSpecs(new RefSpec("HEAD:" + remoteRef))
+                        .setRefLeaseSpecs(new RefLeaseSpec(remoteRef, expectedCurrentHash)).call();
+                assertPushAccepted(pushResults, remoteRef);
+                pushed = true;
+            }
+            finally {
+                if (!pushed) {
+                    resetToOriginHead(repo);
+                }
             }
 
-            // Return true only if there were any changes to stage
-            return hasChanges;
-        }
+            return null;
+        });
     }
 
     /**
@@ -578,10 +566,13 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if the reset failed.
      */
     public void reset(Repository repo, String ref) throws GitAPIException {
-        try (Git git = new Git(repo)) {
-            setRemoteUrl(repo);
-            git.reset().setMode(ResetCommand.ResetType.HARD).setRef(ref).call();
-        }
+        workingCopyLocks.withLock(workingCopyPath(repo), () -> {
+            try (Git git = new Git(repo)) {
+                setRemoteUrl(repo);
+                git.reset().setMode(ResetCommand.ResetType.HARD).setRef(ref).call();
+            }
+            return null;
+        });
     }
 
     /**
@@ -636,10 +627,16 @@ public class GitService extends AbstractGitService {
      * @param repo Local Repository Object.
      */
     public void pullIgnoreConflicts(Repository repo) {
-        try (Git git = new Git(repo)) {
-            log.debug("Pull ignore conflicts {}", repo.getLocalPath());
-            setRemoteUrl(repo);
-            pullCommand(git).call();
+        try {
+            // The pull changes the index, so it takes the lock that the commit of the online editor holds while it stages, checks and commits
+            workingCopyLocks.withLock(workingCopyPath(repo), () -> {
+                try (Git git = new Git(repo)) {
+                    log.debug("Pull ignore conflicts {}", repo.getLocalPath());
+                    setRemoteUrl(repo);
+                    pullCommand(git).call();
+                }
+                return null;
+            });
         }
         catch (WrongRepositoryStateException ex) {
             // A merge that stopped on conflicts leaves the repository in MERGING or MERGING_RESOLVED until the repository is reset, e.g. via the code editor.
@@ -659,18 +656,21 @@ public class GitService extends AbstractGitService {
      * @throws GitAPIException if the pull failed.
      */
     private void pull(Repository repo) throws GitAPIException {
-        try (Git git = new Git(repo)) {
-            log.info("Pull {}", repo.getLocalPath());
-            setRemoteUrl(repo);
-            pullCommand(git).call();
-        }
+        workingCopyLocks.withLock(workingCopyPath(repo), () -> {
+            try (Git git = new Git(repo)) {
+                log.info("Pull {}", repo.getLocalPath());
+                setRemoteUrl(repo);
+                pullCommand(git).call();
+            }
+            return null;
+        });
     }
 
     /**
      * Get branch that origin/HEAD points to, useful to handle default branches that are not main
      *
      * @param repo Local Repository Object.
-     * @return name of the origin/HEAD branch, e.g. 'main' or null if there is no HEAD
+     * @return name of the origin/HEAD branch, e.g. 'main' or 'course/main' or null if there is no HEAD
      */
     private String getOriginHead(Repository repo) throws GitAPIException {
         Ref originHeadRef;
@@ -684,7 +684,7 @@ public class GitService extends AbstractGitService {
         }
 
         String fullName = originHeadRef.getTarget().getName();
-        return StringUtils.substringAfterLast(fullName, "/");
+        return fullName.startsWith(Constants.R_HEADS) ? fullName.substring(Constants.R_HEADS.length()) : fullName;
     }
 
     /**
@@ -694,18 +694,71 @@ public class GitService extends AbstractGitService {
      */
     public void resetToOriginHead(Repository repo) {
         try {
+            resetToOriginHeadOrThrow(repo);
+        }
+        catch (GitAPIException | JGitInternalException ex) {
+            log.error("Cannot fetch/hard reset the repo {} with url {} to origin/HEAD due to the following exception", repo.getLocalPath(), repo.getRemoteRepositoryUri(), ex);
+        }
+    }
+
+    private void resetToOriginHeadOrThrow(Repository repo) throws GitAPIException {
+        workingCopyLocks.withLock(workingCopyPath(repo), () -> {
             fetchAll(repo);
             var originHead = getOriginHead(repo);
 
             if (originHead == null) {
                 log.error("Cannot hard reset the repo {} to origin/HEAD because it is empty.", repo.getLocalPath());
-                return;
+                return null;
             }
 
             reset(repo, "origin/" + originHead);
+            return null;
+        });
+    }
+
+    /**
+     * Get the local repository like {@link #getOrCheckoutRepository(LocalVCRepositoryUri, boolean, boolean)} with a pull, but for a caller that is about to replace the
+     * content of the repository: the working copy is hard reset to the remote instead of merging it. A merge fails with a checkout conflict if the working copy holds an
+     * uncommitted edit of a file that the remote changed meanwhile, and every later pull would fail the same way.
+     *
+     * @param repoUri     The remote repository.
+     * @param writeAccess Whether we want to write to the repository
+     * @return the repository, equal to the head of the remote repository.
+     * @throws GitAPIException if the repository could not be checked out or reset.
+     */
+    public Repository getOrCheckoutRepositoryDiscardingLocalChanges(LocalVCRepositoryUri repoUri, boolean writeAccess) throws GitAPIException {
+        Path localPath = getLocalPathOfRepo(repoClonePath, repoUri);
+        return workingCopyLocks.withLock(localPath, () -> {
+            Repository repository = checkoutRepositoryLocked(repoUri, repoUri, localPath, false, defaultBranch, writeAccess, false);
+            resetToOriginHeadOrThrow(repository);
+            return repository;
+        });
+    }
+
+    /**
+     * Replaces the content of the working copy like {@link #getOrCheckoutRepositoryDiscardingLocalChanges(LocalVCRepositoryUri, boolean)}, but keeps the lock of the
+     * working copy until the replacement is done, so two replacements cannot interleave.
+     *
+     * @param repoUri     the remote repository
+     * @param replacement the change of the working copy, which is run with the repository equal to the head of the remote repository
+     * @throws GitAPIException if the repository could not be checked out or reset, or if the replacement fails with it
+     * @throws IOException     if the replacement fails with it
+     */
+    public void replaceWorkingCopyContent(LocalVCRepositoryUri repoUri, WorkingCopyReplacement replacement) throws GitAPIException, IOException {
+        Path localPath = getLocalPathOfRepo(repoClonePath, repoUri);
+        try {
+            workingCopyLocks.withLock(localPath, () -> {
+                try {
+                    replacement.replace(getOrCheckoutRepositoryDiscardingLocalChanges(repoUri, true));
+                }
+                catch (IOException exception) {
+                    throw new UncheckedIOException(exception);
+                }
+                return null;
+            });
         }
-        catch (GitAPIException | JGitInternalException ex) {
-            log.error("Cannot fetch/hard reset the repo {} with url {} to origin/HEAD due to the following exception", repo.getLocalPath(), repo.getRemoteRepositoryUri(), ex);
+        catch (UncheckedIOException exception) {
+            throw exception.getCause();
         }
     }
 

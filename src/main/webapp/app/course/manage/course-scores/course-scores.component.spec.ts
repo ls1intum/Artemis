@@ -21,12 +21,11 @@ import { Exercise, ExerciseType, IncludedInOverallScore, exerciseTypes } from 'a
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { ParticipantScoresService, ScoresDTO } from 'app/course/participant-scores/participant-scores.service';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
@@ -40,7 +39,6 @@ import { CommonSpreadsheetCellObject } from 'app/shared-ui/export/row-builder/ex
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { PlagiarismCaseDTO } from 'app/plagiarism/shared/entities/PlagiarismCase';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -163,16 +161,6 @@ describe('CourseScoresComponent', () => {
         submissions: [{ results: [{ score: 200 } as Result] }],
         presentationScore: 100,
     } as StudentParticipation;
-    const courseScoreStudent1 = new ScoresDTO();
-    courseScoreStudent1.studentId = user1.id;
-    courseScoreStudent1.pointsAchieved = 50;
-    courseScoreStudent1.studentLogin = user1.login;
-    courseScoreStudent1.scoreAchieved = roundScorePercentSpecifiedByCourseSettings(50 / 40, course);
-    const courseScoreStudent2 = new ScoresDTO();
-    courseScoreStudent2.studentId = user2.id;
-    courseScoreStudent2.pointsAchieved = 15;
-    courseScoreStudent2.studentLogin = user2.login;
-    courseScoreStudent2.scoreAchieved = roundScorePercentSpecifiedByCourseSettings(15 / 40, course);
 
     const createGradeScore = (participationId: number, userId: number, exerciseId: number, score: number, presentationScore = 0) => ({
         participationId,
@@ -274,7 +262,6 @@ describe('CourseScoresComponent', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
-                MockProvider(ParticipantScoresService),
                 MockProvider(GradingService, {
                     findGradingScaleForCourse: () => {
                         return of(
@@ -294,7 +281,6 @@ describe('CourseScoresComponent', () => {
             .overrideComponent(CourseScoresComponent, {
                 set: {
                     imports: [
-                        MockModule(NgbTooltipModule),
                         NgClass,
                         MockComponent(FaIconComponent),
                         MockComponent(ParticipantScoresDistributionComponent),

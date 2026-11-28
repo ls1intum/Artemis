@@ -20,7 +20,7 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { User } from 'app/account/user/user.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { TumAetUiTableQueryEvent } from '@tumaet/ui-angular';
+import { TumAetUiTableQueryEvent } from '@tumaet/ui-angular/table';
 import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 
 describe('OrganizationManagementDetailComponent', () => {

@@ -1,4 +1,4 @@
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { Component, effect, input, signal } from '@angular/core';
 import { roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
@@ -12,7 +12,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-score-display',
     templateUrl: './score-display.component.html',
-    styleUrls: ['./score-display.component.scss'],
+    styleUrls: ['./score-display.component.css'],
     imports: [TumAetUiTooltipDirective, TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ScoreDisplayComponent {

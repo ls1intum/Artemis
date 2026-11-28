@@ -1,7 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-// DeleteDialogService is still built on PrimeNG's dynamic dialog, so its dependency has to be provided here.
-import { DialogService } from 'primeng/dynamicdialog';
 import { By } from '@angular/platform-browser';
 import { PasskeySettingsComponent } from 'app/account/user/settings/credentials/passkey-settings/passkey-settings.component';
 import { PasskeySettingsApiService } from 'app/account/user/settings/credentials/passkey-settings/passkey-settings-api.service';
@@ -20,7 +18,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { User } from 'app/account/user/user.model';
-import { TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 
 describe('PasskeySettingsComponent', () => {
     let component: PasskeySettingsComponent;
@@ -55,7 +53,6 @@ describe('PasskeySettingsComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                DialogService,
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 WebauthnApiService,

@@ -8,7 +8,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-feedback-suggestion-badge',
     templateUrl: './feedback-suggestion-badge.component.html',
-    styleUrls: ['./feedback-suggestion-badge.component.scss'],
+    styleUrls: ['./feedback-suggestion-badge.component.css'],
     imports: [FaIconComponent, TranslateDirective],
     host: {
         '[class.suggestion-badge-host--footer]': 'variant() === "footer"',

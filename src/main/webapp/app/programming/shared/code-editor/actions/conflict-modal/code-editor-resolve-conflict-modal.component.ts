@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { faBan, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -8,10 +9,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-code-editor-resolve-conflict-modal',
     templateUrl: './code-editor-resolve-conflict-modal.component.html',
-    imports: [FormsModule, TranslateDirective, FaIconComponent],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, TumAetUiButtonDirective],
 })
 export class CodeEditorResolveConflictModalComponent {
-    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogRef = inject<TumAetUiDialogRef<boolean>>(TumAetUiDialogRef);
 
     // Icons
     faBan = faBan;

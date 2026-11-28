@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -35,7 +36,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -126,7 +128,6 @@ class LocalVCServletServiceTest {
     @Mock
     private BuildAgentNetworkPolicy buildAgentNetworkPolicy;
 
-    @InjectMocks
     private LocalVCServletService localVCServletService;
 
     private User testUser;
@@ -164,8 +165,12 @@ class LocalVCServletServiceTest {
         // The repositories do not exist on disk, so reading the latest commit of one finds nothing
         ReflectionTestUtils.setField(repositoryResolver, "localVCBasePath", Path.of("/tmp/test-repos"));
         ReflectionTestUtils.setField(repositoryResolver, "localVCBaseUri", URI.create("http://localhost"));
-        // Setup the VcsAccessLogService as an Optional containing the mock
-        ReflectionTestUtils.setField(localVCServletService, "vcsAccessLogService", Optional.of(vcsAccessLogService));
+        // The constructor takes the size limits as primitives, which constructor injection of mocks cannot provide, so the service is built explicitly
+        localVCServletService = new LocalVCServletService(authenticationManager, userRepository, programmingExerciseRepository, programmingExerciseBuildConfigRepository,
+                repositoryAccessService, programmingExerciseParticipationService, auxiliaryRepositoryService, Optional.of(vcsAccessLogService),
+                participationVCSAccessTokenRepository, repositoryVCSAccessTokenRepository, authorizationCheckService, rateLimitService, userVcsAccessTokenService,
+                repositoryResolver, accessLogRecorder, buildAgentAuthenticationService, passwordAuthenticationNoticeService, buildAgentNetworkPolicy,
+                mock(LocalVCAgentTokenService.class), 20, 50);
     }
 
     @Test
@@ -200,10 +205,32 @@ class LocalVCServletServiceTest {
         AuthenticationContext.Session context = new AuthenticationContext.Session(session);
 
         when(accessLogRecorder.resolveAuthenticationMechanismFromSessionOrRequest(any(), eq(testUser), eq(testRepositoryUri))).thenReturn(AuthenticationMechanism.SSH);
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setId(5L);
+        when(programmingExerciseParticipationService.fetchParticipationByRepository(anyString(), anyString(), anyLong())).thenReturn(participation);
 
         localVCServletService.saveFailedAccessVcsAccessLog(context, "student1", testExercise.getId(), testRepositoryUri, testUser, RepositoryActionType.READ);
 
-        verify(vcsAccessLogService).saveAccessLog(eq(testUser), any(), eq(RepositoryActionType.CLONE_FAIL), eq(AuthenticationMechanism.SSH), anyString(), anyString());
+        verify(vcsAccessLogService).saveAccessLog(eq(testUser), eq(5L), eq(RepositoryActionType.CLONE_FAIL), eq(AuthenticationMechanism.SSH), anyString(), anyString());
+    }
+
+    /**
+     * A push that is refused while the references are advertised never reached the repository and follows no advertisement of its own, so its entry carries no commit. That is
+     * what keeps it from taking away the entry of an earlier push that was up to date.
+     */
+    @Test
+    void saveFailedAccessVcsAccessLog_forARefusedAdvertisement_storesNoCommit() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getMethod()).thenReturn("GET");
+        when(accessLogRecorder.resolveAuthenticationMechanismFromSessionOrRequest(any(), eq(testUser), eq(testRepositoryUri))).thenReturn(AuthenticationMechanism.PASSWORD);
+        var participation = new ProgrammingExerciseStudentParticipation();
+        participation.setId(5L);
+        when(programmingExerciseParticipationService.fetchParticipationByRepository(anyString(), anyString(), anyLong())).thenReturn(participation);
+
+        localVCServletService.saveFailedAccessVcsAccessLog(new AuthenticationContext.Request(request), "student1", testExercise.getId(), testRepositoryUri, testUser,
+                RepositoryActionType.WRITE);
+
+        verify(vcsAccessLogService).saveAccessLog(eq(testUser), eq(5L), eq(RepositoryActionType.PUSH_FAIL), eq(AuthenticationMechanism.PASSWORD), eq(""), any());
     }
 
     @Test
@@ -414,6 +441,48 @@ class LocalVCServletServiceTest {
 
             assertThat(localVCServletService.isBranchNameAllowedForRepository(repositoryOfProject("TEST"), "feature/login"))
                     .isEqualTo(LocalVCServletService.BranchingStatus.NAME_DOES_NOT_MATCH_REGEX);
+        }
+
+        @ParameterizedTest
+        // The quantified anchor matches only empty input, and (?=a)b can never match; the remaining inputs would match under Java's regex syntax.
+        @CsvSource({ "(?:^){2147483647},feature", "(a+)+,a", "(a|aa)+,aa", "(?=a)b,feature", "(a)\\1,aa", "a*?,a", "\\p{Alpha},a" })
+        void anExpressionWithUnsupportedSyntaxThatWasSavedEarlier_refusesEveryBranch(String regex, String branch) {
+            configureBranching(true, regex);
+
+            assertThat(localVCServletService.isBranchNameAllowedForRepository(repositoryOfProject("TEST"), branch))
+                    .isEqualTo(LocalVCServletService.BranchingStatus.NAME_DOES_NOT_MATCH_REGEX);
+        }
+
+        @Test
+        void persistedZeroWidthAlternativesAreRefusedBeforeTheMatcherIsCalled() {
+            configureBranching(true, "(^|^|^)".repeat(18) + "$");
+            // Keep the dangerous expression away from the Java matcher even when this regression fails.
+            try (var matcher = mockStatic(TimeBoundedRegexMatcher.class, invocation -> {
+                throw new AssertionError("An unsupported persisted expression must be rejected before matching");
+            })) {
+                assertThat(localVCServletService.isBranchNameAllowedForRepository(repositoryOfProject("TEST"), "feature"))
+                        .isEqualTo(LocalVCServletService.BranchingStatus.NAME_DOES_NOT_MATCH_REGEX);
+            }
+        }
+
+        @ParameterizedTest
+        @CsvSource(value = { ".*;BRANCH_ALLOWED;BRANCH_ALLOWED", "feature/.*;BRANCH_ALLOWED;NAME_DOES_NOT_MATCH_REGEX",
+                "^(feature|bugfix)/[a-z0-9-]+$;BRANCH_ALLOWED;NAME_DOES_NOT_MATCH_REGEX", "[a-z]{3,10}-\\d{2};NAME_DOES_NOT_MATCH_REGEX;BRANCH_ALLOWED" }, delimiter = ';')
+        void typicalExpressions_stayUsable(String regex, LocalVCServletService.BranchingStatus featureBranchStatus, LocalVCServletService.BranchingStatus simpleBranchStatus) {
+            configureBranching(true, regex);
+
+            assertThat(localVCServletService.isBranchNameAllowedForRepository(repositoryOfProject("TEST"), "feature/login-1")).isEqualTo(featureBranchStatus);
+            assertThat(localVCServletService.isBranchNameAllowedForRepository(repositoryOfProject("TEST"), "abc-12")).isEqualTo(simpleBranchStatus);
+        }
+
+        @Test
+        void aBranchNameLongerThanAnyReasonableName_isRefusedWithoutMatching() {
+            configureBranching(true, ".*");
+
+            assertThat(localVCServletService.isBranchNameAllowedForRepository(repositoryOfProject("TEST"), "a".repeat(256)))
+                    .isEqualTo(LocalVCServletService.BranchingStatus.NAME_DOES_NOT_MATCH_REGEX);
+            assertThat(localVCServletService.isBranchNameAllowedForRepository(repositoryOfProject("TEST"), "a".repeat(255)))
+                    .isEqualTo(LocalVCServletService.BranchingStatus.BRANCH_ALLOWED);
         }
 
         @Test

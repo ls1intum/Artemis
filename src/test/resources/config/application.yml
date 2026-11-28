@@ -143,14 +143,12 @@ artemis:
         api-base-url: https://mocke.tum.live/api/v2
 
 spring:
+    properties:
+        migrator:
+            # Tests shadow the production application.yml: fail on a removed configuration key here as well.
+            fail: on-error
     application:
         name: Artemis
-    ai:
-        chat:
-            memory:
-                repository:
-                    jdbc:
-                        initialize-schema: never # Disable JDBC schema init for tests (H2), prod uses Liquibase
     datasource:
         url: jdbc:mysql://artemis-mysql:3306/
         type: com.zaxxer.hikari.HikariDataSource
@@ -322,15 +320,37 @@ zonky:
 server:
     port: 8080
     url: http://localhost
-    forward-headers-strategy: native
+    request:
+        header:
+            forwarded:
+                strategy: web-server
 
 management:
+    health:
+        mail:
+            # A health poll must not touch the shared mail sender while a test stubs or resets its spy.
+            enabled: false
+    otlp:
+        metrics:
+            export:
+                # Tests shadow the production application.yml: retain its disabled metrics export so the
+                # publisher cannot poll health indicators and interfere with test-owned mocks and spies.
+                enabled: false
     endpoints:
         web:
             base-path: /management
             exposure:
                 include: ["artemismetrics"]
     endpoint:
+        health:
+            status:
+                # Tests shadow the production application.yml: keep the status ranking and HTTP mapping of the main file (see ConnectorHealth),
+                # so that an aggregate health test sees DEGRADED as production does. HealthStatusConfigurationTest guards the values of the main file.
+                order: DOWN, OUT_OF_SERVICE, DEGRADED, UP, UNKNOWN
+                http-mapping:
+                    DOWN: 503
+                    OUT_OF_SERVICE: 503
+                    DEGRADED: 200
         artemismetrics:
             access: read_only
     info:

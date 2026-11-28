@@ -1,13 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ImportComponent } from 'app/shared-ui/import/import.component';
 import { BaseEntity } from 'app/foundation/model/base-entity';
 import { SortService } from 'app/foundation/service/sort.service';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/foundation/pagination/pageable-table';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { Subject, of } from 'rxjs';
 import { DummyPagingService } from 'test/helpers/mocks/service/dummy-paging-service';
@@ -27,7 +27,7 @@ describe('ImportComponent', () => {
     let sortService: SortService;
     let searchStub: ReturnType<typeof vi.spyOn>;
     let sortByPropertyStub: ReturnType<typeof vi.spyOn>;
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
     let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
 
     let searchResult: SearchResult<BaseEntity>;
@@ -42,13 +42,13 @@ describe('ImportComponent', () => {
         dialogRef = {
             close: dialogRefCloseSpy,
             onClose: new Subject<any>(),
-        } as unknown as DynamicDialogRef;
+        } as unknown as TumAetUiDialogRef;
 
         // Return the promise so the test framework awaits setup; otherwise `comp`/`searchStub` can be stale
         // across tests, which - now that ngOnInit performs a search - leaks spurious paging-service calls.
         return TestBed.configureTestingModule({
             imports: [FormsModule, DummyImportComponent, MockComponent(ButtonComponent)],
-            providers: [MockProvider(DummyPagingService), MockProvider(SortService), { provide: DynamicDialogRef, useValue: dialogRef }],
+            providers: [MockProvider(DummyPagingService), MockProvider(SortService), { provide: TumAetUiDialogRef, useValue: dialogRef }],
         })
             .compileComponents()
             .then(() => {

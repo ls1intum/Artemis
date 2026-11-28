@@ -38,8 +38,22 @@
         <!-- Preload the spotlight LCP poster so the browser can start fetching it before Angular
              bootstraps (eliminates ~6.9 s resource-load delay flagged by Lighthouse).
              Video preload is omitted here because index.html is served for every route and the
-             video is only used on the landing page. -->
-        <link rel="preload" as="image" href="/content/images/landing/demo-videos/interactive-exercise-poster.webp" type="image/webp" fetchpriority="high" />
+             video is only used on the landing page. The poster is only used there as well, so every other
+             route skips it: on a slow connection a high-priority image competes with the scripts of the page. -->
+        <script>
+            (function () {
+                if (location.pathname !== '/') {
+                    return;
+                }
+                var poster = document.createElement('link');
+                poster.rel = 'preload';
+                poster.as = 'image';
+                poster.href = '/content/images/landing/demo-videos/interactive-exercise-poster.webp';
+                poster.type = 'image/webp';
+                poster.fetchPriority = 'high';
+                document.head.appendChild(poster);
+            })();
+        </script>
         <link rel="preload" as="image" href="/public/images/logo.svg" type="image/svg+xml" />
         <link rel="icon" type="image/svg+xml" sizes="any" href="logo/favicon.svg" />
         <link rel="manifest" href="manifest.webapp" />
@@ -76,25 +90,51 @@
                 "sameAs": ["https://github.com/ls1intum/Artemis", "https://docs.artemis.tum.de"]
             }
         </script>
+        <script>
+            // Sets the theme before the first paint, so a page in the dark theme does not start in the light one. The theme
+            // service (theme.service.ts) reads the same two sources once the application runs: the stored choice of the user
+            // (key `artemisapp.theme.preference`, value "LIGHT" or "DARK") and otherwise the colour scheme of the system.
+            (function () {
+                var theme;
+                try {
+                    var stored = JSON.parse(localStorage.getItem('artemisapp.theme.preference'));
+                    if (stored === 'DARK') theme = 'dark';
+                    if (stored === 'LIGHT') theme = 'light';
+                } catch (e) {
+                    // no usable preference: follow the system
+                }
+                if (!theme) {
+                    theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', theme);
+            })();
+        </script>
         <!-- Inline bootstrap skeleton + loading spinner. Paints under 1s so FCP fires before any
              application chunk is parsed; replaced by the real shell once Angular hydrates. -->
         <style>
             :root {
                 color-scheme: light dark;
             }
-            html,
-            body {
-                margin: 0;
-                padding: 0;
-                background: #e9ecef;
-                color: #212529;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-                min-height: 100vh;
-            }
-            @media (prefers-color-scheme: dark) {
+            /* Apollon ships its control styles in a layer named `components`. Declared first, it stays below the element defaults, as when those were not in a layer. The full order is explained in content/css/application.css. */
+            @layer components, base, tumaet-ui-theme, tumaet-ui-cdk, tumaet-ui;
+            /* In the layer of the element defaults (content/css/base.css), so the theme replaces these values once it has loaded. */
+            @layer base {
                 html,
                 body {
-                    background: #303030;
+                    margin: 0;
+                    padding: 0;
+                    background: #e9ecef;
+                    color: #212529;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                    min-height: 100vh;
+                }
+                /*
+                 * The body colours of the dark theme (themes/dark.css), for the time before the stylesheet has loaded.
+                 * `:where()` keeps the specificity of a single element selector, so the `body` rule of base.css replaces them like the light ones.
+                 */
+                html:where([data-theme='dark']),
+                :where(html[data-theme='dark']) body {
+                    background: #22272e;
                     color: #f8f9fa;
                 }
             }
