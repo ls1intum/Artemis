@@ -26,7 +26,7 @@ catalog:
   '@fortawesome/angular-fontawesome': 5.1.0
   '@fortawesome/fontawesome-svg-core': 7.3.1
   '@fortawesome/free-solid-svg-icons': 7.3.1
-  '@playwright/test': 1.65.0
+  '@playwright/test': 1.65.1
   '@storybook/addon-a11y': 10.6.7
   '@storybook/addon-docs': 10.6.7
   '@storybook/addon-themes': 10.6.7
@@ -50,7 +50,7 @@ catalog:
   jsdom: 30.0.1
   lodash-es: 4.18.1
   postcss: 8.5.32
-  playwright: 1.65.0
+  playwright: 1.65.1
   # Only here to satisfy Storybook's peer requirement (packages/tum-aet-ui declares it); Artemis itself is Angular.
   # Must equal the react and react-dom overrides below - see the note there.
   react: 19.3.1
