@@ -33,6 +33,8 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
         return false;
     },
     packageNamePattern: '',
+    packageNameEditedByUser: false,
+    onPackageNameEdited(): void {},
     packageNameRequired: false,
     problemStatementLoaded: false,
     projectTypes: [],

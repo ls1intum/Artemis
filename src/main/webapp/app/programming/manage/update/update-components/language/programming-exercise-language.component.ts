@@ -113,7 +113,9 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     isPackageNameValid(): boolean {
         const packageNameField = this.packageNameField();
         const languageOrPackageExempt = !this.programmingExercise().programmingLanguage || !this.programmingExerciseCreationConfig().packageNameRequired;
+        // Simple mode hides the field and derives the package name; the overall form validation still reports a missing or invalid one
+        const fieldHidden = !this.isEditFieldDisplayedRecord().packageName;
         const fieldValidOrExempt = this.programmingExercise().projectType === ProjectType.XCODE || packageNameField?.isDisabled || packageNameField?.valid;
-        return Boolean(languageOrPackageExempt || fieldValidOrExempt);
+        return Boolean(languageOrPackageExempt || fieldHidden || fieldValidOrExempt);
     }
 }

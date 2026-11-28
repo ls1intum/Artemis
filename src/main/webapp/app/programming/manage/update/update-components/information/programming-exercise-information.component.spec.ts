@@ -9,7 +9,8 @@ import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/
 import { By } from '@angular/platform-browser';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { NgModel } from '@angular/forms';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
 import { TableEditableFieldComponent } from 'app/shared-ui/table/editable-field/table-editable-field.component';
@@ -183,6 +184,42 @@ describe('ProgrammingExerciseInformationComponent', () => {
 
             expect(comp.programmingExercise().shortName!).toHaveLength(36);
             expect(comp.programmingExercise().shortName).toBe('A'.repeat(35) + '1');
+        });
+    });
+
+    describe('package name generation', () => {
+        beforeEach(() => {
+            fixture.componentRef.setInput('isSimpleMode', true);
+            comp.programmingExercise().programmingLanguage = ProgrammingLanguage.JAVA;
+            comp.programmingExercise().title = 'Bubble Sort';
+        });
+
+        it('should derive the package name from the generated short name', () => {
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(comp.programmingExercise().packageName).toBe('de.tum.cit.aet.bubblesort');
+        });
+
+        it('should add the course short name when switching back to simple mode after the course loaded', () => {
+            fixture.componentRef.setInput('isSimpleMode', false);
+            fixture.changeDetectorRef.detectChanges();
+            const course = new Course();
+            course.shortName = 'itp';
+            comp.programmingExercise().course = course;
+
+            fixture.componentRef.setInput('isSimpleMode', true);
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(comp.programmingExercise().packageName).toBe('de.tum.cit.aet.itp.bubblesort');
+        });
+
+        it('should keep a package name the instructor typed in advanced mode', () => {
+            comp.programmingExercise().packageName = 'com.example.sorting';
+            fixture.componentRef.setInput('programmingExerciseCreationConfig', { ...programmingExerciseCreationConfigMock, packageNameEditedByUser: true });
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(comp.programmingExercise().shortName).toBe('BubbleSort');
+            expect(comp.programmingExercise().packageName).toBe('com.example.sorting');
         });
     });
 });

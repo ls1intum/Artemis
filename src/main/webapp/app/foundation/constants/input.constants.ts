@@ -129,6 +129,10 @@ const escapeDots = (packages: string[]) => packages.map((name) => name.replaceAl
 // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations.
 // The first two lookaheads refuse the reserved packages above and everything below the ones in the first list.
 export const PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN = String.raw`^(?!(?:${escapeDots(RESERVED_PACKAGE_ANCESTORS_FOR_JAVA_KOTLIN)})$)(?!(?:${escapeDots(RESERVED_PACKAGE_SUBTREES_FOR_JAVA_KOTLIN)})(?:\.|$))(?!.*(?:\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\.|$))[A-Z_a-z][0-9A-Z_a-z]*(?:\.[A-Z_a-z][0-9A-Z_a-z]*)*$`;
+// Kotlin additionally refuses its own hard keywords that Java allows, because the package declaration of the Kotlin templates would not compile with them.
+// Keep in sync with PACKAGE_NAME_PATTERN_FOR_KOTLIN in ProgrammingExerciseValidationService.
+export const PACKAGE_NAME_PATTERN_FOR_KOTLIN =
+    String.raw`^(?!.*(?:\.|^)(?:as|fun|in|is|object|typealias|typeof|val|var|when)(?:\.|$))` + PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN.substring(1);
 // Swift package name Regex derived from (https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412),
 // with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
 export const APP_NAME_PATTERN_FOR_SWIFT =

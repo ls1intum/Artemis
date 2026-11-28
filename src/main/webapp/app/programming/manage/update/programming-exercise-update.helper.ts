@@ -1,3 +1,8 @@
+import { MAX_PACKAGE_NAME_LENGTH, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN, PACKAGE_NAME_PATTERN_FOR_KOTLIN } from 'app/foundation/constants/input.constants';
+import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { PROPOSED_PACKAGE_PREFIX_FOR_DOTTED_LANGUAGES, deriveProposedPackageName } from 'app/hyperion/problem-statement/problem-statement.utils';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+
 export enum ProgrammingExerciseInputField {
     // General section
     TITLE = 'title',
@@ -70,7 +75,7 @@ export const IS_DISPLAYED_IN_SIMPLE_MODE: Record<ProgrammingExerciseInputField, 
     programmingLanguage: true,
     projectType: false,
     withExemplaryDependency: false,
-    packageName: true,
+    packageName: false,
     enableStaticCodeAnalysis: false,
     sequentialTestRuns: false,
     // Version Control section
@@ -99,3 +104,42 @@ export const IS_DISPLAYED_IN_SIMPLE_MODE: Record<ProgrammingExerciseInputField, 
     presentationScore: false,
     plagiarismControl: false,
 };
+
+/**
+ * Derives the package name of a new exercise, so instructors do not have to pick one. Java and Kotlin get
+ * "de.tum.cit.aet.<course short name>.<exercise short name>"; other languages, and short names that are Java keywords, fall back to a name derived from the title.
+ * Kotlin keywords that Java allows get a suffix, because the Kotlin templates would not compile with them.
+ */
+export function deriveDefaultPackageName(exercise: ProgrammingExercise): string | undefined {
+    const language = exercise.programmingLanguage;
+    if (!language || !exercise.shortName) {
+        return undefined;
+    }
+    if ((language === ProgrammingLanguage.JAVA || language === ProgrammingLanguage.KOTLIN) && exercise.projectType !== ProjectType.MAVEN_BLACKBOX) {
+        const courseShortName = getCourseFromExercise(exercise)?.shortName;
+        const packageName = escapeKotlinKeywords(
+            language,
+            [PROPOSED_PACKAGE_PREFIX_FOR_DOTTED_LANGUAGES, courseShortName, exercise.shortName].filter(Boolean).join('.').toLowerCase(),
+        );
+        if (
+            packageName.length <= MAX_PACKAGE_NAME_LENGTH &&
+            new RegExp(language === ProgrammingLanguage.KOTLIN ? PACKAGE_NAME_PATTERN_FOR_KOTLIN : PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN).test(packageName)
+        ) {
+            return packageName;
+        }
+    }
+    return deriveProposedPackageName(exercise.title || exercise.shortName, language, exercise.projectType);
+}
+
+// Hard keywords of Kotlin that are valid in Java; PACKAGE_NAME_PATTERN_FOR_KOTLIN refuses them, so a segment like the course short name gets a suffix instead
+const KOTLIN_ONLY_HARD_KEYWORDS = new Set(['as', 'fun', 'in', 'is', 'object', 'typealias', 'typeof', 'val', 'var', 'when']);
+
+function escapeKotlinKeywords(language: ProgrammingLanguage, packageName: string): string {
+    if (language !== ProgrammingLanguage.KOTLIN) {
+        return packageName;
+    }
+    return packageName
+        .split('.')
+        .map((segment) => (KOTLIN_ONLY_HARD_KEYWORDS.has(segment) ? `${segment}exercise` : segment))
+        .join('.');
+}

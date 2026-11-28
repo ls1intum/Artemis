@@ -37,6 +37,7 @@ import {
     PACKAGE_NAME_PATTERN_FOR_GO,
     PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX,
     PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
+    PACKAGE_NAME_PATTERN_FOR_KOTLIN,
     PROGRAMMING_EXERCISE_NAME_MAX_LENGTH,
     PROGRAMMING_EXERCISE_SHORT_NAME_PATTERN,
 } from 'app/foundation/constants/input.constants';
@@ -55,7 +56,7 @@ import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/upd
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/group-timeline-lock/exercise-group-timeline-lock.component';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
-import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
+import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField, deriveDefaultPackageName } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule, NgForm } from '@angular/forms';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
@@ -144,6 +145,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly destroyRef = inject(DestroyRef);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
+    private readonly packageNameRegexForKotlin = new RegExp(PACKAGE_NAME_PATTERN_FOR_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
     private readonly appNameRegexForSwift = RegExp(APP_NAME_PATTERN_FOR_SWIFT);
     private readonly packageNameRegexForGo = RegExp(PACKAGE_NAME_PATTERN_FOR_GO);
@@ -196,6 +198,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     categoriesChanged = (categories: ExerciseCategory[]) => this.updateCategories(categories);
     projectTypeChanged = (projectType: ProjectType) => this.onProjectTypeChange(projectType);
     staticCodeAnalysisChanged = () => this.onStaticCodeAnalysisChanged();
+    packageNameEdited = () => (this.packageNameEditedByUser = true);
+    packageNameEditedByUser = false;
 
     auxiliaryRepositoryDuplicateNames = false;
     auxiliaryRepositoryDuplicateDirectories = false;
@@ -639,6 +643,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                                 ) {
                                     this.selectedProgrammingLanguage = this.programmingExercise.exerciseGroup.exam.course.defaultProgrammingLanguage;
                                 }
+                                // The generated package name contains the course short name, which is known only now
+                                this.updateDefaultPackageName();
                             });
                             // we need the course id  to make the request to the server if it's an import from file
                             if (this.isImportFromFile || this.isExternalImport) {
@@ -653,6 +659,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                                 if (!params['exerciseId'] && this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile && !this.isExternalImport) {
                                     this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
                                 }
+                                this.updateDefaultPackageName();
                                 this.exerciseCategories = this.programmingExercise.categories || [];
 
                                 this.loadCourseExerciseCategories(this.programmingExercise.course.id);
@@ -1134,7 +1141,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         // Select the correct pattern
         this.setPackageNamePattern(language);
         this.selectedProgrammingLanguage = language;
+        this.updateDefaultPackageName();
         return language;
+    }
+
+    /** In simple mode the package name field is hidden, so a new exercise gets a package name that fits the selected language. */
+    private updateDefaultPackageName() {
+        if (this.isSimpleMode() && this.isCreate && !this.packageNameEditedByUser) {
+            this.programmingExercise.packageName = deriveDefaultPackageName(this.programmingExercise) ?? this.programmingExercise.packageName;
+        }
     }
 
     /**
@@ -1149,8 +1164,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 this.packageNamePattern = APP_NAME_PATTERN_FOR_SWIFT;
                 break;
             case ProgrammingLanguage.JAVA:
-            case ProgrammingLanguage.KOTLIN:
                 this.packageNamePattern = useBlackboxPattern ? PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX : PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN;
+                break;
+            case ProgrammingLanguage.KOTLIN:
+                this.packageNamePattern = PACKAGE_NAME_PATTERN_FOR_KOTLIN;
                 break;
             case ProgrammingLanguage.GO:
                 this.packageNamePattern = PACKAGE_NAME_PATTERN_FOR_GO;
@@ -1179,6 +1196,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.selectedProjectType = projectType;
         const useBlackboxPattern = projectType === ProjectType.MAVEN_BLACKBOX;
         this.setPackageNamePattern(this.programmingExercise.programmingLanguage!, useBlackboxPattern);
+        this.updateDefaultPackageName();
         return projectType;
     }
 
@@ -1530,7 +1548,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 }
                 break;
             case ProgrammingLanguage.KOTLIN:
-                regex = this.packageNameRegexForJavaKotlin;
+                regex = this.packageNameRegexForKotlin;
                 break;
             case ProgrammingLanguage.SWIFT:
                 regex = this.appNameRegexForSwift;
@@ -1735,6 +1753,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         config.onWithDependenciesChanged = this.withDependenciesChanged;
         config.packageNameRequired = this.packageNameRequired;
         config.packageNamePattern = this.packageNamePattern;
+        config.packageNameEditedByUser = this.packageNameEditedByUser;
+        config.onPackageNameEdited = this.packageNameEdited;
         config.supportedLanguages = this.supportedLanguages;
         config.selectedProgrammingLanguage = this.selectedProgrammingLanguage;
         config.onProgrammingLanguageChange = this.programmingLanguageChanged;

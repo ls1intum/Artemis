@@ -242,6 +242,7 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         assertThat(result.exam().examMode()).isEqualTo(exam1.getExamMode());
         assertThat(result.exam().course()).isNotNull();
         assertThat(result.exam().course().id()).isEqualTo(course1.getId());
+        assertThat(result.exam().course().shortName()).isEqualTo(course1.getShortName());
         // The list-only exercises component is intentionally not populated on the single-group response.
         assertThat(result.exercises()).isNull();
     }

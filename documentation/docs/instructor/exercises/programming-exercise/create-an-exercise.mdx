@@ -54,7 +54,7 @@ The table below lists which settings each mode shows.
 |---|---|---|
 | General | Title, Categories, Difficulty | Short Name, Channel Name, Auxiliary Repositories, Checkout Paths |
 | Mode | — | Participation Mode, Team Size, Allow Offline IDE, Allow Online Editor, Allow Online IDE |
-| Language | Programming Language, Package Name | Project Type, Exemplary Dependency, Online IDE Configuration and Experience Level, Static Code Analysis, Sequential Test Runs, Build Plan |
+| Language | Programming Language | Package Name, Project Type, Exemplary Dependency, Online IDE Configuration and Experience Level, Static Code Analysis, Sequential Test Runs, Build Plan |
 | Version Control | — | Allow Custom Branches, Branch Name Pattern |
 | Build Time Window | — | Build window start, Build window end |
 | Problem | Problem Statement | Linked Competencies |
@@ -121,6 +121,8 @@ Three settings control how students can work on the exercise:
 - **Project Type**: The project structure of the template, for example Gradle or Maven for Java. Not available for every language.
 - **With exemplary dependency**: Java only. Adds an external Apache Commons Lang dependency as an example of using a third-party library.
 - **Package Name**: The package structure students must use. Not available for every language.
+  Artemis derives it from the course and exercise short names, for example `de.tum.cit.aet.itp2026.sorting` for Java and Kotlin.
+  In simple mode Artemis always sets it this way; in advanced mode you can change it before you create the exercise.
 - **Configuration for Online IDE**: The Online IDE image students work in. Shown only when **Allow Online IDE** is selected.
 - **Starting experience level in the Online IDE**: Beginner, Advanced or Expert, which decides how much of the Online IDE students see when they first
   open the exercise there. Shown only when **Allow Online IDE** is selected. Artemis writes the level into `.vscode/eduide.json` of every student

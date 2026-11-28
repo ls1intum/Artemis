@@ -27,6 +27,9 @@ export type ProgrammingExerciseCreationConfig = {
     onWithDependenciesChanged: (withDependencies: boolean) => boolean;
     packageNameRequired: boolean;
     packageNamePattern: string;
+    // true once the instructor typed a package name, which Artemis then no longer replaces with a generated one
+    packageNameEditedByUser: boolean;
+    onPackageNameEdited: () => void;
     supportedLanguages: string[];
     selectedProgrammingLanguage: ProgrammingLanguage;
     onProgrammingLanguageChange: (language: ProgrammingLanguage) => ProgrammingLanguage;

@@ -959,6 +959,27 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         });
     });
 
+    describe('generated package name', () => {
+        it('should include the course short name once the course is loaded', () => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.params = of({ courseId });
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.shortName = 'sorting';
+            route.data = of({ programmingExercise: exercise });
+            course.shortName = 'itp';
+            course.defaultProgrammingLanguage = ProgrammingLanguage.JAVA;
+            vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: course })));
+            vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
+            comp.isSimpleMode.set(true);
+
+            comp.ngOnInit();
+
+            expect(comp.programmingExercise.packageName).toBe('de.tum.cit.aet.itp.sorting');
+        });
+    });
+
     describe('programming language change and features', () => {
         beforeEach(() => {
             const route = TestBed.inject(ActivatedRoute);
@@ -1860,6 +1881,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     expected: 'artemisApp.exercise.form.packageName.pattern.JAVA',
                 },
                 { language: ProgrammingLanguage.KOTLIN, projectType: undefined, packageName: 'org', expected: 'artemisApp.exercise.form.packageName.pattern.KOTLIN' },
+                // Kotlin keywords that Java allows break the package declaration of the Kotlin templates
+                { language: ProgrammingLanguage.KOTLIN, projectType: undefined, packageName: 'de.tum.in.when', expected: 'artemisApp.exercise.form.packageName.pattern.KOTLIN' },
                 // The build guards of the test templates reject the packages of Ares and of the libraries that come with it
                 {
                     language: ProgrammingLanguage.JAVA,
@@ -1899,6 +1922,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 { language: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_MAVEN, packageName: 'de.tum.in' },
                 { language: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_MAVEN, packageName: 'org.example' },
                 { language: ProgrammingLanguage.KOTLIN, projectType: undefined, packageName: 'net.kotlin' },
+                { language: ProgrammingLanguage.KOTLIN, projectType: undefined, packageName: 'de.example.whenever' },
+                { language: ProgrammingLanguage.JAVA, projectType: ProjectType.PLAIN_GRADLE, packageName: 'de.tum.in.when' },
             ])('accepts the package name $packageName for $language $projectType', ({ language, projectType, packageName }) => {
                 // The tests of a black-box exercise are not run with Ares, so it may use a name that Ares reserves for other project types
                 comp.programmingExercise.programmingLanguage = language;

@@ -102,6 +102,13 @@ public class ProgrammingExerciseValidationService {
     public static final Pattern PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN = Pattern.compile(PACKAGE_NAME_REGEX_FOR_JAVA_KOTLIN);
 
     /**
+     * Kotlin additionally refuses its own hard keywords that Java allows, such as <code>when</code> or <code>fun</code>, because the package declaration of the Kotlin
+     * templates would not compile with them. Has to be kept in sync with the client constant <code>PACKAGE_NAME_PATTERN_FOR_KOTLIN</code>.
+     */
+    private static final Pattern PACKAGE_NAME_PATTERN_FOR_KOTLIN = Pattern
+            .compile("^(?!.*(?:\\.|^)(?:as|fun|in|is|object|typealias|typeof|val|var|when)(?:\\.|$))" + PACKAGE_NAME_REGEX_FOR_JAVA_KOTLIN.substring(1));
+
+    /**
      * Packages that no Java or Kotlin exercise may use, and everything below them. Student classes in these packages would shadow the JDK, Ares 2 or one of the libraries
      * that Ares and the tests bring along, so the build guards of the test templates reject them (<code>verify-ares-reserved-packages-v2</code> in the
      * <code>pom.xml</code> files, <code>AresReservedPackages.gradle</code>). The Kotlin template additionally reserves <code>kotlin</code> and <code>org.jetbrains</code>,
@@ -252,7 +259,8 @@ public class ProgrammingExerciseValidationService {
 
         // Check if package name matches regex
         Matcher packageNameMatcher = switch (programmingExercise.getProgrammingLanguage()) {
-            case JAVA, KOTLIN -> PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN.matcher(programmingExercise.getPackageName());
+            case JAVA -> PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN.matcher(programmingExercise.getPackageName());
+            case KOTLIN -> PACKAGE_NAME_PATTERN_FOR_KOTLIN.matcher(programmingExercise.getPackageName());
             case SWIFT -> PACKAGE_NAME_PATTERN_FOR_SWIFT.matcher(programmingExercise.getPackageName());
             case GO -> PACKAGE_NAME_PATTERN_FOR_GO.matcher(programmingExercise.getPackageName());
             case DART -> PACKAGE_NAME_PATTERN_FOR_DART.matcher(programmingExercise.getPackageName());

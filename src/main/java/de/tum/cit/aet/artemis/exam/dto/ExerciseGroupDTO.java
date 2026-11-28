@@ -65,15 +65,16 @@ public record ExerciseGroupDTO(long id, @Nullable String title, @Nullable Boolea
     }
 
     /**
-     * Slim course projection embedded in {@link ExamForExerciseGroupDTO}. Carries only the id and the default
-     * programming language, which the programming-exercise editor reads to preselect the language for a new exam
-     * programming exercise.
+     * Slim course projection embedded in {@link ExamForExerciseGroupDTO}. Carries only the id, the short name and the
+     * default programming language, which the programming-exercise editor reads to generate the package name and to
+     * preselect the language for a new exam programming exercise.
      *
      * @param id                         the id of the course
+     * @param shortName                  the short name of the course
      * @param defaultProgrammingLanguage the course's default programming language
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record CourseForExerciseGroupDTO(long id, @Nullable ProgrammingLanguage defaultProgrammingLanguage) {
+    public record CourseForExerciseGroupDTO(long id, @Nullable String shortName, @Nullable ProgrammingLanguage defaultProgrammingLanguage) {
 
         /**
          * Builds the slim course projection from a course entity.
@@ -82,7 +83,7 @@ public record ExerciseGroupDTO(long id, @Nullable String title, @Nullable Boolea
          * @return the slim course DTO
          */
         public static CourseForExerciseGroupDTO of(Course course) {
-            return new CourseForExerciseGroupDTO(course.getId(), course.getDefaultProgrammingLanguage());
+            return new CourseForExerciseGroupDTO(course.getId(), course.getShortName(), course.getDefaultProgrammingLanguage());
         }
     }
 
