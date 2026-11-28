@@ -32,6 +32,7 @@
             "channelName": "Channel Name",
             "channelNameHint": "Students discuss the lecture in a course channel with this name. It follows the title and may contain lowercase letters, digits and hyphens.",
             "description": "Description",
+            "descriptionMaxLength": "The description must not exceed {{ max }} characters.",
             "startDate": "Start Date",
             "endDate": "End Date",
             "course": "Course",
@@ -72,6 +73,7 @@
                 "createHint": "Save the lecture to add content to it.",
                 "nothingToSave": "The lecture details have no changes to save. Content is saved automatically.",
                 "detailsIncomplete": "Fill in the required details to save.",
+                "descriptionTooLong": "Shorten the lecture description to save.",
                 "periodInvalid": "Correct the lecture period to save.",
                 "savingContent": "Saving content…"
             },
