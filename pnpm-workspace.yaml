@@ -193,7 +193,7 @@ overrides:
   less: '4.9.1'
   # Must stay >= 11.0.1, which fixed GHSA-g3hv-75wg-m249 (denial of service through globparts amplification).
   # The 10.x line never got the fix, and every consumer (eslint, typescript-estree) asks for a range that does not reach 11.
-  minimatch: '11.0.8'
+  minimatch: '11.0.9'
   # Reached dev-side via postcss. 6.x is outside postcss's declared range, but the production build and the client tests pass with it
   # (checked 2026-11-14). It must stay on a patched release (GHSA: custom generators can loop indefinitely when size is zero).
   nanoid: '6.0.2'
