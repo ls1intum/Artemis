@@ -17,8 +17,10 @@ export interface OnlineTeamStudent {
 /** Instantiated and/or deserialized from server data; fields are populated after construction, hence the definite-assignment (!) markers. */
 export class TeamAssignmentPayload {
     public exerciseId!: number;
+    /** Missing when the student was unassigned from the team. */
     public teamId?: number;
-    public studentParticipations!: StudentParticipation[];
+    /** The server leaves an empty list out of the JSON, so this is missing when the student was unassigned from the team. */
+    public studentParticipations?: StudentParticipation[];
 }
 
 export class Team implements BaseEntity {
