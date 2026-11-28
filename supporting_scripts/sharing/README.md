@@ -31,4 +31,4 @@ Artemis fetches the metadata via `GET /api/pluginIF/v0.1/basket/local-basket`. I
 
 To export, use **Export to Sharing** on a local programming exercise. Artemis returns a URL on the mock's `/api/pluginIF/v0.1/exercise/import` endpoint. Opening it consumes the signed Artemis download once. The mock checks the exercise details and repository ZIP contents, saves the original bytes as `export-<sha256>.zip` in the output directory, and shows the title, archive members, repositories, and SHA-256 on its receipt page. Follow **Return to Artemis** to go back to the exercise.
 
-Run the companion tests with `node --test supporting_scripts/sharing/mock-platform.spec.mjs`.
+Run the companion tests with `pnpm exec vitest run --config config/eslint/rules/vitest.config.mjs supporting_scripts/sharing/mock-platform.spec.mjs`.

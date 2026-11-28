@@ -4,7 +4,7 @@ import { once } from 'node:events';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { test } from 'node:test';
+import { test } from 'vitest';
 
 import { createMockPlatform } from './mock-platform.mjs';
 
@@ -17,7 +17,7 @@ async function platform(t, fetchArtemis) {
     const server = await createMockPlatform({ key, output, fetchArtemis });
     server.listen(0, '127.0.0.1');
     await once(server, 'listening');
-    t.after(async () => {
+    t.onTestFinished(async () => {
         await new Promise((resolve) => server.close(resolve));
         await rm(output, { recursive: true, force: true });
     });
