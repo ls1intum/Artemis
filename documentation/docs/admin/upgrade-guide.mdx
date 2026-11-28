@@ -2,7 +2,7 @@
 id: upgrade-guide
 title: Upgrade Guide
 sidebar_label: Upgrade Guide
-last_reviewed: 2026-11-25
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -193,6 +193,26 @@ The steps below are for a migration failing on an existing database. A **fresh i
 
 Restore the backup taken in step 4 of the upgrade procedure if the cause cannot be resolved. Reverting to the previous release on its own is not enough: the schema does not revert with it, and the older release may not be able to read the migrated schema.
 
+## Select the distributed data provider
+
+Before upgrading, count every Artemis JVM, including dedicated build agents and AI workers. For a single JVM,
+remove the old provider setting to use the default `Local`, or explicitly select `Local`. Its in-memory queues and
+runtime state are cleared when the process stops.
+
+For multiple JVMs, provision a persistent Redis or Valkey store and configure `artemis.distributed-data.provider: Redis`
+and the same endpoint on **all** processes before starting the new release. Installations already using Redis or Valkey
+can keep their store and follow its [backup and schema upgrade procedure](/admin/production-setup/distributed-data#prepare-an-upgrade).
+
+When switching from an in-memory store, schedule a maintenance window. Stop accepting new jobs, let queued and running
+builds finish, and confirm that both the result queue and the deferred-result queue are empty. Drain AI worker operations
+if applicable. Record runtime feature toggles you want to restore. If you customized the expiry of per-node file or PlantUML caches,
+copy that lifetime in seconds to `artemis.cache.time-to-live-seconds`. Stop all old nodes together. The new provider starts
+with empty runtime state. If nodes used a central configuration service, copy the settings they still need into their
+Spring configuration files or environment first. Remove obsolete discovery settings and services, start one core,
+then start the remaining nodes.
+Restore the recorded feature toggles. Check that each agent appears under **Administration → Build System**,
+run a test build, and verify its result before reopening admission. See [provider configuration](/admin/production-setup/distributed-data#configure-the-provider).
+
 ## Version-Specific Migration Steps
 
 Some releases change behavior in a way that requires a one-time action on existing data. These steps are additional to the upgrade scenarios above.
@@ -282,7 +302,7 @@ share one budget of the login rate limits, and appear with one address in their 
 ### 10.8: Build Results in the Distributed Data
 
 With Redis or Valkey, this release changes the stored layout of build results (schema version `2`). **Finished build results that were still waiting in the result queues when you stop the old nodes are discarded**, and their submissions need a new build. Queued builds are kept. A build that was still running when you stopped its node is marked as missing and rebuilt automatically after about five to ten minutes.
-Pause all build agents and wait until the running builds have finished and the result queues are empty before you upgrade. Hazelcast keeps nothing across a restart and is not affected. See
+Pause all build agents and wait until the running builds have finished and the result queues are empty before you upgrade. See
 [Distributed Data with Redis or Valkey](/admin/production-setup/distributed-data#schema-1-to-2).
 
 ### 10.7: Rate Limit of Git Operations

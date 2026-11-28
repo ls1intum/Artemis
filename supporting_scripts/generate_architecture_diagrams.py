@@ -232,12 +232,12 @@ def top_level():
     # build agent and distributed data provider below the server. The provider lies under LocalCI, the agent under LocalVC
     below_y = cont_y + cont_h + 58
     ba_w, ba_h = s.size_comp("Build Agent", ["runs build jobs in Docker"])
-    dp_w, dp_h = s.size_comp(PROVIDER, ["Hazelcast, Redis or Local"])
+    dp_w, dp_h = s.size_comp(PROVIDER, ["Local or Redis"])
     px = ci_x + ci_w // 2
     provider_x = px - 24
     agent_x = provider_x - 106 - ba_w
     s.comp(agent_x, below_y, "Build Agent", ["runs build jobs in Docker"])
-    s.comp(provider_x, below_y, PROVIDER, ["Hazelcast, Redis or Local"])
+    s.comp(provider_x, below_y, PROVIDER, ["Local or Redis"])
     vx = cx + vc_w // 2 - 10
     s.assembly([(vx, cont_y + cont_h - 26), (vx, below_y)], "Git (HTTPS, SSH)", (vx + 22, below_y - 22), stub=40, anchor="start")
     s.assembly([(px, below_y), (px, cont_y + cont_h - 26)], "Distributed Data", (px + 22, below_y - 22), anchor="start")

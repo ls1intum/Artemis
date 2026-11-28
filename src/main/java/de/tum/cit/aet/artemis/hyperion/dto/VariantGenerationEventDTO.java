@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.hyperion.service.variants.VariantJobPhase;
 
 /**
  * Websocket event published on "/user/topic/hyperion/variant-generation/jobs/{jobId}" via
- * HyperionWebsocketService. Events are fire-and-forget; the Hazelcast job record is
+ * HyperionWebsocketService. Events are fire-and-forget; the shared job record is
  * authoritative and the client re-syncs from REST on reconnect.
  *
  * @param type              event kind

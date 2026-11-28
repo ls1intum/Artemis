@@ -35,7 +35,7 @@ class AiWorkerArchitectureTest {
     @Test
     void workerCannotAccessDatabaseOrClusterProviders() {
         noClasses().that().resideInAnyPackage("..aiworker.service.sandbox..", "..aiworker.service.messaging..").should().dependOnClassesThat()
-                .resideInAnyPackage("java.sql..", "javax.sql..", "jakarta.persistence..", "org.springframework.data..", "org.hibernate..", "com.hazelcast..", "org.redisson..",
+                .resideInAnyPackage("java.sql..", "javax.sql..", "jakarta.persistence..", "org.springframework.data..", "org.hibernate..", "org.redisson..",
                         "org.springframework.jdbc..", "jakarta.servlet..", "org.springframework.web.servlet..", "org.springframework.web.socket..")
                 .check(CLASSES);
     }

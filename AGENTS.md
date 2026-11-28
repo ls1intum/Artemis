@@ -36,7 +36,7 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
   `@OneToOne` field. Read it through its own repository. [database](documentation/docs/developer/guidelines/database.mdx)
 - Do not add `@Lob` or Hibernate second-level `@Cache`. Use Spring caching only with explicit
   eviction. [database](documentation/docs/developer/guidelines/database.mdx) · [caching](documentation/docs/developer/guidelines/caching.mdx)
-- Cross-node state goes through `DistributedDataProvider`, never direct Hazelcast or Redis access.
+- Cross-node state goes through `DistributedDataProvider`, never direct Redis client access.
   Use `getExpiringMap(name, ttl)` for entries with a lifetime. [distributed data](documentation/docs/developer/guidelines/distributed-data.mdx)
 - Specify a locale for Java case conversion, including in tests. Use `Locale.ROOT` for machine
   values; keep `Locale.ENGLISH` only where the same login convention already applies.

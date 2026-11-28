@@ -2,21 +2,48 @@
 id: distributed-data
 title: Distributed Data with Redis or Valkey
 sidebar_label: Distributed Data with Redis or Valkey
-last_reviewed: 2026-11-12
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
 
-This page explains how to upgrade an Artemis installation that uses Redis or Valkey for distributed data. It is
-intended for system administrators. Developers changing data stored in the distributed provider should follow the
-[developer guideline](/developer/guidelines/distributed-data#changing-a-stored-type).
+Artemis uses the `Local` provider by default. Use it when the core and any build agent run in the same JVM.
+Queues, caches and other runtime state in that JVM are lost when the process stops.
+
+## Configure the provider
+
+For several core nodes, a dedicated build agent or a separate AI worker, configure **every Artemis process** to use
+the `Redis` provider and the same Redis or Valkey endpoint. Separate processes need a shared store even on one host.
+Configure persistence and backups for the store, restrict network access to the Artemis processes, and supply the
+credentials through your deployment secret manager. For example:
+
+```yaml
+artemis:
+    distributed-data:
+        provider: Redis
+    instance-id: ${NODE_NAME}
+spring:
+    data:
+        redis:
+            host: ${REDIS_HOST}
+            port: 6379
+            username: ${REDIS_USERNAME}
+            password: ${REDIS_PASSWORD}
+            client-name: artemis-${NODE_NAME}
+```
+
+Set `NODE_NAME` to a distinct, stable value for each process, for example `core-1` or `agent-1`.
+The resulting Redis client name must start with `artemis` so membership checks recognize the process.
+Omitting the client name lets Artemis generate a unique one at startup. For a build agent, use the same
+stable value for its short name and Redis client name, for example `artemis-agent-1`, to identify it consistently in
+queue and connection diagnostics. The host and credentials must address the same store on every node. For an existing installation changing providers, follow the
+[upgrade guide](/admin/upgrade-guide#select-the-distributed-data-provider).
 
 ## When this procedure applies
 
-The procedure applies when `artemis.distributed-data.provider` is set to `Redis`. Valkey implements the Redis protocol
-and follows the same procedure. Redis and Valkey persist queues, maps, sets, and other shared state across an Artemis
-restart. Hazelcast does not retain this data after its cluster stops and therefore needs no persistent-data migration.
+Redis and Valkey retain shared state across an Artemis restart. The following steps cover upgrades of installations
+that already use either store.
 
 Artemis assigns a schema version to its Redis or Valkey data. Stored structures use versioned keys such as
 `artemis:v2:{buildJobQueue}`. The metadata keys are deliberately readable without an Artemis-specific codec:
@@ -150,10 +177,8 @@ same time.
 
 ## Types that Artemis reads from the store
 
-Both distributed data providers, Hazelcast and Redis or Valkey, only create objects of known types when they read a
-stored value. A class name found in the store that is not on the list is refused before the class is loaded, and the
-read fails with the message `Type <name> is not allowed in the distributed data store`. Hazelcast reports its own
-message, `Resolving class <name> is not allowed`. Artemis logs the refused name on the Redis or Valkey provider.
+The Redis provider checks serialized type names before it loads their classes. If a type is outside the allowlist,
+Artemis logs the name and rejects the read with `Type <name> is not allowed in the distributed data store`.
 
 The filter only restricts what is read. It does not change how values are written, the stored format or the schema
 version, so the migration described on this page is not affected. A mixed-version rollout needs one precaution: the result
@@ -176,7 +201,6 @@ The default list contains:
 | `com.nimbusds.jose.`                                                                     | Signing keys of the LTI key set                              |
 | `com.github.dockerjava.api.exception.`                                                   | Exceptions of failed build jobs                              |
 | Two Spring cache markers, `NullValue` and `SimpleKey`                                    | A cached `null` and a composite cache key                    |
-| `com.hazelcast.`, `io.github.bucket4j.` (Hazelcast only)                                 | Classes that Hazelcast and the rate limiter store themselves |
 
 Types outside the default list, such as those in `java.net` or most of `java.io`, are refused. Most
 installations need no change. If a plugin or a locally patched Artemis stores additional types, add them with the
@@ -201,9 +225,3 @@ They are no longer read by the new release and do not prevent startup.
 Do not run a broad wildcard deletion, especially when the store is shared with another application. After the upgrade
 and its backup-retention period, an administrator may inventory and remove known obsolete Artemis keys according to the
 installation's normal change procedure.
-
-## Redis does not need a service registry
-
-Artemis nodes using Redis discover shared state through Redis and do not use Eureka to form the distributed-data
-cluster. A Redis deployment therefore does not need a JHipster Registry. This differs from Hazelcast, where Artemis
-uses the registry to discover cluster members.

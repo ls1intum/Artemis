@@ -20,7 +20,7 @@ Artemis therefore distinguishes two kinds of components on `/management/health` 
 
 | Component                                                                                                                                                                       | Status when it fails | HTTP status of `/management/health` |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ----------------------------------- |
-| Critical components: database, distributed data provider (Hazelcast, Redis), websocket broker, service registry, continuous integration server (LocalCI or Jenkins), disk space | `DOWN`               | 503                                 |
+| Critical components: database, distributed data store (when Redis is configured), websocket broker, continuous integration server (LocalCI or Jenkins), disk space | `DOWN`               | 503                                 |
 | Optional external systems: Athena, Iris (Pyris), Hermes, Apollon, Weaviate, the sharing platform, Hyperion workers                                                              | `DEGRADED`           | 200                                 |
 
 The status of the whole instance is the most severe status of its components: `DOWN` before `OUT_OF_SERVICE` before `DEGRADED` before `UP`.

@@ -15,7 +15,7 @@ services:
         depends_on:
             mysql:
                 condition: service_healthy
-            jhipster-registry:
+            redis:
                 condition: service_healthy
             activemq-broker:
                 condition: service_healthy
@@ -26,6 +26,14 @@ services:
         env_file:
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
             - ${ARTEMIS_NODE_1_ENV_FILE:-./artemis/config/node1.env}
+        environment:
+            &redis-environment
+            ARTEMIS_DISTRIBUTEDDATA_PROVIDER: Redis
+            SPRING_DATA_REDIS_HOST: artemis-redis
+            SPRING_DATA_REDIS_PORT: 6379
+            SPRING_DATA_REDIS_USERNAME: artemis
+            SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-artemis}
+            SPRING_DATA_REDIS_CLIENTNAME: artemis-node-1
         volumes:
             - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
             - ${ARTEMIS_LEGAL_MOUNT:-./.docker-data/artemis-legal}:/opt/artemis/legal
@@ -41,7 +49,7 @@ services:
         depends_on:
             mysql:
                 condition: service_healthy
-            jhipster-registry:
+            redis:
                 condition: service_healthy
             activemq-broker:
                 condition: service_healthy
@@ -54,6 +62,9 @@ services:
         env_file:
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
             - ${ARTEMIS_NODE_2_ENV_FILE:-./artemis/config/node2.env}
+        environment:
+            <<: *redis-environment
+            SPRING_DATA_REDIS_CLIENTNAME: artemis-node-2
         volumes:
             - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
             - ${ARTEMIS_LEGAL_MOUNT:-./.docker-data/artemis-legal}:/opt/artemis/legal
@@ -69,7 +80,7 @@ services:
         depends_on:
             mysql:
                 condition: service_healthy
-            jhipster-registry:
+            redis:
                 condition: service_healthy
             activemq-broker:
                 condition: service_healthy
@@ -82,22 +93,23 @@ services:
         env_file:
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
             - ${ARTEMIS_NODE_3_ENV_FILE:-./artemis/config/node3.env}
+        environment:
+            <<: *redis-environment
+            SPRING_DATA_REDIS_CLIENTNAME: artemis-node-3
         volumes:
             - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
             - ${ARTEMIS_LEGAL_MOUNT:-./.docker-data/artemis-legal}:/opt/artemis/legal
             - ${ARTEMIS_DATA_EXPORT_MOUNT:-./.docker-data/artemis-data-exports}:/opt/artemis/data-exports
             - /var/run/docker.sock:/var/run/docker.sock
 
-    jhipster-registry:
+    redis:
         extends:
-            file: ./broker-registry.yml
-            service: jhipster-registry
-        networks:
-            - artemis
+            file: ./test-server-redis.yml
+            service: redis
 
     activemq-broker:
         extends:
-            file: ./broker-registry.yml
+            file: ./broker.yml
             service: activemq-broker
         networks:
             - artemis

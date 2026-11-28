@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
@@ -23,20 +22,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import com.hazelcast.config.Config;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationActivityDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
@@ -53,35 +48,18 @@ import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService.GenerationUsage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class GenerationJobReplayStoreTest {
 
     /** The production default; the TTL-specific tests inject their own short value instead of waiting this long. */
     private static final Duration TERMINAL_REPLAY_TTL = Duration.ofHours(4);
 
-    private HazelcastInstance hazelcastInstance;
+    private final DistributedDataProvider data = new LocalDataProviderService();
 
     private GenerationJobReplayStore replayStore;
 
-    @BeforeAll
-    void startHazelcast() {
-        Config config = new Config();
-        config.setClusterName("hyperion-job-replay-store-test-" + System.nanoTime());
-        config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
-        hazelcastInstance = Hazelcast.newHazelcastInstance(config);
-    }
-
     @BeforeEach
     void setUp() {
-        hazelcastInstance.getDistributedObjects().forEach(distributedObject -> distributedObject.destroy());
-        replayStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), TERMINAL_REPLAY_TTL, Duration.ofHours(4),
-                HyperionDistributedDataTestProvider.provider(hazelcastInstance).getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
-    }
-
-    @AfterAll
-    void stopHazelcast() {
-        hazelcastInstance.shutdown();
+        replayStore = new GenerationJobReplayStore(data, TERMINAL_REPLAY_TTL, Duration.ofHours(4), data.getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
     }
 
     @Test
@@ -96,8 +74,8 @@ class GenerationJobReplayStoreTest {
         var otherInstructor = new User();
         otherInstructor.setLogin("other");
 
-        var reconnectedStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), TERMINAL_REPLAY_TTL, Duration.ofHours(4),
-                HyperionDistributedDataTestProvider.provider(hazelcastInstance).getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
+        var reconnectedStore = new GenerationJobReplayStore(data, TERMINAL_REPLAY_TTL, Duration.ofHours(4),
+                data.getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
         assertThat(reconnectedStore.getStatus(owner, exercise)).hasValueSatisfying(status -> assertThat(status.input()).isEqualTo(input));
         assertThat(reconnectedStore.getStatus(otherInstructor, exercise)).isEmpty();
 
@@ -109,9 +87,9 @@ class GenerationJobReplayStoreTest {
     void initializeStart_whenTranscriptInitializationFails_keepsReplayEmpty() {
         long exerciseId = 82L;
         String key = String.valueOf(exerciseId);
-        IMap<String, GenerationJobService.JobTranscript> failingTranscriptMap = spy(transcriptMap());
+        DistributedMap<String, GenerationJobService.JobTranscript> failingTranscriptMap = spy(transcriptMap());
         doThrow(new IllegalStateException("transcript initialization failed")).when(failingTranscriptMap).put(eq(key), any(GenerationJobService.JobTranscript.class));
-        ReflectionTestUtils.setField(replayStore, "transcriptMap", new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedMap<>(failingTranscriptMap));
+        ReflectionTestUtils.setField(replayStore, "transcriptMap", failingTranscriptMap);
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> replayStore.initializeStart(exerciseId, "failed", "owner", GenerationMode.GENERATE, null))
                 .withMessageContaining("transcript initialization failed");
@@ -126,11 +104,11 @@ class GenerationJobReplayStoreTest {
         String key = String.valueOf(exerciseId);
         GenerationJobService.JobTranscript previousTranscript = transcript("previous", exerciseId, GenerationMode.ADAPT, true);
         GenerationJobService.JobFileChangeIndex previousIndex = fileChangeIndex("previous", "solution/Previous.java");
-        transcriptMap().set(key, previousTranscript);
-        fileChangeMap().set(key, previousIndex);
-        IMap<String, GenerationJobService.JobFileChangeIndex> failingFileChangeMap = spy(fileChangeMap());
+        transcriptMap().put(key, previousTranscript);
+        fileChangeMap().put(key, previousIndex);
+        DistributedMap<String, GenerationJobService.JobFileChangeIndex> failingFileChangeMap = spy(fileChangeMap());
         doThrow(new IllegalStateException("file-change initialization failed")).when(failingFileChangeMap).put(eq(key), any(GenerationJobService.JobFileChangeIndex.class));
-        ReflectionTestUtils.setField(replayStore, "fileChangeMap", new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedMap<>(failingFileChangeMap));
+        ReflectionTestUtils.setField(replayStore, "fileChangeMap", failingFileChangeMap);
 
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> replayStore.initializeStart(exerciseId, "failed", "owner", GenerationMode.GENERATE, null))
                 .withMessageContaining("file-change initialization failed");
@@ -149,8 +127,8 @@ class GenerationJobReplayStoreTest {
         GenerationJobService.JobFileChangeIndex previousIndex = fileChangeIndex("previous", "solution/Previous.java");
         GenerationJobService.JobTranscript newerTranscript = transcript("newer", exerciseId, GenerationMode.ADAPT, false);
         GenerationJobService.JobFileChangeIndex newerIndex = fileChangeIndex("newer", "solution/Newer.java");
-        transcriptMap().set(key, newerTranscript);
-        fileChangeMap().set(key, newerIndex);
+        transcriptMap().put(key, newerTranscript);
+        fileChangeMap().put(key, newerIndex);
         GenerationJobReplayStore.StartedReplay failedReplay = new GenerationJobReplayStore.StartedReplay(failedTranscript, failedIndex, previousTranscript, previousIndex,
                 new GenerationJobService.JobArtifacts("previous", "owner",
                         new ExerciseGenerationRetainedArtifactsDTO("previous", ExerciseGenerationArtifactCompleteness.COMPLETE, "Retained statement", null, List.of())));
@@ -172,13 +150,13 @@ class GenerationJobReplayStoreTest {
         GenerationJobService.JobFileChangeIndex failedIndex = fileChangeIndex("failed", null);
         GenerationJobService.JobTranscript previousTranscript = transcript("previous", exerciseId, GenerationMode.ADAPT, true);
         GenerationJobService.JobFileChangeIndex previousIndex = fileChangeIndex("previous", null);
-        transcriptMap().set(key, failedTranscript);
-        fileChangeMap().set(key, failedIndex);
+        transcriptMap().put(key, failedTranscript);
+        fileChangeMap().put(key, failedIndex);
         GenerationJobReplayStore.StartedReplay failedReplay = new GenerationJobReplayStore.StartedReplay(failedTranscript, failedIndex, previousTranscript, previousIndex,
                 new GenerationJobService.JobArtifacts("previous", "owner",
                         new ExerciseGenerationRetainedArtifactsDTO("previous", ExerciseGenerationArtifactCompleteness.COMPLETE, "Retained statement", null, List.of())));
-        IMap<String, GenerationJobService.JobInfo> originalJobMap = jobMap();
-        IMap<String, GenerationJobService.JobInfo> observedJobMap = spy(originalJobMap);
+        DistributedMap<String, GenerationJobService.JobInfo> originalJobMap = jobMap();
+        DistributedMap<String, GenerationJobService.JobInfo> observedJobMap = spy(originalJobMap);
         CountDownLatch lockAttempts = new CountDownLatch(2);
         CountDownLatch firstLockAcquired = new CountDownLatch(1);
         AtomicInteger acquisitions = new AtomicInteger();
@@ -190,7 +168,7 @@ class GenerationJobReplayStoreTest {
             }
             return null;
         }).when(observedJobMap).lock(key);
-        ReflectionTestUtils.setField(replayStore, "jobMap", new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedMap<>(observedJobMap));
+        ReflectionTestUtils.setField(replayStore, "jobMap", observedJobMap);
         ExecutorService executor = Executors.newFixedThreadPool(2);
         AtomicBoolean transcriptLockHeld = new AtomicBoolean(true);
 
@@ -220,12 +198,12 @@ class GenerationJobReplayStoreTest {
     void retainAfterJobCleared_expiresTranscriptFileChangesAndUsageTogetherOnTheConfiguredTtl() {
         // The TTL is set at three independent call sites, so a short injected value proves all three read the same configured value. It must still outlast the writes below,
         // which already carry it, and the pre-condition reads that follow them.
-        GenerationJobReplayStore shortLivedStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), Duration.ofSeconds(5),
-                Duration.ofHours(4), HyperionDistributedDataTestProvider.provider(hazelcastInstance).getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
+        GenerationJobReplayStore shortLivedStore = new GenerationJobReplayStore(data, Duration.ofSeconds(5), Duration.ofHours(4),
+                data.getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
         long exerciseId = 610L;
         String key = String.valueOf(exerciseId);
         String jobId = "short-lived";
-        jobMap().set(key, jobInfo(jobId, exerciseId));
+        jobMap().put(key, jobInfo(jobId, exerciseId));
         shortLivedStore.initializeStart(exerciseId, jobId, "owner", GenerationMode.GENERATE, null);
         shortLivedStore.recordFileChange(exerciseId, jobId, ExerciseGenerationFileChangeDTO.of("Solution.java", ExerciseGenerationFileChangeDTO.ACTION_WRITE, 1));
         shortLivedStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR, "failed"), true);
@@ -244,9 +222,8 @@ class GenerationJobReplayStoreTest {
 
     @Test
     void newReplayStore_rejectsANonPositiveTerminalReplayTtl() {
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), Duration.ZERO, Duration.ofHours(4),
-                        HyperionDistributedDataTestProvider.provider(hazelcastInstance).getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4))))
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(
+                () -> new GenerationJobReplayStore(data, Duration.ZERO, Duration.ofHours(4), data.getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4))))
                 .withMessageContaining("terminal-replay-ttl");
     }
 
@@ -255,7 +232,7 @@ class GenerationJobReplayStoreTest {
         long exerciseId = 611L;
         String key = String.valueOf(exerciseId);
         String jobId = "truncating";
-        jobMap().set(key, jobInfo(jobId, exerciseId));
+        jobMap().put(key, jobInfo(jobId, exerciseId));
         replayStore.initializeStart(exerciseId, jobId, "owner", GenerationMode.GENERATE, null);
         replayStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "HEAD"), false);
         int overflow = 5;
@@ -282,7 +259,7 @@ class GenerationJobReplayStoreTest {
         long exerciseId = 613L;
         String key = String.valueOf(exerciseId);
         String jobId = "structure-preserving";
-        jobMap().set(key, jobInfo(jobId, exerciseId));
+        jobMap().put(key, jobInfo(jobId, exerciseId));
         replayStore.initializeStart(exerciseId, jobId, "owner", GenerationMode.GENERATE, null);
         replayStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "HEAD"), false);
         replayStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.phase(ExerciseGenerationEventDTO.Phase.DESIGNING, "designing"), false);
@@ -310,7 +287,7 @@ class GenerationJobReplayStoreTest {
         String key = String.valueOf(exerciseId);
         String jobId = "spend-stamped";
         ExerciseGenerationLiveUsageDTO liveUsage = new ExerciseGenerationLiveUsageDTO(1000, 100, 800, 700, 250_000, 3, 0.0042, true);
-        jobMap().set(key, jobInfo(jobId, exerciseId));
+        jobMap().put(key, jobInfo(jobId, exerciseId));
         replayStore.initializeStart(exerciseId, jobId, "owner", GenerationMode.GENERATE, null);
         replayStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "HEAD"), false);
         replayStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.phase(ExerciseGenerationEventDTO.Phase.DESIGNING, "designing").withLiveUsage(liveUsage), false);
@@ -333,7 +310,7 @@ class GenerationJobReplayStoreTest {
         long exerciseId = 614L;
         String key = String.valueOf(exerciseId);
         String jobId = "structural-only";
-        jobMap().set(key, jobInfo(jobId, exerciseId));
+        jobMap().put(key, jobInfo(jobId, exerciseId));
         replayStore.initializeStart(exerciseId, jobId, "owner", GenerationMode.GENERATE, null);
         replayStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "HEAD"), false);
         for (int index = 0; index < GenerationJobReplayStore.MAX_RETAINED_EVENTS + 10; index++) {
@@ -353,7 +330,7 @@ class GenerationJobReplayStoreTest {
         long exerciseId = 612L;
         String key = String.valueOf(exerciseId);
         String jobId = "not-truncating";
-        jobMap().set(key, jobInfo(jobId, exerciseId));
+        jobMap().put(key, jobInfo(jobId, exerciseId));
         replayStore.initializeStart(exerciseId, jobId, "owner", GenerationMode.GENERATE, null);
         for (int index = 0; index < GenerationJobReplayStore.MAX_RETAINED_EVENTS; index++) {
             replayStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.PROGRESS, "p" + index), false);
@@ -370,7 +347,7 @@ class GenerationJobReplayStoreTest {
         long exerciseId = 613L;
         String key = String.valueOf(exerciseId);
         String jobId = "sealing";
-        jobMap().set(key, jobInfo(jobId, exerciseId));
+        jobMap().put(key, jobInfo(jobId, exerciseId));
         replayStore.initializeStart(exerciseId, jobId, "owner", GenerationMode.GENERATE, null);
         replayStore.recordToolCalls(jobId, 3);
 
@@ -386,7 +363,7 @@ class GenerationJobReplayStoreTest {
     void sealUsageOnWorkerExit_withoutATerminalTranscript_closesTheAccountAsIncompleteInsteadOfLeavingItPending() {
         long exerciseId = 614L;
         String jobId = "no-verdict";
-        jobMap().set(String.valueOf(exerciseId), jobInfo(jobId, exerciseId));
+        jobMap().put(String.valueOf(exerciseId), jobInfo(jobId, exerciseId));
         replayStore.initializeStart(exerciseId, jobId, "owner", GenerationMode.GENERATE, null);
 
         replayStore.sealUsageOnWorkerExit(exerciseId, jobId);
@@ -398,7 +375,7 @@ class GenerationJobReplayStoreTest {
     void markUsageIncomplete_isAbsorbing_soNoLaterSealCanClaimACompleteAccount() {
         long exerciseId = 615L;
         String jobId = "uncertain";
-        jobMap().set(String.valueOf(exerciseId), jobInfo(jobId, exerciseId));
+        jobMap().put(String.valueOf(exerciseId), jobInfo(jobId, exerciseId));
         replayStore.initializeStart(exerciseId, jobId, "owner", GenerationMode.GENERATE, null);
 
         replayStore.markUsageIncomplete(jobId);
@@ -412,15 +389,15 @@ class GenerationJobReplayStoreTest {
     void failedIncompleteMarkerWrite_cannotBecomeCompleteAfterRecoveryAndWorkerExit() {
         long exerciseId = 617L;
         String jobId = "incomplete-marker-write-failed";
-        jobMap().set(String.valueOf(exerciseId), jobInfo(jobId, exerciseId));
+        jobMap().put(String.valueOf(exerciseId), jobInfo(jobId, exerciseId));
         replayStore.initializeStart(exerciseId, jobId, "owner", GenerationMode.GENERATE, null);
-        IMap<String, Object> actualUsageMap = usageMap();
-        IMap<String, Object> failingUsageMap = spy(actualUsageMap);
-        doThrow(new IllegalStateException("usage write failed")).when(failingUsageMap).put(eq(jobId), any(), anyLong(), eq(TimeUnit.MILLISECONDS));
-        ReflectionTestUtils.setField(replayStore, "usageMap", new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedMap<>(failingUsageMap));
+        DistributedMap<String, Object> actualUsageMap = usageMap();
+        DistributedMap<String, Object> failingUsageMap = spy(actualUsageMap);
+        doThrow(new IllegalStateException("usage write failed")).when(failingUsageMap).put(eq(jobId), any(), any(Duration.class));
+        ReflectionTestUtils.setField(replayStore, "usageMap", failingUsageMap);
 
         assertThatCode(() -> replayStore.markUsageIncomplete(jobId)).doesNotThrowAnyException();
-        ReflectionTestUtils.setField(replayStore, "usageMap", new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedMap<>(actualUsageMap));
+        ReflectionTestUtils.setField(replayStore, "usageMap", actualUsageMap);
         assertThat(replayStore.usageSnapshot(jobId).accountingState()).isEqualTo(ExerciseGenerationAccountingState.INCOMPLETE);
         replayStore.recordEvent(exerciseId, jobId, ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.DONE, "saved"), true);
         replayStore.sealUsageOnWorkerExit(exerciseId, jobId);
@@ -432,15 +409,15 @@ class GenerationJobReplayStoreTest {
     void failedAggregateWrite_cannotBecomeCompleteAfterTheStoreRecovers() {
         long exerciseId = 617L;
         String jobId = "aggregate-write-failed";
-        jobMap().set(String.valueOf(exerciseId), jobInfo(jobId, exerciseId));
+        jobMap().put(String.valueOf(exerciseId), jobInfo(jobId, exerciseId));
         replayStore.initializeStart(exerciseId, jobId, "owner", GenerationMode.GENERATE, null);
-        IMap<String, Object> actualUsageMap = usageMap();
-        IMap<String, Object> failingUsageMap = spy(actualUsageMap);
-        doThrow(new IllegalStateException("usage write failed")).when(failingUsageMap).put(eq(jobId), any(), anyLong(), eq(TimeUnit.MILLISECONDS));
-        ReflectionTestUtils.setField(replayStore, "usageMap", new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedMap<>(failingUsageMap));
+        DistributedMap<String, Object> actualUsageMap = usageMap();
+        DistributedMap<String, Object> failingUsageMap = spy(actualUsageMap);
+        doThrow(new IllegalStateException("usage write failed")).when(failingUsageMap).put(eq(jobId), any(), any(Duration.class));
+        ReflectionTestUtils.setField(replayStore, "usageMap", failingUsageMap);
 
         assertThatCode(() -> replayStore.recordAgentTurn(jobId)).doesNotThrowAnyException();
-        ReflectionTestUtils.setField(replayStore, "usageMap", new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedMap<>(actualUsageMap));
+        ReflectionTestUtils.setField(replayStore, "usageMap", actualUsageMap);
         replayStore.sealUsage(jobId);
 
         assertThat(replayStore.usageSnapshot(jobId).accountingState()).isEqualTo(ExerciseGenerationAccountingState.INCOMPLETE);
@@ -449,16 +426,16 @@ class GenerationJobReplayStoreTest {
 
     @Test
     void failedAggregateWriteMarkerExpiresOnlyAfterTheRetainedUsageIsGone() {
-        var shortLivedStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), Duration.ofSeconds(1), Duration.ofSeconds(1));
+        var shortLivedStore = new GenerationJobReplayStore(data, Duration.ofSeconds(1), Duration.ofSeconds(1));
         String jobId = "short-lived-failed-usage";
         shortLivedStore.initializeStart(618L, jobId, "owner", GenerationMode.GENERATE, null);
-        IMap<String, Object> actualUsageMap = usageMap();
-        IMap<String, Object> failingUsageMap = spy(actualUsageMap);
-        doThrow(new IllegalStateException("usage write failed")).when(failingUsageMap).put(eq(jobId), any(), anyLong(), eq(TimeUnit.MILLISECONDS));
-        ReflectionTestUtils.setField(shortLivedStore, "usageMap", new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedMap<>(failingUsageMap));
+        DistributedMap<String, Object> actualUsageMap = usageMap();
+        DistributedMap<String, Object> failingUsageMap = spy(actualUsageMap);
+        doThrow(new IllegalStateException("usage write failed")).when(failingUsageMap).put(eq(jobId), any(), any(Duration.class));
+        ReflectionTestUtils.setField(shortLivedStore, "usageMap", failingUsageMap);
 
         shortLivedStore.recordAgentTurn(jobId);
-        ReflectionTestUtils.setField(shortLivedStore, "usageMap", new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedMap<>(actualUsageMap));
+        ReflectionTestUtils.setField(shortLivedStore, "usageMap", actualUsageMap);
         assertThat(shortLivedStore.usageSnapshot(jobId).accountingState()).isEqualTo(ExerciseGenerationAccountingState.INCOMPLETE);
 
         await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
@@ -476,7 +453,7 @@ class GenerationJobReplayStoreTest {
     void recordAgentTurnAndAttempt_accumulateOnTheUsageSnapshot() {
         long exerciseId = 616L;
         String jobId = "counting";
-        jobMap().set(String.valueOf(exerciseId), jobInfo(jobId, exerciseId));
+        jobMap().put(String.valueOf(exerciseId), jobInfo(jobId, exerciseId));
         replayStore.initializeStart(exerciseId, jobId, "owner", GenerationMode.GENERATE, null);
 
         replayStore.recordAttempt(jobId);
@@ -538,8 +515,8 @@ class GenerationJobReplayStoreTest {
 
     @Test
     void recordUsage_appliesTheRetentionBound() {
-        GenerationJobReplayStore shortLivedStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), Duration.ofSeconds(1),
-                Duration.ofHours(4), HyperionDistributedDataTestProvider.provider(hazelcastInstance).getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
+        GenerationJobReplayStore shortLivedStore = new GenerationJobReplayStore(data, Duration.ofSeconds(1), Duration.ofHours(4),
+                data.getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
 
         shortLivedStore.recordUsage("orphan", llmRequest());
         assertThat(usageMap().get("orphan")).isNotNull();
@@ -577,19 +554,19 @@ class GenerationJobReplayStoreTest {
         return new GenerationJobService.JobFileChangeIndex(jobId, "owner", changes);
     }
 
-    private IMap<String, GenerationJobService.JobInfo> jobMap() {
-        return hazelcastInstance.getMap("hyperion-exercise-generation-jobs");
+    private DistributedMap<String, GenerationJobService.JobInfo> jobMap() {
+        return data.getMap(GenerationJobService.JOB_MAP_NAME);
     }
 
-    private IMap<String, GenerationJobService.JobTranscript> transcriptMap() {
-        return hazelcastInstance.getMap("hyperion-exercise-generation-transcripts");
+    private DistributedMap<String, GenerationJobService.JobTranscript> transcriptMap() {
+        return data.getExpiringMap("hyperion-exercise-generation-transcripts", GenerationJobService.DEFAULT_TERMINAL_REPLAY_TTL);
     }
 
-    private IMap<String, GenerationJobService.JobFileChangeIndex> fileChangeMap() {
-        return hazelcastInstance.getMap("hyperion-exercise-generation-file-changes");
+    private DistributedMap<String, GenerationJobService.JobFileChangeIndex> fileChangeMap() {
+        return data.getExpiringMap("hyperion-exercise-generation-file-changes", GenerationJobService.DEFAULT_TERMINAL_REPLAY_TTL);
     }
 
-    private IMap<String, Object> usageMap() {
-        return hazelcastInstance.getMap("hyperion-exercise-generation-usage");
+    private DistributedMap<String, Object> usageMap() {
+        return data.getExpiringMap("hyperion-exercise-generation-usage", GenerationJobService.DEFAULT_TERMINAL_REPLAY_TTL);
     }
 }

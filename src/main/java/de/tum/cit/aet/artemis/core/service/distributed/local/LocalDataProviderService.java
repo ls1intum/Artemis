@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.core.service.distributed.local;
 
 import java.time.Duration;
 import java.util.Comparator;
-import java.util.Map;
-import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.UUID;
@@ -58,7 +56,7 @@ public class LocalDataProviderService implements DistributedDataProvider {
      *
      * <p>
      * Requesting the same name once as a plain and once as a priority queue is rejected rather than silently answered
-     * with whichever kind was created first. That is the same failure the Hazelcast provider guards against: a caller
+     * with whichever kind was created first. A caller
      * that believes it holds a priority queue but is handed a FIFO one dispatches in the wrong order without any signal.
      */
     @Override
@@ -129,61 +127,10 @@ public class LocalDataProviderService implements DistributedDataProvider {
         return Set.of(getLocalMemberAddress());
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>
-     * The local provider models a single node that is both core and build agent, and it reports that node as alive, so
-     * an agent missing from the set is genuinely unknown.
-     */
-    @Override
-    public boolean buildAgentsAppearInClusterMemberList() {
-        return true;
-    }
-
-    @Override
-    public boolean noDataMemberInClusterAvailable() {
-        return false;
-    }
-
-    @Override
-    public Set<String> getConnectedClientNames() {
-        // Local provider doesn't support client tracking - assume all registered agents are connected
-        return Set.of();
-    }
-
-    @Override
-    public Optional<Map<String, Set<String>>> getConnectedClientAddresses() {
-        // Local provider has no client connections to observe: everything runs in one JVM. Empty rather than an empty
-        // map, so callers treat this as "unknown" and skip the address binding, which is correct here - there is no
-        // remote build agent whose origin could be checked.
-        return Optional.empty();
-    }
-
-    @Override
-    public boolean clientsConnectDirectlyToCoreNodes() {
-        // Everything runs in one JVM, so there is no client connection at all to draw a conclusion from
-        return false;
-    }
-
     @Override
     public boolean isConnectedToCluster() {
         // Local provider is always "connected" (it's a single-node in-memory implementation)
         return isInstanceRunning();
-    }
-
-    @Override
-    public UUID addConnectionStateListener(Consumer<Boolean> callback) {
-        // Local provider is always connected - invoke callback immediately with isInitialConnection=true
-        callback.accept(true);
-        // Return a random UUID - listeners are not tracked since local provider doesn't have lifecycle events
-        return UUID.randomUUID();
-    }
-
-    @Override
-    public boolean removeConnectionStateListener(UUID listenerId) {
-        // No-op for local provider - listeners are not tracked
-        return false;
     }
 
     @Override

@@ -88,7 +88,7 @@ then pin the result with a wire-contract test; `AthenaConfigWireContractTest` is
 
 ## Distributed data
 
-**Rule.** Never use Hazelcast or Redis directly. Everything crossing a node boundary, including the
+**Rule.** Use Redis clients only in provider adapters. Everything crossing a node boundary, including the
 build job queue, feature toggles, scheduling messages, websocket broker status, LTI state, Pyris
 jobs, and `@Cacheable` caches, goes through `DistributedDataProvider` in
 `src/main/java/de/tum/cit/aet/artemis/core/service/distributed/`.
@@ -96,16 +96,14 @@ jobs, and `@Cacheable` caches, goes through `DistributedDataProvider` in
 **Enforced by.**
 `src/test/java/de/tum/cit/aet/artemis/shared/architecture/DistributedDataProviderArchitectureTest.java`,
 which fails the build if a production class outside a small named set of provider adapters depends
-on `com.hazelcast..`, `org.redisson..`, or `org.springframework.data.redis..`.
+on `org.redisson..` or `org.springframework.data.redis..`.
 
 **Why it is not merely stylistic.** The provider is selected by `artemis.distributed-data.provider`.
-With the Redis provider, no Hazelcast instance is created at all, so a direct Hazelcast call
-does not throw. It silently writes state nowhere.
+Single-process installations use the Local provider and need no connection to a shared store.
 
-**Adding a capability.** Add it to `DistributedDataProvider`, implement it for Hazelcast, Redis, and
-Local, and add a case to
+**Adding a capability.** Add it to `DistributedDataProvider`, implement it for Local and Redis, and add a case to
 `src/test/java/de/tum/cit/aet/artemis/core/service/distributed/AbstractDistributedDataTest.java`.
-That suite is the only thing keeping the three providers in agreement.
+That suite is the only thing keeping the two providers in agreement.
 
 **Entry lifetimes.** Request them at the call site with `getExpiringMap(name, ttl)`. `getMap(name)`
 rejects a per-entry TTL on purpose: a provider-level map configuration only applies to that one

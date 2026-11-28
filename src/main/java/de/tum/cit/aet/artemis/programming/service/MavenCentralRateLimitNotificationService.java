@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  * <p>
  * The detection runs fully asynchronously so that build result processing (and thereby the feedback students and instructors are waiting for) is never delayed. To avoid flooding
  * instructors when many builds fail at the same time, at most one email per exercise and day is sent. The deduplication state lives in a cluster-shared map obtained through the
- * {@link DistributedDataProvider} abstraction, so it works on both Hazelcast and Redis deployments; the per-key lock linearises concurrent detections from different nodes. On
+ * {@link DistributedDataProvider} abstraction, so it works on Local and Redis deployments; the per-key lock linearises concurrent detections from different nodes. On
  * deployments without a {@link DistributedDataProvider} (e.g. Jenkins setups without the {@code localci} profile), the service falls back to a node-local map — in a multi-node
  * setup each node then deduplicates independently, which in the worst case sends one email per node per day instead of one per cluster (an acceptable degradation for this rare
  * topology).

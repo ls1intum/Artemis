@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL;
 import static de.tum.cit.aet.artemis.core.config.Constants.REDIS;
 
@@ -20,7 +19,7 @@ import org.springframework.core.env.Environment;
  * removed once every environment has been switched over.
  *
  * <p>
- * Centralised here because eight conditions and configuration classes need the same answer, and having each read the
+ * Centralised here because several conditions and configuration classes need the same answer, and having each read the
  * environment directly is how they would drift apart during the rename.
  */
 public final class DistributedDataProviderResolver {
@@ -38,7 +37,7 @@ public final class DistributedDataProviderResolver {
     /**
      * The values the provider beans are conditioned on. Anything else is a misconfiguration.
      */
-    private static final List<String> SUPPORTED_PROVIDERS = List.of(HAZELCAST, REDIS, LOCAL);
+    private static final List<String> SUPPORTED_PROVIDERS = List.of(LOCAL, REDIS);
 
     private DistributedDataProviderResolver() {
     }
@@ -47,12 +46,12 @@ public final class DistributedDataProviderResolver {
      * Resolves the configured provider name, preferring the current property over the superseded one.
      *
      * @param environment the Spring environment to read from
-     * @return the configured provider name, or {@link Constants#HAZELCAST} if neither property is set
+     * @return the configured provider name, or {@link Constants#LOCAL} if neither property is set
      */
     public static String resolveProvider(Environment environment) {
         String provider = firstNonBlank(environment.getProperty(PROVIDER_PROPERTY), environment.getProperty(LEGACY_PROVIDER_PROPERTY));
         if (provider == null) {
-            return HAZELCAST;
+            return LOCAL;
         }
         // Every provider bean is gated on an exact match, so an unsupported value would leave the application with no
         // provider at all and fail much later with an unrelated error. Reject it where the misconfiguration actually is.

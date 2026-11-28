@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration;
 
+import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationRedisTestSupport.client;
+import static de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationRedisTestSupport.provider;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -18,18 +20,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.redisson.Redisson;
-import org.redisson.api.RedissonClient;
-import org.redisson.config.Config;
-import org.redisson.spring.data.connection.RedissonConnectionFactory;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.DockerClientFactory;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.config.RedissonCodecConfiguration;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
-import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisClientListResolver;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedDataProviderService;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -47,9 +42,9 @@ class GenerationJobServiceRedisTest {
     void cancellationRecordStillBlocksSaveAfterFastSignalOrAcknowledgementIsLost(boolean acknowledgementLost) {
         try (var valkey = ValkeyTestContainerFactory.create()) {
             valkey.start();
-            var redis = client("redis://" + valkey.getHost() + ":" + valkey.getMappedPort(6379), "generation-cancellation-test");
+            var redis = client("redis://" + valkey.getHost() + ":" + valkey.getMappedPort(6379), "artemis-generation-cancellation-test");
             try {
-                var provider = spy(provider(redis, "generation-cancellation-test"));
+                var provider = spy(provider(redis));
                 var slots = spy(provider.<String, GenerationJobService.JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
                 doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
                 var jobs = jobs(provider);
@@ -85,11 +80,11 @@ class GenerationJobServiceRedisTest {
         try (var valkey = ValkeyTestContainerFactory.create()) {
             valkey.start();
             String address = "redis://" + valkey.getHost() + ":" + valkey.getMappedPort(6379);
-            var firstRedis = client(address, "generation-first-node");
-            var secondRedis = client(address, "generation-second-node");
+            var firstRedis = client(address, "artemis-generation-first-node");
+            var secondRedis = client(address, "artemis-generation-second-node");
             try {
-                var first = jobs(provider(firstRedis, "generation-first-node"));
-                var second = jobs(provider(secondRedis, "generation-second-node"));
+                var first = jobs(provider(firstRedis));
+                var second = jobs(provider(secondRedis));
                 var ready = new CountDownLatch(2);
                 var start = new CountDownLatch(1);
                 try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
@@ -131,8 +126,8 @@ class GenerationJobServiceRedisTest {
             var firstRedis = client(address, "artemis-live-save-first");
             var secondRedis = client(address, "artemis-live-save-second");
             try (var reader = Executors.newSingleThreadExecutor()) {
-                var first = new GenerationLiveSaveService(provider(firstRedis, "artemis-live-save-first"), true);
-                var second = new GenerationLiveSaveService(provider(secondRedis, "artemis-live-save-second"), true);
+                var first = new GenerationLiveSaveService(provider(firstRedis), true);
+                var second = new GenerationLiveSaveService(provider(secondRedis), true);
                 String firstReader = first.claimReader(42L);
                 String oldGroupToken = second.getSlotInfo(42L).orElseThrow().token();
 
@@ -183,20 +178,6 @@ class GenerationJobServiceRedisTest {
         }, mock(GenerationTokenUsageService.class));
         jobs.init();
         return jobs;
-    }
-
-    private static RedissonDistributedDataProviderService provider(RedissonClient redis, String name) {
-        var provider = new RedissonDistributedDataProviderService(redis, new RedisClientListResolver(new RedissonConnectionFactory(redis)));
-        ReflectionTestUtils.setField(provider, "redisClientName", name);
-        return provider;
-    }
-
-    private static RedissonClient client(String address, String name) {
-        var config = new Config();
-        config.useSingleServer().setAddress(address).setClientName(name).setConnectionMinimumIdleSize(1).setConnectionPoolSize(2).setSubscriptionConnectionMinimumIdleSize(1)
-                .setSubscriptionConnectionPoolSize(2);
-        new RedissonCodecConfiguration().artemisRedissonSerializationCodecCustomizer().customize(config);
-        return Redisson.create(config);
     }
 
     private static User owner() {

@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_DEVELOPMENT;
-import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
@@ -75,9 +74,6 @@ public class ArtemisApp {
         if (activeProfiles.contains(SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(ArtemisConstants.SPRING_PROFILE_PRODUCTION)) {
             log.error("You have misconfigured your application! It should not run with both the 'dev' and 'prod' profiles at the same time.");
         }
-        if (activeProfiles.contains(SPRING_PROFILE_DEVELOPMENT) && activeProfiles.contains(ArtemisConstants.SPRING_PROFILE_CLOUD)) {
-            log.error("You have misconfigured your application! It should not run with both the 'dev' and 'cloud' profiles at the same time.");
-        }
         if (activeProfiles.contains(PROFILE_CORE)) {
             InternalAccessConfiguration.warnIfFullyOpen(env);
             AllowedDockerRegistries.from(env).logActiveList();
@@ -91,28 +87,7 @@ public class ArtemisApp {
      */
     public static void main(String[] args) {
         SpringApplication app = new SpringApplication(ArtemisApp.class);
-        DefaultProfileUtil.addDefaultProfile(app);
-        app.addListeners((ApplicationEnvironmentPreparedEvent event) -> {
-            Environment environment = event.getEnvironment();
-            if (environment.acceptsProfiles(Profiles.of(PROFILE_AIWORKER)) && environment.acceptsProfiles(Profiles.of(PROFILE_CORE))) {
-                throw new IllegalArgumentException("An AI Worker node cannot also run the core profile");
-            }
-            if (!isWorkerOnly(environment)) {
-                return;
-            }
-            if (environment.getProperty("spring.main.web-application-type", WebApplicationType.class, WebApplicationType.NONE) != WebApplicationType.NONE) {
-                throw new IllegalArgumentException("An AI Worker-only node cannot enable an HTTP server");
-            }
-            if (environment.matchesProfiles(PROFILE_BUILDAGENT + " | " + PROFILE_LOCALCI + " | " + PROFILE_LOCALVC)) {
-                throw new IllegalArgumentException("An AI Worker-only node cannot use server or build-agent profiles");
-            }
-            if (DistributedDataProviderResolver.isProvider(environment, LOCAL)) {
-                throw new IllegalArgumentException("An AI Worker-only node requires a shared Hazelcast or Redis data provider");
-            }
-            if (DistributedDataProviderResolver.isProvider(environment, HAZELCAST) && !environment.getProperty("eureka.client.enabled", Boolean.class, false)) {
-                throw new IllegalArgumentException("An AI Worker-only node requires Eureka discovery with Hazelcast");
-            }
-        });
+        configureApplication(app);
         // The upload root of FilePathConverter is not set here. It is set by FileUploadPathEnvironmentPostProcessor,
         // before the context is created, because ApplicationReadyEvent fires inside run() and its listeners resolve
         // file locations.
@@ -132,6 +107,38 @@ public class ArtemisApp {
         if (env.acceptsProfiles(Profiles.of(PROFILE_CORE))) {
             deferredEagerBeanInitialization(context);
         }
+    }
+
+    /**
+     * Sets the default profile and validates the node role for executable and servlet-container deployments.
+     *
+     * @param app the application being prepared
+     */
+    public static void configureApplication(SpringApplication app) {
+        DefaultProfileUtil.addDefaultProfile(app);
+        app.addListeners((ApplicationEnvironmentPreparedEvent event) -> {
+            Environment environment = event.getEnvironment();
+            if (environment.acceptsProfiles(Profiles.of(PROFILE_AIWORKER)) && environment.acceptsProfiles(Profiles.of(PROFILE_CORE))) {
+                throw new IllegalArgumentException("An AI Worker node cannot also run the core profile");
+            }
+            if (environment.matchesProfiles(PROFILE_BUILDAGENT + " & !" + PROFILE_CORE + " & !" + PROFILE_AIWORKER)
+                    && DistributedDataProviderResolver.isProvider(environment, LOCAL)) {
+                throw new IllegalArgumentException(
+                        "A standalone build agent requires the Redis data provider. Configure " + DistributedDataProviderResolver.PROVIDER_PROPERTY + "=Redis.");
+            }
+            if (!isWorkerOnly(environment)) {
+                return;
+            }
+            if (environment.getProperty("spring.main.web-application-type", WebApplicationType.class, WebApplicationType.NONE) != WebApplicationType.NONE) {
+                throw new IllegalArgumentException("An AI Worker-only node cannot enable an HTTP server");
+            }
+            if (environment.matchesProfiles(PROFILE_BUILDAGENT + " | " + PROFILE_LOCALCI + " | " + PROFILE_LOCALVC)) {
+                throw new IllegalArgumentException("An AI Worker-only node cannot use server or build-agent profiles");
+            }
+            if (DistributedDataProviderResolver.isProvider(environment, LOCAL)) {
+                throw new IllegalArgumentException("An AI Worker-only node requires the Redis data provider");
+            }
+        });
     }
 
     private static boolean isWorkerOnly(Environment environment) {

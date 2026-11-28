@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
  * <p>
  * <strong>Overview</strong>
  * </p>
- * This service wires together all Hazelcast-based event listeners relevant to LocalCI operation.
+ * This service wires together all distributed event listeners relevant to LocalCI operation.
  * It ensures that build job states, build agent information, and result processing remain consistent
  * across the distributed cluster — even under transient network issues, node restarts, or CI agent failures.
  *
@@ -59,7 +59,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
  * <strong>Fault Tolerance and Recovery</strong>
  * </p>
  * <ul>
- * <li>Detects and marks "lost" or "stuck" jobs that may occur after build agent crashes or Hazelcast disconnects.</li>
+ * <li>Detects and marks "lost" or "stuck" jobs that may occur after build agent crashes or provider disconnects.</li>
  * <li>Processes leftover result queue entries periodically to ensure no build results are stranded.</li>
  * <li>Sends targeted email alerts when a build agent self-pauses due to consecutive failures.</li>
  * </ul>
@@ -68,7 +68,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
  * <strong>Extension Guidelines</strong>
  * </p>
  * <ul>
- * <li>Any new LocalCI-related Hazelcast topic, queue, or map should register its listener here to ensure consistent cluster behavior.</li>
+ * <li>Any new LocalCI-related distributed topic, queue, or map should register its listener here to ensure consistent cluster behavior.</li>
  * <li>New event types should integrate both with {@link LocalCIQueueWebsocketService} (for real-time updates)
  * and with persistence or recovery logic as appropriate.</li>
  * </ul>

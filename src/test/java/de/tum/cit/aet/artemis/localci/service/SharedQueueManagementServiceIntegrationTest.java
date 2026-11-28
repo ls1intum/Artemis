@@ -86,18 +86,17 @@ class SharedQueueManagementServiceIntegrationTest extends AbstractProgrammingInt
     }
 
     /**
-     * The Hazelcast provider names its client after the build agent short name, so the disconnected client identifier
-     * is already the map key.
+     * A client name matching another agent's short name must not remove that agent.
      */
     @Test
-    void testHandleClientDisconnectionRemovesAgentMatchedByKey() {
+    void testHandleClientDisconnectionIgnoresShortNameCollision() {
         DistributedMap<String, BuildAgentInformation> buildAgents = distributedDataAccessService.getDistributedBuildAgentInformation();
         buildAgents.clear();
-        storeBuildAgent("artemis-build-agent-1", "[192.168.1.1]:5701");
+        storeBuildAgent("artemis-build-agent-1", "artemis-node-2");
 
         sharedQueueManagementService.handleClientDisconnection("artemis-build-agent-1");
 
-        assertThat(buildAgents.get("artemis-build-agent-1")).isNull();
+        assertThat(buildAgents.get("artemis-build-agent-1")).isNotNull();
     }
 
     /**

@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 
 /**
  * Integration test that verifies the metrics endpoint returns real cache and datasource
- * data when running with a full Spring context (Hazelcast, HikariCP, Hibernate).
+ * data when running with a full Spring context (HikariCP, Hibernate).
  */
 class ArtemisMetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -43,14 +43,4 @@ class ArtemisMetricsIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(response.databases().connections().value()).as("DB total connections should be positive").isPositive();
     }
 
-    @Test
-    void metricsEndpoint_shouldReturnCacheMetrics() {
-        // Trigger some cache activity
-        userTestRepository.count();
-
-        var cache = metricsEndpoint.allMetrics().cache();
-        assertThat(cache).as("Cache metrics should not be empty").isNotEmpty();
-        // websocketBrokerStatus is always present in the test Hazelcast instance
-        assertThat(cache).containsKey("websocketBrokerStatus");
-    }
 }

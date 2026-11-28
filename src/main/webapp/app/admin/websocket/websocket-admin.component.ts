@@ -16,11 +16,10 @@ import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 /**
- * Admin view to monitor and control websocket broker connectivity across Hazelcast nodes.
+ * Admin view to monitor and control websocket broker connectivity across Artemis nodes.
  * <p>
  * Features:
  * - Auto-refresh every 5 seconds with last-success/failed indicator.
- * - Distinguishes core nodes from build agents (lite members).
  * - Per-node connect/disconnect controls and bulk actions for all core nodes.
  */
 @Component({

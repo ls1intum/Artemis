@@ -15,7 +15,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 /**
  * A single progress event streamed to the instructor over the websocket while an agentic whole-exercise generation/adaptation runs.
  * <p>
- * {@link Serializable} because it is retained (inside {@code JobTranscript}) in a distributed Hazelcast map for reconnect/replay.
+ * {@link Serializable} because it is retained (inside {@code JobTranscript}) in a distributed map for reconnect/replay.
  * <p>
  * Everything except {@code type} and {@code timestamp} is populated only on the events it describes and is {@code null} elsewhere. {@link TerminationReason} is orthogonal to
  * {@link CompletionStatus}: the first says why the attempt loop stopped producing candidates, the second what became of the result.

@@ -102,7 +102,6 @@ CLASS_ALLOWLIST: dict[str, str] = {
     "PostUpdateEventListener": "a Hibernate type that the page names",
     "PostDeleteEventListener": "a Hibernate type that the page names",
     "ExampleParticipationService": "an illustrative name in a guideline, not a real class",
-    "EntryListener": "a Hazelcast type that the page names to explain what the distributed data provider replaces",
     "TransactionSynchronizationManager": "a Spring type that the pages name to explain what a transaction boundary is needed for",
 }
 

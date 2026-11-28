@@ -3,8 +3,6 @@
 spring:
     application:
         name: Artemis
-    hazelcast:
-        localInstances: false
     main:
         web-application-type: none
     liquibase:
@@ -55,7 +53,3 @@ management:
         metrics:
             export:
                 enabled: false
-eureka:
-    client:
-        enabled: true
-        register-with-eureka: false

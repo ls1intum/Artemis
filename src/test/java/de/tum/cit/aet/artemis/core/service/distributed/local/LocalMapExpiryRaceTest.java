@@ -3,10 +3,12 @@ package de.tum.cit.aet.artemis.core.service.distributed.local;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * {@link LocalMap} enforces expiry by purging on every read, so a purge runs concurrently with ordinary writes on
@@ -21,6 +23,25 @@ import org.junit.jupiter.api.Test;
 class LocalMapExpiryRaceTest {
 
     private static final Duration ALREADY_ELAPSED = Duration.ofNanos(1);
+
+    @Test
+    void releasesKeyLocksAfterTheLastUser() {
+        var map = new LocalMap<Integer, Integer>();
+        var locks = (Map<?, ?>) ReflectionTestUtils.getField(map, "locks");
+        for (int key = 0; key < 1000; key++) {
+            assertThat(map.get(key)).isNull();
+            map.lock(key);
+            try {
+                map.put(key, key);
+                map.remove(key);
+                assertThat(locks).hasSize(1);
+            }
+            finally {
+                map.unlock(key);
+            }
+        }
+        assertThat(locks).isEmpty();
+    }
 
     @Test
     void testAValueWrittenWhileThePurgeIsMidEvictionSurvives() throws Exception {

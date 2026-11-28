@@ -2,7 +2,7 @@
 id: security
 title: Security
 sidebar_label: Security
-last_reviewed: 2026-11-19
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -30,9 +30,7 @@ jhipster:
         authentication:
             jwt:
                 base64-secret: ""
-    registry:
-        password: "change-me"
-   ```
+```
 
 <Callout variant={CalloutVariant.warning}>
     Always replace default credentials before deploying. Failing to do so exposes your system to serious security risks.
@@ -144,10 +142,6 @@ Every build agent is registered at the address it reaches the core nodes from, a
     A host cannot know how it appears on the far side of a NAT, which is why `BuildAgentDTO.memberAddress` is not used
     for this: it is the agent's view of its own socket, and it is forgeable.
 
-    Where an agent legitimately reaches core nodes from more than one address — a multi-homed host routing the cluster
-    connection and the git connection over different interfaces — both are registered and both authorize it, provided
-    each has been measured. Under Hazelcast the cluster path is observed and the git path is reported by the agent, so
-    both are.
 </Callout>
 
 Optionally, bound which hosts may act as a build agent at all:
@@ -192,22 +186,10 @@ artemis:
     Several agents on one host share a source address, which is normal behind NAT and fully supported. The allowlist
     bounds hosts, not individual agents.
 
-    **The binding works on both providers, by two routes.** It compares where an agent was seen with where its clone
-    arrives, so the two have to be measurements of the same network path.
-
-    - **Hazelcast** clients connect to the cluster members, which are the nodes that serve git, so a core node observes
-      the agent's origin directly and no agent has to be trusted for it.
-    - **Redis** is a separate service: an agent's connection to it says nothing about its route to a core node. There
-      the agent measures its own origin instead, by asking a core node over the git base URL which address the request
-      arrived from — the same resolution the origin check itself performs. It republishes every minute, and the entry
-      expires if it stops, so a crashed agent unregisters itself.
-
-    Where both are available the agent is bound to either, which is what keeps it working when a gateway sits on the
-    git path but not the cluster path.
-
-    An agent that has neither — one that has not reported yet, or one sharing a JVM with a core node under Hazelcast
-    before it reports — is unconstrained rather than refused, because refusing an agent whose origin nothing has
-    established yet would fail its first clones. **`allowed-ranges` and the per-build-job scoping apply on every
+    The agent asks a core node over the git base URL which address its request arrived from, using the same address
+    resolution as the clone itself. It republishes that address every minute. Its entry expires when it stops reporting.
+    An agent that has not reported yet can make its first clone.
+    **`allowed-ranges` and the per-build-job scoping apply on every
     provider regardless**, since both are checked against the address of the request itself.
 </Callout>
 
@@ -558,7 +540,7 @@ The setting is empty by default, which allows every host. Once it holds a host, 
 
 ## Rate Limiting
 
-Artemis provides **cluster-wide rate limiting** powered by [Bucket4j](https://bucket4j.com) (token buckets). The bucket state lives in the configured distributed data provider (Hazelcast, Redis or Valkey), or in the process itself with the `Local` provider.
+Artemis provides **cluster-wide rate limiting** powered by [Bucket4j](https://bucket4j.com) (token buckets). The bucket state lives in the configured distributed data provider (Redis or Valkey) for a multi-node installation, or in process memory with the default `Local` provider.
 It helps protect authentication and account management endpoints from brute-force attempts and other types of abusive traffic.
 
 ### What It Does

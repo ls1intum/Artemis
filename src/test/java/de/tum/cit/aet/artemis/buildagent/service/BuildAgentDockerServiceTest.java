@@ -39,7 +39,6 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.github.dockerjava.api.command.InfoCmd;
@@ -53,12 +52,12 @@ import com.github.dockerjava.api.exception.NotModifiedException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Info;
 import com.github.dockerjava.api.model.PullResponseItem;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
@@ -78,8 +77,7 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
     private BuildAgentDockerService buildAgentDockerService;
 
     @Autowired
-    @Qualifier("hazelcastInstance")
-    private HazelcastInstance hazelcastInstance;
+    private DistributedDataProvider provider;
 
     // The Spring-managed bean has to be used here: a manually constructed BuildLogsMap has maxLogLinesPerBuildJob = 0 and therefore silently drops every entry.
     @Autowired
@@ -114,7 +112,7 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
         buildJob.setDockerImage("test-image-name");
         buildJob.setBuildStartDate(buildStartDate);
 
-        IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+        DistributedMap<String, ZonedDateTime> dockerImageCleanupInfo = provider.getMap("dockerImageCleanupInfo");
 
         dockerImageCleanupInfo.put("test-image-name", buildStartDate);
 
@@ -420,7 +418,7 @@ class BuildAgentDockerServiceTest extends AbstractProgrammingIntegrationLocalCIL
 
         ZonedDateTime buildStartDate = ZonedDateTime.now();
 
-        IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+        DistributedMap<String, ZonedDateTime> dockerImageCleanupInfo = provider.getMap("dockerImageCleanupInfo");
 
         dockerImageCleanupInfo.put("test-image-name", buildStartDate);
 

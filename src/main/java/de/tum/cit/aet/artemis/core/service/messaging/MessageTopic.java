@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.core.service.messaging;
 
 /**
- * Topic identifiers for Hazelcast messages between instances.
+ * Topic identifiers for messages between instances.
  */
 public enum MessageTopic {
 

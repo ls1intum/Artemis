@@ -56,7 +56,7 @@ public class BlobCacheConfiguration {
      */
     @Bean
     public CacheManager blobCacheManager(@Value("${artemis.cache.blob.maximum-size-bytes:268435456}") long maximumSizeBytes,
-            @Value("${artemis.cache.hazelcast.time-to-live-seconds:3600}") int timeToLiveSeconds) {
+            @Value("${artemis.cache.time-to-live-seconds:3600}") int timeToLiveSeconds) {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
         cacheManager.setCacheNames(BLOB_CACHE_NAMES);
         // CaffeineCacheManager builds one independent cache per name from this single builder, so the configured budget is the per-cache maximum weight.

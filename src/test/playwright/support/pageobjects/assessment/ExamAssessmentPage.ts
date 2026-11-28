@@ -9,9 +9,7 @@ export class ExamAssessmentPage extends AbstractExerciseAssessmentPage {
     }
 
     async submitTextAssessment() {
-        // The server occasionally returns 500 on multi-node setups when Hazelcast L2-cache invalidation
-        // for Result.feedbacks (ordered list) lags between nodes. Retry up to 2 times on 500 with a brief
-        // delay so the cache settles. Status >=400 triggers retry; 200 returns immediately.
+        // Retry transient assessment errors on multi-node runs.
         for (let attempt = 0; attempt < 3; attempt++) {
             const responsePromise = this.page.waitForResponse(`${BASE_API}/text/participations/*/results/*/submit-text-assessment`);
             await super.submitWithoutInterception();

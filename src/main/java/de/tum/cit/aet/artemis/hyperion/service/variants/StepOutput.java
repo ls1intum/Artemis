@@ -17,5 +17,5 @@ import java.time.Instant;
 public record StepOutput(String summary, String detail, Instant recordedAt) implements Serializable {
 
     // `detail` is kept bounded by the pipeline's truncate() (100 KB + "[truncated]" marker) before storage, since
-    // Hazelcast entries are replicated; the full agent transcript goes to the log, not the job record.
+    // the full agent transcript goes to the log, not the job record.
 }

@@ -2,7 +2,7 @@
 id: benchmarking-tool
 title: Benchmarking Tool
 sidebar_label: Benchmarking Tool
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-28
 ---
 
 The Artemis Benchmarking Tool is a web application designed for Artemis administrators to test the performance of Artemis under heavy load.
@@ -263,7 +263,7 @@ pushes code to their own git repository, and hands the exam in, with no pause be
 | Build agent machines | 3 | 3 |
 | Concurrent builds | 6 | 9 |
 | Database | MySQL, own machine | MySQL, own machine |
-| Coordination between servers | Hazelcast | Redis |
+| Coordination between servers | Earlier in-memory provider | Redis |
 | Repository storage | shared network storage | shared network storage |
 | Simulated students | 2,000 | 2,000 |
 
@@ -318,7 +318,7 @@ came close to their limit. Capacity planning should follow that imbalance.
 **staging2 was faster on almost every action**, and the difference is large: submitting an exercise
 took 0.31 s against 0.75 s, and downloading a repository 0.98 s against 2.04 s. Two things differ
 between the clusters, so it is not possible to say which of them caused the improvement: staging2
-coordinates through Redis rather than Hazelcast, and it was running a newer Artemis version. What can be
+used Redis for coordination while the other cluster used an in-memory provider, and it was running a newer Artemis version. What can be
 said is that the coordination layer was never the constraint on either cluster: Redis peaked at 10% CPU
 and 44 MB of memory while handling 2,500 commands per second, and never had to discard data to stay
 within its memory limit.

@@ -26,11 +26,8 @@ import de.tum.cit.aet.artemis.localvc.dto.ObservedClientAddressDTO;
  * Tells a caller which address this node sees it at.
  * <p>
  * Exists for the build agent origin binding. A core node authorizes an agent's clone by comparing the address the
- * request arrives from against the addresses that agent is registered at, and something has to establish what that
- * address is. Where the middleware can answer it - Hazelcast, whose clients connect to the cluster members, which are
- * these same nodes - a core node observes it directly. Where it cannot, the agent has to be told, because no host can
- * work out for itself how it appears on the other side of a NAT gateway or a load balancer: its own socket knows only
- * the pre-NAT local address, which is why {@code BuildAgentDTO.memberAddress} is not usable for this.
+ * request arrives from against the registered addresses. The agent queries this endpoint through its configured git URL
+ * to measure the address seen by the server, including address translation by proxies or NAT.
  * <p>
  * The answer is produced by the same {@link de.tum.cit.aet.artemis.core.util.HttpRequestUtils#getPeerIpString} call,
  * with the same trusted-proxy predicate, that the git path uses to decide the origin. That identity is the point: a

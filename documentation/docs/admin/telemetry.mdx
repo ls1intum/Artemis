@@ -2,7 +2,7 @@
 id: telemetry
 title: Telemetry
 sidebar_label: Telemetry
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-28
 ---
 
 Artemis reports installation configuration to help the maintainer team understand deployments,
@@ -89,7 +89,7 @@ integrations to keep supporting, for example before removing Jenkins or MySQL in
 | --- | --- | --- |
 | `ciSystem` | `localci`, `jenkins`, `none` | The `localci` and `jenkins` profiles of the scheduling node. `none` means neither is active, for example an installation without programming exercises. |
 | `versionControlSystem` | `localvc`, `none` | The `localvc` profile of the scheduling node |
-| `distributedDataProvider` | `hazelcast`, `redis`, `local` | `artemis.distributed-data.provider`, or the superseded `artemis.continuous-integration.data-store`. Hazelcast is the default. |
+| `distributedDataProvider` | `local`, `redis` | `artemis.distributed-data.provider`, or the superseded `artemis.continuous-integration.data-store`. Local is the default. |
 | `websocketBroker` | `external`, `simple` | `external` when `spring.websocket.broker.addresses` contains at least one valid address, so that websocket messages are relayed to a broker such as ActiveMQ Artemis. `simple` is the in-memory broker of a single node. |
 
 `dataSource` reports `postgresql` or `mysql` and `buildAgentCount` the number of connected build agents, which is `0` without

@@ -32,20 +32,17 @@ data:
   ARTEMIS_BUILDLOGSPATH: "/opt/artemis/data/build-logs"
   ARTEMIS_FAILEDBUILDLOGSPATH: "/opt/artemis/data/failed-build-logs"
 
-  # ---- Service discovery (Eureka) + Hazelcast ----
-  # EUREKA_CLIENT_SERVICEURL_DEFAULTZONE lives in the Secret because the URL embeds the registry password.
-  EUREKA_CLIENT_ENABLED: "true"
-  EUREKA_INSTANCE_PREFERIPADDRESS: "true"
-  EUREKA_INSTANCE_APPNAME: "Artemis"
-  # Evict dead pod IPs quickly so Hazelcast stops dialing gone pods on churn.
-  EUREKA_INSTANCE_LEASERENEWALINTERVALINSECONDS: "5"
-  EUREKA_INSTANCE_LEASEEXPIRATIONDURATIONINSECONDS: "10"
+  # ---- Distributed state shared by all core and build-agent pods ----
+  ARTEMIS_DISTRIBUTEDDATA_PROVIDER: {{ .Values.artemis.distributedDataProvider | quote }}
+  {{- if include "artemis.redisEnabled" . }}
+  SPRING_DATA_REDIS_HOST: {{ include "artemis.redisName" . | quote }}
+  SPRING_DATA_REDIS_PORT: "6379"
+  {{- end }}
 
   # ---- WebSocket STOMP relay (ActiveMQ) ----
   SPRING_WEBSOCKET_BROKER_ADDRESSES: {{ include "artemis.brokerAddresses" . | quote }}
 
   # ---- LocalCI distributed queue and result processing ----
-  ARTEMIS_CONTINUOUSINTEGRATION_DATASTORE: {{ .Values.artemis.config.localci.dataStore | quote }}
   ARTEMIS_CONTINUOUSINTEGRATION_CONCURRENTRESULTPROCESSINGSIZE: {{ .Values.artemis.config.localci.concurrentResultProcessingSize | quote }}
 
   # ---- User management ----

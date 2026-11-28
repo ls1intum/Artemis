@@ -170,8 +170,7 @@ public class BuildAgentInformationService {
 
     /**
      * Updates the local build agent information with the most recent build job.
-     * Uses the build agent's short name as the map key for stable identification,
-     * since the Hazelcast member address may change after initial client connection.
+     * Uses the build agent's short name as the stable map key.
      *
      * @param recentBuildJob        the most recent build job
      * @param isPaused              whether the build agent is paused
@@ -196,7 +195,6 @@ public class BuildAgentInformationService {
             return;
         }
 
-        // Use buildAgentShortName as the stable key - memberAddress can change after Hazelcast client connects
         String agentKey = buildAgentShortName;
         try {
             // Acquire lock before inner try block to ensure unlock() in finally only runs if lock() succeeded
@@ -229,8 +227,6 @@ public class BuildAgentInformationService {
     private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildAgentInformation agent, BuildJobQueueItem recentBuildJob, boolean isPaused,
             boolean isPausedDueToFailures, int consecutiveFailures) {
         String memberAddress = distributedDataAccessService.getLocalMemberAddress();
-        // Use buildAgentShortName for filtering instead of memberAddress, because Hazelcast client connections
-        // use ephemeral ports that can change, causing memberAddress filtering to fail
         List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(buildAgentShortName);
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
         int maxNumberOfConcurrentBuilds = buildAgentConfiguration.getBuildExecutor() != null ? buildAgentConfiguration.getBuildExecutor().getMaximumPoolSize()
@@ -320,8 +316,6 @@ public class BuildAgentInformationService {
 
     /**
      * Gets the processing jobs assigned to a specific build agent by its name.
-     * Uses the agent's name (short-name) for filtering instead of memberAddress,
-     * because Hazelcast client connections use ephemeral ports that can change.
      *
      * @param agentName the build agent's short name (stable identifier)
      * @return list of build jobs currently being processed by this agent

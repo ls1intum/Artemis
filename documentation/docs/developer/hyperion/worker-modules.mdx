@@ -2,7 +2,7 @@
 id: worker-modules
 title: AI Worker and Hyperion Boundaries
 sidebar_label: AI Worker Boundaries
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-28
 ---
 
 Artemis builds **one WAR**. AI Worker and Hyperion are feature packages in the main
@@ -32,8 +32,7 @@ conditions to load AI Worker services and the selected workload. Worker-only
 conditions keep server modules disabled, including when their feature flags are
 inherited. It starts no HTTP server and excludes database auto-configuration. It rejects a combined
 core/LocalCI/LocalVC/Build Agent profile and HTTP override. The worker VM must
-also block access to core database and repository services. The selected Hazelcast
-or Redis client still starts through the shared distributed-data provider.
+also block access to core database and repository services. The Redis client starts through the shared distributed-data provider.
 
 The worker runs a workload only when `artemis.aiworker.workload` selects it. Hyperion
 selects `hyperion-generation`; other values do not activate its authoring services.
@@ -86,7 +85,7 @@ The deployment-wide generation setting activates mutation protection; shared par
 | LocalCI                                | Resolve wrapper assignment types to the existing test-repository build template.                                                     | A wrapper in the assignment does not change the test harness. Plain Maven/Gradle and black-box template names remain unchanged.                                                                               |
 | Build agent                            | Keep LocalCI's JUnit parser in the build-agent layer.                                                                                | Hyperion uses its own JUnitReportParser. LocalCI keeps its separate production parser in the build-agent layer; parity tests compare test names, skips and failures.                                          |
 | Exercise                               | Reserve course programming templates during participation creation.                                                                  | Prevents participation creation from observing a partially saved course exercise when generation is enabled. Exam programming variants are not supported; student-exam assignment is unchanged.               |
-| Core distributed data                  | Provide conditional writes, expiry renewal and process identities through all supported providers.                                   | Callers must not assume that local, Hazelcast and Redis membership or expiry events are identical. Unknown coordination state rejects protected writes.                                                       |
+| Core distributed data                  | Provide conditional writes, expiry renewal and process identities through all supported providers.                                   | Callers must not assume that Local and Redis membership or expiry events are identical. Unknown coordination state rejects protected writes.                                                       |
 | Core WebSocket security                | Authorize AI subscriptions and reject direct sends to server-owned topics.                                                           | Client sends are limited to mapped commands, with participation-owner or exercise-editor checks where needed.                                                                                                 |
 | Exercise versioning and LLM accounting | Use existing storage for version snapshots and usage.                                                                                | No schema migration is required. Shared pricing and accounting stay unchanged. Hyperion owns explicit-price and cache accounting, then writes through the existing usage service.                             |
 

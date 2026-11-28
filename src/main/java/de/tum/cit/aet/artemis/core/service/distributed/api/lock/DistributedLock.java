@@ -10,9 +10,7 @@ import java.time.Duration;
  * unrelated map, which obscures the intent and ties the lock's lifetime to that map.
  *
  * <p>
- * <strong>Guarantees.</strong> None of the providers offer a consensus-backed (CP) lock: Hazelcast's CP subsystem is
- * not enabled in Artemis and needs at least three members, and Redisson's {@code RLock} on a single Redis is likewise
- * AP. A network partition or a node dying at the wrong moment can therefore let two holders believe they own the lock.
+ * A Redis failover or network partition can let two holders believe they own the lock.
  * Use this to de-duplicate work, not to protect an invariant whose violation cannot be tolerated. Locks are reentrant
  * for the owning thread and must be released in a {@code finally} block.
  */

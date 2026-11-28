@@ -2,7 +2,7 @@
 id: server-tests
 title: Server Tests
 sidebar_label: Server Tests
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -219,19 +219,19 @@ The following annotations can cause Spring to create new application contexts if
 
 Only the following abstract base test classes are permitted to define context-affecting annotations:
 
-| Base Test Class | Hazelcast Instance | Purpose |
-|-----------------|-------------------|---------|
-| `AbstractSpringIntegrationIndependentTestBase` | N/A | Shared mocks and setup for independent test buckets |
-| `AbstractSpringIntegrationIndependentTest` | `Artemis_independent` | Independent tests without CI/CD integration |
-| `AbstractSpringIntegrationIndependentBatchTest` | `Artemis_independent_batch` | Second independent bucket for balanced parallel execution |
-| `AbstractSpringIntegrationJenkinsLocalVCTest` | `Artemis_jenkins_localvc` | Jenkins + LocalVC integration (deprecated, removed in Artemis 11) |
-| `AbstractSpringIntegrationJenkinsLocalVCTemplateTest` | `Artemis_jenkins_localvc_template` | Jenkins template tests |
-| `AbstractSpringIntegrationJenkinsLocalVCBatchTest` | `Artemis_jenkins_localvc_batch` | Jenkins batch tests |
-| `AbstractSpringIntegrationLocalCILocalVCTestBase` | N/A | Shared mocks and setup for the two local CI + LocalVC buckets |
-| `AbstractSpringIntegrationLocalCILocalVCTest` | `Artemis_localci_localvc` | Local CI + LocalVC integration |
-| `AbstractSpringIntegrationLocalCILocalVCBatchTest` | `Artemis_localci_localvc_batch` | Second local CI + LocalVC bucket for balanced parallel execution |
-| `AbstractSpringIntegrationLocalVCSamlTest` | `Artemis_localvc_saml` | LocalVC with SAML authentication |
-| `AbstractArtemisBuildAgentTest` | `Artemis_build_agent` | Build agent tests |
+| Base Test Class | Purpose |
+| --- | --- |
+| `AbstractSpringIntegrationIndependentTestBase` | Shared mocks and setup for independent test buckets |
+| `AbstractSpringIntegrationIndependentTest` | Independent tests without CI/CD integration |
+| `AbstractSpringIntegrationIndependentBatchTest` | Second independent bucket for balanced parallel execution |
+| `AbstractSpringIntegrationJenkinsLocalVCTest` | Jenkins + LocalVC integration (deprecated, removed in Artemis 11) |
+| `AbstractSpringIntegrationJenkinsLocalVCTemplateTest` | Jenkins template tests |
+| `AbstractSpringIntegrationJenkinsLocalVCBatchTest` | Jenkins batch tests |
+| `AbstractSpringIntegrationLocalCILocalVCTestBase` | Shared mocks and setup for the two local CI + LocalVC buckets |
+| `AbstractSpringIntegrationLocalCILocalVCTest` | Local CI + LocalVC integration |
+| `AbstractSpringIntegrationLocalCILocalVCBatchTest` | Second local CI + LocalVC bucket for balanced parallel execution |
+| `AbstractSpringIntegrationLocalVCSamlTest` | LocalVC with SAML authentication |
+| `AbstractArtemisBuildAgentTest` | Build agent tests |
 
 **Exception:** `RedissonDistributedDataTest` is allowed to have its own `@TestPropertySource` for Redis-specific configuration, as it requires a separate context.
 

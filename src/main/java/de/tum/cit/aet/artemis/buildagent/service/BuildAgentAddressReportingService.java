@@ -31,12 +31,6 @@ import de.tum.cit.aet.artemis.localvc.dto.ObservedClientAddressDTO;
 /**
  * Publishes the address a core node sees this build agent at, so that its clones can be bound to it.
  * <p>
- * The core nodes prefer to observe an agent's origin themselves, and under Hazelcast they can: an agent's client
- * connects to the cluster members, which are the nodes that serve git, so the address the middleware accepted is the
- * address a clone will arrive from. Under Redis it is not - clients connect to Redis, which is neither a core node nor
- * on the path to one - and the addresses genuinely differ wherever a gateway sits on one path and not the other. The
- * origin binding would then have to be switched off, which is what this restores.
- * <p>
  * <b>Why the agent cannot work this out alone.</b> A host knows only its own socket's local address, which is what it
  * looks like <em>before</em> any NAT between it and the core node. That is precisely why
  * {@code BuildAgentDTO.memberAddress} is unusable here. So the agent asks: it calls the core nodes' git base URL and is
@@ -95,10 +89,6 @@ public class BuildAgentAddressReportingService {
 
     /**
      * Measures and republishes this agent's address.
-     * <p>
-     * Runs on every agent regardless of provider. Under Hazelcast the core nodes observe the same agent anyway and the
-     * registry reads the union, so the two agree and the extra entry costs nothing; where they disagree - a load
-     * balancer on the git path but not on the cluster path - having both is what keeps the agent authorized.
      */
     // The first attempt waits longer than the rest. An agent sharing a JVM with the core node it is configured against
     // is asking itself, and at five seconds the web server is reliably not accepting yet - a guaranteed failure and a

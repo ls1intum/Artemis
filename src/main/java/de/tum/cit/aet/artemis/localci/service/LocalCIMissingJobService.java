@@ -64,7 +64,7 @@ public class LocalCIMissingJobService {
      * </p>
      * <ul>
      * <li>Application crashes or restarts while build job was queued</li>
-     * <li>network issues leading to Hazelcast data loss</li>
+     * <li>network issues leading to distributed data loss</li>
      * <li>Build agent crashes or is disconnected</li>
      * </ul>
      */

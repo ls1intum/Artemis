@@ -50,10 +50,10 @@ public class OAuth2JWKSService {
     }
 
     /**
-     * Returns the Hazelcast map that stores the JWKs for each OAuth2 ClientRegistration.
+     * Returns the distributed map that stores the JWKs for each OAuth2 ClientRegistration.
      * The map is lazily initialized when it is first accessed.
      *
-     * @return the Hazelcast map containing JWKs
+     * @return the distributed map containing JWKs
      */
     public DistributedMap<String, JWK> getClientRegistrationIdToJwk() {
         if (this.clientRegistrationIdToJwk == null) {
@@ -75,7 +75,7 @@ public class OAuth2JWKSService {
     /**
      * Updates the JWK associated with the clientRegistrationId receives.
      * If the clientRegistrationId does not exist, the key for it is deleted.
-     * Otherwise, a new key is generated and stored in the Hazelcast map.
+     * Otherwise, a new key is generated and stored in the distributed map.
      *
      * @param clientRegistrationId the client registrationId
      */

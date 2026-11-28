@@ -13,7 +13,7 @@ artemis:
 postgresql:
   auth:
     password: exampleexampleexample
-registry:
+redis:
   password: exampleexampleexample
 broker:
   auth:

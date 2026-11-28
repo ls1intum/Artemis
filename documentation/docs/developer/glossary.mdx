@@ -2,7 +2,7 @@
 id: glossary
 title: Glossary
 sidebar_label: Glossary
-last_reviewed: 2026-11-05
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -114,7 +114,7 @@ that appear in the code, the user interface, and the documentation, so that one 
 | Server | The Spring Boot application in `src/main/java`. | |
 | Core node | A server instance that serves the client and the REST API and runs the scheduled tasks. A cluster has one or more core nodes. | |
 | Module | A package of the server below `de.tum.cit.aet.artemis`, such as `exercise`, `exam`, or `localci`, with its own API for the other modules. | |
-| Distributed data provider | The abstraction `DistributedDataProvider` that holds the state that nodes share (caches, queues, locks, maps). Hazelcast, Redis, and a local implementation are its **providers**. See [Distributed Data](guidelines/distributed-data.mdx). | `distributed cache provider` |
+| Distributed data provider | The abstraction `DistributedDataProvider` that holds the state that nodes share (caches, queues, locks, maps). Its **providers** are Local (one JVM) and Redis (a shared Redis or Valkey store). See [Distributed Data](guidelines/distributed-data.mdx). | `distributed cache provider` |
 | Provider | A swappable implementation of the distributed data provider. Its glue code is an **adapter**. | |
 | Websocket topic | A declared destination that the server sends messages to and that the client subscribes to. Every topic is a constant: a broadcast topic has an access rule for its subscribers, a per-user topic reaches only the user that the server addresses. See [Websocket](guidelines/websocket.mdx). | `web socket` |
 | Spring profile | A switch that enables parts of the server, such as `core`, `buildagent`, `localvc`, `localci`, `scheduling`, or `dev`. | |

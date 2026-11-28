@@ -145,7 +145,7 @@ class TelemetrySendingServiceTest {
 
     @Test
     void reportsTheConfiguredDistributedDataProvider() {
-        assertThat(service.buildTelemetryData(false, "startup-id", Instant.EPOCH).distributedDataProvider()).isEqualTo("hazelcast");
+        assertThat(service.buildTelemetryData(false, "startup-id", Instant.EPOCH).distributedDataProvider()).isEqualTo("local");
         env.setProperty("artemis.distributed-data.provider", "Redis");
         assertThat(service.buildTelemetryData(false, "startup-id", Instant.EPOCH).distributedDataProvider()).isEqualTo("redis");
         env.setProperty("artemis.distributed-data.provider", "Local");
@@ -181,7 +181,7 @@ class TelemetrySendingServiceTest {
                 .andExpect(jsonPath("$.numberOfNodes").value(2)).andExpect(jsonPath("$.buildAgentCount").value(3)).andExpect(jsonPath("$.isMultiNode").value(true))
                 .andExpect(jsonPath("$.startupId").value("startup-id")).andExpect(jsonPath("$.startedAt").value("1970-01-01T00:00:00Z"))
                 .andExpect(jsonPath("$.ciSystem").value("none")).andExpect(jsonPath("$.versionControlSystem").value("none"))
-                .andExpect(jsonPath("$.distributedDataProvider").value("hazelcast")).andExpect(jsonPath("$.websocketBroker").value("simple"))
+                .andExpect(jsonPath("$.distributedDataProvider").value("local")).andExpect(jsonPath("$.websocketBroker").value("simple"))
                 .andExpect(jsonPath("$.adminName").doesNotExist()).andExpect(jsonPath("$.contact").doesNotExist()).andRespond(withSuccess());
         service.sendTelemetryByPostRequest(false, "startup-id", Instant.EPOCH);
         server.verify();

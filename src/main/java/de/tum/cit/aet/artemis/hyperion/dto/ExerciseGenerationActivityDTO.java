@@ -20,7 +20,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * <p>
  * Purely observational: no scheduling decision, gate, or verdict reads these numbers.
  * <p>
- * {@link Serializable} because it is carried inside {@link ExerciseGenerationEventDTO}, which is retained in a distributed Hazelcast map for reconnect/replay.
+ * {@link Serializable} because it is carried inside {@link ExerciseGenerationEventDTO}, which is retained in a distributed map for reconnect/replay.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "What a generation run is doing right now, so a long synchronous model call is visible instead of silent")

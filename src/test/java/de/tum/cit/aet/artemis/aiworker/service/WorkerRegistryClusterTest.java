@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.aiworker.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -13,9 +12,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
-
-import com.hazelcast.config.Config;
-import com.hazelcast.core.Hazelcast;
+import org.junit.jupiter.api.condition.EnabledIf;
+import org.redisson.Redisson;
+import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
+import org.redisson.spring.data.connection.RedissonConnectionFactory;
+import org.testcontainers.DockerClientFactory;
 
 import de.tum.cit.aet.artemis.aiworker.api.WorkerMessageCodecApi;
 import de.tum.cit.aet.artemis.aiworker.config.AiWorkerProperties;
@@ -27,25 +29,26 @@ import de.tum.cit.aet.artemis.aiworker.dto.WorkerCommandDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerEventDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
 import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerTransport;
+import de.tum.cit.aet.artemis.core.config.RedissonCodecConfiguration;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
-import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
+import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisClientListResolver;
+import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedDataProviderService;
+import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
 
 class WorkerRegistryClusterTest {
 
     @Test
-    void twoDataMembersShareFourSlotsWithoutDoubleAdmission() throws Exception {
-        String cluster = "worker-slots-" + UUID.randomUUID();
-        var first = Hazelcast.newHazelcastInstance(config(cluster, List.of()));
-        try {
-            int port = first.getCluster().getLocalMember().getSocketAddress().getPort();
-            var second = Hazelcast.newHazelcastInstance(config(cluster, List.of("127.0.0.1:" + port)));
+    @EnabledIf("dockerAvailable")
+    void twoRedisClientsShareFourSlotsWithoutDoubleAdmission() throws Exception {
+        try (var store = ValkeyTestContainerFactory.create()) {
+            store.start();
+            String address = "redis://" + store.getHost() + ":" + store.getMappedPort(6379);
+            var first = redisClient(address);
+            var second = redisClient(address);
             try {
-                await().atMost(Duration.ofSeconds(60)).untilAsserted(() -> assertThat(first.getCluster().getMembers()).hasSize(2));
                 var properties = new AiWorkerProperties(List.of("worker"), Duration.ofSeconds(30), Duration.ofSeconds(45));
-                var firstCore = new WorkerRegistryService(properties, new WorkerTransport(new HazelcastDistributedDataProviderService(first), new WorkerMessageCodecApi()),
-                        new HazelcastDistributedDataProviderService(first));
-                var secondCore = new WorkerRegistryService(properties, new WorkerTransport(new HazelcastDistributedDataProviderService(second), new WorkerMessageCodecApi()),
-                        new HazelcastDistributedDataProviderService(second));
+                var firstCore = registry(properties, first);
+                var secondCore = registry(properties, second);
                 firstCore.recordPresence("worker", event(WorkerCommandDTO.PROTOCOL_VERSION, "worker", UUID.randomUUID(), 1, Instant.now(), WorkerEventType.HEARTBEAT, null, true,
                         "sha256:" + "a".repeat(64), null, null, null).withCapacity(new WorkerCapacityDTO(4, List.of())));
                 var barrier = new CyclicBarrier(4);
@@ -74,23 +77,25 @@ class WorkerRegistryClusterTest {
             }
             finally {
                 second.shutdown();
+                first.shutdown();
             }
-        }
-        finally {
-            first.shutdown();
         }
     }
 
-    private Config config(String name, List<String> seeds) {
-        var config = new Config().setClusterName(name);
-        config.setProperty("hazelcast.operation.thread.count", "2").setProperty("hazelcast.operation.generic.thread.count", "2");
-        var network = config.getNetworkConfig();
-        network.setPort(0).setPortAutoIncrement(false);
-        network.getInterfaces().setEnabled(true).setInterfaces(List.of("127.0.0.1"));
-        network.getJoin().getAutoDetectionConfig().setEnabled(false);
-        network.getJoin().getMulticastConfig().setEnabled(false);
-        network.getJoin().getTcpIpConfig().setEnabled(true).setMembers(seeds);
-        return config;
+    private static WorkerRegistryService registry(AiWorkerProperties properties, RedissonClient client) {
+        var provider = new RedissonDistributedDataProviderService(client, new RedisClientListResolver(new RedissonConnectionFactory(client)));
+        return new WorkerRegistryService(properties, new WorkerTransport(provider, new WorkerMessageCodecApi()), provider);
+    }
+
+    private static RedissonClient redisClient(String address) {
+        var config = new Config();
+        config.useSingleServer().setAddress(address);
+        new RedissonCodecConfiguration().artemisRedissonSerializationCodecCustomizer().customize(config);
+        return Redisson.create(config);
+    }
+
+    static boolean dockerAvailable() {
+        return DockerClientFactory.instance().isDockerAvailable();
     }
 
     private static final WorkloadCapabilityDTO CAPABILITY = new WorkloadCapabilityDTO("text-analysis", 1, "text");

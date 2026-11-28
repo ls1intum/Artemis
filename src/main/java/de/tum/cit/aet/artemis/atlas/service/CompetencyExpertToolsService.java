@@ -56,7 +56,7 @@ public class CompetencyExpertToolsService {
 
     /**
      * Mutable wrapper class for competency operations.
-     * Implements Serializable to support distributed caching via Hazelcast.
+     * Implements Serializable to support distributed caching across nodes.
      */
     public static class CompetencyOperation implements Serializable {
 

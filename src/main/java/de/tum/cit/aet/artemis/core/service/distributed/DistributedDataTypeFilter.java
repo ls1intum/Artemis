@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
  * Decides which types may be created when a value is read from the distributed data store.
  *
  * <p>
- * Both distributed data providers read stored values with Java serialization or Kryo, and both resolve the class names
+ * Redis reads stored values with Java serialization or Kryo. Both formats resolve the class names
  * found in the stored bytes. Without a filter, whatever a store contains decides which classes are instantiated on the
  * reading node. This filter limits that to the types Artemis stores: its own classes, the {@code java.util},
  * {@code java.time} and {@code java.math} types its records are made of, a few {@code java.lang} value types, and the
@@ -27,10 +27,6 @@ import org.slf4j.LoggerFactory;
  * An operator can extend the default list with {@code artemis.distributed-data.additional-allowed-types}: a comma
  * separated list in which an entry ending with a dot allows every type below that prefix, and any other entry allows
  * exactly one class.
- *
- * <p>
- * Provider specific classes (the ones Hazelcast and Bucket4j serialize themselves) are not part of the default list;
- * the provider adds them through {@link #withProviderTypes(Set, List)}.
  */
 public final class DistributedDataTypeFilter {
 
@@ -70,20 +66,10 @@ public final class DistributedDataTypeFilter {
      * @return a filter with the default list plus the configured entries
      */
     public static DistributedDataTypeFilter withAdditional(List<String> additionalTypes) {
-        return new DistributedDataTypeFilter(DEFAULT_CLASSES, DEFAULT_PREFIXES).withProviderTypes(Set.of(), additionalTypes);
-    }
-
-    /**
-     * @param providerClasses exact class names the provider needs to read
-     * @param providerEntries further entries in the configuration syntax, where a trailing dot means a prefix; may be {@code null}
-     * @return a copy of this filter that additionally allows the given types
-     */
-    public DistributedDataTypeFilter withProviderTypes(Set<String> providerClasses, List<String> providerEntries) {
-        Set<String> allClasses = new LinkedHashSet<>(classes);
-        allClasses.addAll(providerClasses);
-        List<String> allPrefixes = new ArrayList<>(prefixes);
-        if (providerEntries != null) {
-            for (String entry : providerEntries) {
+        Set<String> allClasses = new LinkedHashSet<>(DEFAULT_CLASSES);
+        List<String> allPrefixes = new ArrayList<>(DEFAULT_PREFIXES);
+        if (additionalTypes != null) {
+            for (String entry : additionalTypes) {
                 String trimmed = entry == null ? "" : entry.trim();
                 if (trimmed.isEmpty()) {
                     continue;
@@ -97,20 +83,6 @@ public final class DistributedDataTypeFilter {
             }
         }
         return new DistributedDataTypeFilter(allClasses, allPrefixes);
-    }
-
-    /**
-     * @return the exact class names this filter allows
-     */
-    public Set<String> allowedClasses() {
-        return classes;
-    }
-
-    /**
-     * @return the name prefixes this filter allows
-     */
-    public List<String> allowedPrefixes() {
-        return prefixes;
     }
 
     /**

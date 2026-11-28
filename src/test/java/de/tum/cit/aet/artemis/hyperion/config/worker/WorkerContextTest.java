@@ -135,7 +135,6 @@ class WorkerContextTest {
             assertThat(context).hasNotFailed().hasSingleBean(WorkerSupervisorService.class).hasSingleBean(DockerSandboxService.class).hasSingleBean(WorkerCommandListener.class)
                     .hasSingleBean(HyperionWorkloadService.class);
             assertThat(context.getEnvironment().getProperty("spring.main.web-application-type")).isEqualTo("none");
-            assertThat(context.getEnvironment().getProperty("spring.hazelcast.localInstances")).isEqualTo("false");
             assertThat(context).doesNotHaveBean("openAiEmbeddingModel").doesNotHaveBean("openAiImageModel").doesNotHaveBean("openAiSdkAudioSpeechModel")
                     .doesNotHaveBean("openAiSdkAudioTranscriptionModel").doesNotHaveBean("openAiSdkModerationModel").doesNotHaveBean("openAiDecisionModel");
             assertThat(context.getBean(WorkerSettings.class).maxConcurrentExecutions()).isEqualTo(4);

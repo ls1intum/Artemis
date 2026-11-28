@@ -43,7 +43,7 @@ public record VariantJobDTO(String jobId, Long sourceExerciseId, Long courseId, 
         VariantGenerationRequestDTO request, List<String> warnings, Long totalTokensUsed, Instant startedAt, Instant finishedAt) implements Serializable {
 
     /**
-     * Maps the Hazelcast job record to the tray view.
+     * Maps the shared job record to the tray view.
      *
      * @param job the job record
      * @return the DTO

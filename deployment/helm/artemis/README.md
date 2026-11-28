@@ -4,7 +4,7 @@ This MVP chart deploys a complete Artemis LocalCI installation in Kubernetes:
 
 - one Artemis leader core with the `scheduling` profile;
 - zero or more member cores without `scheduling`;
-- PostgreSQL, JHipster Registry/Eureka, and ActiveMQ STOMP relay;
+- PostgreSQL, Valkey, and ActiveMQ STOMP relay;
 - standalone LocalCI build-agent controllers; and
 - Kubernetes Jobs created directly for individual builds.
 
@@ -30,7 +30,9 @@ Every core must mount the same `/opt/artemis/data` filesystem. It contains Local
 cluster therefore needs `ReadWriteMany` storage. Docker Desktop has only local `ReadWriteOnce` storage, so
 `values-docker-desktop.yaml` pins both core pods to one worker as an explicit local-only compromise.
 
-Core nodes discover one another through Eureka and use ActiveMQ for cross-core WebSocket delivery. Exactly one core has `scheduling`.
+The chart defaults to `artemis.distributedDataProvider: Redis` and keeps the same store when core or agent replica counts change. A single core without separate agents or workers can use `Local` with `buildAgents.enabled: false` to omit Valkey.
+
+In clustered deployments, core nodes and build agents share state through Valkey. Core nodes register their identity in that store and use ActiveMQ for cross-core WebSocket delivery. Exactly one core has `scheduling`.
 
 ## Install
 
@@ -48,7 +50,7 @@ Required secret values are:
 - `artemis.config.admin.password`
 - `artemis.config.jwtBase64Secret`
 - `postgresql.auth.password`
-- `registry.password`
+- `redis.password` for the default Redis provider
 - `broker.auth.password`
 
 Every node here runs under the `prod` profile, which refuses to start on a credential that Artemis publishes as an

@@ -9,15 +9,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Per-course debounce state kept in the Hazelcast {@code atlas-content-change-accumulator} map.
+ * Per-course debounce state kept in the shared {@code atlas-content-change-accumulator} map.
  * Every {@link de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent} appends to
  * {@link #exerciseIds} and every {@link de.tum.cit.aet.artemis.lecture.domain.event.LectureUnitContentChangedEvent}
  * appends to {@link #lectureUnitIds}; both bump {@link #lastEventTime}. The scheduler only fires an
  * orchestrator run once the debounce window has elapsed since the last event, so a burst of edits
  * across exercises and lecture units collapses into a single run.
  * <p>
- * Records are serialisable because Hazelcast replicates entries across nodes and persists them in
- * the map's backup partitions; the accumulator must round-trip cleanly through Java serialization.
+ * The Redis map codec serializes these records when sharing them across nodes.
  * The id sets are unmodifiable snapshots; {@link #with} / {@link #withLectureUnit} return fresh
  * instances with merged ids. The compact constructor null-guards {@link #lectureUnitIds} so an entry
  * serialized by an older node (before the field existed) deserializes to an empty set instead of

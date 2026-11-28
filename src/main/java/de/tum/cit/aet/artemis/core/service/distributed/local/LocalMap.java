@@ -28,12 +28,12 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     private final ConcurrentHashMap<K, V> map;
 
-    private final ConcurrentHashMap<K, ReentrantLock> locks = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<K, KeyLock> locks = new ConcurrentHashMap<>();
 
     /**
      * Nano-time deadlines for entries stored with a time-to-live. The local provider has no background eviction, so
-     * expiry is enforced by purging on every read; that keeps reads consistent with the Hazelcast and Redis providers,
-     * which also never return an entry whose time-to-live has elapsed.
+     * expiry is enforced by purging on every read; that keeps reads consistent with Redis,
+     * which also never returns an entry whose time-to-live has elapsed.
      */
     private final ConcurrentHashMap<K, Long> expiryDeadlines = new ConcurrentHashMap<>();
 
@@ -69,9 +69,8 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
             // Re-read the deadline under the key lock rather than acting on what the scan saw. Between the two, a
             // writer can replace the value and drop or renew its deadline; deciding outside the lock let purge delete
             // that fresh value.
-            ReentrantLock lock = getLock(key);
             V expiredValue = null;
-            lock.lock();
+            lock(key);
             try {
                 Long current = expiryDeadlines.get(key);
                 if (current != null && current - now <= 0) {
@@ -80,7 +79,7 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
                 }
             }
             finally {
-                lock.unlock();
+                unlock(key);
             }
             if (expiredValue != null) {
                 notifyEntryRemoved(key, expiredValue);
@@ -104,20 +103,23 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
         }
     }
 
-    private ReentrantLock getLock(K key) {
-        return locks.computeIfAbsent(key, _ -> new ReentrantLock());
+    private static final class KeyLock {
+
+        private final ReentrantLock lock = new ReentrantLock();
+
+        // Counted under locks.compute, including threads waiting to acquire the lock and reentrant acquisitions.
+        private int users;
     }
 
     @Override
     public V get(K key) {
         purgeExpiredEntries();
-        ReentrantLock lock = getLock(key);
-        lock.lock();
+        lock(key);
         try {
             return map.get(key);
         }
         finally {
-            lock.unlock();
+            unlock(key);
         }
     }
 
@@ -127,7 +129,7 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
         Map<K, V> result = new HashMap<>();
         for (K key : keys) {
             V value = get(key);
-            // Absent keys are left out rather than mapped to null, matching Hazelcast's IMap.getAll and Redisson's
+            // Absent keys are left out rather than mapped to null, matching Redisson's
             // RMap.getAll. Mapping them to null would make result.size() and containsKey() disagree between providers.
             if (value != null) {
                 result.put(key, value);
@@ -153,18 +155,17 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
      * @param deadline the nano-time the entry expires at, or null to store it without a lifetime
      */
     private void putInternal(K key, V value, Long deadline) {
-        ReentrantLock lock = getLock(key);
         V oldValue;
         boolean isUpdate;
 
-        lock.lock();
+        lock(key);
         try {
             oldValue = map.put(key, value);
             isUpdate = oldValue != null;
             writeDeadline(key, deadline);
         }
         finally {
-            lock.unlock();
+            unlock(key);
         }
 
         if (isUpdate) {
@@ -193,9 +194,8 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
      */
     private V putIfAbsentInternal(K key, V value, Long deadline) {
         purgeExpiredEntries();
-        ReentrantLock lock = getLock(key);
         V existing;
-        lock.lock();
+        lock(key);
         try {
             existing = map.putIfAbsent(key, value);
             if (existing == null) {
@@ -204,7 +204,7 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
             }
         }
         finally {
-            lock.unlock();
+            unlock(key);
         }
         if (existing == null) {
             notifyEntryAdded(key, value);
@@ -215,9 +215,8 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
     @Override
     public boolean remove(K key, V value) {
         purgeExpiredEntries();
-        ReentrantLock lock = getLock(key);
         boolean removed;
-        lock.lock();
+        lock(key);
         try {
             removed = map.remove(key, value);
             if (removed) {
@@ -225,7 +224,7 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
             }
         }
         finally {
-            lock.unlock();
+            unlock(key);
         }
         if (removed) {
             notifyEntryRemoved(key, value);
@@ -236,14 +235,13 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
     @Override
     public boolean replace(K key, V expectedValue, V replacementValue) {
         purgeExpiredEntries();
-        ReentrantLock lock = getLock(key);
         boolean replaced;
-        lock.lock();
+        lock(key);
         try {
             replaced = map.replace(key, expectedValue, replacementValue);
         }
         finally {
-            lock.unlock();
+            unlock(key);
         }
         if (replaced) {
             notifyEntryUpdated(key, replacementValue, expectedValue);
@@ -254,8 +252,7 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
     @Override
     public boolean refreshTimeToLive(K key, Duration timeToLive) {
         purgeExpiredEntries();
-        ReentrantLock lock = getLock(key);
-        lock.lock();
+        lock(key);
         try {
             if (!map.containsKey(key)) {
                 return false;
@@ -264,22 +261,21 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
             return true;
         }
         finally {
-            lock.unlock();
+            unlock(key);
         }
     }
 
     @Override
     public V remove(K key) {
-        ReentrantLock lock = getLock(key);
         V oldValue;
 
-        lock.lock();
+        lock(key);
         try {
             oldValue = map.remove(key);
             expiryDeadlines.remove(key);
         }
         finally {
-            lock.unlock();
+            unlock(key);
         }
 
         if (oldValue != null) {
@@ -322,41 +318,27 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public void clear() {
-        Set<K> keysCopy = Set.copyOf(map.keySet());
-        Map<K, V> entriesCopy = new HashMap<>(map);
-        try {
-            for (K key : keysCopy) {
-                getLock(key).lock();
-            }
-            // Both wipes happen while the locks are held, for the same reason the per-key writes keep them together:
-            // dropping the deadlines first would briefly leave live values without the lifetime they were stored with.
-            map.clear();
-            expiryDeadlines.clear();
-        }
-        finally {
-            for (K key : keysCopy) {
-                getLock(key).unlock();
-            }
-        }
-
-        for (Map.Entry<K, V> entry : entriesCopy.entrySet()) {
-            final K key = entry.getKey();
-            final V value = entry.getValue();
-            notifyEntryRemoved(key, value);
+        for (K key : Set.copyOf(map.keySet())) {
+            remove(key);
         }
     }
 
     @Override
     public void lock(K key) {
-        getLock(key).lock();
+        KeyLock entry = locks.compute(key, (_, current) -> {
+            KeyLock retained = current == null ? new KeyLock() : current;
+            retained.users++;
+            return retained;
+        });
+        entry.lock.lock();
     }
 
     @Override
     public void unlock(K key) {
-        ReentrantLock lock = locks.get(key);
-        if (lock != null) {
-            lock.unlock();
-        }
+        locks.computeIfPresent(key, (_, entry) -> {
+            entry.lock.unlock();
+            return --entry.users == 0 ? null : entry;
+        });
     }
 
     @Override

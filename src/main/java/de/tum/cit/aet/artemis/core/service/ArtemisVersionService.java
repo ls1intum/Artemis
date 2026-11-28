@@ -74,7 +74,7 @@ public class ArtemisVersionService {
      * Creates a new ArtemisVersionService with the required dependencies.
      *
      * @param restClient   the REST client for making HTTP requests to GitHub API
-     * @param cacheManager the cache manager for distributed caching (Hazelcast)
+     * @param cacheManager the cache manager for distributed caching
      */
     public ArtemisVersionService(@Qualifier("githubRestClient") RestClient restClient, CacheManager cacheManager) {
         this.restClient = restClient;

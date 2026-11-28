@@ -187,8 +187,7 @@ public class CompetencyOrchestrationService {
      * <p>
      * Best-effort: this runs in the callers' {@code finally} blocks after {@code orchestrateBatch} /
      * {@code orchestrateExercise} may already have committed competency mutations. A distributed-map
-     * failure here (e.g. {@code HazelcastInstanceNotActiveException} during member shutdown or
-     * partition migration) must not propagate, or it would clobber the already-computed result and —
+     * failure here (e.g. a lost Redis connection) must not propagate, or it would clobber the already-computed result and —
      * for the scheduler — be mistaken for a safe pre-mutation failure that triggers a re-run of an
      * already-applied batch. A failed release just leaves the entry to expire via {@link #RUN_LEASE}.
      */

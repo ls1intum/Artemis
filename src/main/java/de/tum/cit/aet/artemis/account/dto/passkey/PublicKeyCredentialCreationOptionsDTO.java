@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * Serializable Data Transfer Object (DTO) for {@link PublicKeyCredentialCreationOptions}, used for synchronizing
- * WebAuthn registration requests across multiple nodes (e.g., via Hazelcast). The original class is not serializable,
+ * WebAuthn registration requests across multiple nodes in the distributed store. The original class is not serializable,
  * so this DTO serves as an intermediate representation that can be serialized/deserialized.
  *
  * <p>

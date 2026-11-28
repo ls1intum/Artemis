@@ -26,9 +26,8 @@ import de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService;
 // PROFILE_DEMO only adds the lazy beans that seed the demo course, which tests invoke directly: the startup event that triggers seeding is never published in tests.
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_DEMO })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "artemis.sharing.enabled=true", "artemis.user-management.passkey.enabled=true",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent_batch", "artemis.iris.enabled=true", "artemis.deimos.enabled=true",
-        "artemis.lti.enabled=true", "artemis.atlas.enabled=true", "artemis.atlas.atlasllm.enabled=true", "artemis.athena.enabled=true", "artemis.apollon.enabled=true",
-        "artemis.continuous-integration.build-job.retention-period=30",
+        "artemis.iris.enabled=true", "artemis.deimos.enabled=true", "artemis.lti.enabled=true", "artemis.atlas.enabled=true", "artemis.atlas.atlasllm.enabled=true",
+        "artemis.athena.enabled=true", "artemis.apollon.enabled=true", "artemis.continuous-integration.build-job.retention-period=30",
         // Use separate paths for parallel bucket execution.
         "artemis.course-archives-path=./local/server-integration-test-independent-batch/exports/courses",
         "artemis.legal-path=./local/server-integration-test-independent-batch/legal",

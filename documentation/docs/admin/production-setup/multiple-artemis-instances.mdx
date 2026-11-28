@@ -2,7 +2,7 @@
 id: multiple-artemis-instances
 title: Multiple Artemis Instances
 sidebar_label: Multiple Artemis Instances
-last_reviewed: 2026-11-09
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -11,16 +11,13 @@ import Image, {ImageSize} from "../../../src/components/Image/Image";
 
 import buildAgentViewImg from "./assets/distributed-setup/build_agent_view.png"
 import deploymentBrokerImg from "./assets/distributed-setup/deployment_broker.drawio.png"
-import deploymentHazelcastImg from "./assets/distributed-setup/deployment_hazelcast.drawio.png"
 import multiInstanceSetupSimpleImg from "./assets/distributed-setup/deployment_after_simple.drawio.png"
-import registryImg from "./assets/distributed-setup/registry.png"
-import runConfigImg from "./assets/distributed-setup/run-config.png"
 import singleInstanceSetupImg from "./assets/distributed-setup/deployment_before.drawio.png"
 
 
 ## Setup with one instance
 
-Artemis usually runs with one instance of the application server:
+A single Artemis JVM can use the default `Local` provider. Its queues and caches live in memory until the process stops.
 
 <Image
     src={singleInstanceSetupImg}
@@ -66,234 +63,9 @@ Each of these three aspects is synchronized using a different solution
 
 ### Database cache
 
-Artemis synchronizes distributed data through either [Hazelcast](https://hazelcast.com), which is the default, or a
-Redis-compatible store. All instances must use the same provider. The
-[distributed-data administration guide](/admin/production-setup/distributed-data) explains the operational differences
-and the required upgrade procedure for Redis and Valkey.
-
-With Hazelcast, all Artemis instances form a cluster that synchronizes their cache. You can use the configuration
-argument `spring.hazelcast.interface` to configure the interface on which Hazelcast will listen.
-
-<Image
-    src={deploymentHazelcastImg}
-    size={ImageSize.large}
-    alt={"Component diagram showing how the Hazelcast cache connects to Artemis instances."}
-/>
-
-One problem that arises with a distributed setup is that all instances have to know each other in order
-to create this cluster.
-This is problematic if the instances change dynamically.
-Artemis uses a discovery service to solve the issue (named [JHipster Registry](https://www.jhipster.tech/jhipster-registry/)).
-
-
-### Discovery service
-
-JHipster registry contains Eureka, the discovery service where all instances can register themselves and fetch
-the other registered instances.
-
-Eureka can be configured like this within Artemis:
-
-```yaml
-# Eureka configuration
-eureka:
-    client:
-        enabled: true
-        service-url:
-            defaultZone: {{ artemis_eureka_urls }}
-    instance:
-        prefer-ip-address: true
-        ip-address: {{ artemis_ip_address }}
-        appname: Artemis
-        instanceId: Artemis:{{ artemis_eureka_instance_id }}
-
-logging:
-    file:
-        name: '/opt/artemis/artemis.log'
-```
-
-`{{ artemis_eureka_urls }}` must be the URL where Eureka is reachable,
-`{{ artemis_ip_address }}` must be the IP under which this instance is reachable and
-`{{ artemis_eureka_instance_id }}` must be a unique identifier for this instance.
-You also have to set up the value `jhipster.registry.password` to the password of the registry
-(which you will set later).
-
-Note that Hazelcast (which requires Eureka) is by default binding to `127.0.0.1` to prevent other instances
-to form a cluster without manual intervention.
-If you set up the cluster on multiple machines (which you should do for a production setup),
-you have to set the value `spring.hazelcast.interface` to the ip-address of the machine.
-Hazelcast will then bind on this interface rather than `127.0.0.1`,
-which allows other instances to establish connections to the instance.
-This setting must be set for every instance, but you have to make sure to adjust the ip-address correspondingly.
-
-
-#### Setting up the Discovery Service
-
-##### Installation
-
-1. Create the directories `/opt/registry/` and `/opt/registry/config-server`.
-
-2. Download the application
-
-    Download the latest version of the jhipster-registry JAR from GitHub: https://github.com/jhipster/jhipster-registry/releases/.
-
-
-##### Service configuration
-
-1. Configure `/etc/systemd/system/registry.service`:
-
-    ```systemd
-    [Unit]
-    Description=Registry
-    After=syslog.target
-
-    [Service]
-    User=artemis
-    WorkingDirectory=/opt/registry
-    ExecStart=/usr/bin/java \
-        -Xmx256m \
-        -jar registry.jar \
-        --spring.profiles.active=prod,native
-    SuccessExitStatus=143
-    StandardOutput=/opt/registry/registry.log
-
-    [Install]
-    WantedBy=multi-user.target
-    ```
-
-2. Set Permissions in Registry Folder
-
-    ```bash
-    chown -R artemis:artemis /opt/registry
-    chmod g+rwx /opt/registry
-    ```
-
-3. Enable the service
-
-    ```bash
-    systemctl daemon-reload
-    systemctl enable registry.service
-    ```
-
-4. Start service
-
-    ```bash
-    systemctl start registry
-    ```
-
-5. Check the logs for issues
-
-    ```bash
-    journalctl -u registry --since=10m -f
-    ```
-
-
-##### Configuration
-
-1. `/opt/registry/application-prod.yml`
-
-    ```yaml
-    logging:
-        file:
-            name: '/opt/registry/registry.log'
-
-    jhipster:
-        security:
-            authentication:
-            jwt:
-                base64-secret: THE-SAME-TOKEN-THAT-IS-USED-ON-THE-ARTEMIS-INSTANCES
-        registry:
-            password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED
-    spring:
-        security:
-            user:
-                password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED
-    ```
-
-2. `/opt/registry/bootstrap-prod.yml`
-
-    ```yaml
-    jhipster:
-        security:
-            authentication:
-            jwt:
-                base64-secret: THE-SAME-TOKEN-THAT-IS-USED-ON-THE-ARTEMIS-INSTANCES
-                secret: ''
-
-    spring:
-        cloud:
-            config:
-            server:
-                bootstrap: true
-                composite:
-                - type: native
-                  search-locations: file:./config-server
-    ```
-
-3. `/opt/registry/config-server/application.yml`
-
-    ```yaml
-    # Common configuration shared between all applications
-    configserver:
-        name: Artemis JHipster Registry
-        status: Connected to the Artemis JHipster Registry
-
-    jhipster:
-        security:
-            authentication:
-            jwt:
-                secret: ''
-                base64-secret: THE-SAME-TOKEN-THAT-IS-USED-ON-THE-ARTEMIS-INSTANCES
-
-    eureka:
-        client:
-            service-url:
-                defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
-    ```
-
-
-##### nginx config
-
-You still have to make the registry available:
-
-1. `/etc/nginx/sites-available/registry.conf`
-
-    ```
-    server {
-        listen 443 ssl http2;
-        server_name REGISTRY_FQDN;
-        ssl_session_cache shared:RegistrySSL:10m;
-        include /etc/nginx/common/common_ssl.conf;
-        add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload";
-        add_header X-Frame-Options DENY;
-        add_header Referrer-Policy same-origin;
-        client_max_body_size 10m;
-        client_body_buffer_size 1m;
-
-        location / {
-            proxy_pass              http://localhost:8761;
-            proxy_read_timeout      300;
-            proxy_connect_timeout   300;
-            proxy_http_version      1.1;
-            proxy_redirect          http://         https://;
-
-            proxy_set_header    Host                $http_host;
-            proxy_set_header    X-Real-IP           $remote_addr;
-            proxy_set_header    X-Forwarded-For     $remote_addr;
-            proxy_set_header    X-Forwarded-Proto   $scheme;
-
-            gzip off;
-        }
-    }
-    ```
-
-2. `ln -s /etc/nginx/sites-available/registry.conf /etc/nginx/sites-enabled/`
-
-    This enables the registry in nginx.
-
-3. `systemctl restart nginx`
-
-    This will apply the config changes and the registry will be reachable.
-
+Every core node, dedicated build agent and AI worker must connect to the same Redis or Valkey store. Configure the
+`Redis` provider explicitly on every process, even if they run on the same host. See the
+[distributed-data administration guide](/admin/production-setup/distributed-data#configure-the-provider).
 
 ### WebSockets
 
@@ -483,9 +255,9 @@ repositories that are checked out for the online editor, course icons, etc.
 
 Artemis uses scheduled tasks in various scenarios: e.g. to lock repositories on due date, clean up unused resources, etc.
 As we now run multiple instances of Artemis, we have to ensure that the scheduled tasks are not executed multiple times.
-Artemis uses to approaches for this:
+Artemis uses two approaches for this:
 
-1. Tasks for quizzes (e.g. evaluation once the quiz is due) are automatically distributed (using Hazelcast)
+1. Tasks for quizzes (e.g. evaluation once the quiz is due) are distributed through the configured provider
 
 2. Tasks for other exercises are only scheduled on one instance:
 
@@ -504,24 +276,6 @@ upstream artemis {
     server instance2:8080;
 }
 ```
-
-
-### Overview
-
-All instances can now communicate with each other on 3 different layers:
-
-- Database cache
-- WebSockets
-- File system
-
-You can see the state of all connected instances within the registry.
-It relays message between instances:
-
-<Image
-    src={registryImg}
-    size={ImageSize.large}
-    alt={"List of Artemis instances as shown in the registry user interface."}
-/>
 
 
 ## Deploying a New Version
@@ -694,8 +448,7 @@ Artemis also ships a proof-of-concept Kubernetes runner that executes each build
 build-agent pods need no Docker socket. [LocalCI Build Runners](/admin/production-setup/build-runners) compares both and documents
 how to configure and deploy them.
 
-With Hazelcast, build agents run as [Hazelcast Lite Members](https://docs.hazelcast.com/hazelcast/5.3/maintain-cluster/lite-members) and require a full member, in our case a core node, to be running. With Redis or Valkey, build agents connect to the Redis or Valkey store that the core nodes use instead.
-Thus, before starting a build agent make sure that at least the primary node (or the Redis or Valkey store) is running. You can then add and remove build agents to the cluster as desired.
+Start the shared Redis or Valkey store before the build agents. Agents can then be added and removed independently.
 
 You can verify that a build agent has been successfully added to the cluster by checking the Build Agents page under **Administration → Build System**.
 It may take a few seconds for the build agent to show up:
@@ -716,7 +469,7 @@ nodes that read a setting matter.
 | --- | --- | --- |
 | Profiles | `core`, `localvc`, `localci`, `scheduling` | `buildagent` |
 | Database (`spring.datasource`) | Yes, **one** database that all core nodes share | No. A build agent has no database access. |
-| `artemis.distributed-data.provider` | Yes, identical on all nodes | Yes, identical to the core nodes |
+| `artemis.distributed-data.provider` | Set to `Redis` | Set to `Redis` and use the same store as the core nodes |
 | `artemis.version-control.url` and the repository authentication | Yes | `url` and `default-branch` only, see [Build Agents](#build-agents) |
 | `artemis.continuous-integration.build.images` (default Docker image per language) | Yes, exercises are created on core nodes | Not needed |
 | `build-timeout-seconds` (`min`, `default`, `max`) | Yes, `application-localci.yml` | Yes, `application-buildagent.yml`. The `max` values must be equal. |
@@ -762,46 +515,24 @@ An agent also pauses itself after `pause-after-consecutive-failed-jobs` (100) co
 
 **Updating.** Build agents are updated together with the core nodes, following [Deploying a New Version](#deploying-a-new-version): Artemis has no rolling update.
 Pause the agents so that running builds finish, stop all nodes, start the first core node and wait for it, then start the remaining core nodes, and finally the build agents,
-which need a running core node (or the Redis or Valkey store) to join. Jobs that are lost during the restart are detected as missing builds and queued again, as described above.
+which need a running Redis or Valkey store. Jobs that are lost during the restart are detected as missing builds and queued again, as described above.
 
 
 ## Running multiple instances locally
 
-For testing purposes, you can also run multiple instances on the same machine. You can do this by using
-different ports and a unique instance ID for each instance.
-
-1. In `application-local.yml`, add the following configuration:
-
-    ```yaml
-    eureka:
-        client:
-            enabled: true
-    ```
-
-2. Create additional run configurations for each instance. You will have to add CLI arguments to each additional run
-    configuration to set the instance ID and the port, e.g. `--server.port=8081 --eureka.instance.instanceId="Artemis:2"`.
-    Also, make sure that only one instance has the `scheduling` profile enabled:
-
-    <Image src={runConfigImg} size={ImageSize.large} alt={"Run configuration dialog in IntelliJ."} />
-
-3. Start the registry service, e.g., by running `docker compose --env-file .env -f deployment/docker/broker-registry.yml up`.
-
-4. Start the first instance with the default run configuration (no additional CLI arguments, `scheduling` enabled)
-    and wait until it is up and running.
-
-5. Start the remaining instances.
-
-You should now be able to see all instances in the registry interface at http://localhost:8761.
-
+For development on one machine, start Redis or Valkey and the WebSocket broker before the core nodes. Use the
+same [provider configuration](/admin/production-setup/distributed-data#configure-the-provider) and database on
+every node. Give each process a unique `artemis.instance-id` and a Redis client name starting with `artemis-` (for example, `artemis-core-2`). Choose distinct
+HTTP and SSH ports for core nodes. Enable `scheduling` on exactly one core node. The Compose setup below supplies
+these settings.
 
 ### Running multiple instances locally with Docker
 
 You can also run multiple instances of Artemis locally using Docker. This will start 2 Artemis instances, each running
 in its own container. A load balancer (nginx) will be used to distribute the requests to the different instances. The
 load balancer will be running in a separate container and will be accessible on ports 80/443 of the host system. The
-instances share their state through Valkey on the Redis [distributed data provider](/admin/production-setup/distributed-data),
-so they need no registry service and form no Hazelcast cluster. Further details can be found in [Database Cache](#database-cache). The
-instances will also use a ActiveMQ Artemis broker to synchronize WebSocket messages. Further details can be found in [WebSockets](#websockets). In summary, the setup will look like this:
+instances share their state through Valkey on the Redis [distributed data provider](/admin/production-setup/distributed-data). The
+instances also use an ActiveMQ Artemis broker to synchronize WebSocket messages. Further details can be found in [WebSockets](#websockets). In summary, the setup will look like this:
 
 * 2 Artemis instances:
     * artemis-app-node-1: using following spring profile: `prod,localvc,localci,core,scheduling,docker`

@@ -3,7 +3,7 @@ id: jenkins-to-localci-migration
 title: Migrating from Jenkins to LocalCI
 sidebar_label: Jenkins to LocalCI Migration
 description: How to move an Artemis installation that builds with Jenkins to LocalCI before Jenkins support is removed in Artemis 11.
-last_reviewed: 2026-11-09
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -72,7 +72,7 @@ and no Jenkins user to maintain.
 - Pull the Docker images for your languages on the build agents so that the first builds do not wait for downloads. Builds fail when a
   build agent cannot reach the registry.
 - Choose the distributed data provider. A single node can use the local provider. Several nodes need
-  [Hazelcast or Redis](/admin/production-setup/distributed-data).
+  [Redis or Valkey](/admin/production-setup/distributed-data).
 
 ### 2. Rehearse on staging
 
@@ -90,7 +90,7 @@ Change these on every Artemis node. The profile names are the Spring profiles in
 | `artemis.version-control.build-agent-git-username` and `build-agent-git-password` | The shared credential pair for Jenkins | Remove both. A node that runs LocalCI **refuses to start** while either is set. |
 | Jenkins-specific keys under `artemis.continuous-integration` | Used, for example the build timeout | Remove them. They are marked as Jenkins specific in `application-artemis.yml`. |
 | Build agent authentication | The shared credential pair above | Per-build clone tokens or SSH keys, see [Build agent authentication](/admin/production-setup/security) |
-| Distributed data | Not needed on a single node | Set `artemis.distributed-data.provider` to `Hazelcast`, `Redis` or `Local`, see [distributed data](/admin/production-setup/distributed-data) |
+| Distributed data | Not needed on a single node | Set `artemis.distributed-data.provider` to `Redis` on each process in a multi-node installation, see [distributed data](/admin/production-setup/distributed-data) |
 
 The remaining LocalCI options (concurrent builds, Docker flags, the maximum build duration and the bulk trigger limits) are described in
 [Configure Build Management](/admin/production-setup/integrated-code-lifecycle-setup#configure-build-management).

@@ -11,7 +11,7 @@ import inet.ipaddr.IPAddressString;
  * Comparison of single IP addresses that arrive as text from two different components.
  * <p>
  * Exists because the two sides of every origin check in the build agent paths are formatted independently: the
- * middleware reports whatever Hazelcast or Redis produced for a socket, while the request side comes from the servlet
+ * agent reports the IP address measured by a core node, while the request side comes from the servlet
  * container or the ssh server. The same host therefore shows up in different notations, and the two that matter are
  * <ul>
  * <li>the two textual forms of an IPv6 address, {@code ::1} and {@code 0:0:0:0:0:0:0:1};</li>

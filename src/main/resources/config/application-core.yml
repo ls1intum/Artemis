@@ -68,10 +68,6 @@ spring:
           - org.springframework.boot.micrometer.metrics.autoconfigure.startup.StartupTimeMetricsListenerAutoConfiguration
           - org.springframework.boot.micrometer.metrics.autoconfigure.task.TaskExecutorMetricsAutoConfiguration
           - org.springframework.boot.tomcat.autoconfigure.metrics.TomcatMetricsAutoConfiguration
-    cloud:
-        loadbalancer:
-            cache:
-                enabled: true
 
 management:
     endpoint:

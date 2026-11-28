@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.core.service.messaging;
 
 /**
  * This interface offers a service that will send messages to the node that runs the scheduling.
- * This can either be the same node or a different node within the Hazelcast cluster.
+ * This can either be the same node or a different node within the cluster.
  */
 public interface InstanceMessageSendService {
 

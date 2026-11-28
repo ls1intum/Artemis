@@ -65,6 +65,9 @@ expect "no ScaledObject by default" 0 "$(count_of 'kind: ScaledObject' <<< "$def
 default_agents=$(render --show-only templates/build-agents/statefulset.yaml)
 expect "the build agents keep their replica count" 1 "$(count_of '  replicas: 2' <<< "$default_agents")"
 
+expect "cores and standalone agents share Redis" 1 "$(count_of 'ARTEMIS_DISTRIBUTEDDATA_PROVIDER: "Redis"' <<< "$default_render")"
+expect "both pod types set a distinct Redis client name" 2 "$(count_of 'name: SPRING_DATA_REDIS_CLIENTNAME' <<< "$default_render")"
+
 echo "== autoscaling"
 scaled=$(render -f "$values/autoscaling-values.yaml" --show-only templates/build-agents/scaledobject.yaml)
 expect "one ScaledObject" 1 "$(count_of 'kind: ScaledObject' <<< "$scaled")"
@@ -97,6 +100,16 @@ echo "== no build agents, no autoscaling"
 without_agents=$(render -f "$values/autoscaling-values.yaml" --set buildAgents.enabled=false)
 expect "no ScaledObject without build agents" 0 "$(count_of 'kind: ScaledObject' <<< "$without_agents")"
 expect "no build agent StatefulSet without build agents" 0 "$(count_of 'name: artemis-build-agent' <<< "$without_agents")"
+
+expect "scaling to one core without agents keeps the Redis store" 1 "$(count_of 'ARTEMIS_DISTRIBUTEDDATA_PROVIDER: "Redis"' <<< "$without_agents")"
+single_node=$(render --set artemis.distributedDataProvider=Local --set buildAgents.enabled=false --set redis.password=)
+expect "one core without agents needs no Redis service" 0 "$(count_of 'app.kubernetes.io/component: redis' <<< "$single_node")"
+expect "Local uses no Redis connection" 0 "$(count_of 'SPRING_DATA_REDIS_' <<< "$single_node")"
+expect "the single core uses Local" 1 "$(count_of 'ARTEMIS_DISTRIBUTEDDATA_PROVIDER: "Local"' <<< "$single_node")"
+expect_refused "Local with separate agents" "Local requires artemis.replicaCount=1 and buildAgents.enabled=false" --set artemis.distributedDataProvider=Local
+expect_refused "Local with multiple cores" "Local requires artemis.replicaCount=1 and buildAgents.enabled=false" --set artemis.distributedDataProvider=Local --set buildAgents.enabled=false --set artemis.replicaCount=2
+expect_refused "unknown distributed provider" "artemis.distributedDataProvider must be Redis or Local" --set artemis.distributedDataProvider=unknown
+expect_refused "multiple cores without a Redis credential" "redis.password is required" --set buildAgents.enabled=false --set artemis.replicaCount=2 --set redis.password=
 
 echo "== configurations that cannot work are refused"
 expect_refused "autoscaling without a Prometheus address" "buildAgents.autoscaling.prometheus.serverAddress is required" --set buildAgents.autoscaling.enabled=true

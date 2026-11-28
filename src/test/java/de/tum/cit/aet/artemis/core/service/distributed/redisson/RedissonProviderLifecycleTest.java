@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -22,51 +21,32 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.redisson.config.Config;
 
 class RedissonProviderLifecycleTest {
 
     @Test
-    void connectionStateCallbacksAreImmediateOnlyWhileRunningAndRemovalIsIdempotent() {
+    void reportsItsConfiguredIdentifierAndConnectionState() {
         var client = mock(RedissonClient.class);
         var service = new RedissonDistributedDataProviderService(client, mock(RedisClientListResolver.class));
-        ReflectionTestUtils.setField(service, "redisClientName", "artemis-agent");
-        List<Boolean> events = new ArrayList<>();
-        UUID listener = service.addConnectionStateListener(events::add);
-        service.addConnectionStateListener(_ -> {
-            throw new IllegalStateException("callback failed");
-        });
-        assertThat(events).containsExactly(true);
-        assertThat(service.removeConnectionStateListener(listener)).isTrue();
-        assertThat(service.removeConnectionStateListener(listener)).isFalse();
+        var config = new Config();
+        config.useSingleServer().setAddress("redis://localhost:6379").setClientName("artemis-agent");
+        when(client.getConfig()).thenReturn(config);
         assertThat(service.getLocalMemberAddress()).isEqualTo("artemis-agent");
         assertThat(service.isConnectedToCluster()).isTrue();
-        assertThat(service.noDataMemberInClusterAvailable()).isFalse();
-        assertThat(service.clientsConnectDirectlyToCoreNodes()).isFalse();
-        assertThat(service.buildAgentsAppearInClusterMemberList()).isTrue();
         when(client.isShuttingDown()).thenReturn(true);
         assertThat(service.isInstanceRunning()).isFalse();
-        service.addConnectionStateListener(events::add);
-        assertThat(events).containsExactly(true);
-        when(client.isShutdown()).thenReturn(true);
-        assertThat(service.noDataMemberInClusterAvailable()).isTrue();
     }
 
     @Test
     void completeMembershipSnapshotIsResolvedOnceAndIncompleteSnapshotsNeverHideOtherNodes() {
         var resolver = mock(RedisClientListResolver.class);
         var service = new RedissonDistributedDataProviderService(mock(RedissonClient.class), resolver);
-        var observed = Map.of("artemis-core", Set.of("192.0.2.1"), "artemis-agent", Set.of("192.0.2.2"));
+        var observed = Set.of("artemis-core", "artemis-agent");
         when(resolver.resolveClients()).thenReturn(new RedisClientListResolver.ClientListSnapshot(observed, true));
         assertThat(service.getClusterMemberAddresses()).containsExactlyInAnyOrder("artemis-core", "artemis-agent");
-        assertThat(service.getConnectedClientNames()).containsExactlyInAnyOrder("artemis-core", "artemis-agent");
-        var membership = service.getClusterMembership();
-        assertThat(membership.clusterMemberAddresses()).containsExactlyInAnyOrder("artemis-core", "artemis-agent");
-        assertThat(membership.connectedClientNames()).containsExactlyInAnyOrder("artemis-core", "artemis-agent");
         when(resolver.resolveClients()).thenReturn(new RedisClientListResolver.ClientListSnapshot(observed, false));
         assertThat(service.getClusterMemberAddresses()).isEmpty();
-        assertThat(service.getConnectedClientNames()).isEmpty();
-        assertThat(service.getClusterMembership().clusterMemberAddresses()).isEmpty();
     }
 
     @Test
@@ -88,10 +68,10 @@ class RedissonProviderLifecycleTest {
             });
             var task = org.mockito.ArgumentCaptor.forClass(Runnable.class);
             verify(executor).scheduleAtFixedRate(task.capture(), eq(5L), eq(5L), eq(TimeUnit.SECONDS));
-            when(resolver.resolveClients()).thenReturn(new RedisClientListResolver.ClientListSnapshot(Map.of(), false));
+            when(resolver.resolveClients()).thenReturn(new RedisClientListResolver.ClientListSnapshot(Set.of(), false));
             task.getValue().run();
             assertThat(disconnected).isEmpty();
-            when(resolver.resolveClients()).thenReturn(new RedisClientListResolver.ClientListSnapshot(Map.of("artemis-core", Set.of()), true));
+            when(resolver.resolveClients()).thenReturn(new RedisClientListResolver.ClientListSnapshot(Set.of("artemis-core"), true));
             task.getValue().run();
             task.getValue().run();
             assertThat(disconnected).containsExactly("artemis-agent");

@@ -23,8 +23,6 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 import com.zaxxer.hikari.HikariDataSource;
 
 import io.micrometer.core.instrument.MeterRegistry;
@@ -32,7 +30,7 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
 
 /**
- * Actuator endpoint that exposes JVM, process, HTTP, cache, datasource and garbage-collector
+ * Actuator endpoint that exposes JVM, process, HTTP, datasource and garbage-collector
  * metrics in the format expected by the Artemis admin metrics UI.
  * <p>
  * Collects data from Micrometer's {@link MeterRegistry} and JMX MBeans.
@@ -61,12 +59,11 @@ public class ArtemisMetricsEndpoint {
     // --- DTOs ---
     // Note: @JsonProperty with dots (e.g., "system.cpu.usage") is intentional.
     // Jackson treats the full string as a flat JSON key, matching the client's TypeScript interface.
-    // Maps are only used where keys are dynamic at runtime (memory pool names, cache names, URIs, status codes).
+    // Maps are only used where keys are dynamic at runtime (memory pool names, URIs, status codes).
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record MetricsResponse(Map<String, MemoryMetrics> jvm, ProcessMetrics processMetrics, GarbageCollectorMetrics garbageCollector,
-            @JsonProperty("http.server.requests") HttpRequestMetrics httpServerRequests, Map<String, CacheStats> cache, DatabaseMetrics databases,
-            Map<String, Map<String, RequestStats>> services) {
+            @JsonProperty("http.server.requests") HttpRequestMetrics httpServerRequests, DatabaseMetrics databases, Map<String, Map<String, RequestStats>> services) {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -106,11 +103,6 @@ public class ArtemisMetricsEndpoint {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record CacheStats(@JsonProperty("cache.gets.hit") double hits, @JsonProperty("cache.gets.miss") double misses, @JsonProperty("cache.puts") double puts,
-            @JsonProperty("cache.evictions") double evictions, @JsonProperty("cache.removals") double removals, @JsonProperty("cache.size") double size) {
-    }
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record GaugeValue(double value) {
     }
 
@@ -123,7 +115,7 @@ public class ArtemisMetricsEndpoint {
 
     @ReadOperation
     public MetricsResponse allMetrics() {
-        return new MetricsResponse(jvmMemoryMetrics(), processMetrics(), garbageCollectorMetrics(), httpRequestMetrics(), cacheMetrics(), databaseMetrics(), endpointMetrics());
+        return new MetricsResponse(jvmMemoryMetrics(), processMetrics(), garbageCollectorMetrics(), httpRequestMetrics(), databaseMetrics(), endpointMetrics());
     }
 
     // --- Collection methods ---
@@ -178,53 +170,6 @@ public class ArtemisMetricsEndpoint {
         }
 
         return new HttpRequestMetrics(new RequestCount(totalCount), perCode);
-    }
-
-    /**
-     * Collects metrics for all Hazelcast IMaps used as distributed state.
-     * <p>
-     * This includes the Spring {@code @Cacheable} caches, which the distributed data provider backs with IMaps on this
-     * provider, as well as application-level IMaps (rate-limit buckets, atlas session state, course notification cache,
-     * etc.).
-     * Hibernate L2 cache is disabled cluster-wide, so there are no JCache / ICache regions
-     * to read — see {@code documentation/docs/developer/guidelines/caching.mdx}.
-     * <p>
-     * Statistics are read from {@code IMap.getLocalMapStats()} (local-only); the entry
-     * count uses {@code stats.getOwnedEntryCount()} rather than {@code map.size()} to
-     * avoid the cluster-wide network round-trip implied by the latter.
-     * <p>
-     * <strong>Hazelcast-only by nature.</strong> These counters come from Hazelcast's per-map local statistics, which
-     * Redis has no equivalent for: Redis reports server-wide keyspace and memory figures, not per-structure hit/miss
-     * counts. When Hazelcast is not the configured provider there is no {@code HazelcastInstance} bean, the lookup below
-     * fails, and this returns an empty map so the endpoint still serves its other sections. Dashboards that read these
-     * counters therefore go blank on a Redis-only node rather than reporting wrong numbers.
-     */
-    private Map<String, CacheStats> cacheMetrics() {
-        Map<String, CacheStats> result = new TreeMap<>();
-        try {
-            var hazelcast = applicationContext.getBean(HazelcastInstance.class);
-            for (var distributedObject : hazelcast.getDistributedObjects()) {
-                String name = distributedObject.getName();
-                if (name.startsWith("__") || "default".equals(name) || "nodeMetrics".equals(name)) {
-                    continue;
-                }
-                try {
-                    if (distributedObject instanceof IMap<?, ?> map) {
-                        var stats = map.getLocalMapStats();
-                        long misses = Math.max(0, stats.getGetOperationCount() - stats.getHits());
-                        result.put(name, new CacheStats(stats.getHits(), misses, stats.getPutOperationCount(), stats.getEvictionCount(), stats.getRemoveOperationCount(),
-                                stats.getOwnedEntryCount()));
-                    }
-                }
-                catch (Exception e) {
-                    log.debug("Could not collect IMap metrics for '{}': {}", name, e.getMessage());
-                }
-            }
-        }
-        catch (Exception e) {
-            log.debug("Could not access HazelcastInstance for cache metrics: {}", e.getMessage());
-        }
-        return result;
     }
 
     /**

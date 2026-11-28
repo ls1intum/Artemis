@@ -278,7 +278,7 @@ public class ExerciseMappingToolsService {
 
             exerciseMappingPreview.set(preview);
 
-            // Also write to Hazelcast so cross-node requests can retrieve the preview
+            // Also write to the shared cache so cross-node requests can retrieve the preview
             String sessionId = currentSessionId.get();
             if (sessionId != null) {
                 sessionCacheService.cacheExerciseMappingPreview(sessionId, preview);

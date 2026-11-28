@@ -13,7 +13,6 @@ import static org.mockito.Mockito.verify;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -25,12 +24,9 @@ import org.redisson.spring.data.connection.RedissonConnectionFactory;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.hazelcast.core.Hazelcast;
-
 import de.tum.cit.aet.artemis.core.config.RedissonCodecConfiguration;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisClientListResolver;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedDataProviderService;
@@ -96,19 +92,6 @@ class GenerationRunStoreServiceTest {
     @Test
     void localProviderRetainsOnlyBoundedDetachedActivity() throws Exception {
         verifyStore(new LocalDataProviderService());
-    }
-
-    @Test
-    void hazelcastSupportsAtomicActivityAndExpiry() throws Exception {
-        var config = new com.hazelcast.config.Config().setClusterName("activity-" + UUID.randomUUID());
-        config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-        var instance = Hazelcast.newHazelcastInstance(config);
-        try {
-            verifyStore(new HazelcastDistributedDataProviderService(instance));
-        }
-        finally {
-            instance.shutdown();
-        }
     }
 
     @Test

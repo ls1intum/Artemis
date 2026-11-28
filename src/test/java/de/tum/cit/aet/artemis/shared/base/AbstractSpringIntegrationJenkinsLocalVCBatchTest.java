@@ -32,8 +32,7 @@ import org.springframework.test.context.TestPropertySource;
         // LocalVCBuildAgentCredentialsValidator refuses to start such a node without them.
         "artemis.version-control.build-agent-git-username=buildjob_user", "artemis.version-control.build-agent-git-password=buildjob_password",
         "artemis.user-management.use-external=false", "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$",
-        "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc_batch", "info.contact=test@localhost",
-        "artemis.continuous-integration.artemis-authentication-token-value=ThisIsAReallyLongTopSecretTestingToken",
+        "info.contact=test@localhost", "artemis.continuous-integration.artemis-authentication-token-value=ThisIsAReallyLongTopSecretTestingToken",
         // Use separate paths for parallel bucket execution
         "artemis.failed-build-logs-path=./local/server-integration-test-batch/failed-build-logs", "artemis.repo-clone-path=./local/server-integration-test-batch/repos",
         "artemis.version-control.local-vcs-repo-path=./local/server-integration-test-batch/local-vcs-repos", "artemis.lti.enabled=true", "artemis.athena.enabled=true",

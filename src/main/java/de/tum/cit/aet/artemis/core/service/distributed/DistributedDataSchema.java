@@ -6,8 +6,8 @@ import java.util.List;
  * The version of the data Artemis keeps in the distributed store, and which of that data survives a version bump.
  *
  * <p>
- * Redis and Valkey keep their contents across a release, which is why a queued build survives a deploy instead of
- * vanishing the way it does with Hazelcast. The cost is that a new release reads bytes an older one wrote. Prefixing
+ * Redis and Valkey keep their contents across a release, which is why queued builds survive application restarts. A new release can therefore read bytes an older one wrote.
+ * Prefixing
  * every key with {@link #VERSION} turns that from something to detect into something that cannot happen: a release
  * only ever sees keys written under its own version.
  *

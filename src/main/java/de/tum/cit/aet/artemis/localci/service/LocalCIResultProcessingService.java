@@ -149,28 +149,28 @@ public class LocalCIResultProcessingService {
 
     /**
      * Logs the health of the result processor every 5 minutes.
-     * If there are items in the Hazelcast queue but no results have been processed since the last check, an error is logged.
+     * If there are items in the distributed queue but no results have been processed since the last check, an error is logged.
      */
     @Scheduled(fixedDelay = 300_000, initialDelay = 300_000)
     public void logResultProcessorHealth() {
-        int hazelcastQueueSize = distributedDataAccessService.getResultQueueSize();
+        int resultQueueSize = distributedDataAccessService.getResultQueueSize();
         long currentProcessed = processedResults.get();
         long lastProcessed = lastProcessedResults.getAndSet(currentProcessed);
 
-        log.info("Result executor health: active={}, poolSize={}, queueSize={}, completed={}, hazelcastQueue={}, currentProcessed={}, lastProcessed={}",
+        log.info("Result executor health: active={}, poolSize={}, queueSize={}, completed={}, resultQueue={}, currentProcessed={}, lastProcessed={}",
                 resultProcessingExecutor.getActiveCount(), resultProcessingExecutor.getPoolSize(), resultProcessingExecutor.getQueue().size(),
-                resultProcessingExecutor.getCompletedTaskCount(), hazelcastQueueSize, currentProcessed, lastProcessed);
+                resultProcessingExecutor.getCompletedTaskCount(), resultQueueSize, currentProcessed, lastProcessed);
 
-        if (hazelcastQueueSize > 0 && currentProcessed == lastProcessed) {
+        if (resultQueueSize > 0 && currentProcessed == lastProcessed) {
             // We had items in the queue, but processed nothing in the 5 minutes.
-            log.error("Result processing seems stuck: hazelcastQueueSize={} and processedResults did not increase.", hazelcastQueueSize);
+            log.error("Result processing seems stuck: resultQueueSize={} and processedResults did not increase.", resultQueueSize);
             log.error("Consider restarting the application if this issue persists.");
         }
     }
 
     /**
-     * Removes the item listener from the Hazelcast result queue if the instance is active.
-     * Logs an error if Hazelcast is not running.
+     * Removes the item listener from the distributed result queue if the instance is active.
+     * Logs an error if the data provider is not running.
      */
     @PreDestroy
     public void removeListener() {
@@ -515,7 +515,7 @@ public class LocalCIResultProcessingService {
      * </p>
      * <ul>
      * <li>Trigger asynchronous post-processing of build results when a new {@link ResultQueueItem} arrives.</li>
-     * <li>Keep the Hazelcast event thread lightweight by delegating all work to {@link #processResultAsync()}.</li>
+     * <li>Keep the queue listener thread lightweight by delegating all work to {@link #processResultAsync()}.</li>
      * <li>Log concise, context-rich messages for observability while avoiding excessive output.</li>
      * </ul>
      *

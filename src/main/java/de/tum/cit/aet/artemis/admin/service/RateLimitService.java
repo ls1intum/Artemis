@@ -37,7 +37,7 @@ public class RateLimitService implements ServiceCredentialBudget {
 
     private static final Logger log = LoggerFactory.getLogger(RateLimitService.class);
 
-    // Bucket4J proxy that connects rate-limit buckets to Hazelcast for cluster-wide synchronization
+    // Bucket4J proxy that connects rate-limit buckets to the configured provider for cluster-wide synchronization
     private final ProxyManager<String> proxyManager;
 
     private final Map<Integer, BucketConfiguration> perMinuteCfgCache = new ConcurrentHashMap<>();

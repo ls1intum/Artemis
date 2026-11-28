@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
  * Manages the lifecycle of the STOMP broker relay connection and coordinates reconnect attempts.
  * <p>
  * Tracks broker availability events, exposes manual connect/disconnect/reconnect hooks (used by admin actions),
- * and publishes the current broker status into Hazelcast for UI consumption. Admin-triggered disconnects suppress
+ * and publishes the current broker status in the distributed map for UI consumption. Admin-triggered disconnects suppress
  * automatic reconnect attempts until an explicit connect/reconnect request clears the suppression.
  */
 @Profile(PROFILE_CORE)
@@ -279,7 +279,7 @@ public class WebsocketBrokerReconnectionService implements ApplicationListener<B
     }
 
     /**
-     * Periodically re-publish the last known broker status so nodes that join late (e.g. when Hazelcast is not yet ready)
+     * Periodically re-publish the last known broker status so nodes that join late (e.g. while the data provider is starting)
      * eventually see an up-to-date value.
      */
     private void scheduleStatusPublisher() {

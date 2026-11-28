@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.service.distributed.redisson;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,8 +16,8 @@ import java.util.function.Consumer;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
-import org.jspecify.annotations.NonNull;
 import org.redisson.api.RedissonClient;
+import org.redisson.config.ConfigSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,7 +37,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueu
 import de.tum.cit.aet.artemis.core.service.distributed.api.set.DistributedSet;
 import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
 
-// Exactly one provider bean exists at runtime, because the conditions of all three match one value of
+// Exactly one provider bean exists at runtime, because the conditions of both match one value of
 // artemis.distributed-data.provider each. Static analysis cannot evaluate those conditions and reports every injection of
 // DistributedDataProvider as ambiguous (Sonar java:S9352); @Primary names the preferred provider for it and changes nothing at runtime.
 @Lazy
@@ -51,13 +50,10 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
 
     /**
      * Polling interval for client disconnection detection in seconds.
-     * Redis doesn't have built-in client disconnection events like Hazelcast,
+     * Redis doesn't expose client disconnection events,
      * so we poll the client list periodically to detect disconnections.
      */
     private static final long CLIENT_POLLING_INTERVAL_SECONDS = 5;
-
-    @Value("${spring.data.redis.client-name:artemis-node}")
-    private String redisClientName;
 
     @Value("${artemis.version:unknown}")
     private String artemisVersion;
@@ -70,11 +66,6 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
      * Registered client disconnection listeners. The callback receives the disconnected client's name.
      */
     private final Map<UUID, Consumer<String>> clientDisconnectionListeners = new ConcurrentHashMap<>();
-
-    /**
-     * Registered connection state listeners. The callback receives the connection state.
-     */
-    private final Map<UUID, Consumer<Boolean>> connectionStateListeners = new ConcurrentHashMap<>();
 
     /**
      * Tracks the previously known connected clients for detecting disconnections.
@@ -196,7 +187,7 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
 
     @Override
     public String getLocalMemberAddress() {
-        return redisClientName;
+        return ConfigSupport.getConfig(redissonClient.getConfig()).getClientName();
     }
 
     /**
@@ -213,100 +204,10 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
         return snapshot.complete() ? snapshot.clientNames() : Set.of();
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>
-     * Redis has no member/client distinction: core nodes and build agents alike appear in the Redis client list, so an
-     * agent that is missing from it really is gone.
-     */
-    @Override
-    public boolean buildAgentsAppearInClusterMemberList() {
-        return true;
-    }
-
-    @Override
-    public boolean noDataMemberInClusterAvailable() {
-        return !isInstanceRunning();
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * <p>
-     * Redis has no concept of connected clients in the same way as Hazelcast, so the client list is used. The caller filters the build agent overview to the names in
-     * this set, so a partial answer would hide every agent connected to a different Redis Cluster node. An incomplete lookup therefore yields an empty set, which the
-     * caller already reads as "connectivity cannot be determined" and shows all agents instead of hiding some.
-     */
-    @Override
-    public Set<String> getConnectedClientNames() {
-        var snapshot = redisClientListResolver.resolveClients();
-        return snapshot.complete() ? snapshot.clientNames() : Set.of();
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * <p>
-     * Redis answers both views from the same {@code CLIENT LIST}, so this resolves it once instead of issuing the
-     * query twice. {@code CLIENT LIST} is O(connections) on the server and returns a line per connection that the
-     * client then parses, which made it the second most expensive command this deployment ran.
-     */
-    @Override
-    @NonNull
-    public ClusterMembership getClusterMembership() {
-        var snapshot = redisClientListResolver.resolveClients();
-        Set<String> names = snapshot.complete() ? snapshot.clientNames() : Set.of();
-        return new ClusterMembership(names, names);
-    }
-
-    /**
-     * {@inheritDoc}
-     *
-     * <p>
-     * Redis reports the address it accepted each connection from in {@code CLIENT LIST}. Empty when that query failed or, in Redis Cluster mode, covered only part of the
-     * deployment: the caller concludes from a name's absence that the client disconnected, so a partial answer would clear the addresses of every agent attached to a node that
-     * did not answer. That must stay distinguishable from a complete answer that found no clients.
-     */
-    @Override
-    public Optional<Map<String, Set<String>>> getConnectedClientAddresses() {
-        return redisClientListResolver.getClientAddressesByName();
-    }
-
-    @Override
-    public boolean clientsConnectDirectlyToCoreNodes() {
-        // Clients connect to Redis, not to a core node, so where Redis accepted a connection from says nothing about
-        // the route that client takes to the git server
-        return false;
-    }
-
     @Override
     public boolean isConnectedToCluster() {
         // For Redis, being running means being connected
         return isInstanceRunning();
-    }
-
-    @Override
-    public UUID addConnectionStateListener(Consumer<Boolean> callback) {
-        // Redis doesn't have the same connection lifecycle semantics as Hazelcast clients.
-        // The connection is either available or not, and Redisson handles reconnection internally.
-        // We immediately invoke the callback with isInitialConnection=true if connected.
-        UUID listenerId = UUID.randomUUID();
-        connectionStateListeners.put(listenerId, callback);
-        if (isConnectedToCluster()) {
-            try {
-                callback.accept(true);
-            }
-            catch (Exception e) {
-                log.error("Error notifying connection state listener {}: {}", listenerId, e.getMessage(), e);
-            }
-        }
-        return listenerId;
-    }
-
-    @Override
-    public boolean removeConnectionStateListener(UUID listenerId) {
-        return connectionStateListeners.remove(listenerId) != null;
     }
 
     @Override

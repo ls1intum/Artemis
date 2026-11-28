@@ -245,7 +245,7 @@ tasks.named('generateGitProperties') {
 // configurations.configureEach excludes below. The GitHub dependency graph reports those resolutions although no
 // classpath contains them, so a vulnerable managed version raises an alert even when the dependency is pinned higher
 // in the dependencies block. The artifact below is declared explicitly, so this override only changes what the graph
-// sees. Hazelcast (5.7.0) no longer needs an override: the Spring Boot 4.2 BOM manages that version.
+// sees.
 // testcontainers-redis: 2.2.4 imports spring-boot-dependencies 3.4.2, which reaches artemis-project 2.37.0
 //         (GHSA-pm4j-p7pm-fpvx) in the GitHub dependency graph. 3.0.0 imports spring-boot-dependencies 4.1.1, the minor
 //         before the BOM this build uses today; after a Spring Boot bump the graph walks 4.1.1's imports as well.
@@ -347,8 +347,6 @@ configurations.configureEach {
 
     exclude group: "org.jasypt", module: "jasypt"
 
-    // required by eureka client, but not used in this project
-    exclude group: "com.thoughtworks.xstream", module: "xstream"
     // required by JPlag, but not used in this project
     exclude group: "xerces", module: "xercesImpl"
     // required by JPlag, but not used in this project
@@ -381,40 +379,7 @@ configurations.configureEach {
 }
 
 dependencies {
-    // commons-configuration 1.10 and commons-lang 2.6, which only it brings in, have no patched release
-    // (GHSA-pvp8-3xj6-8c6x, GHSA-j288-q9x7-2f5v). The excludes above keep both off every classpath, but not out of the
-    // copies that io.spring.dependency-management resolves (see the note above the ext overrides), so the declaration
-    // is removed from the two modules that make it: eureka-client and archaius-core, which eureka-client pulls in.
-    // The application has always run without the library because of the excludes above.
-    components {
-        withModule("com.netflix.eureka:eureka-client") {
-            allVariants {
-                withDependencies {
-                    removeAll { it.group == "commons-configuration" }
-                }
-            }
-        }
-        withModule("com.netflix.archaius:archaius-core") {
-            allVariants {
-                withDependencies {
-                    removeAll { it.group == "commons-configuration" }
-                }
-            }
-        }
-    }
-
-    // Required by Spring cloud.
-    // The client5 and core5 trains must be bumped together: httpclient5 5.6.x declares httpcore5 5.4.x. PR #12652 moved
-    // httpclient5 to 5.6.1 while leaving httpcore5 on 5.3.6 and had to be reverted because Hazelcast cluster formation
-    // broke on that mismatched pair. Keeping both explicit pins in sync avoids a repeat.
-    // Stay at or above httpclient5 5.6.3 / httpcore5 5.4.3, which close (httpclient5) a connection leak on
-    // Content-Encoding decode error leading to pool exhaustion, (httpcore5) HTTP/1 header parsing memory
-    // exhaustion, and (httpcore5-h2) an unbounded HPackDecoder header list before SETTINGS ACK. httpcore5-h2 is
-    // declared explicitly so the transitive request from httpclient5 cannot resolve down to a vulnerable 5.3.x.
-    // core5 (5.4.4) is exactly the version that the httpclient5 5.6.5 parent POM declares as httpcore.version. Earlier it
-    // was deliberately one patch above the 5.4.3 that the 5.6.4 parent POM declared (same 5.4 train; Eureka discovery and
-    // Hazelcast cluster formation were verified on that pair with the multi-node end-to-end run). If cluster formation
-    // ever breaks after a bump, go back to the version the parent POM declares first.
+    // Keep the HTTP client and core on the versions expected by the client POM.
     implementation "org.apache.httpcomponents.client5:httpclient5:5.6.5"
     // httpclient5-cache reaches the runtime classpath transitively (webauthn4j, helios-status-spring-starter) and
     // would otherwise sit at an older patch than httpclient5. Pinned so the whole family stays on one version.
@@ -606,9 +571,6 @@ dependencies {
     // server for every other operation. Version is managed by the Spring Boot BOM.
     implementation "com.github.ben-manes.caffeine:caffeine"
 
-    implementation "com.hazelcast:hazelcast:${hazelcast_version}"
-    implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
-    // alternative for Hazelcast
     implementation "org.redisson:redisson:${redisson_version}"
     implementation "org.redisson:redisson-spring-boot-starter:${redisson_version}"
 
@@ -657,17 +619,6 @@ dependencies {
     implementation "org.springframework.data:spring-data-ldap"
     implementation "org.springframework.ldap:spring-ldap-core"
 
-    // Spring Cloud (Paddington 2026.0.x; the exact train is spring_cloud_version in gradle.properties) —
-    // these starters and the commons module are pinned individually instead of being resolved from the train.
-    // Each Boot minor needs the matching train: 2025.1.x accepted Boot 4.0.x and 4.1.x, 2026.0.x is built for
-    // Boot 4.2.x. A mismatch is not a startup failure; the compatibility verifier shuts the application down
-    // shortly after the "Started" banner.
-    // Keep each version equal to the spring-cloud-netflix, spring-cloud-config and spring-cloud-commons version
-    // that the spring-cloud-dependencies BOM of the train lists as its property.
-    implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:5.1.0"
-    implementation "org.springframework.cloud:spring-cloud-starter-config:5.1.0"
-    implementation "org.springframework.cloud:spring-cloud-commons:5.1.0"
-
     // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support).
     // Version managed by the Spring Boot BOM.
     implementation "io.projectreactor.netty:reactor-netty-core"
@@ -696,8 +647,6 @@ dependencies {
     implementation "de.tum.cit.aet:helios-status-spring-starter:${helios_status_version}"
 
     implementation "com.bucket4j:bucket4j_jdk17-core:${bucket4j_version}"
-    implementation "com.bucket4j:bucket4j_jdk17-hazelcast:${bucket4j_version}"
-    // Rate-limit bucket storage for the Redis provider; the Hazelcast module above covers the Hazelcast provider.
     implementation "com.bucket4j:bucket4j_jdk17-redisson:${bucket4j_version}"
 
     // Weaviate vector database client for semantic search
@@ -725,10 +674,6 @@ dependencies {
         implementation("org.apache.santuario:xmlsec") {
             version { strictly("4.0.4") }
             because("Pulled transitively by OpenSAML (SAML2); force the newest version to avoid CVEs")
-        }
-        implementation("org.apache.httpcomponents:httpclient") {
-            version { strictly("4.5.14") }
-            because("Only the Eureka client still needs the HttpClient 4 line (it asks for 4.5.3); keep it on the last 4.x release instead of a version with known CVEs")
         }
     }
 
@@ -882,7 +827,6 @@ apply from: "gradle/openapi.gradle"
 
 dependencyManagement {
     imports {
-        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${spring_cloud_version}"
         // BOM uses 3-part versions (e.g. 18.1.0); POSTGRES_VERSION from .env may be 2-part (e.g. 18.1)
         def pgVersion = findProperty('postgres_version') ?: '18.7'
         def bomVersion = pgVersion.count('.') < 2 ? "${pgVersion}.0" : pgVersion

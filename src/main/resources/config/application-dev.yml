@@ -56,8 +56,6 @@ spring:
         cache-duration: PT1S # 1 second, see the ISO 8601 standard
     thymeleaf:
         cache: false
-    hazelcast:
-        localInstances: true
 
 server:
     port: 8080
@@ -102,15 +100,6 @@ info:
     universityName: # Optional in development, displayed on the About page when set; required on production core nodes
     contact: admin@uni.de # The admins contact email address, shown in the about us page, and sent to the telemetry service
     localLLMDeploymentEnabled: false # Defines whether local on-premise LLMs are available or not
-
-# Eureka configuration
-eureka:
-    instance:
-        prefer-ip-address: true
-    client:
-        enabled: false # By default, the JHipster Registry is not used in the "dev" profile
-        service-url:
-            defaultZone: http://admin:${jhipster.registry.password}@localhost:8761/eureka/
 
 # Theia configuration
 theia:

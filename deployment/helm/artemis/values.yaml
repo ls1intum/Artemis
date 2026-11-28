@@ -5,7 +5,7 @@
 # instance with Kubernetes-native LocalCI execution:
 #   - Artemis application nodes (a single scalable "core" pool)
 #   - PostgreSQL (bundled by default; can point at an external database)
-#   - JHipster Registry (Eureka) - required for Hazelcast member discovery
+#   - Valkey for shared state across cores and build agents
 #   - ActiveMQ broker - STOMP relay for cross-node WebSocket messages
 #   - Kubernetes Gateway API resources for HTTP(S) + git-over-SSH
 #
@@ -40,12 +40,16 @@ imagePullSecrets: []
 # Artemis application nodes ("core" pool)
 # -----------------------------------------------------------------------------
 artemis:
-  # Total number of Artemis core nodes. All nodes are Hazelcast members that
+  # Total number of Artemis core nodes. All nodes
   # serve HTTP/API and host LocalVC git. Exactly ONE node (the leader) also
   # runs the `scheduling` profile so cron jobs don't double-fire.
   #   replicaCount = 1  -> only the leader
   #   replicaCount = N  -> leader (1) + members (N-1)
   replicaCount: 1
+
+  # Redis keeps all cores, standalone agents and workers connected to the same persistent store across scaling changes.
+  # Use Local only for a single core with no separate agents or workers. Changing providers starts a different store.
+  distributedDataProvider: Redis
 
   javaOpts: >-
     -Xmx4g -Xms1g
@@ -138,7 +142,7 @@ artemis:
       username: "artemis_admin"
       password: ""  # REQUIRED - set via --set or a values override / secret manager
 
-    # Base64-encoded JWT signing secret shared by all nodes and the registry.
+    # Base64-encoded JWT signing secret shared by all Artemis nodes.
     # REQUIRED. Generate with: openssl rand -base64 64 | tr -d '\n'
     jwtBase64Secret: ""
 
@@ -151,7 +155,6 @@ artemis:
     # held by every agent opens every repository. Build agents authenticate with the clone token of the job they run.
 
     localci:
-      dataStore: Hazelcast
       concurrentResultProcessingSize: 16
 
 # -----------------------------------------------------------------------------
@@ -304,19 +307,17 @@ postgresql:
     sslmode: "disable"
 
 # -----------------------------------------------------------------------------
-# JHipster Registry (Eureka) - required for Hazelcast member discovery.
-# Artemis disables all other Hazelcast joiners and injects TCP-IP members
-# from Eureka metadata, so this component is mandatory for multi-node.
+# Valkey for the Redis distributed data provider. All Artemis pods share this store.
 # -----------------------------------------------------------------------------
-registry:
+redis:
   image:
-    repository: jhipster/jhipster-registry
-    tag: "v7.5.0"
+    repository: valkey/valkey
+    tag: "9.1.4"
     pullPolicy: IfNotPresent
-  # Admin password for the registry (also embedded in the Eureka service URL).
-  password: ""  # REQUIRED
-  service:
-    port: 8761
+  password: ""  # Required for the Redis provider.
+  persistence:
+    storageClassName: ""
+    size: 5Gi
   resources:
     requests:
       cpu: "250m"

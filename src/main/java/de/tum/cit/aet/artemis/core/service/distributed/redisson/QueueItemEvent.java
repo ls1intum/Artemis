@@ -8,7 +8,7 @@ import java.io.Serializable;
  *
  * <p>
  * Serializable because it travels over the wire like every other value in the distributed store. It carries the item,
- * so that has to be serializable too - which it already is, since Hazelcast requires it of everything queued.
+ * so that has to be serializable too.
  */
 public class QueueItemEvent<T> implements Serializable {
 

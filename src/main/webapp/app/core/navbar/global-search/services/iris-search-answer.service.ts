@@ -42,7 +42,7 @@ export class IrisSearchAnswerService {
     ask(query: string, limit = 5, courseIds?: number[], excludeCourseIds?: number[]): Observable<IrisSearchStatusUpdate> {
         return new Observable<IrisSearchStatusUpdate>((subscriber) => {
             // Generate the correlation ID client-side so it's known before the HTTP call.
-            // The server registers this ID as the Hazelcast job token; WebSocket callbacks echo it back.
+            // The server registers this ID as the distributed job token; WebSocket callbacks echo it back.
             const runId = generateUuid();
 
             // 1. Attach to the shared STOMP subscription, filtering to this run's messages only.

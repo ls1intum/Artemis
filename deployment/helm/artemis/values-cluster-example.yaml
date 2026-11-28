@@ -67,8 +67,7 @@ postgresql:
     port: 5432
     sslmode: require
 
-registry:
-  # Eureka is how Artemis nodes discover each other for Hazelcast. It is always deployed by this chart.
+redis:
   password: ""  # CHANGE ME
 
 broker:

@@ -8,7 +8,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -36,7 +35,7 @@ class RedissonDistributedDataProviderServiceTest {
         RedissonClient redissonClient = mock(RedissonClient.class);
         RedisClientListResolver resolver = mock(RedisClientListResolver.class);
         when(resolver.getUniqueClients()).thenReturn(Set.of("node-a", "node-b"));
-        when(resolver.resolveClients()).thenReturn(new RedisClientListResolver.ClientListSnapshot(Map.of("node-a", Set.of("10.0.0.1:1")), true));
+        when(resolver.resolveClients()).thenReturn(new RedisClientListResolver.ClientListSnapshot(Set.of("node-a"), true));
         var service = new RedissonDistributedDataProviderService(redissonClient, resolver);
         var disconnected = new CopyOnWriteArrayList<String>();
 

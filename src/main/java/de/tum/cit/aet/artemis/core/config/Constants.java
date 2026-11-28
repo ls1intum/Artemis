@@ -332,8 +332,6 @@ public final class Constants {
 
     public static final String ALLOWED_COURSE_REGISTRATION_USERNAME_PATTERN = "allowedCourseRegistrationUsernamePattern";
 
-    public static final int HAZELCAST_PATH_SERIALIZER_ID = 2;
-
     public static final String PLAGIARISM_CACHE_PREFIX = "plagiarism-";
 
     public static final String ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE = PLAGIARISM_CACHE_PREFIX + "active-plagiarism-checks-per-course-cache";
@@ -807,8 +805,6 @@ public final class Constants {
 
     /** The start of every personal access token secret, which tells it apart from a JWT in an Authorization header. */
     public static final String PERSONAL_ACCESS_TOKEN_PREFIX = "art_pat_";
-
-    public static final String HAZELCAST = "Hazelcast";
 
     public static final String REDIS = "Redis";
 

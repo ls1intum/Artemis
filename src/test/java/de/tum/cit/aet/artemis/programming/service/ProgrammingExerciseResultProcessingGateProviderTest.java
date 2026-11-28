@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 import java.time.Duration;
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -17,15 +16,10 @@ import org.redisson.api.RedissonClient;
 import org.redisson.spring.data.connection.RedissonConnectionFactory;
 import org.testcontainers.DockerClientFactory;
 
-import com.hazelcast.client.HazelcastClient;
-import com.hazelcast.client.config.ClientConfig;
-import com.hazelcast.core.Hazelcast;
-
 import de.tum.cit.aet.artemis.core.config.RedissonCodecConfiguration;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisClientListResolver;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedDataProviderService;
 import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
@@ -36,32 +30,6 @@ class ProgrammingExerciseResultProcessingGateProviderTest {
     private static final long EXERCISE_ID = 42L;
 
     private static final String LOCK_NAME = "programming-exercise-result-processing-42";
-
-    @Test
-    void hazelcastClientsShareWriterPermitsAndDeletion() throws Exception {
-        var config = new com.hazelcast.config.Config().setClusterName("result-processing-" + UUID.randomUUID());
-        config.getNetworkConfig().setPort(0).setPortAutoIncrement(false);
-        config.getNetworkConfig().getInterfaces().setEnabled(true).addInterface("127.0.0.1");
-        config.getNetworkConfig().getJoin().getAutoDetectionConfig().setEnabled(false);
-        config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
-        var member = Hazelcast.newHazelcastInstance(config);
-        try {
-            var clientConfig = new ClientConfig().setClusterName(config.getClusterName());
-            clientConfig.getConnectionStrategyConfig().getConnectionRetryConfig().setClusterConnectTimeoutMillis(10_000);
-            clientConfig.getNetworkConfig().addAddress("127.0.0.1:" + member.getCluster().getLocalMember().getSocketAddress().getPort());
-            var client = HazelcastClient.newHazelcastClient(clientConfig);
-            try {
-                verifyCoordination(new HazelcastDistributedDataProviderService(member), new HazelcastDistributedDataProviderService(client));
-            }
-            finally {
-                client.shutdown();
-            }
-        }
-        finally {
-            member.shutdown();
-        }
-    }
 
     @Test
     @EnabledIf("dockerAvailable")

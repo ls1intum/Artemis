@@ -20,8 +20,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBa
  * Covers the admin websocket node overview and the broker control endpoint.
  *
  * <p>
- * The node list is now built from {@link NodeRegistryService} rather than from the raw Hazelcast member list, so it only
- * reports core nodes. Build agents used to appear here as lite members even though the page hid every control for them.
+ * The overview reports core nodes registered with {@link NodeRegistryService}.
  */
 class AdminWebsocketIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 

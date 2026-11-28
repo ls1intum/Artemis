@@ -14,12 +14,10 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -120,12 +118,7 @@ class BuildJobManagementFailureTest {
     }
 
     @Test
-    void retriesDisconnectedInitializationAndReplacesCancelListenerOnReconnection() {
-        AtomicReference<Consumer<Boolean>> listener = new AtomicReference<>();
-        doAnswer(call -> {
-            listener.set(call.getArgument(0));
-            return UUID.randomUUID();
-        }).when(distributed).addConnectionStateListener(any());
+    void retriesDisconnectedInitializationAndRegistersTheCancelListener() {
         List<Runnable> retries = new ArrayList<>();
         ScheduledFuture<?> scheduled = mock(ScheduledFuture.class);
         doAnswer(call -> {
@@ -135,22 +128,15 @@ class BuildJobManagementFailureTest {
         @SuppressWarnings("unchecked")
         DistributedTopic<String> cancel = mock(DistributedTopic.class);
         when(distributed.getCanceledBuildJobsTopic()).thenReturn(cancel);
-        UUID firstId = UUID.randomUUID();
-        when(cancel.addMessageListener(any())).thenReturn(firstId, UUID.randomUUID());
         service.init();
-        assertThat(retries).hasSize(1);
-        listener.get().accept(false);
         assertThat(retries).hasSize(1);
         retries.getFirst().run();
         when(distributed.isConnectedToCluster()).thenReturn(true);
         retries.getFirst().run();
         verify(scheduled).cancel(false);
-        listener.get().accept(true);
-        listener.get().accept(false);
-        verify(cancel).removeMessageListener(firstId);
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Consumer<String>> callback = ArgumentCaptor.forClass(Consumer.class);
-        verify(cancel, org.mockito.Mockito.times(2)).addMessageListener(callback.capture());
+        verify(cancel).addMessageListener(callback.capture());
         callback.getValue().accept("unowned-job");
         verify(runner, never()).cancel(any());
     }

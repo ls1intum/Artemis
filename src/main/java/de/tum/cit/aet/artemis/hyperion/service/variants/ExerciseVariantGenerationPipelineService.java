@@ -142,7 +142,7 @@ public class ExerciseVariantGenerationPipelineService {
      * {@code ExerciseVariantTaskService.runJobAsync} (@Async). All terminal transitions
      * (COMPLETED / DRAFT_WITH_WARNINGS / FAILED / CANCELLED) happen in here.
      *
-     * @param job the claimed job (already stored in the Hazelcast map)
+     * @param job the claimed job (already stored in the distributed map)
      */
     public void run(VariantJob job) {
         String jobId = job.getJobId();
@@ -660,7 +660,7 @@ public class ExerciseVariantGenerationPipelineService {
     }
 
     private static String truncate(String text) {
-        final int maxLength = 100_000; // keep Hazelcast entries bounded (StepOutput note)
+        final int maxLength = 100_000; // bound the stored job record (StepOutput note)
         if (text == null || text.length() <= maxLength) {
             return text;
         }

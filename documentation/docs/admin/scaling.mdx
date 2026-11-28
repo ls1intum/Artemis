@@ -3,7 +3,7 @@ id: scaling
 title: Scaling Artemis
 sidebar_label: 'Scaling & Sizing'
 description: "How to size an Artemis installation: how many servers, how much CPU and memory, when to add nodes, and what the measurements show."
-last_reviewed: 2026-11-09
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../src/components/Callout/Callout";
@@ -92,19 +92,15 @@ to produce builds in the first place.
 />
 
 A single machine is simpler to run, because it needs none of the extra parts a cluster does: no shared
-storage, no service registry and no coordination layer. It is a reasonable choice for a course, and it
+storage or external coordination service. It is a reasonable choice for a course, and it
 has been measured: see [what has been measured](#what-has-been-measured) below.
 
 At the same total cost, several small core nodes usually beat one large one:
 
 - **They fail independently.** Losing one node of three during an exam costs a third of the capacity,
   not all of it.
-- **They can be added without downtime.** A new node joins a running cluster on its own. With Hazelcast
-  it finds the other nodes through the
-  [service registry](/admin/production-setup/multiple-artemis-instances#discovery-service), which the
-  setup pages also call the discovery service; with
-  [Redis](/admin/production-setup/distributed-data#redis-does-not-need-a-service-registry) no registry is needed at
-  all. Either way, nothing has to be reconfigured on the nodes that are already running.
+- **They can be added without downtime.** Configure new nodes to use the existing shared store.
+  Running nodes keep their configuration.
 - **Load really does spread.** In both measured cluster runs the traffic reached all three core nodes.
   One of them was busier than the other two, but the other two were carrying a substantial share of the
   work rather than sitting idle.
@@ -168,7 +164,7 @@ the load on every machine.
 
 | Deployment | Hardware | Students | Average response | Failed requests | What ran out first |
 | --- | --- | --- | --- | --- | --- |
-| Cluster, Hazelcast | 11 VMs, 44 CPUs, 41.5 GB | 2,000 | 0.45 s | **0** | Core nodes, busiest at 87% CPU |
+| Cluster, earlier in-memory provider | 11 VMs, 44 CPUs, 41.5 GB | 2,000 | 0.45 s | **0** | Core nodes, busiest at 87% CPU |
 | Cluster, Redis | 11 VMs, 44 CPUs, 41.5 GB | 2,000 | 0.30 s | **0** | Core nodes, busiest at 77% CPU |
 | Everything on one machine | 1 VM, 4 CPUs, 3.8 GB | 100 | 0.65 s | **0** | Memory (the machine was already swapping to disk) |
 
@@ -288,9 +284,8 @@ component one machine and knowing what would actually increase its load.
 | --- | --- | --- | --- |
 | Database | The dataset, not the user count | Under half of one machine | [Database Tips](/admin/database-tips) |
 | Repository storage | Total repository volume | ~11% of one machine | [File system](/admin/production-setup/multiple-artemis-instances#file-system) |
-| Coordination (Hazelcast or Redis) | Number of nodes, not users | ~10% CPU and 44 MB of memory (measured on Redis; Hazelcast was not measured separately) | [Database cache](/admin/production-setup/multiple-artemis-instances#database-cache), [Distributed Data](/admin/production-setup/distributed-data) |
+| Coordination (Redis or Valkey) | Number of nodes, not users | ~10% CPU and 44 MB of memory (measured on Redis) | [Database cache](/admin/production-setup/multiple-artemis-instances#database-cache), [Distributed Data](/admin/production-setup/distributed-data) |
 | Load balancer / reverse proxy | Request and git traffic | 8-11% of one machine | [nginx configuration](/admin/production-setup/multiple-artemis-instances#nginx-configuration), [configuration templates](/admin/production-setup/additional-tips#nginx-configuration-templates) |
-| Service registry (Hazelcast only) | Number of nodes | Negligible | [Discovery service](/admin/production-setup/multiple-artemis-instances#discovery-service) |
 | Global search | How much content is indexed, and the embedding strategy chosen | Not part of the exam benchmark | [Global Search & Weaviate](/admin/global-search-weaviate) |
 | Iris, Hyperion, Athena | The AI models they call, which are sized separately from Artemis | Not part of the exam benchmark | [Artemis Intelligence](/admin/artemis-intelligence), [Extensions Setup](/admin/extensions-setup) |
 
@@ -372,6 +367,6 @@ Results from other institutions are very welcome.
 - [Benchmarking Tool](/admin/benchmarking-tool) holds the tool, the scenarios and the full measured
   results behind this page
 - [Distributed Data](/admin/production-setup/distributed-data) explains how cross-node state works and how
-  to choose between Hazelcast and Redis
+  to configure Redis or Valkey
 - [Performance](/developer/guidelines/performance) documents the server-side practices that keep the
   database load low in the first place

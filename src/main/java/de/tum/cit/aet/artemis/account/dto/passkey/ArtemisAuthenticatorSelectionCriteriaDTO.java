@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /**
  * Serializable DTO for {@link AuthenticatorSelectionCriteria}, which is used in the WebAuthn
  * registration process to guide authenticator selection. The original class is not serializable,
- * so this DTO allows storing or transmitting selection preferences (e.g., via Hazelcast).
+ * so this DTO allows storing or transmitting selection preferences in the distributed store.
  *
  * <p>
  * This DTO supports conversion back to {@link AuthenticatorSelectionCriteria} for use

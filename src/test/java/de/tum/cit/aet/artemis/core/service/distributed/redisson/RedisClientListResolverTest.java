@@ -33,13 +33,11 @@ class RedisClientListResolverTest {
         var incomplete = resolver.resolveClients();
         assertThat(incomplete.complete()).isFalse();
         assertThat(incomplete.clientNames()).isEmpty();
-        assertThat(resolver.getClientAddressesByName()).isEmpty();
 
         when(connection.serverCommands().getClientList(secondNode)).thenReturn(Flux.just(client(clientName, "10.0.0.3:5678")));
         var complete = resolver.resolveClients();
         assertThat(complete.complete()).isTrue();
         assertThat(complete.clientNames()).containsExactly(clientName);
-        assertThat(complete.addressesByClientName().get("artemis-core")).containsExactly("10.0.0.3");
     }
 
     private static RedisClientInfo client(String name, String address) {

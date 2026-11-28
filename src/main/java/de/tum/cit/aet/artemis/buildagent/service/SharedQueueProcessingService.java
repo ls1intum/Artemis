@@ -56,7 +56,7 @@ import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
 /**
- * Orchestrates consumption of build jobs from the shared (Hazelcast) queue on this node.
+ * Orchestrates consumption of build jobs from the shared queue on this node.
  *
  * <p>
  * <strong>Responsibilities</strong>
@@ -246,13 +246,7 @@ public class SharedQueueProcessingService {
     /**
      * Initialize the service by validating configuration and setting up distributed listeners.
      * <p>
-     * When running as a Hazelcast client with asyncStart=true, the client may not yet be
-     * connected to the cluster when this method is called. In that case, we schedule
-     * periodic retries until the connection is established and initialization completes.
-     * <p>
-     * Additionally, a connection state listener is registered to handle reconnection after
-     * a connection loss. When the client reconnects to the cluster, the listener re-initializes
-     * the distributed listeners (queue, topics) which may have been lost during the disconnection.
+     * If the provider is unavailable during startup, the service retries initialization periodically.
      * <p>
      * EventListener cannot be used here, as the bean is lazy
      * <a href="https://docs.spring.io/spring-framework/reference/core/beans/context-introduction.html#context-functionality-events-annotation">Spring Docs</a>
@@ -271,38 +265,7 @@ public class SharedQueueProcessingService {
             buildAgentDisplayName = buildAgentShortName;
         }
 
-        // Register a connection state listener to handle both initial connection and reconnection.
-        // On reconnection (isInitialConnection=false), the distributed listeners need to be re-registered
-        // because they may have been lost when the connection was interrupted.
-        distributedDataAccessService.addConnectionStateListener(isInitialConnection -> {
-            if (!isInitialConnection) {
-                // This is a reconnection - reset the initialized flag so listeners are re-registered
-                log.info("Reconnected to the distributed data provider. Re-initializing SharedQueueProcessingService listeners.");
-                initialized.set(false);
-                // Also cancel existing scheduled future if it's still running, as a new one will be created
-                cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
-            }
-            boolean initSucceeded = tryInitialize();
-            // If initialization failed after reconnection, schedule retries
-            if (!initSucceeded && !distributedDataAccessService.isConnectedToCluster()) {
-                if (connectionRetryFuture == null || connectionRetryFuture.isDone()) {
-                    connectionRetryFuture = taskScheduler.scheduleAtFixedRate(() -> {
-                        if (tryInitialize()) {
-                            if (connectionRetryFuture != null) {
-                                connectionRetryFuture.cancel(false);
-                            }
-                        }
-                    }, CLUSTER_CONNECTION_RETRY_INTERVAL);
-                }
-            }
-        });
-
-        // If already connected, tryInitialize was called by the listener above.
-        // If not connected yet, schedule periodic retries as a fallback.
-        if (!initialized.get() && !distributedDataAccessService.isConnectedToCluster()) {
-            log.info("Not connected to the distributed data provider yet. Scheduling periodic initialization retries every {} seconds.",
-                    CLUSTER_CONNECTION_RETRY_INTERVAL.toSeconds());
-
+        if (!tryInitialize() && (connectionRetryFuture == null || connectionRetryFuture.isDone())) {
             connectionRetryFuture = taskScheduler.scheduleAtFixedRate(() -> {
                 if (tryInitialize()) {
                     // Initialization succeeded - cancel the retry task
@@ -317,9 +280,7 @@ public class SharedQueueProcessingService {
     /**
      * Attempts to initialize the distributed listeners and scheduled tasks.
      * <p>
-     * This method checks if the Hazelcast client is connected to the cluster before
-     * attempting to access distributed data structures. If not connected, it returns
-     * false so the caller can retry later.
+     * Returns false while the provider is disconnected so the caller can retry.
      *
      * @return true if initialization succeeded, false if not connected to cluster
      */
@@ -403,7 +364,7 @@ public class SharedQueueProcessingService {
         cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
     }
 
-    /** Removes all listeners (queue, pause, resume) if the Hazelcast instance is running. */
+    /** Removes all listeners (queue, pause, resume) if the provider is running. */
     private void removeListener() {
         if (distributedDataAccessService.isInstanceRunning()) {
             if (this.listenerId != null) {
@@ -444,11 +405,6 @@ public class SharedQueueProcessingService {
         // Skip if not connected to cluster (happens when build agent starts before core nodes)
         if (!distributedDataAccessService.isConnectedToCluster()) {
             log.debug("Not connected to the distributed data provider yet. Skipping build agent information update.");
-            return;
-        }
-
-        if (distributedDataAccessService.noDataMemberInClusterAvailable()) {
-            log.debug("There are only lite member in the cluster. Not updating build agent information.");
             return;
         }
 
@@ -614,8 +570,8 @@ public class SharedQueueProcessingService {
             return;
         }
 
-        if (distributedDataAccessService.noDataMemberInClusterAvailable() || distributedDataAccessService.getDistributedBuildJobQueue() == null) {
-            log.warn("There are only lite member in the cluster. Not processing build jobs.");
+        if (distributedDataAccessService.getDistributedBuildJobQueue() == null) {
+            log.warn("The distributed build queue is unavailable. Skipping build job processing.");
             return;
         }
         // Check conditions before acquiring the lock to avoid unnecessary locking
@@ -703,11 +659,11 @@ public class SharedQueueProcessingService {
     private BuildJobQueueItem addToProcessingJobs() {
         BuildJobQueueItem buildJob = distributedDataAccessService.getDistributedBuildJobQueue().poll();
         if (buildJob != null) {
-            String hazelcastMemberAddress = distributedDataAccessService.getLocalMemberAddress();
+            String memberAddress = distributedDataAccessService.getLocalMemberAddress();
 
             long estimatedDuration = Math.max(0, buildJob.jobTimingInfo().estimatedDuration());
             ZonedDateTime estimatedCompletionDate = ZonedDateTime.now().plusSeconds(estimatedDuration);
-            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO(buildAgentShortName, hazelcastMemberAddress, buildAgentDisplayName),
+            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, new BuildAgentDTO(buildAgentShortName, memberAddress, buildAgentDisplayName),
                     estimatedCompletionDate);
 
             distributedDataAccessService.getDistributedProcessingJobs().put(processingJob.id(), processingJob);
@@ -726,20 +682,12 @@ public class SharedQueueProcessingService {
      * its build agent information and any jobs it was processing remain in the distributed maps.
      * This method detects such stale entries by comparing the stored member address of each agent
      * with current cluster members.
-     * <p>
-     * Note: Build agents running as Hazelcast clients (not cluster members) are not cleaned up by this
-     * method since their addresses are not in the cluster member list. Client-mode agents have addresses
-     * on ephemeral ports (e.g., [127.0.0.1]:54321) which will never exactly match cluster member addresses
-     * (which use the configured Hazelcast port like 5701). A separate mechanism (e.g., heartbeat-based
-     * cleanup) should be used for client-mode agent cleanup if needed.
      */
     private void removeOfflineNodes() {
         Set<String> liveNodeIdentifiers = distributedDataAccessService.getClusterMemberAddresses();
-        boolean agentsAppearInLiveList = distributedDataAccessService.buildAgentsAppearInClusterMemberList();
         var buildAgentMap = distributedDataAccessService.getBuildAgentInformationMap();
 
-        log.debug("removeOfflineNodes: live node identifiers = {}, agents appear in live list = {}, build agent map keys = {}", liveNodeIdentifiers, agentsAppearInLiveList,
-                buildAgentMap.keySet());
+        log.debug("removeOfflineNodes: live node identifiers = {}, build agent map keys = {}", liveNodeIdentifiers, buildAgentMap.keySet());
 
         // Iterate over entries to access both the key (short name) and the stored member address
         for (var entry : buildAgentMap.entrySet()) {
@@ -751,7 +699,7 @@ public class SharedQueueProcessingService {
             }
             String storedMemberAddress = entry.getValue().buildAgent().memberAddress();
 
-            if (OfflineBuildAgentDetector.isOffline(storedMemberAddress, liveNodeIdentifiers, agentsAppearInLiveList)) {
+            if (OfflineBuildAgentDetector.isOffline(storedMemberAddress, liveNodeIdentifiers)) {
                 log.info("removeOfflineNodes: REMOVING agent '{}' with address '{}' (node is no longer alive)", agentKey, storedMemberAddress);
                 // Removing the agent entry is the whole cleanup: it raises the map removal event that
                 // SharedQueueManagementService.handleOrphanedJobsForRemovedAgent listens for, and that handler takes each of
@@ -767,7 +715,7 @@ public class SharedQueueProcessingService {
      * Removes the build agent information entry for a specific node from the distributed map.
      *
      * @param agentKey      the map key (build agent short name) identifying the agent
-     * @param memberAddress the Hazelcast member address of the offline node (for logging)
+     * @param memberAddress the member address of the offline node (for logging)
      */
     private void removeBuildAgentInformationForNode(String agentKey, String memberAddress) {
         log.debug("Cleaning up build agent information for offline node: {} (address: {})", agentKey, memberAddress);
@@ -1500,11 +1448,11 @@ public class SharedQueueProcessingService {
      * <p>
      * <strong>Design</strong>:
      * <ul>
-     * <li>Does not perform any heavy work on the Hazelcast event thread.</li>
+     * <li>Does not perform any heavy work on the listener thread.</li>
      * <li>Simply triggers {@code checkAvailabilityAndProcessNextBuild()}, which
      * handles locking and capacity checks.</li>
      * <li>Logs compact, high-signal messages to avoid log spam at scale.</li>
-     * <li>Defensive against Hazelcast lifecycle/availability issues.</li>
+     * <li>Defensive against provider connection loss.</li>
      * </ul>
      */
     private class QueuedBuildJobItemListener implements QueueItemListener<BuildJobQueueItem> {
@@ -1516,7 +1464,7 @@ public class SharedQueueProcessingService {
                 checkAvailabilityAndProcessNextBuild();
             }
             catch (Exception e) {
-                // Never let listener exceptions bubble up and destabilize the Hazelcast thread
+                // Never let listener exceptions bubble up and destabilize the listener thread
                 log.error("Error handling itemAdded event", e);
             }
         }

@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.CacheStats;
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.DatabaseMetrics;
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.GarbageCollectorMetrics;
 import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint.GaugeValue;
@@ -104,7 +103,6 @@ class NodeMetricsCollectorTest {
         assertThat(aggregated.processMetrics()).isEqualTo(new ProcessMetrics(2, 8, 2, 2, 8, 12, 10, 100));
         assertThat(aggregated.garbageCollector()).isEqualTo(new GarbageCollectorMetrics(4, 4, 4, 4, 4, 4, timer(8, 2.5, 6)));
         assertThat(aggregated.httpServerRequests()).isEqualTo(new HttpRequestMetrics(new RequestCount(8), Map.of("200", new RequestStats(8, 2.5, 6))));
-        assertThat(aggregated.cache()).containsEntry("users", new CacheStats(4, 4, 4, 4, 4, 4));
         assertThat(aggregated.databases()).isEqualTo(new DatabaseMetrics(new GaugeValue(4), new GaugeValue(4), new GaugeValue(4), new GaugeValue(4), new GaugeValue(4),
                 new GaugeValue(4), timer(8, 2.5, 6), timer(8, 2.5, 6), timer(8, 2.5, 6)));
         assertThat(aggregated.services()).containsEntry("/api/courses", Map.of("GET", new RequestStats(8, 2.5, 6)));
@@ -116,12 +114,11 @@ class NodeMetricsCollectorTest {
         var stats = new RequestStats(0, 0, 0);
         var gc = new GarbageCollectorMetrics(0, 0, 0, 0, 0, 0, zero);
         var process = new ProcessMetrics(0, 0, 0, 0, 0, 0, 0, 0);
-        add("one", new MetricsResponse(null, process, gc, new HttpRequestMetrics(new RequestCount(0), Map.of("200", stats)), null, database(null),
+        add("one", new MetricsResponse(null, process, gc, new HttpRequestMetrics(new RequestCount(0), Map.of("200", stats)), database(null),
                 Map.of("/api/courses", Map.of("GET", stats))));
-        add("two", new MetricsResponse(null, process, gc, new HttpRequestMetrics(new RequestCount(0), Map.of("200", stats)), null, database(zero),
+        add("two", new MetricsResponse(null, process, gc, new HttpRequestMetrics(new RequestCount(0), Map.of("200", stats)), database(zero),
                 Map.of("/api/courses", Map.of("GET", stats))));
-        add("three", new MetricsResponse(null, null, new GarbageCollectorMetrics(0, 0, 0, 0, 0, 0, null), new HttpRequestMetrics(new RequestCount(0), null), null, database(null),
-                null));
+        add("three", new MetricsResponse(null, null, new GarbageCollectorMetrics(0, 0, 0, 0, 0, 0, null), new HttpRequestMetrics(new RequestCount(0), null), database(null), null));
         var aggregated = collector.getAggregatedMetrics();
         assertThat(aggregated.processMetrics().processStartTime()).isZero();
         assertThat(aggregated.garbageCollector().gcPause()).isEqualTo(zero);
@@ -136,7 +133,7 @@ class NodeMetricsCollectorTest {
     }
 
     private MetricsResponse emptyMetrics() {
-        return new MetricsResponse(null, null, null, null, null, null, null);
+        return new MetricsResponse(null, null, null, null, null, null);
     }
 
     private MetricsResponse fullMetrics(int factor, int count, int start, int uptime) {
@@ -145,8 +142,8 @@ class NodeMetricsCollectorTest {
         return new MetricsResponse(Map.of("heap", new MemoryMetrics(factor, factor * 2, factor * 3)),
                 new ProcessMetrics(factor, factor * 2, factor, factor, factor * 2, factor * 3, start, uptime),
                 new GarbageCollectorMetrics(factor, factor, factor, factor, factor, factor, timer), new HttpRequestMetrics(new RequestCount(count), Map.of("200", stats)),
-                Map.of("users", new CacheStats(factor, factor, factor, factor, factor, factor)), new DatabaseMetrics(new GaugeValue(factor), new GaugeValue(factor),
-                        new GaugeValue(factor), new GaugeValue(factor), new GaugeValue(factor), new GaugeValue(factor), timer, timer, timer),
+                new DatabaseMetrics(new GaugeValue(factor), new GaugeValue(factor), new GaugeValue(factor), new GaugeValue(factor), new GaugeValue(factor), new GaugeValue(factor),
+                        timer, timer, timer),
                 Map.of("/api/courses", Map.of("GET", stats)));
     }
 

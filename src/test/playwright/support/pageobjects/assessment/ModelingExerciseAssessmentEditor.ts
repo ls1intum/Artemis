@@ -87,7 +87,7 @@ export class ModelingExerciseAssessmentEditor extends AbstractExerciseAssessment
     }
 
     override async submit() {
-        // Retry on multi-node 5xx flakes (Hazelcast Result.feedbacks ordered-list invalidation lag).
+        // Retry transient assessment errors on multi-node runs.
         for (let attempt = 0; attempt < 3; attempt++) {
             const responsePromise = this.page.waitForResponse(`${BASE_API}/modeling/modeling-submissions/*/results/*/assessment*`);
             await super.submitWithoutInterception();

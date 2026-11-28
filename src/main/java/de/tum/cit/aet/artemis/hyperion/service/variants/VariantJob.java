@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 
 /**
- * The distributed job record for one variant-generation run. Lives in a Hazelcast map owned by
+ * The distributed job record for one variant-generation run. Lives in a distributed map owned by
  * {@link ExerciseVariantJobService} — mutable-by-replacement: the job service reads the entry, mutates it, and
  * puts it back so updates are visible cluster-wide (this is what makes background generation, reconnect, and
  * the navbar job tray possible).

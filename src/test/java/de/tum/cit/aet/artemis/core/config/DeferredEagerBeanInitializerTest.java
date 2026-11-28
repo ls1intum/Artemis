@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST;
-import static de.tum.cit.aet.artemis.core.config.Constants.REDIS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -19,7 +17,6 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.core.env.Environment;
 
 import de.tum.cit.aet.artemis.core.DeferredEagerBeanInitializationCompletedEvent;
 
@@ -30,8 +27,6 @@ class DeferredEagerBeanInitializerTest {
 
     private ConfigurableApplicationContext mockContext;
 
-    private Environment mockEnv;
-
     private DefaultListableBeanFactory mockBeanFactory;
 
     private DeferredEagerBeanInitializer initializer;
@@ -39,48 +34,15 @@ class DeferredEagerBeanInitializerTest {
     @BeforeEach
     void setUp() {
         mockContext = mock(ConfigurableApplicationContext.class);
-        mockEnv = mock(Environment.class);
         mockBeanFactory = mock(DefaultListableBeanFactory.class);
         when(mockContext.getBeanFactory()).thenReturn(mockBeanFactory);
 
-        initializer = new DeferredEagerBeanInitializer(mockContext, mockEnv);
-    }
-
-    @Test
-    void testInitializesHazelcastClusterManagerWhenConfigured() {
-        // Setup
-        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn(HAZELCAST);
-        when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[0]);
-
-        HazelcastClusterManager mockHazelcast = mock(HazelcastClusterManager.class);
-        when(mockContext.getBean(HazelcastClusterManager.class)).thenReturn(mockHazelcast);
-
-        // Execute
-        initializer.initializeDeferredEagerBeans();
-
-        // Verify
-        verify(mockContext).getBean(HazelcastClusterManager.class);
-        verify(mockContext).publishEvent(any(DeferredEagerBeanInitializationCompletedEvent.class));
-    }
-
-    @Test
-    void testSkipsHazelcastClusterManagerWhenNotConfigured() {
-        // Setup - use a different, supported provider
-        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn(REDIS);
-        when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[0]);
-
-        // Execute
-        initializer.initializeDeferredEagerBeans();
-
-        // Verify HazelcastClusterManager was not requested
-        verify(mockContext, never()).getBean(HazelcastClusterManager.class);
-        verify(mockContext).publishEvent(any(DeferredEagerBeanInitializationCompletedEvent.class));
+        initializer = new DeferredEagerBeanInitializer(mockContext);
     }
 
     @Test
     void testInitializesLazySingletonBeans() {
         // Setup
-        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn(REDIS);
 
         String beanName = "testBean";
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[] { beanName });
@@ -104,7 +66,6 @@ class DeferredEagerBeanInitializerTest {
     @Test
     void testSkipsNonSingletonBeans() {
         // Setup
-        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn(REDIS);
 
         String beanName = "prototypeScopedBean";
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[] { beanName });
@@ -125,7 +86,6 @@ class DeferredEagerBeanInitializerTest {
     @Test
     void testSkipsNonLazyBeans() {
         // Setup
-        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn(REDIS);
 
         String beanName = "eagerBean";
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[] { beanName });
@@ -146,7 +106,6 @@ class DeferredEagerBeanInitializerTest {
     @Test
     void testInitializesMultipleLazySingletonBeans() {
         // Setup
-        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn(REDIS);
 
         String bean1 = "lazyBean1";
         String bean2 = "lazyBean2";
@@ -186,7 +145,6 @@ class DeferredEagerBeanInitializerTest {
     @Test
     void testPublishesDeferredEagerBeanInitializationCompletedEvent() {
         // Setup
-        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn(REDIS);
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[0]);
 
         // Execute
@@ -200,41 +158,8 @@ class DeferredEagerBeanInitializerTest {
     }
 
     @Test
-    void testHazelcastCaseInsensitiveComparison() {
-        // Setup - use uppercase HAZELCAST
-        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn("HAZELCAST");
-        when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[0]);
-
-        HazelcastClusterManager mockHazelcast = mock(HazelcastClusterManager.class);
-        when(mockContext.getBean(HazelcastClusterManager.class)).thenReturn(mockHazelcast);
-
-        // Execute
-        initializer.initializeDeferredEagerBeans();
-
-        // Verify HazelcastClusterManager was initialized
-        verify(mockContext).getBean(HazelcastClusterManager.class);
-    }
-
-    @Test
-    void testHazelcastMixedCaseComparison() {
-        // Setup - use mixed case to verify case-insensitive comparison
-        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn("HaZeLcAsT");
-        when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[0]);
-
-        HazelcastClusterManager mockHazelcast = mock(HazelcastClusterManager.class);
-        when(mockContext.getBean(HazelcastClusterManager.class)).thenReturn(mockHazelcast);
-
-        // Execute
-        initializer.initializeDeferredEagerBeans();
-
-        // Verify HazelcastClusterManager was initialized
-        verify(mockContext).getBean(HazelcastClusterManager.class);
-    }
-
-    @Test
     void testBeansAreInitializedBeforeEventIsPublished() {
         // Setup
-        when(mockEnv.getProperty(DistributedDataProviderResolver.PROVIDER_PROPERTY)).thenReturn(REDIS);
 
         String beanName = "testBean";
         when(mockBeanFactory.getBeanDefinitionNames()).thenReturn(new String[] { beanName });

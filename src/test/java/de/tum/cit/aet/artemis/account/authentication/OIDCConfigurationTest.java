@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.account.security.OIDCService;
 /**
  * Isolated configuration tests ensuring that OIDC beans and the custom SecurityFilterChain
  * are conditionally instantiated based on the feature toggle state.
- * This test avoids dirtying the heavy Spring context and bypasses Hazelcast initialization.
+ * This test avoids dirtying the heavy Spring context and its infrastructure dependencies.
  */
 class OIDCConfigurationTest {
 

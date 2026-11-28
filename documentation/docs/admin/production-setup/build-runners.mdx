@@ -2,7 +2,7 @@
 id: build-runners
 title: LocalCI Build Runners
 sidebar_label: LocalCI Build Runners
-last_reviewed: 2026-11-14
+last_reviewed: 2026-11-28
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -192,7 +192,7 @@ exercise-visible difference. Three operational settings have no Kubernetes equiv
 ### Deploying
 
 The repository contains a Helm chart, `deployment/helm/artemis`, that deploys Artemis with the Kubernetes runner: one or more
-Artemis core nodes, one or more build-agent controllers, the service registry, the message broker, PostgreSQL, and the
+Artemis core nodes, one or more build-agent controllers, Valkey, the message broker, PostgreSQL, and the
 namespaced RBAC the runner needs. `deployment/helm/artemis/README.md` describes the chart and `deployment/helm/artemis/CLUSTER-SETUP.md` the
 lifecycle and verification commands.
 
@@ -250,8 +250,9 @@ Five things need a decision before that command:
    ```
 
 5. **Data services.** The bundled PostgreSQL is a single instance with no backup or failover. Set `postgresql.deploy`
-   to `false` and fill in `postgresql.external` to use a managed database. The registry (Eureka) is always deployed,
-   because it is how Artemis nodes discover one another.
+   to `false` and fill in `postgresql.external` to use a managed database. The chart defaults to `artemis.distributedDataProvider: Redis` and provisions Valkey for the shared queues and maps.
+   Set `redis.password` and choose the volume size and storage class under `redis.persistence`. Use `Local` only for
+   a single core with `buildAgents.enabled: false` and no external agents or workers.
 
 Ingress is up to the cluster. The chart ships Gateway API resources (`gateway.enabled`), which need a controller such
 as Envoy Gateway, Cilium, Istio, or nginx-gateway-fabric; git over SSH additionally needs one that implements

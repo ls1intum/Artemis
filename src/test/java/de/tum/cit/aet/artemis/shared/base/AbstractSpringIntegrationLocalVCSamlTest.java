@@ -44,8 +44,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_LOCALVC, PROFILE_LOCALCI, PROFILE_SCHEDULING })
 @TestPropertySource(locations = "classpath:config/application-saml2.yml", factory = YamlPropertySourceFactory.class, properties = { SAML2_ENABLED_PROPERTY_NAME + "=true",
         ATLAS_ENABLED_PROPERTY_NAME + "=false", "artemis.athena.enabled=false", "artemis.apollon.enabled=false", PASSKEY_ENABLED_PROPERTY_NAME + "=true",
-        "artemis.user-management.use-external=false", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_localvc_saml", "artemis.lti.enabled=true",
-        "artemis.user-management.oidc.enabled=true",
+        "artemis.user-management.use-external=false", "artemis.lti.enabled=true", "artemis.user-management.oidc.enabled=true",
         // A bulk trigger waits while the build queue is full, which tests that leave jobs in a paused queue would wait on for hours.
         // This has to be set here: application-localci.yml is a profile file and wins over the default test application.yml.
         "artemis.continuous-integration.bulk-trigger.max-queued-jobs-per-build-slot=0",

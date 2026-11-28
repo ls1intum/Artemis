@@ -8,8 +8,7 @@ import java.io.Serializable;
  *
  * <p>
  * Serializable because it travels over the wire like every other value in the distributed store. It carries the entry's
- * key and values, so those have to be serializable too - which they already are, since Hazelcast requires it of
- * everything stored in a distributed map.
+ * key and values, so those have to be serializable too.
  */
 public class MapItemEvent<K, V> implements Serializable {
 

@@ -880,7 +880,7 @@ class CompetencyOrchestrationServiceTest {
 
     @Test
     void runBatch_requeueOfSkippedIdThrowsAfterCommittedActions_isSwallowedAndSuccessPreserved() {
-        // Same shape as the SUCCESS-requeue test, but the post-mutation requeue itself fails (e.g. Hazelcast down).
+        // Same shape as the SUCCESS-requeue test, but the post-mutation requeue itself fails (e.g. a store outage).
         // By this point the LLM has already committed its competency mutations. The requeue failure must NOT escape:
         // if it did, ContentChangeScheduler would treat it as a pre-mutation error and re-requeue the whole batch,
         // re-applying the committed changes on the next tick. So the failure is swallowed and SUCCESS is preserved.
@@ -893,7 +893,7 @@ class CompetencyOrchestrationServiceTest {
         when(orchestratorPlanningToolsService.listCompetencyIndex(COURSE_ID)).thenReturn(new CompetencyIndexResponseDTO(List.of(), List.of()));
         when(templateService.render(anyString(), anyMap())).thenReturn("system prompt");
         // The requeue of the skipped id (12) blows up — this runs only after mutations have committed.
-        doThrow(new RuntimeException("hazelcast down")).when(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L), Set.of());
+        doThrow(new RuntimeException("distributed store unavailable")).when(contentChangeAccumulatorService).requeueAfterFailedRun(COURSE_ID, Set.of(12L), Set.of());
 
         ChatResponse chatResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("Run summary"))));
         ChatClient mockChatClient = mock(ChatClient.class);

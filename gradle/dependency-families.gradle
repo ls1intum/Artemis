@@ -4,10 +4,7 @@
 // LinkageError, not a build failure, so it reaches production. Two real incidents:
 //
 //   * PR #12638 raised httpclient5 5.5.1 -> 5.6.1. httpcore5 stayed on the 5.3 line, but httpclient5 5.6.x
-//     references org.apache.hc.core5.io.IOFunction, which only exists from httpcore5 5.4. Every Eureka registry
-//     fetch then threw NoClassDefFoundError; DiscoveryClient swallows Throwable, so getInstances() simply returned
-//     0 and every node formed its own single-member Hazelcast cluster. Reverted in PR #12652 with the cause
-//     misattributed to IPv6 Basic auth, which cost a second investigation to disprove.
+//     references org.apache.hc.core5.io.IOFunction, which only exists from httpcore5 5.4. Mixing these versions caused a runtime linkage error.
 //   * A later sweep raised bcprov-jdk18on to 1.85.2 while bcpkix/bcpg/bcutil stayed on 1.85. Bouncy Castle requires
 //     its modules to share a version; that one was caught in review rather than by a build.
 //

@@ -8,7 +8,7 @@ import java.util.List;
  * {@code BeanOutputConverter} and stored on the {@link VariantJob}; it becomes the agent's system-prompt
  * contract in the TRANSFORMING/REPAIRING phases.
  *
- * Must be {@link Serializable}: it lives inside the Hazelcast-backed job record.
+ * Must be {@link Serializable}: it lives inside the shared job record.
  *
  * @param variantTitle     the LLM-generated title for the variant — not client-supplied, essential for domain
  *                             changes ("Bank Account Ledger" → "Cargo Bay Inventory"). The short name / project

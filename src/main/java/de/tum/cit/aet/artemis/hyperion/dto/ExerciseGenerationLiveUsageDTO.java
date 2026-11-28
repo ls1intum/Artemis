@@ -23,7 +23,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * priced"
  * rather than claiming the run was free.
  * <p>
- * {@link Serializable} because it is carried inside {@link ExerciseGenerationEventDTO}, which is retained in a distributed Hazelcast map for reconnect/replay.
+ * {@link Serializable} because it is carried inside {@link ExerciseGenerationEventDTO}, which is retained in a distributed map for reconnect/replay.
  *
  * @param inputTokens       prompt tokens the run has been billed so far
  * @param outputTokens      completion tokens the run has been billed so far

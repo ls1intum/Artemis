@@ -17,15 +17,8 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
  * Serves every cluster-wide {@code @Cacheable} cache from the configured distributed data provider.
  *
  * <p>
- * Replaces the previous Hazelcast-specific cache manager. That one made Hazelcast mandatory on every core node
- * regardless of {@code artemis.distributed-data.provider}, which defeated the point of having a provider abstraction:
- * selecting Redis still left a second distributed system running for the caches alone.
- *
- * <p>
  * <strong>Entry lifetimes.</strong> Most of these caches are invalidated explicitly by their writers and are therefore
- * requested without expiry, which is what the Hazelcast map configuration did for them before. The few that carried a
- * time-to-live keep it, declared in {@code timeToLivePerCache} at the one place that constructs this manager rather than
- * in provider configuration a reader of the call site would never find.
+ * requested without expiry. The other caches declare their lifetimes in {@code timeToLivePerCache}.
  */
 public class DistributedDataCacheManager implements CacheManager {
 
@@ -49,7 +42,7 @@ public class DistributedDataCacheManager implements CacheManager {
      * {@inheritDoc}
      *
      * <p>
-     * Caches are created on demand, like the Hazelcast cache manager did, because the set of cache names is spread over
+     * Caches are created on demand because the set of cache names is spread over
      * the {@code @Cacheable} annotations of every module and is not known up front.
      */
     @Override

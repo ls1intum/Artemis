@@ -8,7 +8,6 @@
         <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('endpoints-metrics')" data-testid="nav-endpoints"
             >Endpoints</tumaet-ui-button
         >
-        <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('cache-metrics')" data-testid="nav-cache">Cache</tumaet-ui-button>
         <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('datasource-metrics')" data-testid="nav-datasource"
             >Datasource</tumaet-ui-button
         >
@@ -56,11 +55,6 @@
             @if (metricsKeyExists('services')) {
                 <div id="endpoints-metrics">
                     <jhi-metrics-endpoints-requests [updating]="updatingMetrics()" [endpointsRequestsMetrics]="metrics()!.services" />
-                </div>
-            }
-            @if (metricsKeyExists('cache')) {
-                <div id="cache-metrics">
-                    <jhi-metrics-cache [updating]="updatingMetrics()" [cacheMetrics]="metrics()!.cache" />
                 </div>
             }
             @if (metricsKeyExistsAndObjectNotEmpty('databases')) {

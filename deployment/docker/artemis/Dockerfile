@@ -247,7 +247,7 @@ VOLUME ["/opt/artemis/config"]
 VOLUME ["/opt/artemis/data"]
 VOLUME ["/opt/artemis/public/content"]
 
-EXPOSE 8080 5701 7921
+EXPOSE 8080 7921
 
 # Mirrors deployment/docker/artemis.yml's compose-level healthcheck so `docker run`/`docker ps` report
 # health even for anyone running the raw image directly, outside the provided compose files.

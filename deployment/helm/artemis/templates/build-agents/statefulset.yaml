@@ -89,8 +89,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            - name: EUREKA_INSTANCE_INSTANCEID
+            - name: ARTEMIS_INSTANCEID
               value: "$(MY_POD_NAME)"
+            - name: SPRING_DATA_REDIS_CLIENTNAME
+              value: "artemis-$(MY_POD_NAME)"
             - name: SPRING_PROFILES_ACTIVE
               value: "prod,buildagent,k8s"
             - name: ARTEMIS_CONTINUOUSINTEGRATION_BUILDAGENT_SHORTNAME
@@ -101,8 +103,6 @@ spec:
               value: "true"
             - name: ARTEMIS_CONTINUOUSINTEGRATION_CONCURRENTBUILDSIZE
               value: {{ .Values.buildAgents.concurrentBuildsPerAgent | quote }}
-            - name: ARTEMIS_CONTINUOUSINTEGRATION_DATASTORE
-              value: {{ .Values.artemis.config.localci.dataStore | quote }}
             - name: ARTEMIS_CHECKEDOUTREPOSPATH
               value: /opt/artemis/local/checked-out-repos
             - name: ARTEMIS_REPOCLONEPATH

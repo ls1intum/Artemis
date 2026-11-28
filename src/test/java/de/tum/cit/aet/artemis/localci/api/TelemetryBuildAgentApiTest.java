@@ -6,7 +6,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -15,7 +14,6 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider.ClusterMembership;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 
 class TelemetryBuildAgentApiTest {
@@ -32,16 +30,15 @@ class TelemetryBuildAgentApiTest {
 
     @Test
     void countsConnectedClientsAndColocatedAgentsButNotStaleEntries() {
-        when(provider.getClusterMembership()).thenReturn(new ClusterMembership(Set.of("client"), Set.of("core")));
+        when(provider.getClusterMemberAddresses()).thenReturn(Set.of("client-address", "core"));
         when(data.getBuildAgentInformationMap())
                 .thenReturn(Map.of("client", agent("client", "client-address"), "core", agent("colocated", "core"), "stale", agent("stale", "gone")));
         assertThat(api.getConnectedBuildAgentCount()).isEqualTo(2);
     }
 
     @Test
-    void excludesStaleAgentsWhenHealthyHazelcastHasNoClients() {
-        when(provider.getClusterMembership()).thenReturn(new ClusterMembership(Set.of(), Set.of("core")));
-        when(provider.getConnectedClientAddresses()).thenReturn(Optional.of(Map.of()));
+    void excludesAgentsAbsentFromKnownMembership() {
+        when(provider.getClusterMemberAddresses()).thenReturn(Set.of("core"));
         when(data.getBuildAgentInformationMap()).thenReturn(Map.of("core", agent("colocated", "core"), "stale", agent("stale", "gone")));
         assertThat(api.getConnectedBuildAgentCount()).isEqualTo(1);
         when(data.getBuildAgentInformationMap()).thenReturn(Map.of("stale", agent("stale", "gone")));
@@ -50,20 +47,11 @@ class TelemetryBuildAgentApiTest {
 
     @Test
     void handlesRedisIdentityAndUnknownMembership() {
-        when(provider.getClusterMembership()).thenReturn(new ClusterMembership(Set.of(), Set.of("redis-agent")));
-        when(provider.buildAgentsAppearInClusterMemberList()).thenReturn(true);
+        when(provider.getClusterMemberAddresses()).thenReturn(Set.of("redis-agent"));
         when(data.getBuildAgentInformationMap()).thenReturn(Map.of("agent", agent("short-name", "redis-agent"), "stale", agent("gone", "gone")));
         assertThat(api.getConnectedBuildAgentCount()).isEqualTo(1);
-        when(provider.getClusterMembership()).thenReturn(new ClusterMembership(Set.of(), Set.of()));
+        when(provider.getClusterMemberAddresses()).thenReturn(Set.of());
         assertThat(api.getConnectedBuildAgentCount()).isNull();
     }
 
-    @Test
-    void doesNotTreatUnknownClientConnectivityAsZero() {
-        when(provider.getClusterMembership()).thenReturn(new ClusterMembership(Set.of(), Set.of("core")));
-        when(data.getBuildAgentInformationMap()).thenReturn(Map.of("agent", agent("client", "client-address")));
-        assertThat(api.getConnectedBuildAgentCount()).isNull();
-        when(data.getBuildAgentInformationMap()).thenReturn(Map.of());
-        assertThat(api.getConnectedBuildAgentCount()).isZero();
-    }
 }

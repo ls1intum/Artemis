@@ -101,7 +101,7 @@ Name the component instead:
   frontend  ->  the client, the web client, the user interface
   backend   ->  the server, the application server, or the service (the grading service)
   backend   ->  the provider, when a swappable distributed data implementation is meant
-                (Hazelcast, Redis, Local), matching artemis.distributed-data.provider
+                (Redis, Local), matching artemis.distributed-data.provider
   backend   ->  the concrete system otherwise: the embedding service, the database,
                 the mail transport, the version control system
 

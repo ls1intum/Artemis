@@ -133,8 +133,7 @@ class IrisLegacyTriggerFlagTest extends AbstractIrisIntegrationTest {
         activateIrisFor(course);
         activateIrisFor(exercise);
 
-        // A @TestPropertySource would fork a second Spring context, shutting down the named-singleton Hazelcast
-        // instance and breaking every later test in the slice, so the flag is set on the bean directly.
+        // Reuse the shared Spring context and restore the flag after each test.
         previousLegacyBuildTriggersEnabled = ReflectionTestUtils.getField(irisChatSessionService, "globalLegacyBuildTriggersEnabled");
         ReflectionTestUtils.setField(irisChatSessionService, "globalLegacyBuildTriggersEnabled", false);
     }

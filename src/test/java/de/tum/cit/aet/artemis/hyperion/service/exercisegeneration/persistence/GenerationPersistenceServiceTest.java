@@ -567,8 +567,8 @@ class GenerationPersistenceServiceTest {
 
         assertThatThrownBy(() -> service.persist(exercise, user, outcome, "old statement", null, "job-1", GenerationMode.GENERATE, () -> true, () -> {
             invalidationAttempts.incrementAndGet();
-            throw new IllegalStateException("Hazelcast invalidation failed");
-        })).isInstanceOf(GenerationIncompleteException.class).hasMessageContaining("Hazelcast invalidation failed").satisfies(exception -> {
+            throw new IllegalStateException("Distributed cache invalidation failed");
+        })).isInstanceOf(GenerationIncompleteException.class).hasMessageContaining("Distributed cache invalidation failed").satisfies(exception -> {
             GenerationIncompleteException incomplete = (GenerationIncompleteException) exception;
             assertThat(incomplete.liveExerciseChanged()).isFalse();
         });

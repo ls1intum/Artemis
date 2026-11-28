@@ -3,7 +3,7 @@ Artemis has been deployed as release "{{ .Release.Name }}" in namespace "{{ .Rel
 Topology:
   - Artemis core nodes: {{ .Values.artemis.replicaCount }} ({{ if gt (int .Values.artemis.replicaCount) 1 }}1 leader + {{ sub (int .Values.artemis.replicaCount) 1 }} member(s){{ else }}leader only{{ end }})
   - PostgreSQL:        {{ if .Values.postgresql.deploy }}bundled{{ else }}external ({{ .Values.postgresql.external.host }}){{ end }}
-  - JHipster Registry: bundled (Eureka discovery)
+  - Distributed data:  {{ if include "artemis.redisEnabled" . }}Redis (bundled Valkey){{ else }}Local{{ end }}
   - ActiveMQ broker:   {{ if .Values.broker.deploy }}bundled (STOMP relay){{ else }}external{{ end }}
   - LocalCI agents:    {{ if .Values.buildAgents.enabled }}{{ if include "artemis.buildAgentAutoscalingEnabled" . }}{{ .Values.buildAgents.autoscaling.minReplicas }} to {{ .Values.buildAgents.autoscaling.maxReplicas }} Kubernetes controller(s), scaled by KEDA{{ else }}{{ .Values.buildAgents.replicaCount }} Kubernetes controller(s){{ end }}, {{ .Values.buildAgents.concurrentBuildsPerAgent }} concurrent build(s) each{{ else }}disabled{{ end }}
 

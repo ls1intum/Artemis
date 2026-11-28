@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizScheduleService;
 
 /**
  * This service is only available on a node with the 'scheduling' profile.
- * It receives messages from Hazelcast whenever another node sends a message to a specific topic and processes it on this node.
+ * It receives messages from the distributed topic whenever another node sends a message to a specific topic and processes it on this node.
  */
 @Lazy
 @Service

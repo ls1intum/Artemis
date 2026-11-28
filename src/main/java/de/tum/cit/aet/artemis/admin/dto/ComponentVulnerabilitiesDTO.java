@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * DTO containing vulnerability information for all components.
- * Uses a simple List structure compatible with distributed caching (Hazelcast).
+ * Uses a simple List structure compatible with distributed caching.
  *
  * @param vulnerabilities      list of components with their vulnerabilities
  * @param totalVulnerabilities total number of vulnerabilities found

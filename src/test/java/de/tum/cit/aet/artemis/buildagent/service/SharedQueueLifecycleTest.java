@@ -28,8 +28,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -103,8 +101,6 @@ class SharedQueueLifecycleTest {
 
     private final List<ScheduledFuture<?>> scheduledFutures = new ArrayList<>();
 
-    private final AtomicReference<Consumer<Boolean>> connectionListener = new AtomicReference<>();
-
     private final SharedQueueProcessingService service = new SharedQueueProcessingService(configuration, management, logs, scheduler, runner, information, distributed);
 
     @BeforeEach
@@ -134,14 +130,6 @@ class SharedQueueLifecycleTest {
         when(runner.type()).thenReturn(BuildRunnerType.DOCKER);
         when(logs.getAndTruncateBuildLogs(any())).thenReturn(List.of());
         doAnswer(call -> {
-            Consumer<Boolean> listener = call.getArgument(0);
-            connectionListener.set(listener);
-            if (distributed.isConnectedToCluster()) {
-                listener.accept(true);
-            }
-            return UUID.randomUUID();
-        }).when(distributed).addConnectionStateListener(any());
-        doAnswer(call -> {
             scheduledTasks.add(call.getArgument(0));
             ScheduledFuture<?> future = mock(ScheduledFuture.class);
             scheduledFutures.add(future);
@@ -160,11 +148,11 @@ class SharedQueueLifecycleTest {
     void rejectsInvalidAgentNamesBeforeRegisteringListeners(String name) {
         ReflectionTestUtils.setField(service, "buildAgentShortName", name);
         assertThatThrownBy(service::init).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("lowercase letters, numbers and hyphens");
-        verify(distributed, never()).addConnectionStateListener(any());
+        verify(distributed, never()).getDistributedBuildJobQueue();
     }
 
     @Test
-    void delayedConnectionRetriesAndReconnectionReplaceSchedulesAndListeners() {
+    void delayedConnectionRetriesUntilListenersAreRegistered() {
         when(distributed.isConnectedToCluster()).thenReturn(false);
         service.init();
         assertThat(scheduledTasks).hasSize(1);
@@ -174,11 +162,6 @@ class SharedQueueLifecycleTest {
         scheduledTasks.getFirst().run();
         assertThat(scheduledTasks).hasSize(2);
         verify(scheduledFutures.getFirst()).cancel(false);
-        connectionListener.get().accept(true);
-        assertThat(scheduledTasks).hasSize(2);
-        connectionListener.get().accept(false);
-        assertThat(scheduledTasks).hasSize(3);
-        verify(scheduledFutures.get(1), times(2)).cancel(false);
         pause.publish("other-agent");
         assertThat(service.isPaused()).isFalse();
         pause.publish("agent-one");
@@ -302,9 +285,6 @@ class SharedQueueLifecycleTest {
         when(distributed.isConnectedToCluster()).thenReturn(false);
         submit(buildJob(0));
         when(distributed.isConnectedToCluster()).thenReturn(true);
-        when(distributed.noDataMemberInClusterAvailable()).thenReturn(true);
-        scheduledTasks.getFirst().run();
-        when(distributed.noDataMemberInClusterAvailable()).thenReturn(false);
         when(configuration.getBuildExecutor()).thenReturn(null);
         scheduledTasks.getFirst().run();
         when(configuration.getBuildExecutor()).thenReturn(executor);
@@ -323,33 +303,11 @@ class SharedQueueLifecycleTest {
     }
 
     @Test
-    void disconnectedReconnectionRetriesOnceUntilInitializationSucceeds() {
-        service.init();
-        when(distributed.isConnectedToCluster()).thenReturn(false);
-        connectionListener.get().accept(false);
-        assertThat(scheduledTasks).hasSize(2);
-        connectionListener.get().accept(false);
-        assertThat(scheduledTasks).hasSize(2);
-        scheduledTasks.getLast().run();
-        assertThat(scheduledTasks).hasSize(2);
-        when(distributed.isConnectedToCluster()).thenReturn(true);
-        scheduledTasks.getLast().run();
-        assertThat(scheduledTasks).hasSize(3);
-        verify(scheduledFutures.get(1)).cancel(false);
-        when(distributed.isInstanceRunning()).thenReturn(false);
-        service.removeListenerAndCancelScheduledFuture();
-        verify(scheduledFutures.getLast()).cancel(false);
-    }
-
-    @Test
-    void informationUpdatesRequireClusterAndDataMemberAndIgnoreMalformedAgents() {
+    void informationUpdatesRequireConnectivityAndIgnoreMalformedAgents() {
         when(distributed.isConnectedToCluster()).thenReturn(false);
         service.updateBuildAgentInformation();
         when(distributed.isConnectedToCluster()).thenReturn(true);
-        when(distributed.noDataMemberInClusterAvailable()).thenReturn(true);
-        service.updateBuildAgentInformation();
         verify(information, never()).updateLocalBuildAgentInformation(org.mockito.ArgumentMatchers.anyBoolean());
-        when(distributed.noDataMemberInClusterAvailable()).thenReturn(false);
         agents.put("missing", null);
         agents.put("incomplete", new BuildAgentInformation(null, 1, 0, List.of(), BuildAgentStatus.IDLE, null, null, 0));
         service.updateBuildAgentInformation();

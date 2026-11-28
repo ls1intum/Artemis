@@ -2,7 +2,7 @@
 id: network-model
 title: Network Model
 sidebar_label: Network Model
-last_reviewed: 2026-11-19
+last_reviewed: 2026-11-28
 ---
 
 import Callout from '../../../src/components/Callout/Callout';
@@ -21,12 +21,10 @@ a container can reach. For these, Artemis and the scripts of the repository chec
 | Artemis core node (HTTP behind the proxy) | 8080               | no                          | no                             | no                              |
 | Database (PostgreSQL, MySQL)              | 5432, 3306         | no                          | no                             | no                              |
 | Queue store: Valkey or Redis              | 6379               | no                          | no                             | no                              |
-| Cluster port of the Hazelcast provider    | 5701 and following | no                          | no                             | no                              |
 | Message broker (ActiveMQ)                 | 61613, 61616       | no                          | no                             | no                              |
 | Extension services (Iris/Pyris, Athena)   | service specific   | no                          | no                             | no                              |
 | Weaviate (Iris and global search)         | 8001, 50051        | no                          | no                             | no                              |
 | Build agents                              | none               | no                          | no                             | no                              |
-| Service registry, if used                 | 8761               | no                          | no                             | no                              |
 
 Only the reverse proxy, and where Git over SSH is offered the SSH port, is connected to the internet. Everything else is reachable only from the core nodes and the build agents, on a private network or on the
 loopback interface of the host. The [extension services](#extension-services) belong to this private part of the installation as well. They are reached from the core nodes and, where they work together, from each other.
@@ -35,7 +33,6 @@ The services that hold the state of the installation need special care:
 
 - **Queue store.** The build queue and the results travel through the [distributed data provider](/admin/production-setup/distributed-data). A Valkey or Redis server accepts connections only with a user and a password,
   and listens on the loopback interface or on a private address.
-- **Cluster port.** The Hazelcast provider, which Artemis uses when neither `artemis.distributed-data.provider` nor its superseded predecessor `artemis.continuous-integration.data-store` is set, has no authentication on its cluster port. Bind it to the private interface of the node with `spring.hazelcast.interface`, and let only the other nodes connect.
 - **Build agents** receive build jobs from the queue and clone repositories from the core nodes. A build agent is trusted by the core nodes, so it must not run on a machine that students or other untrusted parties can reach.
 
 ## Extension Services
@@ -73,7 +70,7 @@ Keep the services above out of the reach of build containers:
    host (`host`) or of another container (`container:<name>`), for exercises and for the defaults.
 2. **Restrict the container subnets.** Add firewall rules that drop connections from the subnets that Docker assigns to its networks to the addresses of the services above. Two paths need a rule each: traffic from a
    container to another machine or to another container is forwarded and passes the `DOCKER-USER` chain, which is evaluated before the rules of Docker, while traffic to a service that runs on the Docker host itself
-   passes the `INPUT` chain. A rule in `DOCKER-USER` alone does not protect the cluster port or the queue store of the host. The `firewall` role of the Ansible collection offers
+   passes the `INPUT` chain. A rule in `DOCKER-USER` alone does not protect the queue store of the host. The `firewall` role of the Ansible collection offers
    `firewall_container_subnets_ipv4` and `firewall_container_restricted_destinations_ipv4` (and the `_ipv6` variants) for the forwarded path, and its default policy for `INPUT` drops what is not allowed explicitly.
    Check both paths, see below.
 3. **Keep IPv6 in mind.** If you enable IPv6 on the Docker bridge, the same rules are needed for IPv6, because a container then reaches the services over the IPv6 addresses of the host.
@@ -82,9 +79,8 @@ Keep the services above out of the reach of build containers:
 ## What Artemis Checks
 
 - **Validation of the configured networks.** A core node checks the default network of the builds (`container-defaults.network`) at startup, and a default that shares the network namespace of the host (`host`) or of another container (`container:<name>`) stops the start. An exercise that selects such a network is rejected when it is saved, and a build agent refuses to create a container on it. A network in the list of allowed networks that nobody selects is not checked at startup.
-- **At startup of a build agent that runs builds in Docker**, Artemis starts a short-lived container on every network that builds can use, and tries to connect to the queue store, to the cluster port of the node (when the node is a member of the cluster, and
-  not a client of it) and to the services that you list. The networks are the default network of the build containers and the networks in the list of allowed networks of this agent, so set `container-defaults.network` on the agent as on the core nodes, and set
-  `container-flags-limit.allowed-custom-networks` on the agent as well if the check should include the selectable networks. That list is optional on the agent: if it is set, the agent also refuses builds on other networks, and such a refused build does not count as a failure that pauses the agent. The log names the networks that were checked. Cluster ports of the core nodes are checked from an agent only when you list them. The check runs about one minute after the start and does not delay it. If a container can connect, the agent logs an error that names the network and the service, for example
+- **At startup of a build agent that runs builds in Docker**, Artemis starts a short-lived container on every network that builds can use, and tries to connect to the configured Redis or Valkey store and to the services that you list. The networks are the default network of the build containers and the networks in the list of allowed networks of this agent, so set `container-defaults.network` on the agent as on the core nodes, and set
+  `container-flags-limit.allowed-custom-networks` on the agent as well if the check should include the selectable networks. That list is optional on the agent: if it is set, the agent also refuses builds on other networks, and such a refused build does not count as a failure that pauses the agent. The log names the networks that were checked. The check runs about one minute after the start and does not delay it. If a container can connect, the agent logs an error that names the network and the service, for example
   `Build containers on the network 'default' can reach [10.0.0.5:6379]`. The log lines are the result: watch for this error after the start of the agent. The check runs once per start, so restart the agent after every change of the network, the firewall or the Docker configuration.
   The check only reports. It never stops the agent, and it is skipped, with an information message, when the image is not available because the agent cannot reach a registry.
 
@@ -92,7 +88,7 @@ Keep the services above out of the reach of build containers:
 | ---------------------------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `artemis.continuous-integration.network-isolation-check.enabled` | see below        | The check is on unless this is `false`. The `dev` profile turns it off, because Docker Desktop forwards connections to the host to its loopback interface.                                                                                                                          |
 | `artemis.continuous-integration.network-isolation-check.image`   | `busybox:1.37.0` | The image of the probe container. It needs `sh`, `sleep`, `awk`, `sort`, `nslookup` and an `nc` that supports `-l`, `-e`, `-w` and `-z` (BusyBox has all of them). Without `nslookup` a target that is given by name is reported as undecided. A mirror of the image works as well. |
-| `artemis.continuous-integration.network-isolation-check.targets` | empty            | Further services as `host:port`, for example the database and the broker. The queue store (`spring.data.redis.host` and `port`) and, on a node with the `core` profile, the cluster port (`spring.hazelcast.interface` and `port`) are added automatically.                         |
+| `artemis.continuous-integration.network-isolation-check.targets` | empty            | Further services as `host:port`, for example the database and the broker. With the Redis provider, the configured queue store (`spring.data.redis.host` and `port`) is added automatically.                         |
 
 The automatic entry for the queue store tests the address that the store is configured with. A target that is given by name is tested through every address that the name resolves to, on the agent and inside the container, and through no other. If the same service is reachable over another address that the name does not resolve to, for example the IPv4 address of a store that is configured by its IPv6 address and whose name has no IPv4 record, list that address as a target as well. Literal IPv4 addresses (`10.0.0.5:6379`) and IPv6 addresses (`[fd00::5]:6379`) are accepted.
 
@@ -117,7 +113,7 @@ The default list covers the services of the core installation, but not the ports
 Weaviate (`8001`, `50051`) and the port of your Athena:
 
 ```bash
-INTERNAL_PORTS="5701 5702 5703 6379 5432 3306 61613 61616 8080 8761 8000 8001 50051" \
+INTERNAL_PORTS="6379 5432 3306 61613 61616 8080 8000 8001 50051" \
     supporting_scripts/security/check-network-exposure.sh artemis.example.org
 ```
 

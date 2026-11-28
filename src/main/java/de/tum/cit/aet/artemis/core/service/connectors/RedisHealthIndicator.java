@@ -11,14 +11,15 @@ import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.core.config.RedisCondition;
+import de.tum.cit.aet.artemis.core.config.RedisDistributedDataCondition;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisClientListResolver;
 
 /**
- * Health indicator for the Redis middleware used by LocalCI.
+ * Health indicator for the configured Redis data provider.
  */
 @Lazy
-@Conditional(RedisCondition.class)
+@Conditional(RedisDistributedDataCondition.class)
 @Component
 public class RedisHealthIndicator implements HealthIndicator {
 
@@ -26,18 +27,18 @@ public class RedisHealthIndicator implements HealthIndicator {
 
     private final RedisClientListResolver redisClientListResolver;
 
-    @Value("${spring.data.redis.host}")
+    @Value("${spring.data.redis.host:localhost}")
     private String redisHost;
 
-    @Value("${spring.data.redis.port}")
+    @Value("${spring.data.redis.port:6379}")
     private int redisPort;
 
-    @Value("${spring.data.redis.client-name}")
-    private String redisClientName;
+    private final DistributedDataProvider provider;
 
-    public RedisHealthIndicator(RedisConnectionFactory redisConnectionFactory, RedisClientListResolver redisClientListResolver) {
+    public RedisHealthIndicator(RedisConnectionFactory redisConnectionFactory, RedisClientListResolver redisClientListResolver, DistributedDataProvider provider) {
         this.redisConnectionFactory = redisConnectionFactory;
         this.redisClientListResolver = redisClientListResolver;
+        this.provider = provider;
     }
 
     @Override
@@ -52,8 +53,8 @@ public class RedisHealthIndicator implements HealthIndicator {
             Set<String> uniqueClients = redisClientListResolver.getUniqueClients();
 
             return Health.up().withDetail("Address", "redis://" + redisHost + ":" + redisPort).withDetail("Ping", "Redis is up")
-                    .withDetail("Unique Artemis clients", uniqueClients.size()).withDetail("Artemis Clients", uniqueClients).withDetail("This node client name", redisClientName)
-                    .build();
+                    .withDetail("Unique Artemis clients", uniqueClients.size()).withDetail("Artemis Clients", uniqueClients)
+                    .withDetail("This node client name", provider.getLocalMemberAddress()).build();
 
         }
         catch (Exception e) {

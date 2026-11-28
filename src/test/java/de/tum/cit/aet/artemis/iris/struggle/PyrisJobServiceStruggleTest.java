@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 
 /**
  * Integration test for the cluster-atomic single-flight guard on {@link PyrisJobService}, run against a real
- * Hazelcast instance because the guard's correctness lives entirely in {@code putIfAbsent(ttl)} and
+ * provider because the guard's correctness lives entirely in {@code putIfAbsent(ttl)} and
  * token-conditional {@code remove(key, value)}. Each test uses distinct ids so the shared map cannot
  * cross-contaminate.
  *

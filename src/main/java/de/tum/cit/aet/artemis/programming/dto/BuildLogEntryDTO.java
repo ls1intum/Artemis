@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
  * <p>
  * {@code participations/{participationId}/buildlogs} is a SCORPIO route (additive-only): {@code id} is kept even
  * though no in-repo reader dereferences it, because the out-of-repo IntelliJ plugin may. Do not reuse
- * {@code buildagent.dto.BuildLogDTO} here — that record is the Hazelcast build-agent contract, not the REST wire
+ * {@code buildagent.dto.BuildLogDTO} here — that record is the distributed build-agent contract, not the REST wire
  * shape, and coupling the two would let an unrelated change ripple into this endpoint.
  *
  * @param id   the build log entry id

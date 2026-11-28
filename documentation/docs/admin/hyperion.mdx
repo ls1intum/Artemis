@@ -2,7 +2,7 @@
 id: hyperion
 title: Hyperion Service
 sidebar_label: Hyperion Setup
-last_reviewed: 2026-11-20
+last_reviewed: 2026-11-28
 ---
 
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
@@ -241,9 +241,7 @@ artemis:
         ids: [worker-1]
 ```
 
-Core and worker use the same selected distributed-data provider. A standalone
-worker connects as a Hazelcast client or to Redis/Valkey; it does not join the
-core Hazelcast cluster as a member. Worker IDs must match the configured pool. A missing capable worker returns `503 generationCapacityUnavailable`;
+Core and worker connect to the same Redis or Valkey store. Worker IDs must match the configured pool. A missing capable worker returns `503 generationCapacityUnavailable`;
 starting a supervisor process is not evidence that generation is available.
 
 Generation and adaptation accept mutable Java exercises built with Gradle
@@ -516,35 +514,13 @@ live operations, then update all writers before enabling generation. There is no
 separate fencing-enabled setting, writer-role announcement, or Redis client-list
 requirement for generation.
 
-For Hazelcast, set `jhipster.cache.hazelcast.expected-data-member-count` to the
-fixed number of data members on every member. Set the same count and the same
-`artemis.hyperion.exercise-generation.enabled` value on every non-lite Hazelcast
-data member, including members that do not serve generation. The default count
-`1` is for a single-node installation. Worker clients do not count. The generation
-flag alone does not expose the API on an ineligible member; the Hyperion flag and
-`core,localci,localvc` profiles are still required. Generation job and live-operation maps
-require exactly the configured number of data members for reads and writes;
-missing or unexpected extra members stop coordinated operations. A two-member deployment
-stops coordinated operations if one member is unavailable; a three-member deployment
-also stops them if only two remain. Do not lower the count to bypass an outage.
-Drain operations and restart the cluster together before changing its configured
-size. This feature does not provide automatic failover, automatic replacement, or
-autoscaling while authoring is active. An exact member count does not prove that
-missing old processes have stopped: a replacement cluster can have the same count
-with different processes. Stop the missing old core processes before starting
-replacements or recovering reservations. If all copies of a job or live-operation
-record are lost, replacements cannot reconstruct it; stop writers and reconcile
-interrupted operations before reopening admission. Never infer process death from
-cluster membership.
-
 A save in progress is not automatically handed to another process after a
 heartbeat timeout or disconnect. After a crash, stop the old core and worker
 executions and reconcile repository heads, exercise metadata, and grading before
 releasing their reservations. Job and live-operation records are operational
 state, not a durable SQL recovery journal. Do not flush or replace that state
 while writers run. After complete state loss, stop writers and reconcile
-interrupted operations before reopening writes. These requirements also apply to
-Redis/Valkey; asynchronous provider failover is not certified as lossless ownership.
+interrupted operations before reopening writes. Asynchronous Redis or Valkey failover can lose ownership records.
 
 ### Authoring history and version restoration
 
@@ -615,8 +591,7 @@ Budget RAM for all simultaneously active sandboxes plus the worker JVM and host
 services. Sandbox CPU, RAM and PID limits remain per execution. Slots are a bounded
 concurrency setting, not automatic host scaling. Keep generation outside the core
 JVM: a single-host installation can run a separate isolated worker, while a
-multi-host installation uses the same selected provider. The worker requires
-neither database access nor Hazelcast cluster membership; it connects as a client.
+multi-host installation uses the same selected provider. The worker connects to Redis or Valkey and has no database access.
 Deploy matching core and worker protocol versions together after draining runs.
 Protocol version 7 uses the shared AI Worker envelope, explicit workload schema/profile, the names
 of the LLM preset and the optional repair preset, and review findings that carry a location; core
@@ -644,7 +619,7 @@ See [AI Worker operations](/admin/aiworker) for infrastructure configuration.
 
 The supervisor's Docker socket is host-level authority even when the supervisor
 container is unprivileged. Provision outbound access only to the configured
-distributed-data provider, Eureka when Hazelcast is used, the approved model
+Redis or Valkey store, the approved model
 provider, image registry and approved telemetry endpoint.
 Deny access to databases, repository/NFS services, core management interfaces and
 cloud metadata. Generated-code containers retain network isolation and receive
@@ -704,7 +679,7 @@ coordinated upgrade when the distributed-data schema number is unchanged; do not
 
     This also removes the reconciled legacy reservations whose conditional recovery failed in step 3. Do not clear it
     while any writer is running or any external mutation remains unresolved. Preserve the generation baselines, job maps, build queues and results;
-    they are not part of this cleanup. A fully stopped Hazelcast cluster has no retained coordination map.
+    they are not part of this cleanup.
 
 6. Start all replacement processes with the same application release, verify a controlled save/copy/undo workflow,
    then reopen admission. Keep the old application stopped; rollback requires the same drain and reconciliation.

@@ -31,11 +31,6 @@ import io.micrometer.core.instrument.MeterRegistry;
  * Wires HikariCP connection pool metrics into Micrometer.
  *
  * <p>
- * This used to live on the Hazelcast configuration, which meant the database pool stopped reporting as soon as a
- * deployment selected a different distributed data provider. Pool metrics have nothing to do with the provider, so they
- * are configured on their own here.
- *
- * <p>
  * Core-only, because build agents deliberately run without a datasource (see {@code application-buildagent.yml}, which
  * blanks the datasource URL and excludes {@code DataSourcePoolMetricsAutoConfiguration}).
  */

@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 
-// NOTE: this data structure is used in shared code between core and build agent nodes. Changing it requires that the shared data structures in Hazelcast (or potentially Redis)
+// NOTE: this data structure is used in shared code between core and build agent nodes. Changing it requires that the shared data structures in Redis
 // in the future are migrated or cleared. Changes should be communicated in release notes as potentially breaking changes.
 // TODO: reduce the amount of parameters and combine some in smaller record DTOs
 @JsonIgnoreProperties(ignoreUnknown = true)

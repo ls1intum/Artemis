@@ -223,7 +223,6 @@ log "Starting the server on port $SERVER_PORT (log: build/docs-screenshots-stack
     export ARTEMIS_REPODOWNLOADCLONEPATH="$REPO_DIR/repos-download"
     export ARTEMIS_CHECKEDOUTREPOSPATH="$REPO_DIR/checked-out-repos"
     export SERVER_URL="http://localhost:${SERVER_PORT}"
-    export EUREKA_CLIENT_ENABLED="false"
     export INFO_TESTSERVER="true"
     exec ./gradlew bootRun -x webapp
 ) > "$STATE_DIR/server.log" 2>&1 &

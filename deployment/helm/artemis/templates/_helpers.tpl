@@ -49,7 +49,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{/*
 Selector labels for the Artemis core pods (leader + member). Used by the
 Artemis StatefulSets and the http/ssh/headless Services so they only ever
-select Artemis pods, never postgres/registry/broker.
+select Artemis pods, never postgres/redis/broker.
 */}}
 {{- define "artemis.coreSelectorLabels" -}}
 {{ include "artemis.selectorLabels" . }}
@@ -76,7 +76,7 @@ app.kubernetes.io/component: artemis
 {{- define "artemis.secretName"   -}}{{ include "artemis.fullname" . }}-secret{{- end }}
 {{- define "artemis.hostkeySecretName" -}}{{ include "artemis.fullname" . }}-ssh-hostkey{{- end }}
 {{- define "artemis.postgresName" -}}{{ include "artemis.fullname" . }}-postgres{{- end }}
-{{- define "artemis.registryName" -}}{{ include "artemis.fullname" . }}-registry{{- end }}
+{{- define "artemis.redisName" -}}{{ include "artemis.fullname" . }}-redis{{- end }}
 {{- define "artemis.brokerName"   -}}{{ include "artemis.fullname" . }}-broker{{- end }}
 {{- define "artemis.buildAgentName" -}}{{ include "artemis.fullname" . }}-build-agent{{- end }}
 
@@ -110,6 +110,17 @@ https://{{ required "gateway.hostname (or artemis.config.serverUrl) is required"
 {{- end -}}
 {{- end }}
 
+{{/* Scaling a workload must keep it connected to the same data store. */}}
+{{- define "artemis.redisEnabled" -}}
+{{- if eq .Values.artemis.distributedDataProvider "Redis" -}}
+true
+{{- else if ne .Values.artemis.distributedDataProvider "Local" -}}
+{{- fail "artemis.distributedDataProvider must be Redis or Local" -}}
+{{- else if or (ne (int .Values.artemis.replicaCount) 1) .Values.buildAgents.enabled -}}
+{{- fail "Local requires artemis.replicaCount=1 and buildAgents.enabled=false" -}}
+{{- end -}}
+{{- end }}
+
 {{/* Database host: bundled service or external host. */}}
 {{- define "artemis.dbHost" -}}
 {{- if .Values.postgresql.deploy -}}
@@ -139,11 +150,6 @@ jdbc:postgresql://{{ include "artemis.dbHost" . }}:{{ include "artemis.dbPort" .
 {{- else -}}
 {{ required "broker.externalAddresses is required when broker.deploy=false" .Values.broker.externalAddresses }}
 {{- end -}}
-{{- end }}
-
-{{/* Eureka service URL with embedded admin credentials. */}}
-{{- define "artemis.eurekaUrl" -}}
-http://admin:{{ required "registry.password is required" .Values.registry.password }}@{{ include "artemis.registryName" . }}:{{ .Values.registry.service.port }}/eureka/
 {{- end }}
 
 {{/* Base Spring profiles shared by every core node. */}}
@@ -196,7 +202,7 @@ initContainers:
         mountPath: /opt/artemis/data
       - name: artemis-local
         mountPath: /opt/artemis/local
-  # (b) Wait for PostgreSQL and the JHipster Registry before booting.
+  # (b) Wait for PostgreSQL and Valkey before booting.
   - name: init-wait-deps
     image: busybox:1.37
     command:
@@ -205,8 +211,10 @@ initContainers:
       - |
         until nc -z -w 2 {{ include "artemis.dbHost" $ }} {{ include "artemis.dbPort" $ }}; do
           echo "waiting for database {{ include "artemis.dbHost" $ }}:{{ include "artemis.dbPort" $ }}"; sleep 5; done
-        until nc -z -w 2 {{ include "artemis.registryName" $ }} {{ $.Values.registry.service.port }}; do
-          echo "waiting for registry"; sleep 5; done
+        {{- if include "artemis.redisEnabled" $ }}
+        until nc -z -w 2 {{ include "artemis.redisName" $ }} 6379; do
+          echo "waiting for Valkey"; sleep 5; done
+        {{- end }}
         echo "dependencies are up"
 {{- if .waitForLeader }}
   # (c) Members wait for the leader to be ready so concurrent Liquibase
@@ -234,19 +242,16 @@ containers:
     env:
       - name: ARTEMIS_JAVA_OPTS
         value: {{ $.Values.artemis.javaOpts | quote }}
-      # Hazelcast binds to the pod IP; peers are discovered via Eureka.
-      - name: MY_POD_IP
-        valueFrom:
-          fieldRef:
-            fieldPath: status.podIP
-      - name: SPRING_HAZELCAST_INTERFACE
-        value: "$(MY_POD_IP)"
       - name: SPRING_PROFILES_ACTIVE
         value: "{{ include "artemis.baseProfiles" $ }}{{ if .extraProfiles }},{{ .extraProfiles }}{{ end }}"
-      - name: EUREKA_INSTANCE_INSTANCEID
+      - name: ARTEMIS_INSTANCEID
         valueFrom:
           fieldRef:
             fieldPath: metadata.name
+      {{- if include "artemis.redisEnabled" $ }}
+      - name: SPRING_DATA_REDIS_CLIENTNAME
+        value: "artemis-$(ARTEMIS_INSTANCEID)"
+      {{- end }}
       {{- with $.Values.artemis.extraEnv }}
       {{- toYaml . | nindent 6 }}
       {{- end }}
@@ -258,8 +263,6 @@ containers:
     ports:
       - name: http
         containerPort: 8080
-      - name: hazelcast
-        containerPort: 5701
       - name: ssh
         containerPort: 7921
     startupProbe:

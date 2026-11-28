@@ -477,7 +477,6 @@ if [ "$SKIP_SERVER" = false ]; then
         echo "Iris: server.url set to ${SERVER_URL} so Pyris callbacks reach the host"
     fi
     export ARTEMIS_USERMANAGEMENT_PASSKEY_ADDITIONALALLOWEDORIGINS="http://localhost:9000"
-    export EUREKA_CLIENT_ENABLED="false"
     export INFO_TESTSERVER="true"
     # Installation metadata for the About page. Matches deployment/docker/artemis/config/playwright.env.
     export INFO_OPERATORNAME="TUM"

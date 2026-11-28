@@ -7,20 +7,17 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class BuildAgentSshAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
-    @Qualifier("hazelcastInstance")
-    private HazelcastInstance hazelcastInstance;
+    private DistributedDataProvider provider;
 
     @Autowired
     private BuildAgentSshKeyService buildAgentSSHKeyService;
@@ -38,10 +35,10 @@ class BuildAgentSshAuthenticationIntegrationTest extends AbstractSpringIntegrati
     }
 
     @Test
-    void testSSHInHazelcast() {
+    void testSshKeyInDistributedMap() {
         sharedQueueProcessingService.updateBuildAgentInformation();
-        IMap<String, BuildAgentInformation> buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
-        assertThat(buildAgentInformation.values()).as("SSH public key available in hazelcast.")
+        DistributedMap<String, BuildAgentInformation> buildAgentInformation = provider.getMap("buildAgentInformation");
+        assertThat(buildAgentInformation.values()).as("SSH public key available in the build agent map.")
                 .anyMatch(agent -> agent.publicSshKey().equals(buildAgentSSHKeyService.getPublicKeyAsString()));
     }
 }
