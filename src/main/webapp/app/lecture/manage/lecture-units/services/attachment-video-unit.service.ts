@@ -1,8 +1,8 @@
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Observable, from, of } from 'rxjs';
+import { catchError, concatMap, last, map } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentVideoUnitApi } from 'app/openapi/api/attachment-video-unit-api';
@@ -132,5 +132,19 @@ export class AttachmentVideoUnitService {
         attachment.attachmentType = AttachmentType.FILE;
 
         return this.create(lectureId, attachmentVideoUnit, attachment, file);
+    }
+
+    /**
+     * Creates one attachment video unit per dropped PDF file, one after the other, so the units keep the order of the files.
+     *
+     * @param lectureId - The ID of the lecture to add the units to
+     * @param files - The PDF files to create the units from
+     * @returns Observable that emits the last created unit, or undefined when no file was given, and then completes
+     */
+    createAttachmentVideoUnitsFromFiles(lectureId: number, files: File[]): Observable<AttachmentVideoUnit | undefined> {
+        return from(files).pipe(
+            concatMap((file) => this.createAttachmentVideoUnitFromFile(lectureId, file)),
+            last(undefined, undefined as AttachmentVideoUnit | undefined),
+        );
     }
 }

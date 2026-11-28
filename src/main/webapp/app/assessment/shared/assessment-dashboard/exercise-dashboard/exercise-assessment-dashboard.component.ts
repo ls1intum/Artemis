@@ -72,7 +72,7 @@ import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-he
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { TutorParticipationApi } from 'app/openapi/api/tutor-participation-api';
-import type { TutorParticipationStatusEnum } from 'app/openapi/model/tutor-participation';
+import type { TutorParticipationStatus as TutorParticipationStatusEnum } from 'app/openapi/model/tutor-participation-status';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
 import { alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetReason } from 'app/assessment/shared/util/assessment-availability.util';

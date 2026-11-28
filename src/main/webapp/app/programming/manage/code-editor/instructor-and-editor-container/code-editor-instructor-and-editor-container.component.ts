@@ -40,7 +40,8 @@ import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDi
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
-import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
+import { ConsistencyIssueCategory } from 'app/openapi/model/consistency-issue-category';
+import { Severity } from 'app/openapi/model/severity';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } from 'app/hyperion/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
@@ -60,7 +61,7 @@ import { HYPERION_GENERATION_BLOCKER_KEY, hyperionGenerationBlocker, usesCanonic
 import { serverTimeSignal } from 'app/hyperion/exercise-generation/hyperion-server-time.util';
 import { CodeEditorAiActionsComponent } from 'app/hyperion/code-editor/ai-actions/code-editor-ai-actions.component';
 
-const SEVERITY_ORDER: Record<ConsistencyIssueSeverityEnum, number> = {
+const SEVERITY_ORDER: Record<Severity, number> = {
     ['HIGH']: 0,
     ['MEDIUM']: 1,
     ['LOW']: 2,
@@ -85,8 +86,8 @@ interface ConsistencyIssueNavigationIssue {
     filePath?: string;
     lineNumber?: number;
     auxiliaryRepositoryId?: number;
-    severity: ConsistencyIssueSeverityEnum;
-    category: ConsistencyIssueCategoryEnum;
+    severity: Severity;
+    category: ConsistencyIssueCategory;
 }
 
 @Component({

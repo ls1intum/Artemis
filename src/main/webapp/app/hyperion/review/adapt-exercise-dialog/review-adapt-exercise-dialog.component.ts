@@ -15,7 +15,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AdaptFinding, reviewRepositoryLabel } from 'app/exercise/review/review-comment-utils';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
-import { ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
+import { Severity } from 'app/openapi/model/severity';
 
 export interface ReviewAdaptExerciseDialogResult {
     instructions?: string;
@@ -52,9 +52,9 @@ interface FilterOption {
 
 /** Severity order so the most important findings surface first when there are many to triage. */
 const SEVERITY_ORDER: Record<string, number> = {
-    [ConsistencyIssueSeverityEnum.High]: 0,
-    [ConsistencyIssueSeverityEnum.Medium]: 1,
-    [ConsistencyIssueSeverityEnum.Low]: 2,
+    [Severity.High]: 0,
+    [Severity.Medium]: 1,
+    [Severity.Low]: 2,
 };
 
 /** Group order follows how an instructor reads an exercise: the statement, then what students get, then the answer, then the tests. */

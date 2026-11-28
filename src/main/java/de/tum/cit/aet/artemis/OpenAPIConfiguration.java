@@ -152,13 +152,25 @@ public class OpenAPIConfiguration {
         });
     }
 
+    /**
+     * Keeps the DTO schemas without their suffix, and the enum schemas under their own name. The specification is generated with
+     * {@code enums-as-ref}, so a DTO refers to an enum it uses instead of repeating its values, and the client gets one type per enum.
+     */
     private static Map<String, Schema> filterForSchemasWithDtoSuffixAndStripSuffix(Components components) {
-        return components.getSchemas().entrySet().stream().filter(entry -> entry.getKey().endsWith("DTO"))
-                .collect(Collectors.toMap(entry -> entry.getKey().substring(0, entry.getKey().length() - DTO_NUMBER_OF_CHARACTERS), entry -> {
+        return components.getSchemas().entrySet().stream().filter(entry -> entry.getKey().endsWith("DTO") || isEnumSchema(entry.getValue()))
+                .collect(Collectors.toMap(entry -> schemaNameWithoutDtoSuffix(entry.getKey()), entry -> {
                     Schema<?> schema = entry.getValue();
-                    schema.setName(entry.getKey().substring(0, entry.getKey().length() - DTO_NUMBER_OF_CHARACTERS));
+                    schema.setName(schemaNameWithoutDtoSuffix(entry.getKey()));
                     return schema;
                 }));
+    }
+
+    private static boolean isEnumSchema(Schema<?> schema) {
+        return schema.getEnum() != null && !schema.getEnum().isEmpty() && schema.getProperties() == null;
+    }
+
+    private static String schemaNameWithoutDtoSuffix(String name) {
+        return name.endsWith("DTO") ? name.substring(0, name.length() - DTO_NUMBER_OF_CHARACTERS) : name;
     }
 
     private void removeDtoSuffixFromRequestBodyIfExisting(Operation operation) {

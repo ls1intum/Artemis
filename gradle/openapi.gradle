@@ -73,6 +73,7 @@
                 "-Dartemis.aiworker.ids=openapi-docs",
                 "-Dartemis.weaviate.enabled=true",
                 "-Dartemis.openapi-docs-generation=true",
+                "-Denums-as-ref=true",
                 "-Dartemis.iris.enabled=true",
                 "-Dspringdoc.api-docs.enabled=true",
                 "-Dspringdoc.pre-loading-enabled=true",

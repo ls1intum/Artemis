@@ -12,7 +12,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { User } from 'app/account/user/user.model';
 import { CalendarApi } from 'app/openapi/api/calendar-api';
-import { CalendarEventTypeEnum } from 'app/openapi/model/calendar-event';
+import { CalendarEventType } from 'app/openapi/model/calendar-event-type';
 import { HttpErrorResponse } from '@angular/common/http';
 
 describe('CalendarService', () => {
@@ -609,7 +609,7 @@ describe('CalendarService - authentication state changes', () => {
 function expectCalendarEventToMatch(
     event: IdentifiableCalendarEvent,
     expected: {
-        type: CalendarEventTypeEnum;
+        type: CalendarEventType;
         title: string;
         startDate: string;
         endDate?: string;

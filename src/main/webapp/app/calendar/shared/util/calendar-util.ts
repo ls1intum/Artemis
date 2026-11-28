@@ -1,8 +1,8 @@
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faChalkboardUser, faCheckDouble, faDiagramProject, faFileArrowUp, faFont, faGraduationCap, faKeyboard, faPersonChalkboard } from '@fortawesome/free-solid-svg-icons';
-import { CalendarEventTypeEnum } from 'app/openapi/model/calendar-event';
+import { CalendarEventType } from 'app/openapi/model/calendar-event-type';
 
-const eventTypeIconMap: Record<CalendarEventTypeEnum, IconProp> = {
+const eventTypeIconMap: Record<CalendarEventType, IconProp> = {
     ['LECTURE']: faChalkboardUser,
     ['TUTORIAL']: faPersonChalkboard,
     ['EXAM']: faGraduationCap,
@@ -13,7 +13,7 @@ const eventTypeIconMap: Record<CalendarEventTypeEnum, IconProp> = {
     ['FILE_UPLOAD_EXERCISE']: faFileArrowUp,
 };
 
-export function getIconForEventType(type: CalendarEventTypeEnum): IconProp {
+export function getIconForEventType(type: CalendarEventType): IconProp {
     return eventTypeIconMap[type];
 }
 
@@ -36,7 +36,7 @@ export enum CalendarEventFilterOption {
     ExerciseEvents = 'exerciseEvents',
 }
 
-const eventTypeToColorClassMap: Record<CalendarEventTypeEnum, string> = {
+const eventTypeToColorClassMap: Record<CalendarEventType, string> = {
     ['EXAM']: 'var(--pastel-teal)',
     ['LECTURE']: 'var(--pastel-blue)',
     ['TUTORIAL']: 'var(--pastel-purple)',
@@ -47,6 +47,6 @@ const eventTypeToColorClassMap: Record<CalendarEventTypeEnum, string> = {
     ['QUIZ_EXERCISE']: 'var(--pastel-cyan)',
 };
 
-export function getColorForEventType(type: CalendarEventTypeEnum): string {
+export function getColorForEventType(type: CalendarEventType): string {
     return eventTypeToColorClassMap[type];
 }

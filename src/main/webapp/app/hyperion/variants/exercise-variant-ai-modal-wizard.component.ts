@@ -51,7 +51,8 @@ import { ExerciseVariantGroupDTO, ExerciseVariantGroupService } from 'app/course
 import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExerciseVariantGenerationService } from 'app/hyperion/services/exercise-variant-generation.service';
 import { VariantGenerationEvent, VariantJobPhase, isTerminalVariantPhase } from 'app/hyperion/services/exercise-variant-websocket.service';
-import { VariantGenerationRequest, VariantGenerationRequestNarrativeStyleEnum } from 'app/openapi/model/variant-generation-request';
+import { VariantGenerationRequest } from 'app/openapi/model/variant-generation-request';
+import { VariantNarrativeStyle } from 'app/openapi/model/variant-narrative-style';
 import { VariantPlacement } from 'app/openapi/model/variant-placement';
 import { StepOutput } from 'app/openapi/model/step-output';
 import { VariantJobDetail } from 'app/openapi/model/variant-job-detail';
@@ -78,8 +79,8 @@ const WIZARD_STEPS: ReadonlyArray<{ step: WizardStep; id: string; labelKey: stri
  * fully creative storytelling, in ascending order. The tooltip carries the description; not selecting the
  * Storytelling card at all means "stay consistent with the source exercise's narrative" (server-side default).
  */
-const NARRATIVE_STYLES: ReadonlyArray<{ value: VariantGenerationRequestNarrativeStyleEnum; labelKey: string; descriptionKey: string }> = (
-    ['TECHNICAL', 'REALISTIC', 'CREATIVE'] as VariantGenerationRequestNarrativeStyleEnum[]
+const NARRATIVE_STYLES: ReadonlyArray<{ value: VariantNarrativeStyle; labelKey: string; descriptionKey: string }> = (
+    ['TECHNICAL', 'REALISTIC', 'CREATIVE'] as VariantNarrativeStyle[]
 ).map((value) => ({ value, labelKey: narrativeStyleTranslationKey(value), descriptionKey: `${narrativeStyleTranslationKey(value)}_DESCRIPTION` }));
 
 /**
@@ -174,7 +175,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly changeDomain = signal(false);
     readonly domainText = signal('');
     readonly changeNarrative = signal(false);
-    readonly narrativeStyle = signal<VariantGenerationRequestNarrativeStyleEnum>('TECHNICAL');
+    readonly narrativeStyle = signal<VariantNarrativeStyle>('TECHNICAL');
     readonly changeCustom = signal(false);
     readonly additionalInstructions = signal('');
 

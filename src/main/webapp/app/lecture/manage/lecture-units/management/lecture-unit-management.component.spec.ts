@@ -697,6 +697,12 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     describe('PDF drop zone', () => {
+        beforeEach(() => {
+            // The service is mocked; the drop zone uses its real loop over the files, which calls the mocked single-file creation.
+            vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitsFromFiles').mockImplementation((lectureId, files) =>
+                AttachmentVideoUnitService.prototype.createAttachmentVideoUnitsFromFiles.call(attachmentVideoUnitService, lectureId, files),
+            );
+        });
         it('should create attachment units from dropped PDF files', () => {
             const alertService = TestBed.inject(AlertService);
 

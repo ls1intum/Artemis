@@ -28,6 +28,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springdoc.core.annotations.ParameterObject;
@@ -54,10 +55,12 @@ import tools.jackson.databind.node.ArrayNode;
 import tools.jackson.databind.node.ObjectNode;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
+import de.tum.cit.aet.artemis.core.config.UnwrappedSchemaOpenApiCustomizer;
 import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 import io.swagger.v3.core.converter.AnnotatedType;
 import io.swagger.v3.core.converter.ModelConverters;
 import io.swagger.v3.core.converter.ResolvedSchema;
+import io.swagger.v3.core.jackson.ModelResolver;
 import io.swagger.v3.core.util.Json31;
 import io.swagger.v3.core.util.ParameterProcessor;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -104,17 +107,63 @@ class QuizOpenApiSpecificationArchitectureTest extends AbstractArchitectureTest 
      */
     private static Map<String, JsonNode> generatedSchemas;
 
+    /**
+     * The enum schemas swagger-core described, which OpenAPIConfiguration#schemaCustomizer keeps under their own name.
+     */
+    private static Set<String> enumSchemas;
+
+    /**
+     * Every schema swagger-core described for the quiz endpoints, by its name before the DTO suffix is stripped. The schemas are
+     * customized together, like springdoc customizes the whole specification, because a schema and the schema it embeds can come from
+     * different endpoints.
+     */
+    @SuppressWarnings("rawtypes")
+    private static Map<String, io.swagger.v3.oas.models.media.Schema> describedSchemas;
+
+    /**
+     * The schemas the quiz bodies reference directly, by their name before the DTO suffix is stripped.
+     */
+    private static Set<String> bodyReferences;
+
+    private static boolean enumsAsRefBefore;
+
     @BeforeAll
     static void describeTheQuizEndpoints() throws IOException {
         specification = YAMLMapper.builder().build().readTree(SPECIFICATION.toFile());
         generatedSchemas = new HashMap<>();
+        enumSchemas = new TreeSet<>();
+        describedSchemas = new TreeMap<>();
+        bodyReferences = new TreeSet<>();
+        // gradle/openapi.gradle generates the specification with -Denums-as-ref=true.
+        enumsAsRefBefore = ModelResolver.enumsAsRef;
+        ModelResolver.enumsAsRef = true;
         List<String> excludedPaths = excludedPaths();
         AntPathMatcher pathMatcher = new AntPathMatcher();
         endpoints = productionClasses.stream().filter(javaClass -> javaClass.getPackageName().equals(ARTEMIS_PACKAGE + ".quiz.web"))
                 .filter(javaClass -> javaClass.isAnnotatedWith(RestController.class)).map(JavaClass::reflect).flatMap(controller -> endpointsOf(controller).stream())
                 .filter(endpoint -> endpoint.path().startsWith(PATH_PREFIX) && excludedPaths.stream().noneMatch(excluded -> pathMatcher.match(excluded, endpoint.path()))).toList();
+        // springdoc keeps only the schemas something references. A schema that only another record unwraps is written into that record
+        // and never referenced, so it is not in the specification and nothing can be composed of it.
+        Map<String, JsonNode> describedJson = new HashMap<>();
+        describedSchemas.forEach((name, schema) -> describedJson.put(name, JSON_MAPPER.readTree(Json31.pretty(schema))));
+        Map<String, JsonNode> referenced = new HashMap<>();
+        reachableSchemas(bodyReferences, describedJson::get, referenced);
+        describedSchemas.keySet().retainAll(referenced.keySet());
+        // Applies what UnwrappedSchemaOpenApiCustomizer does before OpenAPIConfiguration#schemaCustomizer strips the DTO suffix.
+        UnwrappedSchemaOpenApiCustomizer.composeUnwrappedSchemas(describedSchemas, UnwrappedSchemaOpenApiCustomizer.unwrappedSchemaNames());
+        describedSchemas.forEach((name, schema) -> addEnumSchema(name, JSON_MAPPER.readTree(Json31.pretty(schema))));
+        describedSchemas.forEach((name, schema) -> {
+            if (name.endsWith(DTO_SUFFIX)) {
+                generatedSchemas.put(withoutDtoSuffix(name), withSpecificationReferences(JSON_MAPPER.readTree(Json31.pretty(schema))));
+            }
+        });
         flattenDiscriminatorBackReferences(generatedSchemas);
         assertThat(endpoints).as("quiz endpoints").isNotEmpty();
+    }
+
+    @AfterAll
+    static void restoreEnumsAsRef() {
+        ModelResolver.enumsAsRef = enumsAsRefBefore;
     }
 
     /**
@@ -252,11 +301,13 @@ class QuizOpenApiSpecificationArchitectureTest extends AbstractArchitectureTest 
             }
             Set<String> schemaReferences = new TreeSet<>();
             bodyTypes(method).forEach(bodyType -> schemaReferences.addAll(describe(bodyType)));
+            ArrayNode parameters = parametersOf(method);
+            collectSchemaReferences(parameters, schemaReferences);
             String[] paths = mapping.path().length == 0 ? new String[] { "" } : mapping.path();
             for (String prefix : prefixes) {
                 for (String path : paths) {
                     for (RequestMethod requestMethod : mapping.method()) {
-                        endpoints.add(new Endpoint(requestMethod.name(), normalized(prefix, path), method.getName(), schemaReferences, parametersOf(method)));
+                        endpoints.add(new Endpoint(requestMethod.name(), normalized(prefix, path), method.getName(), schemaReferences, parameters));
                     }
                 }
             }
@@ -309,7 +360,11 @@ class QuizOpenApiSpecificationArchitectureTest extends AbstractArchitectureTest 
 
     private static JsonNode describeParameter(String name, String in, boolean required, String defaultValue, Type type, Annotation[] annotations) {
         var parameter = new io.swagger.v3.oas.models.parameters.Parameter().name(name).in(in).required(required);
-        ParameterProcessor.applyAnnotations(parameter, documentedType(type, annotations), Arrays.asList(annotations), new Components(), new String[0], new String[0], null, true);
+        Components components = new Components();
+        ParameterProcessor.applyAnnotations(parameter, documentedType(type, annotations), Arrays.asList(annotations), components, new String[0], new String[0], null, true);
+        if (components.getSchemas() != null) {
+            components.getSchemas().forEach((schemaName, schema) -> addEnumSchema(schemaName, JSON_MAPPER.readTree(Json31.pretty(schema))));
+        }
         if (!ValueConstants.DEFAULT_NONE.equals(defaultValue)) {
             parameter.getSchema().setDefault(defaultValue);
         }
@@ -361,7 +416,7 @@ class QuizOpenApiSpecificationArchitectureTest extends AbstractArchitectureTest 
     }
 
     /**
-     * Describes a body type like springdoc, adds the DTO schemas it uses to {@link #generatedSchemas} and returns the names of the DTO
+     * Describes a body type like springdoc, adds the schemas it uses to {@link #describedSchemas} and returns the names of the DTO
      * schemas it references directly.
      */
     private static Set<String> describe(Type bodyType) {
@@ -370,11 +425,12 @@ class QuizOpenApiSpecificationArchitectureTest extends AbstractArchitectureTest 
             return Set.of();
         }
         ResolvedSchema resolved = ModelConverters.getInstance(true).resolveAsResolvedSchema(new AnnotatedType(bodyType).resolveAsRef(true));
-        resolved.referencedSchemas.forEach((name, schema) -> {
-            if (name.endsWith(DTO_SUFFIX)) {
-                generatedSchemas.put(withoutDtoSuffix(name), withSpecificationReferences(JSON_MAPPER.readTree(Json31.pretty(schema))));
-            }
-        });
+        resolved.referencedSchemas.forEach(describedSchemas::putIfAbsent);
+        if (resolved.schema != null) {
+            collectSchemaReferences(JSON_MAPPER.readTree(Json31.pretty(resolved.schema)), bodyReferences);
+        }
+        // References to enum schemas are kept by withSpecificationReferences, so the enums of this body are registered first.
+        resolved.referencedSchemas.forEach((name, schema) -> addEnumSchema(name, JSON_MAPPER.readTree(Json31.pretty(schema))));
         Set<String> references = new TreeSet<>();
         if (resolved.schema != null) {
             collectSchemaReferences(withSpecificationReferences(JSON_MAPPER.readTree(Json31.pretty(resolved.schema))), references);
@@ -382,9 +438,16 @@ class QuizOpenApiSpecificationArchitectureTest extends AbstractArchitectureTest 
         return references;
     }
 
+    private static void addEnumSchema(String name, JsonNode schema) {
+        if (schema.path("enum").isArray() && !schema.has("properties")) {
+            enumSchemas.add(name);
+            generatedSchemas.put(name, schema);
+        }
+    }
+
     /**
-     * Applies what OpenAPIConfiguration#schemaCustomizer and pruneOpenApiSpec do to references: only DTO schemas are kept, under their name
-     * without the suffix, so a reference to a DTO loses the suffix and a reference to anything else is removed.
+     * Applies what OpenAPIConfiguration#schemaCustomizer and pruneOpenApiSpec do to references: DTO schemas are kept under their name without
+     * the suffix and enum schemas under their own name, so a reference to a DTO loses the suffix and a reference to anything else is removed.
      */
     private static JsonNode withSpecificationReferences(JsonNode node) {
         if (node.isObject()) {
@@ -413,7 +476,7 @@ class QuizOpenApiSpecificationArchitectureTest extends AbstractArchitectureTest 
 
     private static boolean isReferenceToRemovedSchema(JsonNode node) {
         String reference = node.path("$ref").asString("");
-        return reference.startsWith(SCHEMA_REFERENCE_PREFIX) && !reference.endsWith(DTO_SUFFIX);
+        return reference.startsWith(SCHEMA_REFERENCE_PREFIX) && !reference.endsWith(DTO_SUFFIX) && !enumSchemas.contains(reference.substring(SCHEMA_REFERENCE_PREFIX.length()));
     }
 
     /**
