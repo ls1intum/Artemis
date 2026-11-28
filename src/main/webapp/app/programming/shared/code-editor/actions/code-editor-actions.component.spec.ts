@@ -358,6 +358,24 @@ describe('CodeEditorActionsComponent', () => {
         expect(emittedSubmission['__proto__']).toBeNull();
     });
 
+    it.each([false, true])('should report earlier saved files after a later HTTP failure without clearing newer edits (edited: %s)', (edited) => {
+        const content = 'a'.repeat(7 * 1024 * 1024);
+        const laterResponse = new Subject<FileSubmission>();
+        const onSavedFilesSpy = vi.spyOn(comp.onSavedFiles, 'emit');
+        const onErrorSpy = vi.spyOn(comp.onError, 'emit');
+        fixture.componentRef.setInput('unsavedFiles', { 'first.txt': content, 'second.txt': content, 'third.txt': content });
+        updateFilesStub.mockReturnValueOnce(of({ 'first.txt': null, 'second.txt': null })).mockReturnValueOnce(laterResponse);
+        comp.onSave();
+        if (edited) {
+            fixture.componentRef.setInput('unsavedFiles', { 'first.txt': 'newer edit', 'second.txt': content, 'third.txt': content });
+        }
+        laterResponse.error(new Error('connection lost'));
+
+        expect(onSavedFilesSpy).toHaveBeenCalledExactlyOnceWith(edited ? { 'second.txt': null } : { 'first.txt': null, 'second.txt': null });
+        expect(onErrorSpy).toHaveBeenCalledExactlyOnceWith('saveFailed');
+        expect(comp.editorState()).toBe(EditorState.UNSAVED_CHANGES);
+    });
+
     it('should stop before the final committing batch when an earlier file update reports an error', () => {
         const largeFileContent = 'a'.repeat(7 * 1024 * 1024);
         const firstBatchResponse = new Subject<FileSubmission>();
@@ -729,7 +747,42 @@ describe('CodeEditorActionsComponent', () => {
         fixture.detectChanges();
         fixture.destroy();
 
-        expect(comp.editorState()).toEqual(EditorState.SAVING);
+        expect(updateFilesStub).toHaveBeenCalledWith([{ fileName: 'fileName', fileContent: unsavedFiles.fileName }], false, 'api/programming/participations/1/repository');
+    });
+
+    it.each([false, true])('should save the final edits to the original repository after destruction during an autosave (active save fails: %s)', (fails) => {
+        const activeSave = new Subject<FileSubmission>();
+        const finalSave = new Subject<FileSubmission>();
+        const onSavedFilesSpy = vi.spyOn(comp.onSavedFiles, 'emit');
+        const onErrorSpy = vi.spyOn(comp.onError, 'emit');
+        fixture.componentRef.setInput('unsavedFiles', { 'file.txt': 'older content' });
+        updateFilesStub.mockReturnValueOnce(activeSave).mockReturnValueOnce(finalSave);
+        comp.onSave();
+        fixture.componentRef.setInput('unsavedFiles', { 'file.txt': 'final edit', 'new.txt': 'new file' });
+        fixture.destroy();
+        if (fails) {
+            getRestResourceUrlStub.mockReturnValue('api/programming/participations/2/repository');
+        }
+        expect(updateFilesStub).toHaveBeenCalledOnce();
+        if (fails) {
+            activeSave.error(new Error('save failed'));
+        } else {
+            activeSave.next({ 'file.txt': null });
+            activeSave.complete();
+        }
+        expect(updateFilesStub).toHaveBeenCalledTimes(2);
+        expect(updateFilesStub).toHaveBeenLastCalledWith(
+            [
+                { fileName: 'file.txt', fileContent: 'final edit' },
+                { fileName: 'new.txt', fileContent: 'new file' },
+            ],
+            false,
+            'api/programming/participations/1/repository',
+        );
+        finalSave.next({ 'file.txt': null, 'new.txt': null });
+        finalSave.complete();
+        expect(onSavedFilesSpy).not.toHaveBeenCalled();
+        expect(onErrorSpy).not.toHaveBeenCalled();
     });
 
     describe('when actions are disabled', () => {

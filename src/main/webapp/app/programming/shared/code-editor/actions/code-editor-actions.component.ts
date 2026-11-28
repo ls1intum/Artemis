@@ -101,6 +101,8 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     private previousEditorState: EditorState | undefined;
     private saveInProgress = false;
     private saveFinished = new Subject<boolean>();
+    private destroyed = false;
+    private saveOnDestroy?: () => void;
 
     constructor() {
         effect(() => {
@@ -175,7 +177,21 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         clearInterval(this.autoSaveInterval);
-        this.onSave();
+        this.destroyed = true;
+        if (!this.disableActions()) {
+            const files = this.unsavedFiles();
+            const repositoryTarget = this.repositoryFileService.getRestResourceUrl();
+            const save = () =>
+                this.saveFiles(files, repositoryTarget)
+                    .pipe(catchError(() => EMPTY))
+                    .subscribe();
+            if (this.saveInProgress) {
+                // Inputs stop updating after destruction; retain the final snapshot and its repository.
+                this.saveOnDestroy = save;
+            } else {
+                save();
+            }
+        }
 
         if (this.conflictStateSubscription) {
             this.conflictStateSubscription.unsubscribe();
@@ -264,9 +280,14 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         if (this.disableActions() || this.saveInProgress) {
             return EMPTY;
         }
-        const unsavedFilesValue = this.unsavedFiles();
+        return this.saveFiles(this.unsavedFiles(), this.repositoryFileService.getRestResourceUrl(), andCommit);
+    }
+
+    private saveFiles(unsavedFilesValue: Record<string, string>, repositoryTarget: string | undefined, andCommit = false): Observable<FileSubmission | undefined> {
         if (!_isEmpty(unsavedFilesValue)) {
-            this.editorState.set(EditorState.SAVING);
+            if (!this.destroyed) {
+                this.editorState.set(EditorState.SAVING);
+            }
             const unsavedFiles = Object.entries(unsavedFilesValue).map(([fileName, fileContent]) => ({ fileName, fileContent }));
             const combinedSubmission: FileSubmission = Object.create(null);
             const validFiles = unsavedFiles.filter(({ fileName, fileContent }) => {
@@ -278,9 +299,21 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             });
             const hasOversizedFiles = !_isEmpty(combinedSubmission);
             const fileUpdateBatches = this.createFileUpdateBatches(validFiles);
-            const repositoryTarget = this.repositoryFileService.getRestResourceUrl();
             let previousBatchReportedError = false;
             let saveSucceeded = false;
+            let resultsReported = false;
+            const reportResults = (fileSubmission: FileSubmission) => {
+                resultsReported = true;
+                if (this.destroyed) {
+                    return;
+                }
+                const completedFiles = Object.fromEntries(
+                    Object.entries(fileSubmission).filter(([fileName, error]) => error || this.unsavedFiles()[fileName] === unsavedFilesValue[fileName]),
+                );
+                if (!_isEmpty(completedFiles)) {
+                    this.onSavedFiles.emit(completedFiles);
+                }
+            };
             const saveFinished = (this.saveFinished = new Subject<boolean>());
             this.saveInProgress = true;
             const saveOperation = from(fileUpdateBatches).pipe(
@@ -302,20 +335,18 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                 }, combinedSubmission),
                 filter(() => this.repositoryFileService.getRestResourceUrl() === repositoryTarget),
                 tap((fileSubmission: FileSubmission) => {
-                    const completedFiles = Object.fromEntries(
-                        Object.entries(fileSubmission).filter(([fileName, error]) => error || this.unsavedFiles()[fileName] === unsavedFilesValue[fileName]),
-                    );
-                    if (!_isEmpty(completedFiles)) {
-                        this.onSavedFiles.emit(completedFiles);
-                    }
+                    reportResults(fileSubmission);
                     if (previousBatchReportedError || hasOversizedFiles) {
                         throw new Error('At least one file could not be saved');
                     }
                     saveSucceeded = true;
                 }),
                 catchError((error: Error) => {
-                    if (this.repositoryFileService.getRestResourceUrl() !== repositoryTarget) {
+                    if (this.destroyed || this.repositoryFileService.getRestResourceUrl() !== repositoryTarget) {
                         return EMPTY;
+                    }
+                    if (!resultsReported) {
+                        reportResults(combinedSubmission);
                     }
                     this.editorState.set(EditorState.UNSAVED_CHANGES);
                     if (error.message === ConnectionError.message) {
@@ -333,6 +364,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
                         this.saveInProgress = false;
                         saveFinished.next(saveSucceeded);
                         saveFinished.complete();
+                        const saveOnDestroy = this.saveOnDestroy;
+                        this.saveOnDestroy = undefined;
+                        saveOnDestroy?.();
                     }),
                 );
         }

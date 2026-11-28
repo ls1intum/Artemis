@@ -323,16 +323,16 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         let update: Observable<FileSubmission>;
         if (filteredUpdates.length === 1 && new TextEncoder().encode(JSON.stringify(filteredUpdates)).length >= MAX_FILE_UPDATE_BATCH_SIZE_BYTES) {
             const [{ fileName, fileContent }] = filteredUpdates;
-            update = this.updateFileContent(fileName, fileContent, restResourceUrl).pipe(
-                switchMap(() => (thenCommit ? this.repositoryService.commit(restResourceUrl) : of(undefined))),
-                map(() => ({ [fileName]: undefined })),
-            );
+            update = this.updateFileContent(fileName, fileContent, restResourceUrl).pipe(map(() => ({ [fileName]: undefined })));
         } else {
             update = this.http.put<FileSubmission>(`${restResourceUrl}/files`, filteredUpdates, {
-                params: { commit: thenCommit ? 'yes' : 'no' },
+                params: { commit: 'no' },
             });
         }
         return update.pipe(
+            switchMap((submission) =>
+                thenCommit && !Object.values(submission).some((error) => !!error) ? this.repositoryService.commit(restResourceUrl).pipe(map(() => submission)) : of(submission),
+            ),
             handleErrorResponse(this.conflictService),
             tap((fileSubmission: FileSubmission | FileSubmissionError) => {
                 if (checkIfSubmissionIsError(fileSubmission)) {

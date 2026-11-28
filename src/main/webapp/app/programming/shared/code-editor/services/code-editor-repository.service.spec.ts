@@ -26,6 +26,29 @@ describe('CodeEditorRepositoryFileService', () => {
 
     afterEach(() => httpTestingController.verify());
 
+    it.each([false, true])('should commit JSON updates only after every file was saved (file error: %s)', async (fileError) => {
+        const submission = { 'saved.txt': null, 'other.txt': fileError ? 'save failed' : null };
+        const result = firstValueFrom(
+            service.updateFiles(
+                [
+                    { fileName: 'saved.txt', fileContent: 'content' },
+                    { fileName: 'other.txt', fileContent: 'other' },
+                ],
+                true,
+            ),
+        );
+        const upload = httpTestingController.expectOne(`${participationUrl}/files?commit=no`);
+        expect(upload.request.method).toBe('PUT');
+        httpTestingController.expectNone(`${participationUrl}/commit`);
+        upload.flush(submission);
+        if (fileError) {
+            httpTestingController.expectNone(`${participationUrl}/commit`);
+        } else {
+            httpTestingController.expectOne({ method: 'POST', url: `${participationUrl}/commit` }).flush(null);
+        }
+        expect(await result).toEqual(submission);
+    });
+
     it('should upload escaped single-file content raw and commit only after the upload succeeds', async () => {
         const content = '\u0001'.repeat(4 * 1024 * 1024);
         expect(new TextEncoder().encode(JSON.stringify([{ fileName: 'escaped.txt', fileContent: content }])).length).toBeGreaterThan(20 * 1024 * 1024);
