@@ -14,7 +14,9 @@
     font-size: 0.9rem;
     color: var(--text-color-secondary);
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition:
+        color 0.15s ease,
+        border-bottom-color 0.15s ease;
 }
 
 .tab-btn:hover {
@@ -48,9 +50,18 @@
     align-items: center;
     background: var(--body-bg);
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+        box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .exercise-card {
+        transition: none;
+    }
 }
 
 .exercise-card::before {

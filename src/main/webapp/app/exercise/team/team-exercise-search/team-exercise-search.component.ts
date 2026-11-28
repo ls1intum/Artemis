@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
-import { TumAetUiAutoCompleteComponent } from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteComponent } from '@tumaet/ui-angular/autocomplete';
 import { createTeamSearch } from 'app/exercise/team/team-search.util';
 import { orderBy } from 'lodash-es';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';

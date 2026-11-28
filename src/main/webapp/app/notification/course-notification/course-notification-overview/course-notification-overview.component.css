@@ -23,6 +23,13 @@
         notification-fade-in 0.2s ease-in-out forwards;
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .notification-item-entering {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
+
 @keyframes notification-height-in {
     from {
         max-height: 0;
@@ -183,8 +190,8 @@
     margin-left: auto;
     flex-shrink: 0;
     white-space: nowrap;
-    padding: 0 !important;
-    color: var(--link-color) !important;
+    padding: 0;
+    color: var(--link-color);
     text-decoration: underline;
     font-weight: 400;
 }

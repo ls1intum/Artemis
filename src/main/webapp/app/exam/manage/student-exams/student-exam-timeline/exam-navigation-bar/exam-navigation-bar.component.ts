@@ -8,7 +8,7 @@ import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 
 /**

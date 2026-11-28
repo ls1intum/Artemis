@@ -22,7 +22,8 @@ import { ScienceSettingsService } from 'app/account/user/settings/profile/scienc
 import { ScienceService } from 'app/foundation/science/science.service';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { SidebarView, isPageTitleView, isSidebarView } from 'app/course/shared/sidebar-view.interface';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';

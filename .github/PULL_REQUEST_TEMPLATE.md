@@ -24,7 +24,7 @@
 - [ ] I **strictly** followed the principle of **data economy** for all database calls.
 - [ ] I **strictly** followed the [server coding and design guidelines](https://docs.artemis.tum.de/developer/guidelines/server-development) and the [REST API guidelines](https://docs.artemis.tum.de/developer/guidelines/rest-api).
 - [ ] I added multiple integration tests (Spring) related to the features (with a high test coverage).
-- [ ] I added pre-authorization annotations according to the [guidelines](https://docs.artemis.tum.de/developer/guidelines/rest-api#authorization) and checked the course groups for all new REST Calls (security).
+- [ ] I added pre-authorization annotations according to the [guidelines](https://docs.artemis.tum.de/developer/guidelines/rest-api#authorization) and checked the course roles for all new REST Calls (security).
 - [ ] I went through the [security guideline](https://docs.artemis.tum.de/developer/guidelines/security): the ids of every request are checked against the course in the path, and tests cover a refused request.
 - [ ] I documented the Java code using JavaDoc style.
 
@@ -36,7 +36,7 @@
 - [ ] I **strictly** followed the [AET UI-UX guidelines](https://ls1intum.github.io/ui-ux-guidelines/).
 - [ ] Following the [theming guidelines](https://docs.artemis.tum.de/developer/guidelines/client-theming), I specified colors only in the theming variable files and checked that the changes look consistent in both the light and the dark theme.
 - [ ] I added multiple integration tests (Vitest) related to the features (with a high test coverage), while following the [test guidelines](https://docs.artemis.tum.de/developer/guidelines/client-tests).
-- [ ] I added `authorities` to all new routes and checked the course groups for displaying navigation elements (links, buttons).
+- [ ] I added `authorities` to all new routes and checked the course roles for displaying navigation elements (links, buttons).
 - [ ] I documented the TypeScript code using JSDoc style.
 - [ ] I added multiple screenshots/screencasts of my UI changes.
 - [ ] I translated all newly inserted strings into English and German.
