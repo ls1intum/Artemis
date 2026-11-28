@@ -77,7 +77,7 @@ describe('Sharing integration', () => {
         route.queryParams = { basketToken: 'token', apiBaseURL: 'https://platform.test/api', returnURL: '/return', checksum: 'signed', selectedExercise: '2' };
         const result = firstValueFrom(TestBed.runInInjectionContext(() => resolveSharingImport(route)));
         const request = http.expectOne('api/programming/sharing/import/basket/exercise-details');
-        const signedBasket = { ...route.queryParams, selectedExercise: 2 };
+        const signedBasket = { basketToken: 'token', apiBaseURL: 'https://platform.test/api', returnURL: '/return', checksum: 'signed', exercisePosition: 2 };
         expect(request.request.body).toMatchObject(signedBasket);
         request.flush({ title: 'Original' });
         const resolved = await result;

@@ -17,7 +17,7 @@ export function resolveSharingImport(route: ActivatedRouteSnapshot) {
     info.returnURL = query.get('returnURL') ?? '';
     info.apiBaseURL = query.get('apiBaseURL') ?? '';
     info.checksum = query.get('checksum') ?? '';
-    info.selectedExercise = Number(query.get('selectedExercise'));
+    info.exercisePosition = Number(query.get('selectedExercise'));
 
     return service.loadDetailsForExercises(info).pipe(
         map((exercise): ProgrammingExerciseImport => {

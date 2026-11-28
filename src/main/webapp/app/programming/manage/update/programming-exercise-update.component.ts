@@ -642,11 +642,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                             });
                             // we need the course id  to make the request to the server if it's an import from file
                             if (this.isImportFromFile || this.isExternalImport) {
-                                this.courseId.set(params['courseId']);
+                                this.courseId.set(Number(params['courseId']));
                                 this.loadCourseExerciseCategories(params['courseId']);
                             }
                         } else if (params['courseId']) {
-                            this.courseId.set(params['courseId']);
+                            this.courseId.set(Number(params['courseId']));
                             this.isExamMode.set(false);
                             this.courseService.findForManagement(this.courseId()).subscribe((res) => {
                                 this.programmingExercise.course = res.body!;
@@ -1576,7 +1576,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     private validateExerciseSubmissionLimit(validationErrorReasons: ValidationReason[]): void {
         // verifying submission limit value
-        if (this.programmingExercise.submissionPolicy !== undefined && this.programmingExercise.submissionPolicy.type !== SubmissionPolicyType.NONE) {
+        if (this.programmingExercise.submissionPolicy && this.programmingExercise.submissionPolicy.type !== SubmissionPolicyType.NONE) {
             const submissionLimit = this.programmingExercise.submissionPolicy?.submissionLimit;
             if (submissionLimit === undefined || typeof submissionLimit !== 'number') {
                 validationErrorReasons.push({

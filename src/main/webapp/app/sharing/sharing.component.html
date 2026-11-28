@@ -27,7 +27,7 @@
                                                 <input
                                                     id="{{ exercise.project.project_id }}"
                                                     [attr.aria-label]="'Select exercise: ' + exercise.metadata.title"
-                                                    [(ngModel)]="sharingInfo.selectedExercise"
+                                                    [(ngModel)]="sharingInfo.exercisePosition"
                                                     (change)="onExerciseSelected(exercisePos)"
                                                     [value]="exercisePos"
                                                     name="selectedExercise"

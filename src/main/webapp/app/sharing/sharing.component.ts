@@ -80,7 +80,7 @@ export class SharingComponent implements OnInit {
     }
 
     onExerciseSelected(index: number): void {
-        this.sharingInfo.selectedExercise = index;
+        this.sharingInfo.exercisePosition = index;
     }
 
     /**
@@ -121,8 +121,8 @@ export class SharingComponent implements OnInit {
             !this.sharingInfo.apiBaseURL ||
             !this.sharingInfo.returnURL ||
             !this.sharingInfo.checksum ||
-            this.sharingInfo.selectedExercise === undefined ||
-            this.sharingInfo.selectedExercise === null
+            this.sharingInfo.exercisePosition === undefined ||
+            this.sharingInfo.exercisePosition === null
         ) {
             this.alertService.error('artemisApp.sharing.error.missingParameters');
             return;
@@ -133,7 +133,7 @@ export class SharingComponent implements OnInit {
                     basketToken: this.sharingInfo.basketToken,
                     apiBaseURL: this.sharingInfo.apiBaseURL,
                     returnURL: this.sharingInfo.returnURL,
-                    selectedExercise: this.sharingInfo.selectedExercise,
+                    selectedExercise: this.sharingInfo.exercisePosition,
                     checksum: this.sharingInfo.checksum,
                 },
             })

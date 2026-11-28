@@ -113,7 +113,7 @@ describe('SharingComponent', () => {
         fixture.componentInstance.onExerciseSelected(1);
 
         // THEN
-        expect(fixture.componentInstance.sharingInfo.selectedExercise).toBe(1);
+        expect(fixture.componentInstance.sharingInfo.exercisePosition).toBe(1);
 
         // WHEN finally navigate to exercise import  page
         fixture.componentInstance.navigateToImportFromSharing();

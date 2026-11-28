@@ -1640,7 +1640,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     describe('external import', () => {
         function openImport(exercise: ProgrammingExercise, save = vi.fn()) {
             route.data = of({ externalImport: { exercise, save } });
-            route.params = of({ courseId });
+            route.params = of({ courseId: String(courseId) });
             route.url = of([]);
             vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockImplementation(getProgrammingLanguageFeature);
             vi.spyOn(courseService, 'findForManagement').mockReturnValue(of(new HttpResponse({ body: { ...course, defaultProgrammingLanguage: ProgrammingLanguage.PYTHON } })));
@@ -2248,7 +2248,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(returned).toBe('new-value');
         });
 
-        it('should find no validation errors for valid input', () => {
+        it.each([undefined, null])('should accept valid exercise details with submissionPolicy %s', (submissionPolicy) => {
+            Object.assign(comp.programmingExercise, { submissionPolicy });
             comp.programmingExercise.title = 'New title';
             comp.programmingExercise.shortName = 'home2';
             comp.programmingExercise.maxPoints = 10;
