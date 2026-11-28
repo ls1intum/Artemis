@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.notification.dto.payload;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -12,5 +14,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param examId        the exam the exercise belongs to, absent for a course exercise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PlagiarismCaseVerdictPayloadDTO(Long exerciseId, String exerciseTitle, String exerciseType, String verdict, Long examId) implements CourseNotificationPayloadDTO {
+public record PlagiarismCaseVerdictPayloadDTO(@Nullable Long exerciseId, @Nullable String exerciseTitle, @Nullable String exerciseType, @Nullable String verdict,
+        @Nullable Long examId) implements CourseNotificationPayloadDTO {
 }

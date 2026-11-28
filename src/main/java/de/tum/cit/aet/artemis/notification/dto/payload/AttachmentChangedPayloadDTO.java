@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.notification.dto.payload;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -12,6 +14,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param notificationText the message the editor wrote for students about the change, absent when they wrote none
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record AttachmentChangedPayloadDTO(String attachmentName, String unitName, Long exerciseId, Long lectureId, String notificationText)
-        implements CourseNotificationPayloadDTO {
+public record AttachmentChangedPayloadDTO(@Nullable String attachmentName, @Nullable String unitName, @Nullable Long exerciseId, @Nullable Long lectureId,
+        @Nullable String notificationText) implements CourseNotificationPayloadDTO {
 }

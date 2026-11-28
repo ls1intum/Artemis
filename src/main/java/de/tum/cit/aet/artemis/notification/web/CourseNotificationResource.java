@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -22,12 +23,13 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.notification.domain.NotificationChannelOption;
-import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationInfoDTO;
-import de.tum.cit.aet.artemis.notification.dto.CourseNotificationPageableDTO;
+import de.tum.cit.aet.artemis.notification.dto.CourseNotificationPageDTO;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationRegistryService;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingPresetRegistryService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -54,26 +56,30 @@ public class CourseNotificationResource {
     }
 
     /**
-     * GET communication/notification/{courseId}: get all non-archived course notifications for the current user
+     * GET /api/notification/courses/{courseId}: get all non-archived course notifications for the current user
      *
      * @param courseId the ID of the course
      * @param pageable the pagination information
      * @return the ResponseEntity with status 200 (OK) and the list of course notifications in body
      */
     @EnforceAtLeastStudentInCourse
+    @Operation(operationId = "getCourseNotifications")
+    @ApiResponse(responseCode = "200", description = "Non-archived notifications, with nullable reconstruction entries and unchanged pagination totals")
     @GetMapping("{courseId}")
-    public ResponseEntity<CourseNotificationPageableDTO<CourseNotificationDTO>> getCourseNotifications(@PathVariable Long courseId, Pageable pageable) {
+    public ResponseEntity<CourseNotificationPageDTO> getCourseNotifications(@PathVariable Long courseId, @ParameterObject Pageable pageable) {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
-                .body(courseNotificationService.getCourseNotifications(pageable, courseId, userRepository.getUser().getId()));
+                .body(CourseNotificationPageDTO.from(courseNotificationService.getCourseNotifications(pageable, courseId, userRepository.getUser().getId())));
     }
 
     /**
-     * GET communication/notification/info: get all notification types and presets
+     * GET /api/notification/courses/info: get all notification types and presets
      *
      * @return the ResponseEntity with status 200 (OK) and the list of all notification types and presets
      */
     @EnforceAtLeastStudent
     @UsageInteraction(FeatureInteraction.AUTOMATIC)
+    @Operation(operationId = "getCourseNotificationInfo")
+    @ApiResponse(responseCode = "200", description = "Notification types, delivery channels and setting presets")
     @GetMapping("info")
     public ResponseEntity<CourseNotificationInfoDTO> getCourseNotificationInfo() {
         var presetDTOs = courseNotificationSettingPresetRegistryService.getSettingPresetDTOs();

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +15,10 @@ import de.tum.cit.aet.artemis.notification.domain.UserCourseNotificationStatusTy
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationSerializedDTO;
+import de.tum.cit.aet.artemis.notification.dto.payload.CourseNotificationPayloadDTO;
+import de.tum.cit.aet.artemis.notification.dto.payload.NewAnnouncementPayloadDTO;
 import de.tum.cit.aet.artemis.notification.dto.payload.NewPostPayloadDTO;
+import de.tum.cit.aet.artemis.notification.service.notifications.push_notifications.PushNotificationDataDTO;
 
 /**
  * Guards the flat {@code parameters} map that {@link CourseNotificationDTO} keeps writing alongside its typed payload.
@@ -97,4 +101,43 @@ class CourseNotificationDTOTest {
         assertThat(parameters.path("courseTitle").asString()).isEqualTo("Course Title");
         assertThat(parameters.path("courseIconUrl").asString()).isEqualTo("icon.url");
     }
+
+    @Test
+    void shouldRetainPrimitiveZerosAndFalseInEveryPayloadVariant() throws Exception {
+        for (Class<?> type : CourseNotificationPayloadDTO.class.getPermittedSubclasses()) {
+            var fields = type.getRecordComponents();
+            Object[] values = Arrays.stream(fields).map(field -> field.getType() == boolean.class ? false : field.getType() == int.class ? 0 : null).toArray();
+            Object payload = type.getDeclaredConstructor(Arrays.stream(fields).map(field -> field.getType()).toArray(Class<?>[]::new)).newInstance(values);
+            JsonNode json = MAPPER.valueToTree(payload);
+            for (var field : fields) {
+                if (field.getType().isPrimitive()) {
+                    assertThat(json.has(field.getName())).as(type.getSimpleName() + "." + field.getName()).isTrue();
+                    assertThat(json.path(field.getName())).isEqualTo(MAPPER.valueToTree(field.getType() == boolean.class ? false : 0));
+                }
+                else {
+                    assertThat(json.has(field.getName())).as(type.getSimpleName() + "." + field.getName()).isFalse();
+                }
+            }
+        }
+    }
+
+    @Test
+    void shouldKeepEmptyAndAbsentPayloadsAndNullableLegacyIconWithoutChangingPushShape() {
+        var empty = new CourseNotificationDTO("newAnnouncementNotification", 1, 42, ZonedDateTime.parse("2026-03-29T01:30:00Z"), CourseNotificationCategory.COMMUNICATION, "Course",
+                null, new NewAnnouncementPayloadDTO(null, null, null, null, null, null, null), UserCourseNotificationStatusType.UNSEEN, null);
+        JsonNode json = MAPPER.valueToTree(empty);
+        assertThat(json.path("payload").isObject()).isTrue();
+        assertThat(json.path("payload").isEmpty()).isTrue();
+        assertThat(json.path("parameters").has("courseIconUrl")).isTrue();
+        assertThat(json.path("parameters").path("courseIconUrl").isNull()).isTrue();
+        JsonNode push = MAPPER.valueToTree(new CourseNotificationSerializedDTO(empty));
+        assertThat(push.has("payload")).isFalse();
+        assertThat(push.path("parameters")).isEqualTo(json.path("parameters"));
+        assertThat(push.path("creationDate").asString()).isEqualTo(empty.creationDate().toString());
+        JsonNode data = MAPPER.valueToTree(new PushNotificationDataDTO(new CourseNotificationSerializedDTO(empty)));
+        assertThat(data.path("version").asInt()).isEqualTo(1);
+        assertThat(data.path("courseNotificationDTO")).isEqualTo(push);
+        assertThat(MAPPER.valueToTree(notification(null)).has("payload")).isFalse();
+    }
+
 }

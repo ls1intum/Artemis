@@ -25,7 +25,7 @@ import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
-import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
+import { CourseNotificationSettingInfo } from 'app/openapi/model/course-notification-setting-info';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -305,7 +305,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
 
         this.courseNotificationSettingService
             .getSettingInfo(courseId)
-            .pipe(filter((settings): settings is CourseNotificationSettingInfo => !!settings))
+            .pipe(filter((settings) => settings !== undefined))
             .subscribe({
                 next: (settings) => {
                     this.notificationSettings = settings;

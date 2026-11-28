@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
-import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
+import { UserCourseNotificationSettingPreset as CourseNotificationSettingPreset } from 'app/openapi/model/user-course-notification-setting-preset';
 import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { faBell, faBellSlash, faBullhorn, faSliders } from '@fortawesome/free-solid-svg-icons';
@@ -14,8 +14,8 @@ describe('CourseNotificationPresetPickerComponent', () => {
     let fixture: ComponentFixture<CourseNotificationPresetPickerComponent>;
 
     const mockPresets: CourseNotificationSettingPreset[] = [
-        new CourseNotificationSettingPreset('preset1', 1, createMockSettingsMap(true, false, true)),
-        new CourseNotificationSettingPreset('preset2', 2, createMockSettingsMap(false, true, true)),
+        { identifier: 'preset1', typeId: 1, presetMap: createMockSettingsMap(true, false, true) },
+        { identifier: 'preset2', typeId: 2, presetMap: createMockSettingsMap(false, true, true) },
     ];
 
     function createMockSettingsMap(push: boolean, email: boolean, webapp: boolean): CourseNotificationSettingsMap {
@@ -143,10 +143,11 @@ describe('CourseNotificationPresetPickerComponent', () => {
     });
 
     it('should reflect the selected preset in the toggle icon', () => {
-        fixture.componentRef.setInput(
-            'selectedCourseSettingPreset',
-            new CourseNotificationSettingPreset('ignoreUserCourseNotificationSettingPreset', 3, createMockSettingsMap(false, false, false)),
-        );
+        fixture.componentRef.setInput('selectedCourseSettingPreset', {
+            identifier: 'ignoreUserCourseNotificationSettingPreset',
+            typeId: 3,
+            presetMap: createMockSettingsMap(false, false, false),
+        });
         fixture.detectChanges();
         expect(component['selectedPresetIcon']()).toBe(faBellSlash);
 

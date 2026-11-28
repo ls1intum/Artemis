@@ -35,7 +35,7 @@ export const systemNotificationManagementRoute: Route[] = [
                 },
                 data: {
                     pageTitle: 'artemisApp.systemNotification.systemNotifications',
-                    breadcrumbLabelVariable: 'notification.body.id',
+                    breadcrumbLabelVariable: 'notification.id',
                 },
             },
             {
@@ -45,7 +45,7 @@ export const systemNotificationManagementRoute: Route[] = [
                     notification: SystemNotificationManagementResolve,
                 },
                 data: {
-                    breadcrumbLabelVariable: 'notification.body.id',
+                    breadcrumbLabelVariable: 'notification.id',
                 },
                 children: [
                     {

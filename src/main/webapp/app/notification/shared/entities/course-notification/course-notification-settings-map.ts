@@ -1,5 +1,3 @@
-import { CourseNotificationChannelSetting } from 'app/notification/shared/entities/course-notification/course-notification-channel-setting';
+import { CourseNotificationSettingInfo } from 'app/openapi/model/course-notification-setting-info';
 
-export interface CourseNotificationSettingsMap {
-    [notificationType: string]: CourseNotificationChannelSetting;
-}
+export type CourseNotificationSettingsMap = NonNullable<CourseNotificationSettingInfo['notificationTypeChannels']>;

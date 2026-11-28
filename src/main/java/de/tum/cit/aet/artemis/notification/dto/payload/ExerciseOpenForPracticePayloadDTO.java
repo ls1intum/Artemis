@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.notification.dto.payload;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -9,5 +11,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param exerciseTitle the title of that exercise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseOpenForPracticePayloadDTO(Long exerciseId, String exerciseTitle) implements CourseNotificationPayloadDTO {
+public record ExerciseOpenForPracticePayloadDTO(@Nullable Long exerciseId, @Nullable String exerciseTitle) implements CourseNotificationPayloadDTO {
 }

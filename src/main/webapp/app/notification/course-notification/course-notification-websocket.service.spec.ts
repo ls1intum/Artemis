@@ -12,7 +12,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/account/user/user.model';
 
-import dayjs from 'dayjs/esm';
+import { NewPostCourseNotification } from 'app/openapi/model/new-post-course-notification';
 describe('CourseNotificationWebsocketService', () => {
     let service: CourseNotificationWebsocketService;
     let websocketServiceMock: { subscribe: ReturnType<typeof vi.fn> };
@@ -20,7 +20,7 @@ describe('CourseNotificationWebsocketService', () => {
     let courseManagementServiceMock: { getCoursesForNotifications: ReturnType<typeof vi.fn> };
     let accountServiceMock: { getAuthenticationState: ReturnType<typeof vi.fn> };
     let coursesSubject: BehaviorSubject<Course[] | undefined>;
-    let websocketReceiveSubject: Subject<CourseNotification>;
+    let websocketReceiveSubject: Subject<unknown>;
     let userSubject: BehaviorSubject<User | null>;
 
     afterEach(() => {
@@ -28,7 +28,7 @@ describe('CourseNotificationWebsocketService', () => {
     });
 
     beforeEach(() => {
-        websocketReceiveSubject = new Subject<CourseNotification>();
+        websocketReceiveSubject = new Subject<unknown>();
         websocketServiceMock = {
             subscribe: vi.fn().mockReturnValue(websocketReceiveSubject.asObservable()),
         };
@@ -61,14 +61,14 @@ describe('CourseNotificationWebsocketService', () => {
     });
 
     describe('Course and session isolation', () => {
-        let streams: Map<string, Subject<CourseNotification>>;
+        let streams: Map<string, Subject<unknown>>;
         let received: CourseNotification[];
 
         beforeEach(() => {
             streams = new Map();
             received = [];
             websocketServiceMock.subscribe.mockImplementation((destination: string) => {
-                const stream = new Subject<CourseNotification>();
+                const stream = new Subject<unknown>();
                 streams.set(destination, stream);
                 return stream;
             });
@@ -77,19 +77,16 @@ describe('CourseNotificationWebsocketService', () => {
             coursesSubject.next([{ id: 42 }, { id: 43 }]);
         });
 
-        function notification(courseId: number): CourseNotification {
-            return new CourseNotification(
+        function notification(courseId: number): NewPostCourseNotification {
+            return {
+                notificationId: courseId,
                 courseId,
-                courseId,
-                'newPostNotification',
-                CourseNotificationCategory.COMMUNICATION,
-                CourseNotificationViewingStatus.UNSEEN,
-                dayjs(),
-                'Course',
-                undefined,
-                { postId: 7 },
-                '/',
-            );
+                notificationType: 'newPostNotification',
+                category: 'COMMUNICATION',
+                status: 'UNSEEN',
+                creationDate: '2026-03-29T01:30:00Z',
+                payload: { postId: 7, authorIsBot: false },
+            };
         }
 
         it('rejects a payload belonging to a different topic before history or live delivery', () => {
@@ -177,15 +174,14 @@ describe('CourseNotificationWebsocketService', () => {
             const courses = [{ id: 1, title: 'Course 1' }] as Course[];
             coursesSubject.next(courses);
 
-            const incomingNotification: CourseNotification = {
+            const incomingNotification: NewPostCourseNotification = {
                 notificationId: 123,
                 courseId: 1,
                 notificationType: 'newPostNotification',
-                category: 'GENERAL' as unknown as CourseNotificationCategory,
-                status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
-                // @ts-ignore
-                creationDate: new Date('2024-01-15T10:00:00'),
-                payload: { postId: 42 },
+                category: 'GENERAL',
+                status: 'UNSEEN',
+                creationDate: '2026-03-29T01:30:00Z',
+                payload: { postId: 42, authorIsBot: false },
             };
 
             websocketReceiveSubject.next(incomingNotification);
@@ -199,7 +195,14 @@ describe('CourseNotificationWebsocketService', () => {
             expect(processedNotification.courseId).toBe(1);
             expect(processedNotification.notificationType).toBe('newPostNotification');
             expect(processedNotification.creationDate).toBeDefined();
-            expect(processedNotification.payload).toEqual({ postId: 42 });
+            expect(processedNotification).toBeInstanceOf(CourseNotification);
+            expect(processedNotification.payload).toEqual({ postId: 42, authorIsBot: false });
+            expect(processedNotification.category).toBe(CourseNotificationCategory.GENERAL);
+            expect(processedNotification.status).toBe(CourseNotificationViewingStatus.UNSEEN);
+            expect(processedNotification.creationDate.toISOString()).toBe('2026-03-29T01:30:00.000Z');
+            expect(incomingNotification.creationDate).toBe('2026-03-29T01:30:00Z');
+            expect(incomingNotification.category).toBe('GENERAL');
+            expect(processedNotification.wire).toBe(incomingNotification);
         });
 
         it('should drop notifications whose category or status does not map to a known enum', () => {
@@ -209,21 +212,36 @@ describe('CourseNotificationWebsocketService', () => {
             const courses = [{ id: 1, title: 'Course 1' }] as Course[];
             coursesSubject.next(courses);
 
-            const malformedNotification: CourseNotification = {
+            const malformedNotification = {
                 notificationId: 999,
                 courseId: 1,
                 notificationType: 'newPostNotification',
-                category: 'NOT_A_REAL_CATEGORY' as unknown as CourseNotificationCategory,
-                status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
-                // @ts-ignore
-                creationDate: new Date('2024-01-15T10:00:00'),
+                category: 'NOT_A_REAL_CATEGORY',
+                status: 'UNSEEN',
+                creationDate: '2026-03-29T01:30:00Z',
                 payload: {},
             };
 
             websocketReceiveSubject.next(malformedNotification);
+            websocketReceiveSubject.next({ ...malformedNotification, category: 'GENERAL', status: 'FUTURE_STATUS' });
 
             // The category cannot be mapped to a CourseNotificationCategory, so the payload is skipped entirely.
             expect(courseNotificationServiceMock.addNotification).not.toHaveBeenCalled();
+        });
+
+        it('retains forward notification types with known category and status for generic rendering', () => {
+            userSubject.next({ id: 7 } as User);
+            coursesSubject.next([{ id: 1 }]);
+            websocketReceiveSubject.next({
+                notificationId: 123,
+                courseId: 1,
+                notificationType: 'futureNotification',
+                category: 'GENERAL',
+                status: 'UNSEEN',
+                creationDate: '2026-03-29T01:30:00Z',
+                payload: {},
+            });
+            expect(courseNotificationServiceMock.addNotification.mock.calls[0][1].notificationType).toBe('futureNotification');
         });
 
         it('should emit received notifications via websocketNotification$ observable', async () => {
@@ -233,15 +251,14 @@ describe('CourseNotificationWebsocketService', () => {
             const notificationPromise = firstValueFrom(service.websocketNotification$);
             const courses = [{ id: 1, title: 'Course 1' }] as Course[];
             coursesSubject.next(courses);
-            const incomingNotification: CourseNotification = {
+            const incomingNotification: NewPostCourseNotification = {
                 notificationId: 123,
                 courseId: 1,
                 notificationType: 'newPostNotification',
-                category: 'GENERAL' as unknown as CourseNotificationCategory,
-                status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
-                // @ts-ignore
-                creationDate: new Date('2024-01-15T10:00:00'),
-                payload: { postId: 42 },
+                category: 'GENERAL',
+                status: 'UNSEEN',
+                creationDate: '2026-03-29T01:30:00Z',
+                payload: { postId: 42, authorIsBot: false },
             };
 
             websocketReceiveSubject.next(incomingNotification);

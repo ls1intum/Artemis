@@ -19,11 +19,9 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
-import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
-import { CourseNotificationSettingPreset } from 'app/notification/shared/entities/course-notification/course-notification-setting-preset';
-import { CourseNotificationInfo } from 'app/notification/shared/entities/course-notification/course-notification-info';
-import { CourseNotificationSettingInfo } from 'app/notification/shared/entities/course-notification/course-notification-setting-info';
+import { CourseNotificationSettingInfo, CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
+import { UserCourseNotificationSettingPreset as CourseNotificationSettingPreset } from 'app/openapi/model/user-course-notification-setting-preset';
+import { CourseNotificationInfo } from 'app/openapi/model/course-notification-info';
 import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 
 describe('CourseNotificationOverviewComponent', () => {
@@ -87,7 +85,7 @@ describe('CourseNotificationOverviewComponent', () => {
             getDateTranslationKey: vi.fn().mockReturnValue(''),
             getDateTranslationParams: vi.fn().mockReturnValue({}),
             safeHtmlForPostingMarkdown: vi.fn().mockReturnValue(''),
-            getInfo: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockNotificationInfo }))),
+            getInfo: vi.fn().mockReturnValue(of(mockNotificationInfo)),
             pageSize: 10,
         } as unknown as CourseNotificationService;
 

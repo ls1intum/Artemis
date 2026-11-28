@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.notification.domain.SystemNotificationType;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO for returning system notifications through REST endpoints.
@@ -20,8 +21,8 @@ import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotificatio
  * @param type             the optional type of the system notification
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record SystemNotificationDTO(Long id, @Nullable String title, @Nullable String text, @Nullable ZonedDateTime notificationDate, @Nullable ZonedDateTime expireDate,
-        @Nullable SystemNotificationType type) {
+public record SystemNotificationDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, @Nullable String title, @Nullable String text,
+        @Nullable ZonedDateTime notificationDate, @Nullable ZonedDateTime expireDate, @Nullable SystemNotificationType type) {
 
     /**
      * Creates a response DTO from a system notification entity.

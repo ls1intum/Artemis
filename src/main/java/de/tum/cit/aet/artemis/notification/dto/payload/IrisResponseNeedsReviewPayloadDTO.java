@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.notification.dto.payload;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -17,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param channelId            the channel involved
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record IrisResponseNeedsReviewPayloadDTO(String postMarkdownContent, String postCreationDate, String postAuthorName, Long postId, String replyMarkdownContent,
-        String replyCreationDate, Long replyId, Double replyConfidence, String channelName, Long channelId) implements CourseNotificationPayloadDTO {
+public record IrisResponseNeedsReviewPayloadDTO(@Nullable String postMarkdownContent, @Nullable String postCreationDate, @Nullable String postAuthorName, @Nullable Long postId,
+        @Nullable String replyMarkdownContent, @Nullable String replyCreationDate, @Nullable Long replyId, @Nullable Double replyConfidence, @Nullable String channelName,
+        @Nullable Long channelId) implements CourseNotificationPayloadDTO {
 }

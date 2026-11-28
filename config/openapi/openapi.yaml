@@ -367,6 +367,221 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizSubmissionBeforeEvaluation'}
+  /api/notification/global-notification-settings/{notificationType}:
+    put:
+      tags: [global-notification-setting]
+      summary: Update a global notification setting for the current user
+      operationId: updateGlobalNotificationSetting
+      parameters:
+      - name: notificationType
+        in: path
+        required: true
+        schema:
+          type: string
+          enum: [NEW_LOGIN, NEW_PASSKEY_ADDED, VCS_TOKEN_EXPIRED, SSH_KEY_EXPIRED,
+            MAINTENANCE, MAVEN_CENTRAL_RATE_LIMIT, PASSWORD_CHANGED, CREDENTIALS_REVOKED]
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UpdateGlobalNotificationSetting'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GlobalNotificationSetting'}
+  /api/notification/courses/{courseId}/status:
+    put:
+      tags: [user-course-notification-status]
+      operationId: updateNotificationStatus
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UserCourseNotificationStatusUpdateRequest'}
+        required: true
+      responses:
+        '200': {description: Notification state updated; empty response body}
+  /api/notification/courses/{courseId}/setting-specification:
+    put:
+      tags: [user-course-notification-setting]
+      description: Apply partial channel overrides for the current course member and
+        select custom preset 0
+      operationId: setUserCourseNotificationSpecification
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CourseNotificationSettingSpecificationRequest'}
+        required: true
+      responses:
+        '200': {description: Specifications applied; empty response body}
+  /api/notification/courses/{courseId}/setting-preset:
+    put:
+      tags: [user-course-notification-setting]
+      description: Apply the JSON numeric preset id for the current course member,
+        including custom preset 0
+      operationId: setUserCourseNotificationPreset
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {type: integer, format: int32, maximum: 32767, minimum: -32768}
+        required: true
+      responses:
+        '200': {description: Preset applied; empty response body}
+        '400':
+          description: Missing or unknown preset id
+          content:
+            application/problem+json:
+              schema: {type: object}
+  /api/notification/courses/{courseId}/seen:
+    put:
+      tags: [user-course-notification-status]
+      operationId: markDisplayedNotificationsAsSeen
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/UserCourseNotificationSeenRequest'}
+        required: true
+      responses:
+        '200': {description: Notification state updated; empty response body}
+  /api/notification/courses/{courseId}/archive-all:
+    put:
+      tags: [user-course-notification-status]
+      operationId: archiveAll
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200': {description: Notification state updated; empty response body}
+  /api/notification/admin/system-notifications:
+    get:
+      tags: [admin-system-notification]
+      operationId: getAllSystemNotifications
+      parameters:
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        required: false
+        schema: {type: integer, default: 0, minimum: 0}
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        required: false
+        schema: {type: integer, default: 20, minimum: 1}
+      - name: sort
+        in: query
+        description: 'Sorting criteria in the format: property,(asc|desc). Default
+          sort order is ascending. Multiple sort criteria are supported.'
+        required: false
+        schema:
+          type: array
+          items: {type: string}
+      responses:
+        '200':
+          description: System notifications for the requested page
+          headers:
+            X-Total-Count:
+              description: Total number of system notifications
+              style: simple
+              schema: {type: integer, format: int64}
+            Link:
+              description: Pagination links
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/SystemNotification'}
+    put:
+      tags: [admin-system-notification]
+      operationId: updateSystemNotification
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SystemNotificationUpdate'}
+        required: true
+      responses:
+        '200':
+          description: Updated system notification
+          headers:
+            X-artemisApp-params:
+              description: URL-encoded entity id (prefix configured by jhipster.clientApp.name)
+              style: simple
+              schema: {type: string}
+            X-artemisApp-alert:
+              description: Entity alert key (prefix configured by jhipster.clientApp.name)
+              style: simple
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SystemNotification'}
+        '400':
+          description: ID must identify an existing notification; both dates must
+            be present and the start must precede expiry
+          content:
+            application/problem+json:
+              schema: {type: object}
+    post:
+      tags: [admin-system-notification]
+      operationId: createSystemNotification
+      parameters:
+      - name: sendMaintenanceEmail
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SystemNotificationUpdate'}
+        required: true
+      responses:
+        '201':
+          description: Created system notification
+          headers:
+            X-artemisApp-params:
+              description: URL-encoded entity id (prefix configured by jhipster.clientApp.name)
+              style: simple
+              schema: {type: string}
+            X-artemisApp-alert:
+              description: Entity alert key (prefix configured by jhipster.clientApp.name)
+              style: simple
+              schema: {type: string}
+            Location:
+              description: 'Created notification URI: /api/notifications/{id}'
+              style: simple
+              schema: {type: string, format: uri-reference}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SystemNotification'}
+        '400':
+          description: ID must be absent; both dates must be present and the start
+            must precede expiry
+          content:
+            application/problem+json:
+              schema: {type: object}
   /api/lecture/lectures:
     get:
       tags: [lecture]
@@ -1532,6 +1747,35 @@ paths:
         required: true
       responses:
         '200': {description: OK}
+  /api/notification/push_notification/register:
+    post:
+      tags: [push-notification]
+      summary: Register a native push device
+      operationId: registerPushNotificationDevice
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PushNotificationRegisterBody'}
+        required: true
+      responses:
+        '200':
+          description: Registration stored; generated encryption key and algorithm
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/PushNotificationRegister'}
+        '401': {description: Authentication credentials could not be parsed or have
+            expired}
+        '400':
+          description: Malformed JSON or an unknown enum value
+          content:
+            application/problem+json:
+              schema: {type: object}
+        '500':
+          description: Invalid nonnull version format currently reaches the generic
+            server error handler
+          content:
+            application/problem+json:
+              schema: {type: object}
   /api/lecture/lectures/{lectureId}/lecture-units/{lectureUnitId}/retry-processing:
     post:
       tags: [lecture-unit]
@@ -3193,6 +3437,136 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/LeaderboardWithCurrentUserEntry'}
+  /api/notification/public/system-notifications/active:
+    get:
+      tags: [public-system-notification]
+      operationId: getActiveAndFutureSystemNotifications
+      responses:
+        '200':
+          description: Active and future system notifications, accessible anonymously
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/SystemNotification'}
+  /api/notification/global-notification-settings:
+    get:
+      tags: [global-notification-setting]
+      summary: Get the current user's global notification settings
+      operationId: getGlobalNotificationSettings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {type: boolean}
+  /api/notification/courses/{courseId}:
+    get:
+      tags: [course-notification]
+      operationId: getCourseNotifications
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: page
+        in: query
+        description: Zero-based page index (0..N)
+        required: false
+        schema: {type: integer, default: 0, minimum: 0}
+      - name: size
+        in: query
+        description: The size of the page to be returned
+        required: false
+        schema: {type: integer, default: 20, minimum: 1}
+      - name: sort
+        in: query
+        description: 'Sorting criteria in the format: property,(asc|desc). Default
+          sort order is ascending. Multiple sort criteria are supported.'
+        required: false
+        schema:
+          type: array
+          items: {type: string}
+      responses:
+        '200':
+          description: Non-archived notifications, with nullable reconstruction entries
+            and unchanged pagination totals
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseNotificationPage'}
+  /api/notification/courses/{courseId}/settings:
+    get:
+      tags: [user-course-notification-setting]
+      operationId: getUserCourseNotificationSettings
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: Effective notification settings for the current course member
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseNotificationSettingInfo'}
+  /api/notification/courses/info:
+    get:
+      tags: [course-notification]
+      operationId: getCourseNotificationInfo
+      responses:
+        '200':
+          description: Notification types, delivery channels and setting presets
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CourseNotificationInfo'}
+  /api/notification/admin/system-notifications/{notificationId}:
+    get:
+      tags: [admin-system-notification]
+      operationId: getSystemNotification
+      parameters:
+      - name: notificationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: The requested system notification
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SystemNotification'}
+        '404': {description: System notification not found}
+    delete:
+      tags: [admin-system-notification]
+      operationId: deleteSystemNotification
+      parameters:
+      - name: notificationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: Deleted system notification; empty response body
+          headers:
+            X-artemisApp-params:
+              description: URL-encoded entity id (prefix configured by jhipster.clientApp.name)
+              style: simple
+              schema: {type: string}
+            X-artemisApp-alert:
+              description: Entity alert key (prefix configured by jhipster.clientApp.name)
+              style: simple
+              schema: {type: string}
+  /api/notification/admin/system-notifications/maintenance-recipients-count:
+    get:
+      tags: [admin-system-notification]
+      operationId: getMaintenanceRecipientsCount
+      responses:
+        '200':
+          description: Number of maintenance email recipients, including zero
+          content:
+            application/json:
+              schema: {type: integer, format: int64}
   /api/lecture/lectures/{lectureId}:
     get:
       tags: [lecture]
@@ -4817,6 +5191,42 @@ paths:
         schema: {type: integer, format: int64}
       responses:
         '200': {description: OK}
+  /api/notification/push_notification/unregister:
+    delete:
+      tags: [push-notification]
+      summary: Unregister a native push device for the current user
+      operationId: unregisterPushNotificationDevice
+      parameters:
+      - name: token
+        in: query
+        description: Device token; a nonblank query value overrides the deprecated
+          body token
+        required: false
+        schema: {type: string}
+      - name: deviceType
+        in: query
+        description: Device transport; a supplied query value overrides the deprecated
+          body deviceType
+        required: false
+        schema:
+          type: string
+          enum: [FIREBASE, APNS]
+      requestBody:
+        description: Deprecated compatibility body for older native clients; each
+          field independently supplies an absent query value, with blank query tokens
+          also falling back
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/PushNotificationUnregisterRequest'}
+      responses:
+        '200': {description: Registration removed; empty response body}
+        '400':
+          description: Incomplete effective fields return an empty response; malformed
+            JSON or enums return problem details
+          content:
+            application/problem+json:
+              schema: {type: object}
+        '404': {description: No matching registration belongs to the current user}
   /api/lecture/lectures/{lectureId}/lecture-units/{lectureUnitId}:
     delete:
       tags: [lecture-unit]
@@ -5007,6 +5417,66 @@ components:
         timestamp: {type: string, format: date-time, description: The moment the change
             was produced}
       required: [action, path, repo, timestamp, turn, type]
+    CourseNotification:
+      discriminator:
+        propertyName: notificationType
+        mapping: {newPostNotification: '#/components/schemas/NewPostCourseNotification',
+          newAnswerNotification: '#/components/schemas/NewAnswerCourseNotification',
+          newMentionNotification: '#/components/schemas/NewMentionCourseNotification',
+          newAnnouncementNotification: '#/components/schemas/NewAnnouncementCourseNotification',
+          newExerciseNotification: '#/components/schemas/NewExerciseCourseNotification',
+          exerciseOpenForPracticeNotification: '#/components/schemas/ExerciseOpenForPracticeCourseNotification',
+          exerciseAssessedNotification: '#/components/schemas/ExerciseAssessedCourseNotification',
+          exerciseUpdatedNotification: '#/components/schemas/ExerciseUpdatedCourseNotification',
+          quizExerciseStartedNotification: '#/components/schemas/QuizExerciseStartedCourseNotification',
+          attachmentChangedNotification: '#/components/schemas/AttachmentChangedCourseNotification',
+          newManualFeedbackRequestNotification: '#/components/schemas/NewManualFeedbackRequestCourseNotification',
+          duplicateTestCaseNotification: '#/components/schemas/DuplicateTestCaseCourseNotification',
+          newCpcPlagiarismCaseNotification: '#/components/schemas/NewCpcPlagiarismCaseCourseNotification',
+          newPlagiarismCaseNotification: '#/components/schemas/NewPlagiarismCaseCourseNotification',
+          programmingBuildRunUpdateNotification: '#/components/schemas/ProgrammingBuildRunUpdateCourseNotification',
+          programmingTestCasesChangedNotification: '#/components/schemas/ProgrammingTestCasesChangedCourseNotification',
+          plagiarismCaseVerdictNotification: '#/components/schemas/PlagiarismCaseVerdictCourseNotification',
+          channelDeletedNotification: '#/components/schemas/ChannelDeletedCourseNotification',
+          addedToChannelNotification: '#/components/schemas/AddedToChannelCourseNotification',
+          removedFromChannelNotification: '#/components/schemas/RemovedFromChannelCourseNotification',
+          tutorialGroupAssignedNotification: '#/components/schemas/TutorialGroupAssignedCourseNotification',
+          tutorialGroupDeletedNotification: '#/components/schemas/TutorialGroupDeletedCourseNotification',
+          registeredToTutorialGroupNotification: '#/components/schemas/RegisteredToTutorialGroupCourseNotification',
+          deregisteredFromTutorialGroupNotification: '#/components/schemas/DeregisteredFromTutorialGroupCourseNotification',
+          tutorialGroupUnassignedNotification: '#/components/schemas/TutorialGroupUnassignedCourseNotification',
+          irisResponseNeedsReviewNotification: '#/components/schemas/IrisResponseNeedsReviewCourseNotification',
+          atlasCompetencyUpdateNotification: '#/components/schemas/AtlasCompetencyUpdateCourseNotification',
+          irisResponseNotification: '#/components/schemas/IrisResponseCourseNotification'}
+      oneOf:
+      - {$ref: '#/components/schemas/NewPostCourseNotification'}
+      - {$ref: '#/components/schemas/NewAnswerCourseNotification'}
+      - {$ref: '#/components/schemas/NewMentionCourseNotification'}
+      - {$ref: '#/components/schemas/NewAnnouncementCourseNotification'}
+      - {$ref: '#/components/schemas/NewExerciseCourseNotification'}
+      - {$ref: '#/components/schemas/ExerciseOpenForPracticeCourseNotification'}
+      - {$ref: '#/components/schemas/ExerciseAssessedCourseNotification'}
+      - {$ref: '#/components/schemas/ExerciseUpdatedCourseNotification'}
+      - {$ref: '#/components/schemas/QuizExerciseStartedCourseNotification'}
+      - {$ref: '#/components/schemas/AttachmentChangedCourseNotification'}
+      - {$ref: '#/components/schemas/NewManualFeedbackRequestCourseNotification'}
+      - {$ref: '#/components/schemas/DuplicateTestCaseCourseNotification'}
+      - {$ref: '#/components/schemas/NewCpcPlagiarismCaseCourseNotification'}
+      - {$ref: '#/components/schemas/NewPlagiarismCaseCourseNotification'}
+      - {$ref: '#/components/schemas/ProgrammingBuildRunUpdateCourseNotification'}
+      - {$ref: '#/components/schemas/ProgrammingTestCasesChangedCourseNotification'}
+      - {$ref: '#/components/schemas/PlagiarismCaseVerdictCourseNotification'}
+      - {$ref: '#/components/schemas/ChannelDeletedCourseNotification'}
+      - {$ref: '#/components/schemas/AddedToChannelCourseNotification'}
+      - {$ref: '#/components/schemas/RemovedFromChannelCourseNotification'}
+      - {$ref: '#/components/schemas/TutorialGroupAssignedCourseNotification'}
+      - {$ref: '#/components/schemas/TutorialGroupDeletedCourseNotification'}
+      - {$ref: '#/components/schemas/RegisteredToTutorialGroupCourseNotification'}
+      - {$ref: '#/components/schemas/DeregisteredFromTutorialGroupCourseNotification'}
+      - {$ref: '#/components/schemas/TutorialGroupUnassignedCourseNotification'}
+      - {$ref: '#/components/schemas/IrisResponseNeedsReviewCourseNotification'}
+      - {$ref: '#/components/schemas/AtlasCompetencyUpdateCourseNotification'}
+      - {$ref: '#/components/schemas/IrisResponseCourseNotification'}
     QuizSubmissionBeforeEvaluation:
       type: object
       properties:
@@ -5136,6 +5606,27 @@ components:
       required: [agentTurns, attempts, cachedInputTokens, cachedInputTokensComplete,
         costUsd, costUsdComplete, inputTokens, modelCalls, models, outputTokens, providerRequestIds,
         providerRequestIdsComplete, toolCalls]
+    PushNotificationRegister:
+      type: object
+      properties:
+        secretKey: {type: string}
+        algorithm: {type: string}
+      required: [algorithm, secretKey]
+    AtlasCompetencyUpdatePayload:
+      type: object
+      properties:
+        outcome: {type: string}
+        exerciseCount: {type: integer, format: int32}
+        appliedCount: {type: integer, format: int32}
+        createdCount: {type: integer, format: int32}
+        editedCount: {type: integer, format: int32}
+        deletedCount: {type: integer, format: int32}
+        assignedCount: {type: integer, format: int32}
+        unassignedCount: {type: integer, format: int32}
+        changesMarkdown: {type: string}
+        omittedCount: {type: integer, format: int32}
+      required: [appliedCount, assignedCount, createdCount, deletedCount, editedCount,
+        exerciseCount, omittedCount, unassignedCount]
     ExerciseGenerationJobStart:
       type: object
       properties:
@@ -5181,6 +5672,20 @@ components:
         indexed: {type: integer, format: int64}
         missing: {type: integer, format: int64}
         orphaned: {type: integer, format: int64}
+    CourseNotificationInfo:
+      type: object
+      properties:
+        notificationTypes:
+          type: object
+          additionalProperties: {type: string}
+        channels:
+          type: array
+          items:
+            type: string
+            enum: [WEBAPP, PUSH, EMAIL]
+        presets:
+          type: array
+          items: {$ref: '#/components/schemas/UserCourseNotificationSettingPreset'}
     ResultSimple:
       type: object
       properties:
@@ -5290,6 +5795,12 @@ components:
         quizQuestions:
           type: array
           items: {$ref: '#/components/schemas/QuizQuestionFromEditor'}
+    AddedToChannelPayload:
+      type: object
+      properties:
+        channelModerator: {type: string}
+        channelName: {type: string}
+        channelId: {type: integer, format: int64}
     ResultForExport:
       type: object
       properties:
@@ -5360,6 +5871,14 @@ components:
         timestamp: {type: string, format: date-time, description: The moment the event
             was produced}
       required: [timestamp, type]
+    NewPlagiarismCasePayload:
+      type: object
+      properties:
+        exerciseId: {type: integer, format: int64}
+        exerciseTitle: {type: string}
+        exerciseType: {type: string}
+        postMarkdownContent: {type: string}
+        examId: {type: integer, format: int64}
     ExerciseGenerationEffortProfile:
       type: object
       properties:
@@ -5371,6 +5890,33 @@ components:
       properties:
         dragItem: {$ref: '#/components/schemas/EntityIdRef'}
         dropLocation: {$ref: '#/components/schemas/EntityIdRef'}
+    IrisResponseCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [irisResponseNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/IrisResponsePayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     AnswerCounter:
       type: object
       properties:
@@ -5397,6 +5943,33 @@ components:
           type: array
           items: {$ref: '#/components/schemas/TutorialGroupSession'}
       required: [id, isOnline, language, sessions, title, tutorId, tutorLogin, tutorName]
+    DuplicateTestCaseCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [duplicateTestCaseNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/DuplicateTestCasePayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     DragAndDropSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
@@ -5476,6 +6049,17 @@ components:
         spotId: {type: integer, format: int64}
         ratedCounter: {type: integer, format: int32}
         unRatedCounter: {type: integer, format: int32}
+    GlobalNotificationSetting:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        userId: {type: integer, format: int64}
+        notificationType:
+          type: string
+          enum: [NEW_LOGIN, NEW_PASSKEY_ADDED, VCS_TOKEN_EXPIRED, SSH_KEY_EXPIRED,
+            MAINTENANCE, MAVEN_CENTRAL_RATE_LIMIT, PASSWORD_CHANGED, CREDENTIALS_REVOKED]
+        enabled: {type: boolean}
+      required: [enabled, id, notificationType, userId]
     ArtifactLocation:
       type: object
       description: Location information for artifacts
@@ -5509,6 +6093,15 @@ components:
         releaseDate: {type: string, format: date-time}
         startDate: {type: string, format: date-time}
         dueDate: {type: string, format: date-time}
+    DuplicateTestCasePayload:
+      type: object
+      properties:
+        exerciseId: {type: integer, format: int64}
+        exerciseTitle: {type: string}
+        releaseDate: {type: string}
+        dueDate: {type: string}
+        examId: {type: integer, format: int64}
+        exerciseGroupId: {type: integer, format: int64}
     QuizBatch:
       type: object
       properties:
@@ -5667,6 +6260,12 @@ components:
         currentUserEntry: {$ref: '#/components/schemas/LeaderboardEntry'}
         currentTime: {type: string, format: date-time}
       required: [currentTime, currentUserEntry, leaderboardEntries]
+    TutorialGroupAssignedPayload:
+      type: object
+      properties:
+        groupTitle: {type: string}
+        groupId: {type: integer, format: int64}
+        moderatorName: {type: string}
     QuizExerciseForCourse:
       type: object
       properties:
@@ -5696,6 +6295,15 @@ components:
           uniqueItems: true
         hasDragAndDropQuestions: {type: boolean}
       required: [includedInOverallScore, quizMode, title]
+    NewExercisePayload:
+      type: object
+      properties:
+        exerciseId: {type: integer, format: int64}
+        exerciseTitle: {type: string}
+        difficulty: {type: string}
+        releaseDate: {type: string}
+        dueDate: {type: string}
+        numberOfPoints: {type: integer, format: int64}
     DragItemCreate:
       type: object
       properties:
@@ -5826,6 +6434,16 @@ components:
         refinementPrompt: {type: string, description: User instructions describing
             how all questions should be changed, maxLength: 2000, minLength: 1}
       required: [questions, refinementPrompt]
+    PushNotificationUnregisterRequest:
+      type: object
+      description: Deprecated compatibility body; pass token and deviceType as query
+        parameters. Each field independently falls back to this body.
+      properties:
+        token:
+          type: [string, 'null']
+        deviceType:
+          type: [string, 'null']
+          enum: [FIREBASE, APNS, null]
     LeaderboardEntry:
       type: object
       properties:
@@ -5863,6 +6481,67 @@ components:
           items: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
           minItems: 1
       required: [questions]
+    NullableCourseNotification:
+      discriminator:
+        propertyName: notificationType
+        mapping: {newPostNotification: '#/components/schemas/NewPostCourseNotification',
+          newAnswerNotification: '#/components/schemas/NewAnswerCourseNotification',
+          newMentionNotification: '#/components/schemas/NewMentionCourseNotification',
+          newAnnouncementNotification: '#/components/schemas/NewAnnouncementCourseNotification',
+          newExerciseNotification: '#/components/schemas/NewExerciseCourseNotification',
+          exerciseOpenForPracticeNotification: '#/components/schemas/ExerciseOpenForPracticeCourseNotification',
+          exerciseAssessedNotification: '#/components/schemas/ExerciseAssessedCourseNotification',
+          exerciseUpdatedNotification: '#/components/schemas/ExerciseUpdatedCourseNotification',
+          quizExerciseStartedNotification: '#/components/schemas/QuizExerciseStartedCourseNotification',
+          attachmentChangedNotification: '#/components/schemas/AttachmentChangedCourseNotification',
+          newManualFeedbackRequestNotification: '#/components/schemas/NewManualFeedbackRequestCourseNotification',
+          duplicateTestCaseNotification: '#/components/schemas/DuplicateTestCaseCourseNotification',
+          newCpcPlagiarismCaseNotification: '#/components/schemas/NewCpcPlagiarismCaseCourseNotification',
+          newPlagiarismCaseNotification: '#/components/schemas/NewPlagiarismCaseCourseNotification',
+          programmingBuildRunUpdateNotification: '#/components/schemas/ProgrammingBuildRunUpdateCourseNotification',
+          programmingTestCasesChangedNotification: '#/components/schemas/ProgrammingTestCasesChangedCourseNotification',
+          plagiarismCaseVerdictNotification: '#/components/schemas/PlagiarismCaseVerdictCourseNotification',
+          channelDeletedNotification: '#/components/schemas/ChannelDeletedCourseNotification',
+          addedToChannelNotification: '#/components/schemas/AddedToChannelCourseNotification',
+          removedFromChannelNotification: '#/components/schemas/RemovedFromChannelCourseNotification',
+          tutorialGroupAssignedNotification: '#/components/schemas/TutorialGroupAssignedCourseNotification',
+          tutorialGroupDeletedNotification: '#/components/schemas/TutorialGroupDeletedCourseNotification',
+          registeredToTutorialGroupNotification: '#/components/schemas/RegisteredToTutorialGroupCourseNotification',
+          deregisteredFromTutorialGroupNotification: '#/components/schemas/DeregisteredFromTutorialGroupCourseNotification',
+          tutorialGroupUnassignedNotification: '#/components/schemas/TutorialGroupUnassignedCourseNotification',
+          irisResponseNeedsReviewNotification: '#/components/schemas/IrisResponseNeedsReviewCourseNotification',
+          atlasCompetencyUpdateNotification: '#/components/schemas/AtlasCompetencyUpdateCourseNotification',
+          irisResponseNotification: '#/components/schemas/IrisResponseCourseNotification'}
+      oneOf:
+      - {$ref: '#/components/schemas/NewPostCourseNotification'}
+      - {$ref: '#/components/schemas/NewAnswerCourseNotification'}
+      - {$ref: '#/components/schemas/NewMentionCourseNotification'}
+      - {$ref: '#/components/schemas/NewAnnouncementCourseNotification'}
+      - {$ref: '#/components/schemas/NewExerciseCourseNotification'}
+      - {$ref: '#/components/schemas/ExerciseOpenForPracticeCourseNotification'}
+      - {$ref: '#/components/schemas/ExerciseAssessedCourseNotification'}
+      - {$ref: '#/components/schemas/ExerciseUpdatedCourseNotification'}
+      - {$ref: '#/components/schemas/QuizExerciseStartedCourseNotification'}
+      - {$ref: '#/components/schemas/AttachmentChangedCourseNotification'}
+      - {$ref: '#/components/schemas/NewManualFeedbackRequestCourseNotification'}
+      - {$ref: '#/components/schemas/DuplicateTestCaseCourseNotification'}
+      - {$ref: '#/components/schemas/NewCpcPlagiarismCaseCourseNotification'}
+      - {$ref: '#/components/schemas/NewPlagiarismCaseCourseNotification'}
+      - {$ref: '#/components/schemas/ProgrammingBuildRunUpdateCourseNotification'}
+      - {$ref: '#/components/schemas/ProgrammingTestCasesChangedCourseNotification'}
+      - {$ref: '#/components/schemas/PlagiarismCaseVerdictCourseNotification'}
+      - {$ref: '#/components/schemas/ChannelDeletedCourseNotification'}
+      - {$ref: '#/components/schemas/AddedToChannelCourseNotification'}
+      - {$ref: '#/components/schemas/RemovedFromChannelCourseNotification'}
+      - {$ref: '#/components/schemas/TutorialGroupAssignedCourseNotification'}
+      - {$ref: '#/components/schemas/TutorialGroupDeletedCourseNotification'}
+      - {$ref: '#/components/schemas/RegisteredToTutorialGroupCourseNotification'}
+      - {$ref: '#/components/schemas/DeregisteredFromTutorialGroupCourseNotification'}
+      - {$ref: '#/components/schemas/TutorialGroupUnassignedCourseNotification'}
+      - {$ref: '#/components/schemas/IrisResponseNeedsReviewCourseNotification'}
+      - {$ref: '#/components/schemas/AtlasCompetencyUpdateCourseNotification'}
+      - {$ref: '#/components/schemas/IrisResponseCourseNotification'}
+      - {type: 'null'}
     GeneratedAssessmentInstruction:
       type: object
       description: Generated structured grading instruction
@@ -5926,6 +6605,16 @@ components:
         isProcessing: {type: boolean}
         buildStartDate: {type: string, format: date-time}
         estimatedCompletionDate: {type: string, format: date-time}
+    UserCourseNotificationStatusUpdateRequest:
+      type: object
+      properties:
+        notificationIds:
+          type: array
+          items: {type: integer, format: int64}
+        statusType:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+      required: [notificationIds, statusType]
     QuizQuestionPoolCompetency:
       type: object
       description: A competency with questions in the quiz question pool
@@ -5974,6 +6663,36 @@ components:
         taxonomy:
           type: string
           enum: [REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE]
+    NewPostPayload:
+      type: object
+      properties:
+        postId: {type: integer, format: int64}
+        postMarkdownContent: {type: string}
+        channelId: {type: integer, format: int64}
+        channelName: {type: string}
+        channelType: {type: string}
+        authorName: {type: string}
+        authorImageUrl: {type: string}
+        authorId: {type: integer, format: int64}
+        authorIsBot: {type: boolean}
+      required: [authorIsBot]
+    NewMentionPayload:
+      type: object
+      properties:
+        postMarkdownContent: {type: string}
+        postCreationDate: {type: string}
+        postAuthorName: {type: string}
+        postId: {type: integer, format: int64}
+        replyMarkdownContent: {type: string}
+        replyCreationDate: {type: string}
+        replyAuthorName: {type: string}
+        replyAuthorId: {type: integer, format: int64}
+        replyImageUrl: {type: string}
+        replyId: {type: integer, format: int64}
+        channelName: {type: string}
+        channelId: {type: integer, format: int64}
+        replyIsBot: {type: boolean}
+      required: [replyIsBot]
     ExerciseGenerationWedgedSlot:
       type: object
       properties:
@@ -6122,6 +6841,13 @@ components:
           items: {$ref: '#/components/schemas/CompetencyLink'}
           uniqueItems: true
         type: {type: string}
+    ProgrammingBuildRunUpdatePayload:
+      type: object
+      properties:
+        exerciseId: {type: integer, format: int64}
+        exerciseTitle: {type: string}
+        examId: {type: integer, format: int64}
+        exerciseGroupId: {type: integer, format: int64}
     ShortAnswerMappingFromEditor:
       type: object
       properties:
@@ -6191,6 +6917,28 @@ components:
             most recent build, absent before the first'}
         modelConfigured: {type: boolean, description: Whether the pool has a usable
             model configuration; builds are refused without one}
+    NewAnswerPayload:
+      type: object
+      properties:
+        postMarkdownContent: {type: string}
+        postCreationDate: {type: string}
+        postAuthorName: {type: string}
+        postId: {type: integer, format: int64}
+        replyMarkdownContent: {type: string}
+        replyCreationDate: {type: string}
+        replyAuthorName: {type: string}
+        replyAuthorId: {type: integer, format: int64}
+        replyImageUrl: {type: string}
+        replyId: {type: integer, format: int64}
+        channelName: {type: string}
+        channelId: {type: integer, format: int64}
+        replyIsBot: {type: boolean}
+      required: [replyIsBot]
+    ChannelDeletedPayload:
+      type: object
+      properties:
+        deletingUser: {type: string}
+        channelName: {type: string}
     SearchResultPageDTOFeedbackDetail:
       type: object
       properties:
@@ -6419,6 +7167,33 @@ components:
         lastName: {type: string}
         login: {type: string}
         repositoryURI: {type: string}
+    TutorialGroupDeletedCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [tutorialGroupDeletedNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/TutorialGroupDeletedPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     BonusResponse:
       type: object
       properties:
@@ -6504,6 +7279,14 @@ components:
         releaseDate: {type: string, format: date-time}
         startPage: {type: integer, format: int32}
         endPage: {type: integer, format: int32}
+    NewCpcPlagiarismCasePayload:
+      type: object
+      properties:
+        exerciseId: {type: integer, format: int64}
+        exerciseTitle: {type: string}
+        exerciseType: {type: string}
+        postMarkdownContent: {type: string}
+        examId: {type: integer, format: int64}
     ProblemStatementRewriteRequest:
       type: object
       description: Request to rewrite a problem statement
@@ -6511,6 +7294,33 @@ components:
         problemStatementText: {type: string, description: Original problem statement
             text to be improved, minLength: 1}
       required: [problemStatementText]
+    AddedToChannelCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [addedToChannelNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/AddedToChannelPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     DragAndDropSubmittedAnswerAfterEvaluation:
       required: [type]
       type: object
@@ -6526,6 +7336,14 @@ components:
           type: string
           default: drag-and-drop
           enum: [drag-and-drop]
+    PlagiarismCaseVerdictPayload:
+      type: object
+      properties:
+        exerciseId: {type: integer, format: int64}
+        exerciseTitle: {type: string}
+        exerciseType: {type: string}
+        verdict: {type: string}
+        examId: {type: integer, format: int64}
     GetLectures:
       type: object
       properties:
@@ -6571,6 +7389,30 @@ components:
         startDate: {type: string, format: date-time}
         endDate: {type: string, format: date-time}
       required: [title]
+    IrisResponseNeedsReviewPayload:
+      type: object
+      properties:
+        postMarkdownContent: {type: string}
+        postCreationDate: {type: string}
+        postAuthorName: {type: string}
+        postId: {type: integer, format: int64}
+        replyMarkdownContent: {type: string}
+        replyCreationDate: {type: string}
+        replyId: {type: integer, format: int64}
+        replyConfidence: {type: number, format: double}
+        channelName: {type: string}
+        channelId: {type: integer, format: int64}
+    ExerciseOpenForPracticePayload:
+      type: object
+      properties:
+        exerciseId: {type: integer, format: int64}
+        exerciseTitle: {type: string}
+    TutorialGroupDeletedPayload:
+      type: object
+      properties:
+        groupTitle: {type: string}
+        groupId: {type: integer, format: int64}
+        moderatorName: {type: string}
     CourseForQuizExercise:
       type: object
       properties:
@@ -6754,6 +7596,13 @@ components:
           items: {$ref: '#/components/schemas/AuthoringRun'}
         nextBeforeId: {type: integer, format: int64}
       required: [runs]
+    UserCourseNotificationSeenRequest:
+      type: object
+      properties:
+        notificationIds:
+          type: array
+          items: {type: integer, format: int64}
+      required: [notificationIds]
     QuizSearchCourse:
       type: object
       properties:
@@ -6808,6 +7657,33 @@ components:
           minItems: 1
         rationale: {type: string, description: The filter's overall rationale}
       required: [verdicts]
+    ExerciseAssessedCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [exerciseAssessedNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/ExerciseAssessedPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     LectureDetailsTextUnit:
       allOf:
       - {$ref: '#/components/schemas/LectureUnitDetails'}
@@ -7008,6 +7884,45 @@ components:
         students:
           type: array
           items: {$ref: '#/components/schemas/Student'}
+    CourseNotificationParameter:
+      oneOf:
+      - {type: string}
+      - {type: number}
+      - {type: boolean}
+      - {type: 'null'}
+    NewAnnouncementCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [newAnnouncementNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/NewAnnouncementPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
+    IrisResponsePayload:
+      type: object
+      properties:
+        sessionId: {type: integer, format: int64}
+        messagePreview: {type: string}
+        chatTitle: {type: string}
     LectureUnitMaterialVersions:
       type: object
       properties:
@@ -7052,6 +7967,33 @@ components:
         missing: {type: integer, format: int32, description: Questions a build with
             the stored settings would add to the pool}
       required: [missing, planned]
+    ChannelDeletedCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [channelDeletedNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/ChannelDeletedPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     CalendarEvent:
       type: object
       properties:
@@ -7065,6 +8007,33 @@ components:
         location: {type: string}
         facilitator: {type: string}
       required: [startDate, title, type]
+    NewAnswerCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [newAnswerNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/NewAnswerPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     ExerciseUnitExerciseReference:
       type: object
       properties:
@@ -7074,6 +8043,33 @@ components:
         type:
           type: string
           enum: [text, programming, modeling, file-upload, quiz]
+    PlagiarismCaseVerdictCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [plagiarismCaseVerdictNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/PlagiarismCaseVerdictPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     QuizSearchExerciseGroup:
       type: object
       properties:
@@ -7084,6 +8080,33 @@ components:
         solutionTempId: {type: integer, format: int64}
         spotTempId: {type: integer, format: int64}
       required: [solutionTempId, spotTempId]
+    DeregisteredFromTutorialGroupCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [deregisteredFromTutorialGroupNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/DeregisteredFromTutorialGroupPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     TutorialGroupSession:
       type: object
       properties:
@@ -7099,6 +8122,17 @@ components:
         attendanceCount: {type: integer, format: int32}
       required: [dateChanged, end, id, isCancelled, isCancelledByFreePeriod, location,
         locationChanged, start, timeChanged]
+    CourseNotificationPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items: {$ref: '#/components/schemas/NullableCourseNotification'}
+        pageNumber: {type: integer, format: int32}
+        pageSize: {type: integer, format: int32}
+        totalElements: {type: integer, format: int64}
+        totalPages: {type: integer, format: int32}
+      required: [pageNumber, pageSize, totalElements, totalPages]
     ShortAnswerSpotReEvaluate:
       type: object
       properties:
@@ -7620,6 +8654,33 @@ components:
         additionalContext: {type: string, description: Optional exercise-specific
             context appended to the default prompt, maxLength: 200000, minLength: 0}
       required: [bonusPoints, maxPoints, problemStatement]
+    ExerciseOpenForPracticeCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [exerciseOpenForPracticeNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/ExerciseOpenForPracticePayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     ProblemStatementRewriteResponse:
       type: object
       description: Response containing rewritten problem statement
@@ -7628,6 +8689,12 @@ components:
         improved: {type: boolean, description: Whether the text was actually improved,
           example: true}
       required: [improved, rewrittenText]
+    TutorialGroupUnassignedPayload:
+      type: object
+      properties:
+        groupTitle: {type: string}
+        groupId: {type: integer, format: int64}
+        moderatorName: {type: string}
     QuizQuestionPoolBuild:
       type: object
       description: One build of a course's quiz question pool
@@ -7842,6 +8909,33 @@ components:
           type: array
           items: {type: string}
         highestOccurrenceOfGroupedFeedback: {type: integer, format: int64}
+    NewPostCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [newPostNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/NewPostPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     AnswerOptionCreate:
       type: object
       properties:
@@ -7850,6 +8944,33 @@ components:
         explanation: {type: string, maxLength: 2000, minLength: 0}
         isCorrect: {type: boolean}
       required: [isCorrect, text]
+    ExerciseUpdatedCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [exerciseUpdatedNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/ExerciseUpdatedPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     TutorialGroupFreePeriodRequest:
       type: object
       properties:
@@ -7869,6 +8990,33 @@ components:
         endTime: {type: string, description: Ending time, example: !!timestamp '2025-07-27T07:17:05.500Z'}
         durationS: {type: number, format: double, description: Duration of consistency
             check, example: 27.765}
+    NewMentionCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [newMentionNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/NewMentionPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     RewriteFaqRequest:
       type: object
       description: Request to rewrite a FAQ
@@ -7911,6 +9059,33 @@ components:
         remark: {type: string, maxLength: 1000, minLength: 0}
         student: {$ref: '#/components/schemas/PresentationAssessmentStudent'}
       required: [language, mode, presentationDate]
+    NewPlagiarismCaseCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [newPlagiarismCaseNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/NewPlagiarismCasePayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     IndexedEntityRecord:
       type: object
       properties:
@@ -7927,6 +9102,33 @@ components:
         weight: {type: number, format: double}
         generatedByAi: {type: boolean}
         competency: {$ref: '#/components/schemas/CourseCompetency'}
+    NewCpcPlagiarismCaseCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [newCpcPlagiarismCaseNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/NewCpcPlagiarismCasePayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     ExerciseGenerationMetadataSuggestionRequest:
       type: object
       description: Request for the derived metadata of an exercise an instructor is
@@ -7954,6 +9156,33 @@ components:
           enum: [LOWER, MATCH, HIGHER, UNKNOWN]
         taskCount: {type: integer, format: int32}
         testCount: {type: integer, format: int32}
+    ProgrammingTestCasesChangedCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [programmingTestCasesChangedNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/ProgrammingTestCasesChangedPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     ExampleSubmissionRequest:
       type: object
       properties:
@@ -7962,6 +9191,12 @@ components:
         assessmentExplanation: {type: string}
         exercise: {$ref: '#/components/schemas/ExerciseReference'}
         submission: {$ref: '#/components/schemas/SubmissionRequest'}
+    DeregisteredFromTutorialGroupPayload:
+      type: object
+      properties:
+        groupTitle: {type: string}
+        groupId: {type: integer, format: int64}
+        moderatorName: {type: string}
     ModelingFeedback:
       type: object
       properties:
@@ -8028,6 +9263,39 @@ components:
           uniqueItems: true
       required: [tutorialPeriodEndInclusive, tutorialPeriodStartInclusive, usePublicTutorialGroupChannels,
         useTutorialGroupChannels]
+    RegisteredToTutorialGroupPayload:
+      type: object
+      properties:
+        groupTitle: {type: string}
+        groupId: {type: integer, format: int64}
+        moderatorName: {type: string}
+    AtlasCompetencyUpdateCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [atlasCompetencyUpdateNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/AtlasCompetencyUpdatePayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     DragAndDropMapping:
       type: object
       properties:
@@ -8043,6 +9311,33 @@ components:
       properties:
         draftProblemStatement: {type: string, description: Draft problem statement
             text}
+    NewManualFeedbackRequestCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [newManualFeedbackRequestNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/NewManualFeedbackRequestPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     LectureSlidesAttachment:
       type: object
       properties:
@@ -8061,6 +9356,42 @@ components:
         ineligibility:
           type: string
           enum: [NOT_IN_COURSE, NO_STUDENT_EXAM, EXERCISE_NOT_IN_STUDENT_EXAM, RESULT_ALREADY_EXISTS]
+    PushNotificationRegisterBody:
+      type: object
+      properties:
+        token: {type: string}
+        deviceType:
+          type: string
+          enum: [FIREBASE, APNS]
+        apiType:
+          type: [string, 'null']
+          default: DEFAULT
+          description: Omitted or null selects DEFAULT
+          enum: [DEFAULT, IOS_V2, null]
+        versionCode:
+          type: [string, 'null']
+          description: Optional native app version; invalid nonnull values currently
+            reach the generic server error handler
+          pattern: ^\d+\.\d+\.\d+$
+    ExerciseUpdatedPayload:
+      type: object
+      properties:
+        exerciseId: {type: integer, format: int64}
+        exerciseTitle: {type: string}
+        examId: {type: integer, format: int64}
+        exerciseGroupId: {type: integer, format: int64}
+        exerciseType: {type: string}
+        notificationText: {type: string}
+    NewAnnouncementPayload:
+      type: object
+      properties:
+        postId: {type: integer, format: int64}
+        postTitle: {type: string}
+        postMarkdownContent: {type: string}
+        authorName: {type: string}
+        authorImageUrl: {type: string}
+        authorId: {type: integer, format: int64}
+        channelId: {type: integer, format: int64}
     QuizQuestionGenerationRequest:
       type: object
       description: Request to generate quiz questions. Either topic or competencyIds
@@ -8198,6 +9529,11 @@ components:
         feedbacks:
           type: array
           items: {$ref: '#/components/schemas/Feedback'}
+    QuizExerciseStartedPayload:
+      type: object
+      properties:
+        exerciseId: {type: integer, format: int64}
+        exerciseTitle: {type: string}
     DropLocationCreate:
       type: object
       properties:
@@ -8492,6 +9828,33 @@ components:
       properties:
         id: {type: integer, format: int64}
         course: {$ref: '#/components/schemas/CourseWithId'}
+    TutorialGroupUnassignedCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [tutorialGroupUnassignedNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/TutorialGroupUnassignedPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     QuizPointStatistic:
       type: object
       properties:
@@ -8602,6 +9965,33 @@ components:
         participantIdentifier: {type: string}
         repositoryUri: {type: string}
         team: {$ref: '#/components/schemas/Team'}
+    RegisteredToTutorialGroupCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [registeredToTutorialGroupNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/RegisteredToTutorialGroupPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     AnswerOptionWithSolution:
       type: object
       properties:
@@ -8615,6 +10005,41 @@ components:
       type: object
       properties:
         id: {type: integer, format: int64}
+    AttachmentChangedPayload:
+      type: object
+      properties:
+        attachmentName: {type: string}
+        unitName: {type: string}
+        exerciseId: {type: integer, format: int64}
+        lectureId: {type: integer, format: int64}
+        notificationText: {type: string}
+    TutorialGroupAssignedCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [tutorialGroupAssignedNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/TutorialGroupAssignedPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     ExerciseGenerationRevertResult:
       type: object
       description: Result of reverting the last Hyperion generation or adaptation
@@ -8761,6 +10186,33 @@ components:
       properties:
         login: {type: string, maxLength: 50, minLength: 0}
         registrationNumber: {type: string, maxLength: 10, minLength: 0}
+    IrisResponseNeedsReviewCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [irisResponseNeedsReviewNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/IrisResponseNeedsReviewPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     ChecklistActionRequest:
       type: object
       description: Request to apply an AI-powered checklist action to the problem
@@ -8798,6 +10250,14 @@ components:
         explanation: {type: string, description: Optional explanation for the overall
             question, maxLength: 2000, minLength: 0}
       required: [options, questionText, title, type]
+    UpdateGlobalNotificationSetting:
+      type: object
+      properties:
+        enabled:
+          type: [boolean, 'null']
+          default: false
+          description: Whether this notification is enabled. Omitted or null values
+            default to false.
     GradeSteps:
       type: object
       properties:
@@ -8992,6 +10452,33 @@ components:
         structuredGradingInstructionId: {type: integer, format: int64}
         indexStart: {type: integer, format: int32}
         indexEnd: {type: integer, format: int32}
+    QuizExerciseStartedCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [quizExerciseStartedNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/QuizExerciseStartedPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     CodeGenerationJobStart:
       type: object
       properties:
@@ -9032,6 +10519,13 @@ components:
       type: object
       properties:
         id: {type: integer, format: int64}
+    ProgrammingTestCasesChangedPayload:
+      type: object
+      properties:
+        exerciseId: {type: integer, format: int64}
+        exerciseTitle: {type: string}
+        examId: {type: integer, format: int64}
+        exerciseGroupId: {type: integer, format: int64}
     TumLiveUploadStart:
       type: object
       properties:
@@ -9095,6 +10589,42 @@ components:
         subTypeWithReferenceFromChannel: {$ref: '#/components/schemas/Channel', writeOnly: true}
         subTypeReferenceDates: {$ref: '#/components/schemas/ChannelSubTypeReferenceDates',
           writeOnly: true}
+    ExerciseAssessedPayload:
+      type: object
+      properties:
+        exerciseId: {type: integer, format: int64}
+        exerciseTitle: {type: string}
+        exerciseType: {type: string}
+        numberOfPoints: {type: integer, format: int64}
+        score: {type: integer, format: int64}
+        examId: {type: integer, format: int64}
+    NewExerciseCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [newExerciseNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/NewExercisePayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     Grade:
       type: object
       properties:
@@ -9143,6 +10673,62 @@ components:
         x: {type: number, format: double, minimum: 0}
         y: {type: number, format: double, minimum: 0}
       required: [condition, name]
+    CourseNotificationSettingSpecificationRequest:
+      type: object
+      properties:
+        notificationTypeChannels:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties: false
+            description: Partial channel overrides; omitted or null values leave existing
+              flags unchanged
+            properties:
+              WEBAPP:
+                type: [boolean, 'null']
+              PUSH:
+                type: [boolean, 'null']
+              EMAIL:
+                type: [boolean, 'null']
+          description: Notification type ids (decimal Short values) as JSON object
+            keys
+      required: [notificationTypeChannels]
+    CourseNotificationSettingInfo:
+      type: object
+      properties:
+        selectedPreset: {type: integer, format: int32}
+        notificationTypeChannels:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties: false
+            description: All effective channel flags
+            properties:
+              WEBAPP: {type: boolean}
+              PUSH: {type: boolean}
+              EMAIL: {type: boolean}
+            required: [EMAIL, PUSH, WEBAPP]
+          description: Notification type ids (decimal Short values) as JSON object
+            keys
+      required: [selectedPreset]
+    UserCourseNotificationSettingPreset:
+      type: object
+      properties:
+        identifier: {type: string}
+        typeId: {type: integer, format: int32}
+        presetMap:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties: false
+            description: All effective channel flags
+            properties:
+              WEBAPP: {type: boolean}
+              PUSH: {type: boolean}
+              EMAIL: {type: boolean}
+            required: [EMAIL, PUSH, WEBAPP]
+          description: Readable notification type names as JSON object keys
+      required: [identifier, typeId]
     TutorialGroupStudent:
       type: object
       properties:
@@ -9227,6 +10813,12 @@ components:
       properties:
         type: {type: string}
       required: [type]
+    RemovedFromChannelPayload:
+      type: object
+      properties:
+        channelModerator: {type: string}
+        channelName: {type: string}
+        channelId: {type: integer, format: int64}
     UserPublicInfo:
       type: object
       properties:
@@ -9264,6 +10856,18 @@ components:
         comments:
           type: array
           items: {type: string}
+    SystemNotification:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        title: {type: string}
+        text: {type: string}
+        notificationDate: {type: string, format: date-time}
+        expireDate: {type: string, format: date-time}
+        type:
+          type: string
+          enum: [WARNING, INFO]
+      required: [id]
     SubmittedAnswerFromStudent:
       discriminator:
         propertyName: type
@@ -9286,6 +10890,33 @@ components:
         totalUsdComplete: {type: boolean, description: Whether every recorded request
             has a USD cost}
       required: [totalUsdComplete]
+    AttachmentChangedCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [attachmentChangedNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/AttachmentChangedPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     MultipleChoiceSubmittedAnswerFromLiveClient:
       required: [type]
       type: object
@@ -9370,6 +11001,39 @@ components:
         maxPoints: {type: number, format: double}
         bonusPoints: {type: number, format: double}
         exerciseVariantGroup: {$ref: '#/components/schemas/ExerciseVariantGroupReference'}
+    NewManualFeedbackRequestPayload:
+      type: object
+      properties:
+        exerciseId: {type: integer, format: int64}
+        exerciseTitle: {type: string}
+        examId: {type: integer, format: int64}
+    ProgrammingBuildRunUpdateCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [programmingBuildRunUpdateNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/ProgrammingBuildRunUpdatePayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     SearchResultPageDTOGradingScale:
       type: object
       properties:
@@ -9484,6 +11148,33 @@ components:
         tempID: {type: integer, format: int64}
         text: {type: string, minLength: 1}
       required: [text]
+    RemovedFromChannelCourseNotification:
+      type: object
+      properties:
+        notificationType:
+          type: string
+          enum: [removedFromChannelNotification]
+        notificationId: {type: integer, format: int64}
+        courseId: {type: integer, format: int64}
+        creationDate: {type: string, format: date-time}
+        category:
+          type: string
+          enum: [GENERAL, COMMUNICATION, IRIS_REVIEW]
+        courseTitle: {type: string}
+        courseIconUrl: {type: string}
+        payload: {$ref: '#/components/schemas/RemovedFromChannelPayload'}
+        status:
+          type: string
+          enum: [UNSEEN, SEEN, ARCHIVED]
+        relativeWebAppUrl: {type: string}
+        parameters:
+          type: object
+          additionalProperties: {$ref: '#/components/schemas/CourseNotificationParameter'}
+          deprecated: true
+          description: Legacy flat compatibility values, including a nullable courseIconUrl;
+            not a structured request payload
+          readOnly: true
+      required: [courseId, notificationId, notificationType]
     TutorialGroupFreePeriodSessionCount:
       type: object
       properties:
@@ -9638,6 +11329,29 @@ components:
         errors:
           type: array
           items: {$ref: '#/components/schemas/AssessmentUploadError'}
+    SystemNotificationUpdate:
+      type: object
+      properties:
+        id:
+          type: [integer, 'null']
+          format: int64
+          description: Omit on creation; required on update
+        title:
+          type: [string, 'null']
+          maxLength: 255
+          minLength: 0
+        text:
+          type: [string, 'null']
+          maxLength: 2000
+          minLength: 0
+        notificationDate: {type: string, format: date-time, description: Start instant;
+            must precede expireDate}
+        expireDate: {type: string, format: date-time, description: Expiry instant;
+            both dates are required for a successful write}
+        type:
+          type: [string, 'null']
+          enum: [WARNING, INFO, null]
+      required: [expireDate, notificationDate]
     QuizExerciseWithSolutionForStudent:
       required: [quizQuestionsType]
       type: object
