@@ -189,7 +189,9 @@ describe('IrisBaseChatbotComponent', () => {
             vi.advanceTimersByTime(150);
             expect(document.activeElement).toBe(modalButton);
 
+            // Closing the dialog removes its button, so the focus is no longer elsewhere on the page.
             fixture.nativeElement.removeAttribute('aria-hidden');
+            modalButton.remove();
             chatService.messages.next([mockServerMessage, { ...mockServerMessage, id: 999 }]);
             fixture.detectChanges();
             vi.advanceTimersByTime(150);
@@ -427,6 +429,37 @@ describe('IrisBaseChatbotComponent', () => {
     it('should trigger onboarding flow once gating signals are satisfied', () => {
         // The effect runs during change detection, which already ran in beforeEach.
         expect(mockOnboardingService.showOnboardingIfNeeded).toHaveBeenCalled();
+    });
+
+    describe('initial focus', () => {
+        let focusedFixture: ComponentFixture<IrisBaseChatbotComponent>;
+        let outside: HTMLButtonElement;
+
+        beforeEach(() => {
+            vi.useFakeTimers();
+            outside = document.body.appendChild(document.createElement('button'));
+            focusedFixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            focusedFixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            document.body.appendChild(focusedFixture.nativeElement);
+            focusedFixture.detectChanges();
+        });
+
+        afterEach(() => {
+            focusedFixture.nativeElement.remove();
+            outside.remove();
+            vi.useRealTimers();
+        });
+
+        it('focuses the message input when nothing else is focused', () => {
+            vi.advanceTimersByTime(150);
+            expect(document.activeElement).toBe(focusedFixture.nativeElement.querySelector('textarea'));
+        });
+
+        it('keeps the focus on an element outside the chat, e.g. the tab that opened it', () => {
+            outside.focus();
+            vi.advanceTimersByTime(150);
+            expect(document.activeElement).toBe(outside);
+        });
     });
 
     describe('when user has not accepted LLM usage policy', () => {

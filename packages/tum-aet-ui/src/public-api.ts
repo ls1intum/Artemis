@@ -81,7 +81,17 @@ export {
     type TumAetUiTableSortEvent,
 } from './lib/table-directive';
 export { TumAetUiTableLayoutComponent } from './lib/table-layout';
-export { TumAetUiTabListComponent, TumAetUiTabPanelComponent, TumAetUiTabPanelsComponent, TumAetUiTabComponent, TumAetUiTabsComponent, type TumAetUiTabValue } from './lib/tabs';
+export {
+    TumAetUiTabListComponent,
+    TumAetUiTabPanelComponent,
+    TumAetUiTabPanelsComponent,
+    TumAetUiTabComponent,
+    TumAetUiTabsComponent,
+    type TumAetUiTabValue,
+    type TumAetUiTabsSelectedColor,
+    type TumAetUiTabsSize,
+    type TumAetUiTabsSurface,
+} from './lib/tabs';
 export { TumAetUiTagComponent, type TumAetUiTagSeverity, type TumAetUiTagSize } from './lib/tag';
 export { TumAetUiToggleSwitchComponent } from './lib/toggle-switch';
 export { TumAetUiTooltipDirective } from './lib/tooltip';
