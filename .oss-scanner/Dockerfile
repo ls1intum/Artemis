@@ -12,7 +12,7 @@
 #-----------------------------------------------------------------------------------------------------------------------
 
 # Same pinned JDK as the production Dockerfile; Renovate bumps both.
-FROM docker.io/library/eclipse-temurin:25.0.5_8-jdk@sha256:b8705e936964c228dfce359e63dbf08f6c69cb380ed1d576b1f6b1064f15567d
+FROM docker.io/library/eclipse-temurin:25.0.5_8-jdk@sha256:884a2f8692cc1e2c7e21f95914adf0ae0eafee9a7eb663a12169cc44468256ec
 
 # scanner contract: the checkout lives inside the image, at /src
 # .oss-scanner/Dockerfile.dockerignore keeps .github in the context, unlike the root .dockerignore.
