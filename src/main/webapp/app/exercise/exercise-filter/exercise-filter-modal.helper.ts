@@ -46,7 +46,7 @@ export function satisfiesScoreFilter(sidebarElement: SidebarCardElement, isFilte
         return true;
     }
 
-    const latestResult = getLatestResultOfStudentParticipation(sidebarElement.studentParticipation, true);
+    const latestResult = getLatestResultOfStudentParticipation(sidebarElement.studentParticipation, true, sidebarElement.exercise?.type);
     if (!latestResult?.score) {
         return achievedScoreFilter.filter.selectedMin === 0;
     }

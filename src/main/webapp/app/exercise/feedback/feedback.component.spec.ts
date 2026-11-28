@@ -1,3 +1,5 @@
+import { By } from '@angular/platform-browser';
+import { TumAetUiBarChartComponent } from '@tumaet/ui-angular';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -303,7 +305,6 @@ describe('FeedbackComponent', () => {
 
         comp.ngOnInit();
 
-        // updateChart ran (the chart stays visible) and the derived chart signals are available.
         expect(comp.scoreChartVisible()).toBe(true);
         expect(comp.feedbackItemNodes()?.length).toBeGreaterThan(0);
         expect(comp.scoreChartData()).toBeDefined();
@@ -313,6 +314,75 @@ describe('FeedbackComponent', () => {
         expect(comp.result().submission!.participation!.exercise).toBeUndefined();
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('[data-testid="feedback-chart"]')).not.toBeNull();
+    });
+
+    describe.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])('%s AI score display', (type) => {
+        it.each([-20, 0, 60, 100, 120])('shows the stored score of %s even without visible feedback', (score) => {
+            fixture.componentRef.setInput('exercise', { ...exercise, type });
+            fixture.componentRef.setInput('result', { id: 89, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, score });
+            fixture.componentRef.setInput('showScoreChart', true);
+
+            fixture.detectChanges();
+
+            const bar = fixture.nativeElement.querySelector('[data-testid="feedback-chart"]');
+            expect(bar?.querySelector('tumaet-ui-bar-chart')).not.toBeNull();
+            expect(comp.scoreChartData().series.map((series) => series.data)).toEqual([[score]]);
+            const chart: TumAetUiBarChartComponent = fixture.debugElement.query(By.directive(TumAetUiBarChartComponent)).componentInstance;
+            expect(chart['valueDomain']()[0]).toBeLessThanOrEqual(Math.min(0, score));
+            expect(chart['valueDomain']()[1]).toBe(Math.max(100, score));
+            expect(fixture.nativeElement.querySelector('h4 [jhiTranslate="artemisApp.result.scoreWithPoints"]')).not.toBeNull();
+            expect(fixture.nativeElement.textContent).toContain('artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip');
+        });
+    });
+
+    it.each([
+        { successful: undefined, score: 60 },
+        { successful: false, score: 60 },
+        { successful: true, score: undefined },
+        { successful: true, score: NaN },
+    ])('hides the AI score bar for unavailable scores: %j', ({ successful, score }) => {
+        fixture.componentRef.setInput('result', {
+            id: 89,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful,
+            score,
+            feedbacks: generateFeedbacksAndExpectedItems().feedbacks,
+        });
+        fixture.componentRef.setInput('showScoreChart', true);
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="feedback-chart"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('h4 [jhiTranslate="artemisApp.result.scoreWithPoints"]')).toBeNull();
+    });
+
+    it('keeps the available AI score visible when feedback details fail to load', () => {
+        getFeedbackDetailsForResultStub.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        fixture.componentRef.setInput('result', { id: 89, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true, rated: true, score: 0 });
+        fixture.componentRef.setInput('showScoreChart', true);
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="retry-feedback-details"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="feedback-chart"]')).not.toBeNull();
+        expect(comp.scoreChartData().series.map((series) => series.data)).toEqual([[0]]);
+    });
+
+    it('uses the stored AI score rather than credits on visible severity cards', () => {
+        fixture.componentRef.setInput('result', {
+            id: 89,
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: true,
+            score: 60,
+            feedbacks: [makeFeedback({ detailText: 'Visible hint', credits: 3, severity: 'high' })],
+        });
+        fixture.componentRef.setInput('showScoreChart', true);
+
+        fixture.detectChanges();
+
+        expect(comp.feedbackItemNodes()?.[0].credits).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('[data-testid="feedback-chart"] tumaet-ui-bar-chart')).not.toBeNull();
+        expect(comp.scoreChartData().series.map((series) => series.data)).toEqual([[60]]);
     });
 
     it('marks a preliminary result as preliminary when the participation carries no exercise', () => {
@@ -358,17 +428,51 @@ describe('FeedbackComponent', () => {
         repositoryFiles.next(new Map([['src/main/java/Example.java', ['1', '2', 'historical answer', '4', '5'].join('\n')]]));
 
         const feedbackItem = (comp.feedbackItemNodes()?.[0] as FeedbackGroup).members[0];
-        expect(feedbackItem.codeReference).toEqual({
-            filePath: 'src/main/java/Example.java',
-            line: 3,
-            lines: [
-                { line: 1, code: '1', referenced: false },
-                { line: 2, code: '2', referenced: false },
-                { line: 3, code: 'historical answer', referenced: true },
-                { line: 4, code: '4', referenced: false },
-                { line: 5, code: '5', referenced: false },
-            ],
-        });
+        expect(feedbackItem.codeReference).toEqual({ filePath: 'src/main/java/Example.java', line: 3 });
+        expect(comp.snippetLines().get(feedbackItem.codeReference!)).toEqual([
+            { line: 1, code: '1', referenced: false },
+            { line: 2, code: '2', referenced: false },
+            { line: 3, code: 'historical answer', referenced: true },
+            { line: 4, code: '4', referenced: false },
+            { line: 5, code: '5', referenced: false },
+        ]);
+    });
+
+    it.each([false, true])('should render asynchronously loaded code without recreating the card (expanded: %s)', async (expanded) => {
+        const repositoryFiles = new Subject<Map<string, string>>();
+        vi.spyOn(programmingExerciseParticipationService, 'getSelectedParticipationRepositoryFilesAtCommit').mockReturnValue(repositoryFiles);
+        comp.result().assessmentType = AssessmentType.AUTOMATIC_ATHENA;
+        comp.result().feedbacks = [
+            makeFeedback({
+                text: 'Check this implementation',
+                detailText: 'Long feedback explanation. '.repeat(30),
+                reference: 'file:src/main/java/Example.java_line:2-4',
+            }),
+        ];
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const element: HTMLElement = fixture.nativeElement;
+        expect(element.querySelector('jhi-feedback-collapse')?.textContent).toContain('artemisApp.result.seeMore');
+        expect(element.querySelectorAll('code')).toHaveLength(0);
+        const collapse = element.querySelector('jhi-feedback-collapse');
+        const toggle = collapse!.querySelector<HTMLElement>('[role="button"]')!;
+        toggle.focus();
+        if (expanded) {
+            toggle.click();
+            await fixture.whenStable();
+        }
+
+        repositoryFiles.next(new Map([['src/main/java/Example.java', 'before\nfirst referenced line\nsecond referenced line\nthird referenced line\nafter']]));
+        await fixture.whenStable();
+
+        const referencedCode = element.querySelectorAll('.feedback-item__code-reference-line--referenced code');
+        expect(Array.from(referencedCode, (code) => code.textContent)).toEqual(['first referenced line', 'second referenced line', 'third referenced line']);
+        expect(element.querySelector('jhi-feedback-collapse')).toBe(collapse);
+        if (expanded) {
+            expect(collapse?.querySelector('jhi-feedback-text')).toBeTruthy();
+        } else {
+            expect(document.activeElement).toBe(toggle);
+        }
     });
 
     it('should request each referenced file only once', () => {
@@ -400,7 +504,7 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         const feedbackItem = (comp.feedbackItemNodes()?.[0] as FeedbackGroup).members[0];
-        expect(feedbackItem.codeReference?.lines).toEqual([
+        expect(comp.snippetLines().get(feedbackItem.codeReference!)).toEqual([
             { line: 1, code: '1', referenced: false },
             { line: 2, code: '2', referenced: false },
             { line: 3, code: '3', referenced: true },
@@ -427,9 +531,10 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         const feedbackItem = (comp.feedbackItemNodes()?.[0] as FeedbackGroup).members[0];
-        expect(feedbackItem.codeReference?.lines).toHaveLength(50);
-        expect(feedbackItem.codeReference?.lines?.at(0)?.line).toBe(1);
-        expect(feedbackItem.codeReference?.lines?.at(-1)?.line).toBe(50);
+        const lines = comp.snippetLines().get(feedbackItem.codeReference!);
+        expect(lines).toHaveLength(50);
+        expect(lines?.at(0)?.line).toBe(1);
+        expect(lines?.at(-1)?.line).toBe(50);
     });
 
     it('should still show feedback when loading the assessed repository fails', () => {
@@ -452,8 +557,7 @@ describe('FeedbackComponent', () => {
 
     it('should hide the score chart when there is no chart data', () => {
         fixture.componentRef.setInput('showScoreChart', true);
-        // No feedbacks -> no feedback item nodes -> updateChart hides the chart.
-        comp['updateChart']([]);
+        comp.feedbackItemNodes.set([]);
 
         expect(comp.scoreChartVisible()).toBe(false);
     });

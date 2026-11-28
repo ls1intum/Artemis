@@ -14,6 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
@@ -744,6 +745,50 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
         Set<Result> results = participationUtilService.getResultsForParticipation(requestedParticipation);
         assertThat(results).extracting(Result::getId).contains(athenaResult.getId());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationWithLatestResult_keepsBuildFeedbackFirstWhenAthenaIsNewer(boolean athenaCompleted) throws Exception {
+        startExercise();
+        var completedAt = ZonedDateTime.parse("2026-01-01T12:00:00Z");
+        var build = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, completedAt.minusHours(1));
+        var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(build.getSubmission().getParticipation().getId()).orElseThrow();
+        Result athena = participationUtilService.addResultToSubmission(participation, participation.getSubmissions().iterator().next());
+        athena.rated(true).score(60.0).assessmentType(AssessmentType.AUTOMATIC_ATHENA).completionDate(athenaCompleted ? completedAt : null);
+        athena.setSuccessful(athenaCompleted ? Boolean.TRUE : null);
+        athena = participationUtilService.addVariousVisibilityFeedbackToResult(athena);
+
+        var response = getJson(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks");
+        var results = response.path("submissions").get(0).path("results");
+
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0).path("id").asLong()).isEqualTo(build.getId());
+        assertThat(results.get(0).path("score").asDouble()).isEqualTo(100.0);
+        assertThat(results.get(0).path("feedbacks")).isNotEmpty();
+        assertThat(results.get(1).path("id").asLong()).isEqualTo(athena.getId());
+        var completionDate = results.get(1).path("completionDate");
+        if (athenaCompleted) {
+            assertThat(Instant.parse(completionDate.asString())).isEqualTo(completedAt.toInstant());
+        }
+        else {
+            assertThat(completionDate.isMissingNode()).isTrue();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationWithLatestResult_keepsBuildFeedbackFirstWhenAthenaIsOlder() throws Exception {
+        startExercise();
+        var completedAt = ZonedDateTime.parse("2026-01-01T12:00:00Z");
+        var athena = addStudentParticipationWithResult(AssessmentType.AUTOMATIC_ATHENA, completedAt.minusHours(1));
+        var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(athena.getSubmission().getParticipation().getId()).orElseThrow();
+        var build = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, completedAt, participation.getSubmissions().iterator().next());
+        assertThat(athena.getId()).isLessThan(build.getId());
+
+        var response = getJson(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks");
+        assertThat(response.path("submissions").get(0).path("results")).extracting(result -> result.path("id").asLong()).containsExactly(build.getId(), athena.getId());
     }
 
     @Test

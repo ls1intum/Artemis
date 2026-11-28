@@ -6,6 +6,8 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -110,6 +112,48 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentBa
         var optionalSubmission = submissionFilterService.getLatestSubmissionWithResult(Set.of(submission), true);
 
         assertThat(optionalSubmission).isEmpty();
+    }
+
+    @Test
+    void dashboardUsesOfficialBuildResultWhenManualAssessmentIsPending() {
+        var participation = new StudentParticipation().exercise(exerciseByType.get(ExerciseType.PROGRAMMING));
+        var submission = new ProgrammingSubmission();
+        submission.setParticipation(participation);
+        var build = new Result().assessmentType(AssessmentType.AUTOMATIC).rated(true).score(80D);
+        build.setId(1L);
+        var athena = new Result().assessmentType(AssessmentType.AUTOMATIC_ATHENA).rated(true).successful(true).score(20D);
+        athena.setId(2L);
+        var draft = new Result().assessmentType(AssessmentType.MANUAL).rated(false);
+        draft.setId(3L);
+        submission.setResults(Set.of(build, athena, draft));
+
+        assertThat(submissionFilterService.getLatestSubmissionWithResult(Set.of(submission), false)).contains(submission);
+        assertThat(submission.getLatestGradingResult()).isSameAs(build);
+    }
+
+    @Test
+    void exportIgnoresUndatedSubmissionWithoutAnEligibleResultBeforeComparingDates() {
+        var participation = new StudentParticipation().exercise(exerciseByType.get(ExerciseType.PROGRAMMING));
+        var latest = new ProgrammingSubmission();
+        latest.setId(10L);
+        latest.setCommitHash("latest-commit");
+        latest.setParticipation(participation);
+        latest.setSubmissionDate(ZonedDateTime.parse("2026-01-01T12:00:00Z"));
+        var latestResult = new Result().assessmentType(AssessmentType.AUTOMATIC).rated(true).score(80D);
+        latest.setResults(Set.of(latestResult));
+
+        var undated = new ProgrammingSubmission();
+        undated.setId(11L);
+        undated.setParticipation(participation);
+
+        var earlier = new ProgrammingSubmission();
+        earlier.setId(12L);
+        earlier.setCommitHash("earlier-commit");
+        earlier.setParticipation(participation);
+        earlier.setSubmissionDate(latest.getSubmissionDate().minusHours(1));
+        earlier.setResults(Set.of(new Result().assessmentType(AssessmentType.AUTOMATIC).rated(true).score(70D)));
+
+        assertThat(submissionFilterService.getLatestResultForExport(new LinkedHashSet<>(List.of(latest, undated, earlier)))).containsSame(latestResult);
     }
 
     @ParameterizedTest

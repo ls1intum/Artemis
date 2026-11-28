@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingSubmissionWithResultsDTO(Long id, String submissionExerciseType, SubmissionType type, Boolean submitted, ZonedDateTime submissionDate, String commitHash,
-        Boolean buildFailed, List<ResultDTO> results) implements Serializable {
+        Boolean buildFailed, List<ResultResponseDTO> results) implements Serializable {
 
     /**
      * The constant Jackson subtype id of {@link ProgrammingSubmission}.
@@ -38,7 +38,7 @@ public record ProgrammingSubmissionWithResultsDTO(Long id, String submissionExer
     public static final String SUBMISSION_EXERCISE_TYPE = "programming";
 
     /**
-     * Converts a programming submission and maps every loaded result through {@link ResultDTO#ofNested}. Results and
+     * Converts a programming submission and maps every loaded result through {@link ResultResponseDTO#ofNested}. Results and
      * their feedback are only mapped when already initialized, so this never triggers a lazy load.
      *
      * @param submission the submission to convert (may be {@code null})
@@ -48,11 +48,11 @@ public record ProgrammingSubmissionWithResultsDTO(Long id, String submissionExer
         if (submission == null) {
             return null;
         }
-        List<ResultDTO> resultDTOs = null;
+        List<ResultResponseDTO> resultDTOs = null;
         // Hibernate.isInitialized(null) is true, so the null check has to stand next to it.
         if (submission.getResults() != null && Hibernate.isInitialized(submission.getResults())) {
             // the results collection can hold null elements; Submission's own accessors guard against them too
-            resultDTOs = submission.getResults().stream().filter(Objects::nonNull).map(ResultDTO::ofNested).toList();
+            resultDTOs = submission.getResults().stream().filter(Objects::nonNull).map(ResultResponseDTO::ofNested).toList();
         }
         return of(submission, resultDTOs);
     }
@@ -66,7 +66,7 @@ public record ProgrammingSubmissionWithResultsDTO(Long id, String submissionExer
      * @param results    the already-mapped results to nest under the submission (may be {@code null})
      * @return the converted DTO, or {@code null} if the input was {@code null}
      */
-    public static ProgrammingSubmissionWithResultsDTO of(ProgrammingSubmission submission, List<ResultDTO> results) {
+    public static ProgrammingSubmissionWithResultsDTO of(ProgrammingSubmission submission, List<ResultResponseDTO> results) {
         if (submission == null) {
             return null;
         }

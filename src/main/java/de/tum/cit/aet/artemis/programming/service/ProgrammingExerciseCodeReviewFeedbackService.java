@@ -115,27 +115,28 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         Result automaticResult = this.submissionService.saveNewEmptyResult(submission);
         automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         automaticResult.setRated(true);
-        Result firstResult = submission.getFirstResult();
-        if (firstResult != null && firstResult.getScore() != null) {
-            automaticResult.setScore(firstResult.getScore());
-        }
-        else {
-            automaticResult.setScore(0.0);
-        }
         automaticResult.setSuccessful(null);
         automaticResult.setCompletionDate(ZonedDateTime.now().plusMinutes(5)); // we do not want to show dates without a completion date, but we want the students to know their
                                                                                // feedback request is in work
         automaticResult = this.resultRepository.save(automaticResult);
 
+        notifyFeedbackStatus(automaticResult, participation);
+
         try {
-
-            this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
-            // now the client should be able to see new result
-
             log.debug("Submission id: {}", submission.getId());
 
             AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, MODULE_FEATURE_ATHENA));
             var athenaResponse = api.getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission, false, requestingUser);
+
+            // Athena already scales credits to the exercise points. Include even suggestions hidden by the code-hint filters.
+            Double maxPoints = programmingExercise.getMaxPoints();
+            double totalCredits = athenaResponse.stream().mapToDouble(item -> item.credits()).sum();
+            if (!athenaResponse.isEmpty() && maxPoints != null && Double.isFinite(maxPoints) && maxPoints > 0 && Double.isFinite(totalCredits)) {
+                double score = totalCredits / maxPoints * 100;
+                if (Double.isFinite(score)) {
+                    automaticResult.setScore(score, programmingExercise.getCourseViaExerciseGroupOrCourseMember());
+                }
+            }
 
             List<Feedback> feedbacks = athenaResponse.stream().filter(individualFeedbackItem -> individualFeedbackItem.filePath() != null)
                     .filter(individualFeedbackItem -> individualFeedbackItem.description() != null).map(individualFeedbackItem -> {
@@ -168,22 +169,33 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
                         feedback.setHasLongFeedbackText(false);
                         feedback.setType(FeedbackType.AUTOMATIC);
                         feedback.setCredits(individualFeedbackItem.credits());
+                        feedback.setSeverity(individualFeedbackItem.severity());
                         return feedback;
-                    }).sorted(Comparator.comparing(Feedback::getCredits, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
+                    }).sorted(Comparator.comparing(Feedback::getSeverity, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
 
+            // For preliminary AI results, successful means generation completed, regardless of the score.
             automaticResult.setSuccessful(true);
             automaticResult.setCompletionDate(ZonedDateTime.now());
 
             this.resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
-
-            this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
         }
         catch (Exception e) {
             log.error("Could not generate feedback", e);
+            automaticResult.score(null);
             automaticResult.setSuccessful(false);
             automaticResult.setCompletionDate(ZonedDateTime.now());
             this.resultRepository.save(automaticResult);
-            this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
+        }
+
+        notifyFeedbackStatus(automaticResult, participation);
+    }
+
+    private void notifyFeedbackStatus(Result result, ProgrammingExerciseStudentParticipation participation) {
+        try {
+            programmingMessagingService.notifyUserAboutNewResult(result, participation);
+        }
+        catch (RuntimeException e) {
+            log.error("Could not notify the student about Athena result {}", result.getId(), e);
         }
     }
 }

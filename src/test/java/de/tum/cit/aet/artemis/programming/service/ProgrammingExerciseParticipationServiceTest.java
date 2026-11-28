@@ -222,7 +222,7 @@ class ProgrammingExerciseParticipationServiceTest {
         result.setId(90L);
         when(studentParticipationRepository.findByIdElseThrow(1L)).thenReturn(participation);
         when(submissionRepository.findLatestSubmissionByParticipationId(1L)).thenReturn(Optional.of(submission));
-        when(resultRepository.findLatestResultWithFeedbacksBySubmissionId(eqId(50L), any())).thenReturn(Optional.of(result));
+        when(resultRepository.findLatestOfficialAndAthenaResultsWithFeedbacksBySubmissionId(eqId(50L), any())).thenReturn(List.of(result));
 
         var loaded = participationService.findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(1L);
 
@@ -238,7 +238,7 @@ class ProgrammingExerciseParticipationServiceTest {
         submission.setId(50L);
         when(studentParticipationRepository.findByIdElseThrow(1L)).thenReturn(participation);
         when(submissionRepository.findLatestSubmissionByParticipationId(1L)).thenReturn(Optional.of(submission));
-        when(resultRepository.findLatestResultWithFeedbacksBySubmissionId(eqId(50L), any())).thenReturn(Optional.empty());
+        when(resultRepository.findLatestOfficialAndAthenaResultsWithFeedbacksBySubmissionId(eqId(50L), any())).thenReturn(List.of());
 
         var loaded = participationService.findStudentParticipationWithLatestSubmissionResultAndFeedbacksElseThrow(1L);
 

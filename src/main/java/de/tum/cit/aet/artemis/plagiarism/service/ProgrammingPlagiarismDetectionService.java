@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.plagiarism.service;
 
-import static de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService.filterParticipationMinimumScore;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -370,13 +368,12 @@ public class ProgrammingPlagiarismDetectionService {
      */
     public List<ProgrammingExerciseParticipation> findStudentParticipationsForComparison(ProgrammingExercise programmingExercise, int minimumScore) {
         long start = System.nanoTime();
-        var studentParticipations = studentParticipationRepository.findAllForPlagiarism(programmingExercise.getId());
+        var studentParticipations = studentParticipationRepository.findAllForPlagiarism(programmingExercise.getId(), minimumScore);
         log.info("findAllForPlagiarism took {}", TimeLogUtil.formatDurationFrom(start));
 
         return studentParticipations.parallelStream().filter(participation -> !participation.isPracticeMode())
                 .filter(participation -> participation instanceof ProgrammingExerciseStudentParticipation).filter(plagiarismService.filterForStudents())
-                .map(participation -> (ProgrammingExerciseParticipation) participation).filter(participation -> participation.getVcsRepositoryUri() != null)
-                .filter(filterParticipationMinimumScore(minimumScore)).toList();
+                .map(participation -> (ProgrammingExerciseParticipation) participation).filter(participation -> participation.getVcsRepositoryUri() != null).toList();
     }
 
     private Optional<Repository> cloneTemplateRepository(ProgrammingExercise programmingExercise, Path targetPath) {

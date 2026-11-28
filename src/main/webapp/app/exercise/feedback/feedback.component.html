@@ -33,13 +33,13 @@
             <fa-icon animation="spin" size="lg" [icon]="faCircleNotch" />
         </div>
     }
-    @if (feedbackItemNodes()?.length) {
+    @if (completedAiScore() !== undefined || (!isLoading() && !loadingFailed() && feedbackItemNodes()?.length)) {
         <div class="result-detail-container">
             @if (!isExamReviewPage()) {
                 <div>
                     <div class="flex justify-between items-start">
                         <h4>
-                            @if (result().assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+                            @if (result().assessmentType === AssessmentType.AUTOMATIC_ATHENA && completedAiScore() === undefined) {
                                 <span jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip"></span>
                             } @else {
                                 @if (!resolvedExercise()?.maxPoints) {
@@ -86,7 +86,10 @@
                 </div>
             }
 
-            @if (scoreChartVisible() && resolvedExercise()) {
+            @if (completedAiScore() !== undefined) {
+                <p class="text-muted-color" jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackSuccessfulTooltip"></p>
+            }
+            @if (scoreChartVisible() && (completedAiScore() !== undefined || resolvedExercise())) {
                 <div class="mb-12">
                     <div data-testid="feedback-chart" class="chart-space h-20">
                         <tumaet-ui-bar-chart
@@ -110,7 +113,7 @@
                 <hr />
             }
 
-            @if (!loadingFailed() && resultIsPreliminary(result(), participation(), resolvedExercise())) {
+            @if (resultIsPreliminary(result(), participation(), resolvedExercise())) {
                 <div>
                     <div class="flex justify-end m-1">
                         <tumaet-ui-tag severity="warn" [value]="'artemisApp.result.preliminary' | artemisTranslate | uppercase" />
@@ -129,8 +132,8 @@
             }
 
             <div class="feedback-list">
-                @for (feedbackItemNode of feedbackItemNodes(); track feedbackItemNode) {
-                    <jhi-feedback-node [feedbackItemNode]="feedbackItemNode" [course]="course()" [isPrinting]="isPrinting()" />
+                @for (feedbackItemNode of feedbackItemNodes(); track feedbackNodeKey(feedbackItemNode)) {
+                    <jhi-feedback-node [feedbackItemNode]="feedbackItemNode" [snippetLines]="snippetLines()" [course]="course()" [isPrinting]="isPrinting()" />
                 }
             </div>
         </div>
@@ -173,7 +176,7 @@
                     </dd>
                 }
             </dl>
-        } @else if (!isLoading() && !loadingFailed() && !buildLogsLoading() && !buildLogsFailed() && !feedbackItemNodes()?.length) {
+        } @else if (!isLoading() && !loadingFailed() && !buildLogsLoading() && !buildLogsFailed() && !feedbackItemNodes()?.length && completedAiScore() === undefined) {
             <!-- No content fallback -->
             @if (!isExamReviewPage()) {
                 <h4 jhiTranslate="artemisApp.result.noResultDetails"></h4>

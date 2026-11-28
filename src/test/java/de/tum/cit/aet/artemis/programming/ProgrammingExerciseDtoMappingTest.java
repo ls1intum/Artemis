@@ -23,6 +23,7 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackSeverity;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
@@ -58,7 +59,7 @@ import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDT
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseListItemDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingParticipationLatestResultDTO;
-import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
+import de.tum.cit.aet.artemis.programming.dto.ResultResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyDTO;
 
 /**
@@ -629,7 +630,7 @@ class ProgrammingExerciseDtoMappingTest {
         assertThat(dto.toEntity().getCategories()).containsExactlyInAnyOrder("[\"a\"]", "[\"b\"]");
     }
 
-    // --- ResultDTO.ofNested ---------------------------------------------------------------------------------------
+    // --- ResultResponseDTO.ofNested ---------------------------------------------------------------------------------------
 
     @Test
     void ofNestedOmitsSubmissionAndParticipationAndToleratesANullSubmission() {
@@ -638,19 +639,21 @@ class ProgrammingExerciseDtoMappingTest {
         feedback.setText("test1");
         feedback.setDetailText("passed");
         feedback.setCredits(1.0);
+        feedback.setSeverity(FeedbackSeverity.HIGH);
 
         Result result = new Result();
         result.setId(1L);
         result.setScore(100.0);
         result.setSubmission(null);
 
-        ResultDTO dto = ResultDTO.ofNested(result, List.of(feedback));
+        ResultResponseDTO dto = ResultResponseDTO.ofNested(result, List.of(feedback));
 
         assertThat(dto.id()).isEqualTo(1L);
         assertThat(dto.score()).isEqualTo(100.0);
         assertThat(dto.submission()).isNull();
         assertThat(dto.participation()).isNull();
         assertThat(dto.feedbacks()).hasSize(1);
+        assertThat(objectMapper.writeValueAsString(dto)).contains("\"severity\":\"high\"");
         assertThat(dto.feedbacks().getFirst().id()).isEqualTo(2L);
         assertThat(dto.feedbacks().getFirst().text()).isEqualTo("test1");
     }
@@ -660,7 +663,7 @@ class ProgrammingExerciseDtoMappingTest {
         Result result = new Result();
         result.setId(3L);
 
-        ResultDTO dto = ResultDTO.ofNested(result, null);
+        ResultResponseDTO dto = ResultResponseDTO.ofNested(result, null);
 
         assertThat(dto.id()).isEqualTo(3L);
         assertThat(dto.feedbacks()).isNull();
@@ -700,7 +703,7 @@ class ProgrammingExerciseDtoMappingTest {
         assertThat(dto.gradingInstruction().gradingScale()).isEqualTo("good");
         assertThat(dto.gradingInstruction().usageCount()).isEqualTo(2);
         assertThat(dto.testCase()).isNotNull();
-        // The shared ResultDTO.TestCaseDTO stops at id and testName; this route kept the rest of the entity payload.
+        // The shared ResultResponseDTO.TestCaseDTO stops at id and testName; this route kept the rest of the entity payload.
         assertThat(dto.testCase().weight()).isEqualTo(3.0);
         assertThat(dto.testCase().bonusMultiplier()).isEqualTo(2.0);
         assertThat(dto.testCase().bonusPoints()).isEqualTo(1.0);

@@ -1281,14 +1281,15 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
 
-        Result invokedResult = resultCaptor.getAllValues().getFirst();
+        Result invokedResult = resultCaptor.getAllValues().getLast();
         assertThat(invokedResult).isNotNull();
         assertThat(invokedResult.getId()).isNotNull();
         assertThat(invokedResult.isSuccessful()).isTrue();
         assertThat(invokedResult.isAthenaBased()).isTrue();
         assertThat(invokedResult.getFeedbacks()).hasSize(1);
         assertThat(invokedResult.getFeedbacks().iterator().next().getReference()).isEqualTo("file:client.cpp_line:3-4");
-        assertThat(invokedResult.getScore()).isEqualTo(100.0);
+        // Athena supplies -1 credit for an exercise worth 5 points; this score is independent of the build result.
+        assertThat(invokedResult.getScore()).isEqualTo(-20.0);
     }
 
     @Test
@@ -1351,13 +1352,14 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
 
-        Result invokedResult = resultCaptor.getAllValues().getFirst();
+        Result invokedResult = resultCaptor.getAllValues().getLast();
         assertThat(invokedResult).isNotNull();
         assertThat(invokedResult.getId()).isNotNull();
         assertThat(invokedResult.isSuccessful()).isTrue();
         assertThat(invokedResult.isAthenaBased()).isTrue();
         assertThat(invokedResult.getFeedbacks()).hasSize(1);
-        assertThat(invokedResult.getScore()).isEqualTo(100.0);
+        // Athena supplies -1 credit for an exercise worth 5 points; this score is independent of the build result.
+        assertThat(invokedResult.getScore()).isEqualTo(-20.0);
     }
 
     @Test
@@ -1387,7 +1389,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedResult.isSuccessful()).isTrue();
         assertThat(invokedResult.isAthenaBased()).isTrue();
         assertThat(invokedResult.getFeedbacks()).hasSize(1);
-        assertThat(invokedResult.getScore()).isZero();
+        // Athena supplies -1 credit for an exercise worth 5 points; this score is independent of the build result.
+        assertThat(invokedResult.getScore()).isEqualTo(-20.0);
     }
 
     @Test
@@ -1522,13 +1525,14 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         verify(programmingMessagingService, timeout(2000).times(2)).notifyUserAboutNewResult(resultCaptor.capture(), any());
 
-        Result invokedResult = resultCaptor.getAllValues().getFirst();
+        Result invokedResult = resultCaptor.getAllValues().getLast();
         assertThat(invokedResult).isNotNull();
         assertThat(invokedResult.getId()).isNotNull();
         assertThat(invokedResult.isSuccessful()).isTrue();
         assertThat(invokedResult.isAthenaBased()).isTrue();
         assertThat(invokedResult.getFeedbacks()).hasSize(1);
-        assertThat(invokedResult.getScore()).isEqualTo(100.0);
+        // Athena supplies -1 credit for an exercise worth 5 points; this score is independent of the build result.
+        assertThat(invokedResult.getScore()).isEqualTo(-20.0);
     }
 
     @Test

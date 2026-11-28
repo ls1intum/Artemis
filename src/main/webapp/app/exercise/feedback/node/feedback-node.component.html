@@ -1,9 +1,33 @@
 @if (feedbackItem()) {
-    <tumaet-ui-message class="feedback-item mb-2" [severity]="messageSeverity(feedbackItem()!.color)">
+    <tumaet-ui-message
+        class="feedback-item mb-2"
+        [class.border-s-2]="feedbackItem()!.isAiFeedback && !!feedbackItem()!.feedbackReference.severity"
+        [class.border-state-danger]="feedbackItem()!.isAiFeedback && feedbackItem()!.feedbackReference.severity === 'high'"
+        [class.border-state-warning]="feedbackItem()!.isAiFeedback && feedbackItem()!.feedbackReference.severity === 'medium'"
+        [class.border-state-info]="feedbackItem()!.isAiFeedback && feedbackItem()!.feedbackReference.severity === 'low'"
+        [severity]="feedbackItem()!.isAiFeedback ? 'secondary' : messageSeverity(feedbackItem()!.color)"
+    >
         <div class="w-full">
             <div class="flex justify-between gap-8">
-                <h4 class="feedback-item__category m-0 text-base font-semibold">{{ feedbackItem()!.name }} {{ feedbackItem()!.title && '· ' + feedbackItem()!.title }}</h4>
-                @if (feedbackItem()!.credits) {
+                <h4 class="feedback-item__category m-0 text-base font-semibold">
+                    {{ feedbackItem()!.isAiFeedback ? feedbackItem()!.title : feedbackItem()!.name + (feedbackItem()!.title ? ' · ' + feedbackItem()!.title : '') }}
+                </h4>
+                @if (feedbackItem()!.isAiFeedback) {
+                    <tumaet-ui-tag
+                        class="shrink-0 self-start"
+                        data-testid="feedback-severity"
+                        [severity]="
+                            feedbackItem()!.feedbackReference.severity === 'high'
+                                ? 'danger'
+                                : feedbackItem()!.feedbackReference.severity === 'medium'
+                                  ? 'warn'
+                                  : feedbackItem()!.feedbackReference.severity === 'low'
+                                    ? 'info'
+                                    : 'secondary'
+                        "
+                        [value]="'artemisApp.feedback.severity.' + (feedbackItem()!.feedbackReference.severity || 'unclassified') | artemisTranslate"
+                    />
+                } @else if (feedbackItem()!.credits) {
                     <span class="feedback-item__credits font-bold">
                         {{ roundValueSpecifiedByCourseSettings(feedbackItem()!.credits, course()) }}P
                         @if (feedbackItem()!.type === 'Subsequent') {
@@ -12,19 +36,17 @@
                     </span>
                 }
             </div>
-            @if (feedbackItem()!.codeReference) {
+            @if (feedbackItem()!.codeReference; as reference) {
                 <div class="feedback-item__code-reference">
-                    <div class="feedback-item__code-reference-path">{{ feedbackItem()!.codeReference!.filePath }}</div>
-                    @for (line of feedbackItem()!.codeReference!.lines; track line.line) {
+                    <div class="feedback-item__code-reference-path">{{ reference.filePath }}</div>
+                    @for (line of snippetLines()?.get(reference) ?? reference.lines; track line.line) {
                         <div class="feedback-item__code-reference-line" [class.feedback-item__code-reference-line--referenced]="line.referenced">
                             <span class="feedback-item__code-reference-line-number">{{ line.line }}</span>
-                            <code class="hljs" [innerHTML]="highlightCode(line.code, feedbackItem()!.codeReference!.filePath)"></code>
+                            <code class="hljs" [innerHTML]="highlightCode(line.code, reference.filePath)"></code>
                         </div>
                     } @empty {
                         <div class="feedback-item__code-reference-line feedback-item__code-reference-line--referenced">
-                            <span class="feedback-item__code-reference-line-number">
-                                {{ feedbackItem()!.codeReference!.line }}{{ feedbackItem()!.codeReference!.lineEnd ? '-' + feedbackItem()!.codeReference!.lineEnd : '' }}
-                            </span>
+                            <span class="feedback-item__code-reference-line-number"> {{ reference.line }}{{ reference.lineEnd ? '-' + reference.lineEnd : '' }} </span>
                         </div>
                     }
                 </div>
@@ -61,8 +83,8 @@
             }
         </div>
         @if (isGroupExpanded()) {
-            @for (feedbackItem of feedbackItemGroup()!.members; track feedbackItem) {
-                <jhi-feedback-node [feedbackItemNode]="feedbackItem" [course]="course()" [isPrinting]="isPrinting()" />
+            @for (feedbackItem of feedbackItemGroup()!.members; track feedbackItem.feedbackReference ?? feedbackItem) {
+                <jhi-feedback-node [feedbackItemNode]="feedbackItem" [snippetLines]="snippetLines()" [course]="course()" [isPrinting]="isPrinting()" />
             }
         }
     </div>

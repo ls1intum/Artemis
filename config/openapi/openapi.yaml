@@ -8137,6 +8137,9 @@ components:
         filePath: {type: string}
         lineStart: {type: integer, format: int32}
         lineEnd: {type: integer, format: int32}
+        severity:
+          type: string
+          enum: [high, medium, low]
     Slide:
       type: object
       properties:

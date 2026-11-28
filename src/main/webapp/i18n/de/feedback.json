@@ -25,6 +25,12 @@
                 "scoreChartAriaLabel": "Balkendiagramm der erreichten Punktzahl dieser Abgabe",
                 "linkedToCommit": "verknüpft mit Commit"
             },
+            "severity": {
+                "high": "Hoch",
+                "medium": "Mittel",
+                "low": "Niedrig",
+                "unclassified": "Nicht klassifiziert"
+            },
             "group": {
                 "wrong": "Falsch",
                 "warning": "Warnung",

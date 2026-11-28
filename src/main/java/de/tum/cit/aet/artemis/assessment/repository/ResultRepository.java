@@ -412,8 +412,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 JOIN s.results r
             WHERE e.id = :exerciseId
                 AND p.student.id = :studentId
+                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR (TYPE(r.submission.participation.exercise) <> ProgrammingExercise AND r.successful = TRUE))
                 AND r.score IS NOT NULL
-                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
                 AND r.completionDate IS NOT NULL
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
@@ -427,8 +427,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 JOIN s.results r
             WHERE e.id = :exerciseId
                 AND p.team.id = :teamId
+                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR (TYPE(r.submission.participation.exercise) <> ProgrammingExercise AND r.successful = TRUE))
                 AND r.score IS NOT NULL
-                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
                 AND r.completionDate IS NOT NULL
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
@@ -442,8 +442,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 JOIN s.results r
             WHERE e.id = :exerciseId
                 AND p.student.id = :studentId
+                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR (TYPE(r.submission.participation.exercise) <> ProgrammingExercise AND r.successful = TRUE))
                 AND r.score IS NOT NULL
-                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
                 AND r.completionDate IS NOT NULL
                 AND r.rated = TRUE
             ORDER BY p.id DESC, s.id DESC, r.id DESC
@@ -458,8 +458,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 JOIN s.results r
             WHERE e.id = :exerciseId
                 AND p.team.id = :teamId
+                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR (TYPE(r.submission.participation.exercise) <> ProgrammingExercise AND r.successful = TRUE))
                 AND r.score IS NOT NULL
-                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
                 AND r.completionDate IS NOT NULL
                 AND r.rated = TRUE
             ORDER BY p.id DESC, s.id DESC, r.id DESC
@@ -819,11 +819,9 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     }
 
     /**
-     * Finds the id of the latest result a student may see for a participation (the highest visible result id), or empty if none is visible. A result is visible when it is
-     * automatic
-     * (including Athena) or a completed manual assessment whose assessment due date is unset or has passed, mirroring {@link #findLatestResultWithFeedbacksBySubmissionId}.
-     * Selecting
-     * only the id avoids materializing the discarded result history; exam hiding is applied by the caller beforehand.
+     * Finds the highest visible result id for a participation. Automatic results (including Athena) are visible, as are completed manual
+     * assessments after the assessment due date or when no due date is set.
+     * Selecting only the id avoids loading the result history. The caller applies exam masking.
      *
      * @param participationId the participation to load the latest visible result id for
      * @param dateTime        the reference time compared against the assessment due date (usually now)
@@ -960,7 +958,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 JOIN s.results r
                 LEFT JOIN FETCH r.feedbacks f
               WHERE s.id = :submissionId
-                AND r.id = (
+                AND r.id IN (
                   SELECT MAX(r2.id)
                   FROM Submission s2
                     JOIN s2.results r2
@@ -976,9 +974,11 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                         )
                       )
                     )
+                  GROUP BY CASE WHEN r2.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA THEN 1 ELSE 0 END
                 )
+              ORDER BY CASE WHEN r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA THEN 1 ELSE 0 END
             """)
-    Optional<Result> findLatestResultWithFeedbacksBySubmissionId(@Param("submissionId") long submissionId, @Param("dateTime") ZonedDateTime dateTime);
+    List<Result> findLatestOfficialAndAthenaResultsWithFeedbacksBySubmissionId(@Param("submissionId") long submissionId, @Param("dateTime") ZonedDateTime dateTime);
 
     /**
      * Find the latest results for the given participation IDs.

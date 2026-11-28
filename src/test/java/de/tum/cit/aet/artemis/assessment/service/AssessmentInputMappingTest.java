@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackSeverity;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
@@ -22,11 +23,12 @@ class AssessmentInputMappingTest {
         instruction.setId(12L);
         instruction.setCredits(3.0);
         var dto = new FeedbackDTO(34L, "Feedback", "preview", true, "reference", 2.0, true, FeedbackType.MANUAL, Visibility.AFTER_DUE_DATE, GradingInstructionDTO.of(instruction),
-                null);
+                null, FeedbackSeverity.HIGH);
         var feedback = dto.toAssessmentFeedback("Full long feedback text");
         assertThat(feedback.getId()).isEqualTo(34L);
         assertThat(feedback.getDetailText()).isEqualTo("Full long feedback text");
         assertThat(feedback.getCredits()).isEqualTo(2.0);
+        assertThat(feedback.getSeverity()).isEqualTo(FeedbackSeverity.HIGH);
         assertThat(feedback.getVisibility()).isEqualTo(Visibility.AFTER_DUE_DATE);
         assertThat(feedback.getGradingInstruction()).isNotSameAs(instruction);
         assertThat(feedback.getGradingInstruction().getId()).isEqualTo(12L);

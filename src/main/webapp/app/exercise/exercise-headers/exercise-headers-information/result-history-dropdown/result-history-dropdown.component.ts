@@ -245,6 +245,9 @@ export class ResultHistoryDropdownComponent {
             if (result.successful === undefined) {
                 return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
             }
+            if (this.exercise().type === ExerciseType.PROGRAMMING && result.successful === true && !Number.isFinite(result.score)) {
+                return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackSuccessful');
+            }
         }
 
         const submission = result.submission;
@@ -260,10 +263,12 @@ export class ResultHistoryDropdownComponent {
         const sortedResults = this.sortedHistoryResults();
         const currentResultIndex = sortedResults.indexOf(result);
 
-        if (currentResultIndex === sortedResults.length - 1) {
+        const compareOfficialScores = this.exercise().type === ExerciseType.PROGRAMMING && !isAthenaAIResult(result);
+        const previousResult = sortedResults.slice(currentResultIndex + 1).find((candidate) => !compareOfficialScores || !isAthenaAIResult(candidate));
+        if (!previousResult) {
             return this.translateService.instant(currentScore > 0 ? 'artemisApp.result.progressString.niceProgress' : 'artemisApp.result.progressString.stuck');
         }
-        const previousScore = sortedResults[currentResultIndex + 1].score ?? 0;
+        const previousScore = previousResult.score ?? 0;
         if (currentScore > previousScore) {
             return this.translateService.instant('artemisApp.result.progressString.niceProgress');
         } else if (currentScore < previousScore) {
