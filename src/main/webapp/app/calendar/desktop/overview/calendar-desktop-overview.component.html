@@ -1,6 +1,6 @@
 <div class="frame">
     <!-- The month and the calendar controls live in the shell title bar, so this page has no header of its own. -->
-    <h5 *titleBarTitle class="mb-0!">{{ monthDescription() }}</h5>
+    <h5 *titleBarTitle class="mb-0">{{ monthDescription() }}</h5>
     <div *titleBarActions class="calendar-bar-controls flex items-center gap-2">
         <tumaet-ui-multi-select
             class="calendar-filter"
@@ -65,8 +65,24 @@
                     <fa-icon [icon]="faArrowUpFromBracket" />
                     <span class="ms-1 title-bar-collapsible-label" jhiTranslate="artemisApp.calendar.subscribeButtonLabel"></span>
                 </button>
-                <jhi-calendar-subscription-popover [subscriptionToken]="subscriptionToken" [courseId]="currentCourseId" #subscriptionPopover />
+                <jhi-calendar-subscription-popover
+                    [subscriptionToken]="subscriptionToken"
+                    [courseId]="currentCourseId"
+                    [resetting]="subscriptionResetting()"
+                    (subscriptionResetRequested)="resetSubscriptionLink()"
+                    #subscriptionPopover
+                />
             </div>
+        } @else if (currentCourseId && subscriptionTokenLoadFailed()) {
+            <button
+                type="button"
+                data-testid="retry-subscription-button"
+                tumAetUiButton
+                size="small"
+                variant="outlined"
+                (click)="retryLoadingSubscriptionToken()"
+                jhiTranslate="artemisApp.calendar.retrySubscriptionButtonLabel"
+            ></button>
         }
         <button type="button" id="today-button" tumAetUiButton size="small" variant="outlined" (click)="goToToday()" jhiTranslate="artemisApp.calendar.todayButtonLabel"></button>
         <tumaet-ui-button-group>

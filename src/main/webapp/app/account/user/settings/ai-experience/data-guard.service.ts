@@ -29,6 +29,6 @@ export class DataGuard implements CanActivate {
         const isHyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
         const isMetisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_METIS);
 
-        return isIrisEnabled || isAthenaEnabled || isHyperionEnabled || isMetisEnabled;
+        return isIrisEnabled || isAthenaEnabled || isHyperionEnabled || isMetisEnabled || this.profileService.isCourseHomeAiAvailable();
     }
 }

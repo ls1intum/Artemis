@@ -166,7 +166,7 @@ import { RESEARCH_STEPS } from 'app/core/landing/landing-data';
             <a class="research-cta" href="https://docs.artemis.tum.de/publications" target="_blank" rel="noopener">
                 {{ 'landing.research.cta' | artemisTranslate }}
                 <fa-icon [icon]="faArrowUpRightFromSquare" />
-                <span class="visually-hidden">{{ 'landing.opensInNewTab' | artemisTranslate }}</span>
+                <span class="sr-only">{{ 'landing.opensInNewTab' | artemisTranslate }}</span>
             </a>
         </section>
     `,

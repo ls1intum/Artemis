@@ -106,7 +106,7 @@ function toStudentView(row: MetisDashboardRowDTO): ReviewStudentView {
 @Component({
     selector: 'jhi-metis-question-review',
     templateUrl: './metis-question-review.component.html',
-    styleUrl: './metis-question-review.component.scss',
+    styleUrl: './metis-question-review.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         FormsModule,

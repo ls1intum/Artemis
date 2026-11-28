@@ -424,12 +424,14 @@ describe('IrisChatService', () => {
             it('should load that session instead of resolving the current one', async () => {
                 const byIdStub = vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(handedOffSession));
                 const currentStub = vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists');
+                const sendStub = vi.spyOn(service, 'sendMessage');
 
                 service.openChat(ChatServiceMode.COURSE, courseId, 777);
                 await waitForSessionIdValue(777);
 
                 expect(byIdStub).toHaveBeenCalledExactlyOnceWith(courseId, 777);
                 expect(currentStub).not.toHaveBeenCalled();
+                expect(sendStub).not.toHaveBeenCalled();
                 // The session's own topic becomes the committed context, so the chip shows the lecture the chat was opened on.
                 expect(service['contextService'].committed()).toEqual({ mode: ChatServiceMode.LECTURE, entityId: lectureId });
             });
@@ -1668,6 +1670,23 @@ describe('IrisChatService', () => {
             vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(mockServerSessionHttpResponseWithEmptyConversation));
             vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
             vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+        });
+
+        it.each([LLMSelectionDecision.CLOUD_AI, LLMSelectionDecision.NO_AI])('reports saving state until %s succeeds or fails', (decision) => {
+            for (const fails of [false, true]) {
+                const request = new Subject<HttpResponse<void>>();
+                userMock.updateLLMSelectionDecision.mockReturnValueOnce(request.asObservable());
+                expect(service.isSavingLLMUsageConsent()).toBe(false);
+                service.updateLLMUsageConsent(decision);
+                expect(service.isSavingLLMUsageConsent()).toBe(true);
+                if (fails) {
+                    request.error(new HttpErrorResponse({ status: 500 }));
+                } else {
+                    request.next(new HttpResponse<void>());
+                    request.complete();
+                }
+                expect(service.isSavingLLMUsageConsent()).toBe(false);
+            }
         });
 
         it('should emit llmOptedOut$ once after NO_AI is persisted successfully', () => {

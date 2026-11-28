@@ -45,10 +45,10 @@
     </ng-template>
 </div>
 
-<p class="text-muted-color text-sm mb-6!" data-testid="error-analysis-note" jhiTranslate="artemisApp.errorAnalysis.note"></p>
+<p class="text-muted-color text-sm mb-6" data-testid="error-analysis-note" jhiTranslate="artemisApp.errorAnalysis.note"></p>
 
 @if (loading() && !result()) {
-    <div class="flex justify-center my-12!">
+    <div class="flex justify-center my-12">
         <fa-icon [icon]="faSpinner" animation="spin" size="3x" />
     </div>
 } @else if (result()) {
@@ -73,7 +73,7 @@
                         <th scope="col" [tumAetUiSortableColumn]="'SEVERITY'" data-testid="sort-severity"><span jhiTranslate="artemisApp.errorAnalysis.column.severity"></span></th>
                         <th scope="col" [tumAetUiSortableColumn]="'LOCATION'" data-testid="sort-location"><span jhiTranslate="artemisApp.errorAnalysis.column.location"></span></th>
                         <th scope="col" [tumAetUiSortableColumn]="'MESSAGE'" data-testid="sort-message"><span jhiTranslate="artemisApp.errorAnalysis.column.message"></span></th>
-                        <th scope="col" class="text-end" [tumAetUiSortableColumn]="'COUNT'" data-testid="sort-count">
+                        <th scope="col" class="text-right" [tumAetUiSortableColumn]="'COUNT'" data-testid="sort-count">
                             <span jhiTranslate="artemisApp.errorAnalysis.column.count"></span>
                         </th>
                         <th scope="col" [tumAetUiSortableColumn]="'FIRST_SEEN'" data-testid="sort-first-seen">
@@ -94,7 +94,7 @@
                             </td>
                             <td class="whitespace-nowrap" data-testid="error-location">{{ 'artemisApp.errorAnalysis.location.' + group.location | artemisTranslate }}</td>
                             <td class="font-mono text-xs wrap-anywhere" data-testid="error-message">{{ group.message }}</td>
-                            <td class="text-end font-semibold" data-testid="error-count">{{ group.count }}</td>
+                            <td class="text-right font-semibold" data-testid="error-count">{{ group.count }}</td>
                             <td class="whitespace-nowrap text-sm" data-testid="error-first-seen">{{ group.firstSeen | artemisDate: 'long' : true }}</td>
                             <td class="whitespace-nowrap text-sm" data-testid="error-last-seen">{{ group.lastSeen | artemisDate: 'long' : true }}</td>
                         </tr>

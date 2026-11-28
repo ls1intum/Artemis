@@ -24,7 +24,6 @@ export const routes: Routes = [
     programmingExerciseUpdateRoute('programming-exercises/:exerciseId/edit'),
     programmingExerciseUpdateRoute('programming-exercises/import/:exerciseId', 'artemisApp.programmingExercise.home.importLabel'),
     programmingExerciseUpdateRoute('programming-exercises/import-from-file', 'artemisApp.programmingExercise.home.importLabel'),
-    programmingExerciseUpdateRoute('programming-exercises/import-from-sharing', 'artemisApp.programmingExercise.home.importLabel'),
     programmingExerciseDetailRoute('programming-exercises/:exerciseId'),
     programmingExerciseVersionHistoryRoute('programming-exercises/:exerciseId/version-history'),
     {

@@ -357,24 +357,8 @@ Every Metis call that returns a response with token counts is recorded in the LL
 service `METIS`, with the pipeline `METIS_QUESTION_GENERATION`, `METIS_QUESTION_REGENERATION` or
 `METIS_ANSWER_RATING`, the course and the exercise. A call that fails, for example with a timeout, is not recorded.
 Generation and rating are attributed to the student whose code is processed, a regeneration to the editor or
-instructor who asked for it. The cost comes from `artemis.llm.model-costs`, matched against the model the endpoint
-reports. A model without an entry is recorded with zero cost, and every recorded call logs the warning
-`No LLM cost configured for model`. For a self-hosted model, register zero cost explicitly:
-
-```yaml
-artemis:
-    llm:
-        model-costs:
-            "[qwen3-coder:30b]":
-                input-cost-per-million-eur: 0
-                output-cost-per-million-eur: 0
-```
-
-A key with dots or colons needs the brackets. As environment variables, the same entry is
-`ARTEMIS_LLM_MODELCOSTS_QWEN3CODER30B_INPUTCOSTPERMILLIONEUR=0` and
-`ARTEMIS_LLM_MODELCOSTS_QWEN3CODER30B_OUTPUTCOSTPERMILLIONEUR=0`: keys and model names are compared without the
-characters that are neither letters nor digits. Configure the entry in one of the two forms only: both reduce to the
-same key, and the server stops right after startup with `Conflicting LLM model cost keys`. See also
+instructor who asked for it. Artemis records the USD amount when the endpoint reports one. Since Metis calls its
+own endpoint without a shared LLM preset, it records an unknown cost when the endpoint omits that amount. See also
 [token usage tracking](/admin/hyperion#token-usage-tracking).
 
 ## Ollama settings

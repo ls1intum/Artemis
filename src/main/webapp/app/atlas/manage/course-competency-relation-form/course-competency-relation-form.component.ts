@@ -10,13 +10,15 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiButtonDirective, TumAetUiFormFieldComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-course-competency-relation-form',
     templateUrl: './course-competency-relation-form.component.html',
-    styleUrl: './course-competency-relation-form.component.scss',
+    styleUrl: './course-competency-relation-form.component.css',
     imports: [TranslateDirective, ArtemisTranslatePipe, FaIconComponent, FormsModule, TumAetUiButtonDirective, TumAetUiFormFieldComponent, TumAetUiSelectComponent],
 })
 export class CourseCompetencyRelationFormComponent {

@@ -1,14 +1,14 @@
 <div class="connection-status" [ngClass]="{ disconnected: disconnected() }">
     @if (!disconnected()) {
-        <div class="badge bg-success connectedExam">
-            <fa-icon class="small" [fixedWidth]="true" [icon]="faTowerBroadcast" />
+        <tumaet-ui-tag severity="success" size="sm" data-testid="connection-status-connected">
+            <fa-icon class="text-xs" [fixedWidth]="true" [icon]="faTowerBroadcast" />
             <span jhiTranslate="connectionStatus.connected"></span>
-        </div>
+        </tumaet-ui-tag>
     } @else {
-        <div class="badge bg-danger connectedExam">
-            <fa-icon class="small" [fixedWidth]="true" [icon]="faExclamation" />
+        <tumaet-ui-tag severity="danger" size="sm" data-testid="connection-status-disconnected">
+            <fa-icon class="text-xs" [fixedWidth]="true" [icon]="faExclamation" />
             <span jhiTranslate="connectionStatus.disconnected"></span>
-        </div>
+        </tumaet-ui-tag>
     }
     <ng-content select="[innerContent]" />
 </div>

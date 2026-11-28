@@ -25,8 +25,9 @@ import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 import { LtiInitializerComponent } from 'app/course/overview/exercise-details/lti-initializer/lti-initializer.component';
-import { PanelModule } from 'primeng/panel';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
@@ -60,10 +61,11 @@ import { ComprehensionCheckPanelComponent } from 'app/metis/overview/comprehensi
         ProgrammingExerciseExampleSolutionRepoDownloadComponent,
         CompetencyContributionComponent,
         LtiInitializerComponent,
-        NgbTooltip,
+        TumAetUiTooltipDirective,
+        TumAetUiButtonDirective,
         ArtemisTranslatePipe,
         DiscussionSectionComponent,
-        PanelModule,
+        TumAetUiPanelComponent,
         TeamPracticeHintComponent,
         ComprehensionCheckPanelComponent,
     ],
@@ -133,6 +135,13 @@ export class ExerciseSplitPanelComponent {
     readonly quizLiveStatus = input<LiveQuizParticipationStatus>();
     /** Whether the title bar is showing the status and due date pills, in which case the details leave them out. */
     readonly titleBarShowsPills = input<boolean>(false);
+    /**
+     * Keeps the side panels collapsed while it is true, for example while a quiz runs, and opens them when it ends. The student
+     * can still open them by hand. A manual collapse or expand of the right panel of this split panel, also before the quiz
+     * starts, ends the automatic behaviour for this instance: a student's own choice is never overridden, so the panels then
+     * neither collapse for the quiz nor open again afterwards.
+     */
+    readonly collapseSidePanels = input<boolean>(false);
 
     /**
      * Stable key describing the sub-route this panel should navigate to. It deliberately captures only the route

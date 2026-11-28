@@ -154,7 +154,7 @@ function compareRowViews(a: DashboardRowView, b: DashboardRowView, field: SortFi
 @Component({
     selector: 'jhi-metis-dashboard',
     templateUrl: './metis-dashboard.component.html',
-    styleUrl: './metis-dashboard.component.scss',
+    styleUrl: './metis-dashboard.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         DecimalPipe,

@@ -1,5 +1,5 @@
 <h3 id="garbageCollectorMetricsTitle" jhiTranslate="metrics.jvm.gc.title"></h3>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6!">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
     <div>
         @if (garbageCollectorMetrics() && garbageCollectorMetrics()['jvm.gc.live.data.size']) {
             <div class="flex flex-col gap-1">
@@ -52,27 +52,27 @@
         <thead>
             <tr>
                 <th scope="col"></th>
-                <th scope="col" class="text-end" jhiTranslate="metrics.servicesstats.table.count"></th>
-                <th scope="col" class="text-end" jhiTranslate="metrics.servicesstats.table.mean"></th>
-                <th scope="col" class="text-end" jhiTranslate="metrics.servicesstats.table.min"></th>
-                <th scope="col" class="text-end" jhiTranslate="metrics.servicesstats.table.p50"></th>
-                <th scope="col" class="text-end" jhiTranslate="metrics.servicesstats.table.p75"></th>
-                <th scope="col" class="text-end" jhiTranslate="metrics.servicesstats.table.p95"></th>
-                <th scope="col" class="text-end" jhiTranslate="metrics.servicesstats.table.p99"></th>
-                <th scope="col" class="text-end" jhiTranslate="metrics.servicesstats.table.max"></th>
+                <th scope="col" class="text-right" jhiTranslate="metrics.servicesstats.table.count"></th>
+                <th scope="col" class="text-right" jhiTranslate="metrics.servicesstats.table.mean"></th>
+                <th scope="col" class="text-right" jhiTranslate="metrics.servicesstats.table.min"></th>
+                <th scope="col" class="text-right" jhiTranslate="metrics.servicesstats.table.p50"></th>
+                <th scope="col" class="text-right" jhiTranslate="metrics.servicesstats.table.p75"></th>
+                <th scope="col" class="text-right" jhiTranslate="metrics.servicesstats.table.p95"></th>
+                <th scope="col" class="text-right" jhiTranslate="metrics.servicesstats.table.p99"></th>
+                <th scope="col" class="text-right" jhiTranslate="metrics.servicesstats.table.max"></th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td>jvm.gc.pause</td>
-                <td class="text-end">{{ garbageCollectorMetrics()['jvm.gc.pause'].count }}</td>
-                <td class="text-end">{{ garbageCollectorMetrics()['jvm.gc.pause'].mean | number: '1.0-3' }}</td>
-                <td class="text-end">{{ garbageCollectorMetrics()['jvm.gc.pause']['0.0'] | number: '1.0-3' }}</td>
-                <td class="text-end">{{ garbageCollectorMetrics()['jvm.gc.pause']['0.5'] | number: '1.0-3' }}</td>
-                <td class="text-end">{{ garbageCollectorMetrics()['jvm.gc.pause']['0.75'] | number: '1.0-3' }}</td>
-                <td class="text-end">{{ garbageCollectorMetrics()['jvm.gc.pause']['0.95'] | number: '1.0-3' }}</td>
-                <td class="text-end">{{ garbageCollectorMetrics()['jvm.gc.pause']['0.99'] | number: '1.0-3' }}</td>
-                <td class="text-end">{{ garbageCollectorMetrics()['jvm.gc.pause'].max | number: '1.0-3' }}</td>
+                <td class="text-right">{{ garbageCollectorMetrics()['jvm.gc.pause'].count }}</td>
+                <td class="text-right">{{ garbageCollectorMetrics()['jvm.gc.pause'].mean | number: '1.0-3' }}</td>
+                <td class="text-right">{{ garbageCollectorMetrics()['jvm.gc.pause']['0.0'] | number: '1.0-3' }}</td>
+                <td class="text-right">{{ garbageCollectorMetrics()['jvm.gc.pause']['0.5'] | number: '1.0-3' }}</td>
+                <td class="text-right">{{ garbageCollectorMetrics()['jvm.gc.pause']['0.75'] | number: '1.0-3' }}</td>
+                <td class="text-right">{{ garbageCollectorMetrics()['jvm.gc.pause']['0.95'] | number: '1.0-3' }}</td>
+                <td class="text-right">{{ garbageCollectorMetrics()['jvm.gc.pause']['0.99'] | number: '1.0-3' }}</td>
+                <td class="text-right">{{ garbageCollectorMetrics()['jvm.gc.pause'].max | number: '1.0-3' }}</td>
             </tr>
         </tbody>
     </table>

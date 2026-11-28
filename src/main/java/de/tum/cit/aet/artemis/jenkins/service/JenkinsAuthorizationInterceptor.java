@@ -9,20 +9,19 @@ import java.util.Map;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 // REMOVE_IN_ARTEMIS_11 (Jenkins): Jenkins support is removed in Artemis 11, delete with the whole jenkins module
 @Profile(PROFILE_JENKINS)
@@ -44,10 +43,10 @@ public class JenkinsAuthorizationInterceptor implements ClientHttpRequestInterce
     @Value("${jenkins.use-crumb:#{true}}")
     private boolean useCrumb;
 
-    private final RestTemplate restTemplate;
+    private final RestClient crumbRestClient;
 
-    public JenkinsAuthorizationInterceptor(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public JenkinsAuthorizationInterceptor(@Qualifier("jenkinsCrumbRestClient") RestClient crumbRestClient) {
+        this.crumbRestClient = crumbRestClient;
     }
 
     @NonNull
@@ -61,13 +60,9 @@ public class JenkinsAuthorizationInterceptor implements ClientHttpRequestInterce
     }
 
     private void setCrumb(final HttpHeaders headersToAuthenticate) {
-        final var headers = new HttpHeaders();
-        headers.setBasicAuth(username, password);
-        final var entity = new HttpEntity<>(headers);
-
         try {
-            final var response = restTemplate.exchange(jenkinsServerUri.toString() + "/crumbIssuer/api/json", HttpMethod.GET, entity,
-                    new ParameterizedTypeReference<Map<String, Object>>() {
+            final var response = crumbRestClient.get().uri(jenkinsServerUri.toString() + "/crumbIssuer/api/json").headers(headers -> headers.setBasicAuth(username, password))
+                    .retrieve().toEntity(new ParameterizedTypeReference<Map<String, Object>>() {
                     });
             final var body = response.getBody();
             final var cookies = response.getHeaders().get("Set-Cookie");

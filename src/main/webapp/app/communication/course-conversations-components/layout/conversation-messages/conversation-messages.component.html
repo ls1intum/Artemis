@@ -2,7 +2,7 @@
     @if (newPost() && isAnnouncementChannel()) {
         <jhi-post-create-edit-modal [posting]="newPost()!" [isCommunicationPage]="true" (onCreate)="handleNewMessageCreated()" />
     }
-    <div class="justify-content-center conversation-messages">
+    <div class="conversation-messages justify-center">
         <div class="channel-content">
             <!-- loading messages -->
             @if (isFetchingPosts() && posts().length === 0) {
@@ -27,7 +27,7 @@
                     'hide-input': isHiddenInputWithCallToAction(),
                 }"
                 infinite-scroll
-                class="conversation-messages-message-list position-relative"
+                class="conversation-messages-message-list relative"
                 [scrollWindow]="false"
                 [infiniteScrollDisabled]="isFetchingPosts() || posts().length >= totalNumberOfPosts()"
                 (scrolledUp)="fetchNextPage()"
@@ -80,15 +80,10 @@
                     }
                     @if (_activeConversation(); as activeConversation) {
                         @if (newPost() && canCreateNewMessageInConversation(activeConversation) && isMobile()) {
-                            <div class="px-3">
+                            <div class="px-4">
                                 @if (getAsChannel(activeConversation)?.isAnnouncementChannel) {
                                     <div class="pt-2">
-                                        <button
-                                            type="button"
-                                            class="btn btn-md btn-primary"
-                                            (click)="createEditModal()?.open()"
-                                            jhiTranslate="artemisApp.communication.newAnnouncement"
-                                        ></button>
+                                        <button tumAetUiButton type="button" (click)="createEditModal()?.open()" jhiTranslate="artemisApp.communication.newAnnouncement"></button>
                                     </div>
                                 } @else {
                                     <jhi-message-inline-input
@@ -106,14 +101,9 @@
             </div>
             @if (_activeConversation(); as activeConversation) {
                 @if (newPost() && canCreateNewMessageInConversation(activeConversation) && !isMobile()) {
-                    <div class="d-none d-sm-block px-3 py-2">
+                    <div class="hidden px-4 py-2 min-[576px]:block">
                         @if (getAsChannel(activeConversation)?.isAnnouncementChannel) {
-                            <button
-                                type="button"
-                                class="btn btn-md btn-primary"
-                                (click)="createEditModal()?.open()"
-                                jhiTranslate="artemisApp.communication.newAnnouncement"
-                            ></button>
+                            <button tumAetUiButton type="button" (click)="createEditModal()?.open()" jhiTranslate="artemisApp.communication.newAnnouncement"></button>
                         } @else {
                             <jhi-message-inline-input
                                 class="message-input"

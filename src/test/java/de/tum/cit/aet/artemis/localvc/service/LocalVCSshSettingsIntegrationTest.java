@@ -72,6 +72,24 @@ class LocalVCSshSettingsIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void duplicateSshPublicKeyOfAnotherUserGetsTheSameAnswerAsOwnDuplicate() throws Exception {
+        sshSettingsTestService.duplicateKeyOfAnotherUserGetsTheSameAnswerAsOwnDuplicate();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void failToAddSshPublicKeyWithExpiryDateInThePast() throws Exception {
+        sshSettingsTestService.failToAddKeyWithExpiryDateInThePast();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void failToAddMoreSshPublicKeysThanTheLimit() throws Exception {
+        sshSettingsTestService.failToAddMoreKeysThanTheLimit();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void failToAddOrDeleteSshPublicKeyWithInvalidKeyId() throws Exception {
         sshSettingsTestService.failToAddOrDeleteWithInvalidKeyId();
     }

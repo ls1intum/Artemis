@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20261025233148-01-course-student-welcome-context" author="krusche">
+        <addColumn tableName="course_configuration"><column name="student_welcome_context" type="varchar(2000)"/></addColumn>
+        <rollback><dropColumn tableName="course_configuration" columnName="student_welcome_context"/></rollback>
+    </changeSet>
+</databaseChangeLog>

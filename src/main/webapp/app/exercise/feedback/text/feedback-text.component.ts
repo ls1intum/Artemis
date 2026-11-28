@@ -1,17 +1,17 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, input, signal } from '@angular/core';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
-import { LongFeedbackTextService } from 'app/exercise/feedback/services/long-feedback-text.service';
+import { LongFeedbackTextApi } from 'app/openapi/api/long-feedback-text-api';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-feedback-text',
-    styleUrls: ['./feedback-text.scss'],
+    styleUrls: ['./feedback-text.css'],
     templateUrl: './feedback-text.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective],
 })
 export class FeedbackTextComponent implements OnInit {
-    private longFeedbackService = inject(LongFeedbackTextService);
+    private longFeedbackApi = inject(LongFeedbackTextApi);
 
     feedback = input.required<FeedbackItem>();
 
@@ -31,8 +31,7 @@ export class FeedbackTextComponent implements OnInit {
     private loadLongFeedback() {
         const feedbackId = this.feedback().feedbackReference.id;
         if (feedbackId) {
-            this.longFeedbackService.find(feedbackId).subscribe((longFeedbackResponse) => {
-                const longFeedback = longFeedbackResponse.body!;
+            this.longFeedbackApi.getLongFeedback(feedbackId).subscribe((longFeedback) => {
                 this.text.set(longFeedback);
                 this.setDownloadInfo(longFeedback);
             });

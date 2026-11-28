@@ -11,7 +11,7 @@ import { ratingSeverity } from 'app/metis/shared/rating-scale.util';
 @Component({
     selector: 'jhi-rating-square',
     templateUrl: './rating-square.component.html',
-    styleUrl: './rating-square.component.scss',
+    styleUrl: './rating-square.component.css',
     imports: [ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

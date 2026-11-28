@@ -1,17 +1,17 @@
 <div class="editable-instruction-container__status__container">
     @if (invalidTestCases().length + missingTestCases().length + repeatedTestCases().length > 0) {
         <div id="instruction_analysis_test-case-issues" class="editable-instruction-container__status__item">
-            <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="testCasesTooltipContent" />
-            <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.issues"></span>
+            <fa-icon [icon]="faExclamationTriangle" class="text-state-warning me-1" [tumAetUiTooltip]="testCasesTooltipContent" />
+            <span class="text-state-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.issues"></span>
         </div>
     } @else {
         <div id="instruction_analysis_test-case-ok" class="editable-instruction-container__status__item">
-            <fa-icon [icon]="faCheckCircle" class="text-success me-1" />
-            <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.ok"></span>
+            <fa-icon [icon]="faCheckCircle" class="text-state-success me-1" />
+            <span class="text-state-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.ok"></span>
         </div>
     }
     <ng-template #testCasesTooltipContent>
-        <div class="text-start w-100">
+        <div class="text-left w-full">
             @if (invalidTestCases().length) {
                 <div>
                     <span [innerHTML]="'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCases' | artemisTranslate: { number: invalidTestCases().length }"
@@ -25,7 +25,7 @@
                 </div>
             }
             @if (missingTestCases().length) {
-                <div class="text-start">
+                <div class="text-left">
                     <span jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.missingTestCases" [translateValues]="{ number: missingTestCases().length }"></span>
                     <ul>
                         @for (test of missingTestCases(); track test) {
@@ -36,7 +36,7 @@
             }
 
             @if (repeatedTestCases().length) {
-                <div class="text-start">
+                <div class="text-left">
                     <span jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.repeatedTestCases" [translateValues]="{ number: repeatedTestCases().length }"></span>
                     <ul>
                         @for (test of repeatedTestCases(); track test) {

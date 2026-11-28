@@ -19,10 +19,11 @@ export class ActiveMenuDirective implements OnInit {
     }
 
     updateActiveFlag(selectedLanguage: string) {
-        this.renderer.setAttribute(this.element.nativeElement, 'aria-pressed', String(this.jhiActiveMenu() === selectedLanguage));
         if (this.jhiActiveMenu() === selectedLanguage) {
+            this.renderer.setAttribute(this.element.nativeElement, 'aria-current', 'true');
             this.renderer.addClass(this.element.nativeElement, 'active');
         } else {
+            this.renderer.removeAttribute(this.element.nativeElement, 'aria-current');
             this.renderer.removeClass(this.element.nativeElement, 'active');
         }
     }

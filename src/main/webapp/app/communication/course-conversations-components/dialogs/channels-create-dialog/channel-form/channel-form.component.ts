@@ -4,7 +4,11 @@ import { ChannelIconComponent } from 'app/communication/course-conversations-com
 import { Subject, takeUntil } from 'rxjs';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SelectButton } from 'primeng/selectbutton';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiInputGroupAddonComponent, TumAetUiInputGroupComponent } from '@tumaet/ui-angular/input-group';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 import { TranslateService } from '@ngx-translate/core';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
@@ -23,7 +27,19 @@ export const channelRegex = new RegExp('^[a-z0-9-]{1}[a-z0-9:\\-]{0,30}$');
 @Component({
     selector: 'jhi-channel-form',
     templateUrl: './channel-form.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ChannelIconComponent, ArtemisTranslatePipe, SelectButton],
+    imports: [
+        FormsModule,
+        ReactiveFormsModule,
+        TranslateDirective,
+        ChannelIconComponent,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+        TumAetUiInputGroupAddonComponent,
+        TumAetUiInputGroupComponent,
+        TumAetUiSelectButtonComponent,
+    ],
 })
 export class ChannelFormComponent implements OnInit, OnDestroy {
     private fb = inject(FormBuilder);

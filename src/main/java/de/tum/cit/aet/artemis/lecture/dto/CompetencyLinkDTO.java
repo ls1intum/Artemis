@@ -1,5 +1,11 @@
 package de.tum.cit.aet.artemis.lecture.dto;
 
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,6 +18,19 @@ public record CompetencyLinkDTO(CompetencyDTO competency, double weight, @JsonPr
 
     public CompetencyLinkDTO(CompetencyDTO competency, double weight) {
         this(competency, weight, false);
+    }
+
+    /**
+     * Maps update-request links only when already loaded, preserving the distinction between absent and empty links.
+     *
+     * @param links links from the learning object
+     * @return the mapped links, or null when absent or not initialized
+     */
+    public static @Nullable Set<CompetencyLinkDTO> ofAllIfInitialized(@Nullable Set<? extends CompetencyLearningObjectLink> links) {
+        if (links == null || !Hibernate.isInitialized(links)) {
+            return null;
+        }
+        return links.isEmpty() ? Set.of() : links.stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet());
     }
 
     public static CompetencyLinkDTO of(CompetencyLearningObjectLink link) {

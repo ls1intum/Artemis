@@ -10,7 +10,7 @@ import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { DatePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiChartSelectEvent, TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
+import { TumAetUiChartSelectEvent, TumAetUiChartTooltipConfig } from '@tumaet/ui-angular/chart';
 
 describe('Plagiarism Run Details', () => {
     let comp: PlagiarismRunDetailsComponent;

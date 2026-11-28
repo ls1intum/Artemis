@@ -4,7 +4,8 @@ import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleCheck } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { readStudentDTOsFromCSVFile } from 'app/shared-ui/user-import/util/read-users-from-csv';
 import { AlertService } from 'app/foundation/service/alert.service';
 import {
@@ -42,7 +43,7 @@ interface ImportResult {
         ArtemisTranslatePipe,
     ],
     templateUrl: './tutorial-registrations-import-modal.component.html',
-    styleUrl: './tutorial-registrations-import-modal.component.scss',
+    styleUrl: './tutorial-registrations-import-modal.component.css',
 })
 export class TutorialRegistrationsImportModalComponent {
     private translateService = inject(TranslateService);

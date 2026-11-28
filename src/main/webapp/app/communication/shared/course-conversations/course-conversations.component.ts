@@ -21,7 +21,9 @@ import {
     faPlus,
     faTimes,
 } from '@fortawesome/free-solid-svg-icons';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { captureException } from 'app/core/error-reporting/capture-exception';
 import { canCreateChannel } from 'app/communication/conversations/conversation-permissions.utils';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
@@ -127,13 +129,13 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     recents: true,
 };
 
-// The sidebar renders as a mobile overlay below Bootstrap `sm`; keep the JS open/close behaviour on the same breakpoint so it does not fire while the two-column layout is shown.
+// The sidebar renders as a mobile overlay below 576px (the media queries of course-conversations.component.css); keep the JS open/close behaviour on the same breakpoint so it does not fire while the two-column layout is shown.
 const MOBILE_SIDEBAR_BREAKPOINT = '(max-width: 576px)';
 
 @Component({
     selector: 'jhi-course-conversations',
     templateUrl: './course-conversations.component.html',
-    styleUrls: ['../../../course/overview/course-overview/course-overview.scss', './course-conversations.component.scss'],
+    styleUrls: ['../../../course/overview/course-overview/course-overview.css', './course-conversations.component.css'],
     encapsulation: ViewEncapsulation.None,
     providers: [CommunicationService, LinkifyService, LinkPreviewService],
     imports: [
@@ -149,6 +151,7 @@ const MOBILE_SIDEBAR_BREAKPOINT = '(max-width: 576px)';
         ConversationThreadSidebarComponent,
         ConversationGlobalSearchComponent,
         FeatureActivationComponent,
+        TumAetUiButtonDirective,
     ],
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarView {
@@ -160,7 +163,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
     private communicationService = inject(CommunicationService);
     private faqService = inject(FaqService);
     private courseOverviewService = inject(CourseOverviewService);
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
+    private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
     private eventManager = inject(EventManager);
     private breakpointObserver = inject(BreakpointObserver);
@@ -753,8 +757,15 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
     }
 
     openCreateGroupChatDialog() {
-        const ref = this.dialogService.open(GroupChatCreateDialogComponent, cloneWith(defaultFirstLayerDialogOptions, { data: { course: this.course() } }));
-        ref?.onClose
+        const ref = this.dialogService.open<GroupChatCreateDialogComponent, UserPublicInfoDTO[]>(
+            GroupChatCreateDialogComponent,
+            cloneWith(defaultFirstLayerDialogOptions, {
+                ariaLabel: this.translateService.instant('artemisApp.dialogs.createGroupChat.title'),
+                autoFocus: 'first-tabbable',
+                data: { course: this.course() },
+            }),
+        );
+        ref.onClose
             .pipe(
                 filter((result: UserPublicInfoDTO[] | undefined) => !!result),
                 takeUntil(this.ngUnsubscribe),
@@ -773,8 +784,15 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
     }
 
     openCreateOneToOneChatDialog() {
-        const ref = this.dialogService.open(OneToOneChatCreateDialogComponent, cloneWith(defaultFirstLayerDialogOptions, { data: { course: this.course() } }));
-        ref?.onClose
+        const ref = this.dialogService.open<OneToOneChatCreateDialogComponent, UserPublicInfoDTO>(
+            OneToOneChatCreateDialogComponent,
+            cloneWith(defaultFirstLayerDialogOptions, {
+                ariaLabel: this.translateService.instant('artemisApp.dialogs.createOneToOneChat.title'),
+                autoFocus: 'first-tabbable',
+                data: { course: this.course() },
+            }),
+        );
+        ref.onClose
             .pipe(
                 filter((result: UserPublicInfoDTO | undefined) => !!result),
                 takeUntil(this.ngUnsubscribe),
@@ -798,8 +816,17 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
      * Emits a create action for the given channel on confirmation.
      */
     openCreateChannelDialog() {
-        const ref = this.dialogService.open(ChannelsCreateDialogComponent, cloneWith(defaultSecondLayerDialogOptions, { data: { course: this.course() } }));
-        ref?.onClose
+        const ref = this.dialogService.open<ChannelsCreateDialogComponent, ChannelDTO>(
+            ChannelsCreateDialogComponent,
+            cloneWith(defaultSecondLayerDialogOptions, {
+                ariaLabel: this.translateService.instant('artemisApp.conversationsLayout.conversationSelectionSideBar.createChannel'),
+                autoFocus: 'first-tabbable',
+                // The form is tall; the small preset wraps its texts so much that the create button leaves a 900px high window.
+                size: 'medium',
+                data: { course: this.course() },
+            }),
+        );
+        ref.onClose
             .pipe(
                 filter((result: ChannelDTO | undefined) => !!result),
                 takeUntil(this.ngUnsubscribe),
@@ -826,9 +853,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
 
     openChannelOverviewDialog() {
         const subType = undefined;
-        const ref = this.dialogService.open(
+        const ref = this.dialogService.open<ChannelsOverviewDialogComponent, [ChannelDTO | undefined, boolean]>(
             ChannelsOverviewDialogComponent,
             cloneWith(defaultFirstLayerDialogOptions, {
+                ariaLabel: this.translateService.instant('artemisApp.dialogs.channelOverview.title', { courseTitle: this.course()?.title }),
                 data: {
                     course: this.course(),
                     createChannelFn: subType === ChannelSubType.GENERAL ? this.courseConversationsService.createChannel : undefined,
@@ -836,9 +864,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
                 },
             }),
         );
-        ref?.onClose
+        ref.onClose
             .pipe(
-                filter((result) => !!result),
+                filter((result): result is [ChannelDTO | undefined, boolean] => !!result),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe((result) => {

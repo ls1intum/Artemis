@@ -1,16 +1,16 @@
-<div [id]="'exercise-card-' + exercise().id" class="course-exercise-row align-items-center position-relative">
-    <a class="stretched-link" [routerLink]="routerLink()"></a>
-    <div class="col-auto d-none d-md-block">
+<div [id]="'exercise-card-' + exercise().id" class="course-exercise-row relative items-center">
+    <a class="cover-link" [routerLink]="routerLink()"></a>
+    <div class="hidden flex-none md:block">
         <a class="exercise-row-icon" [routerLink]="routerLink()">
             @if (exercise().type) {
-                <fa-icon class="me-3" [icon]="getIcon(exercise().type)" size="lg" [ngbTooltip]="getIconTooltip(exercise().type) | artemisTranslate" />
+                <fa-icon class="me-4" [icon]="getIcon(exercise().type)" size="lg" [tumAetUiTooltip]="getIconTooltip(exercise().type) | artemisTranslate" />
             }
         </a>
     </div>
-    <div class="col max-width">
-        <div class="row m-0">
-            <div class="col-auto p-0 d-md-none">
-                <h4 class="fw-medium exercise-title">
+    <div class="max-width shrink-0 grow basis-0">
+        <div class="exercise-row-line m-0 flex flex-wrap">
+            <div class="w-auto max-w-full flex-none p-0! md:hidden">
+                <h4 class="exercise-title">
                     @if (exercise().type) {
                         <fa-icon [icon]="getIcon(exercise().type)" />
                     }
@@ -18,14 +18,19 @@
                     {{ exercise().title }}
                 </h4>
             </div>
-            <div class="col-sm p-0 col d-none d-md-flex">
+            <div class="hidden max-w-full shrink-0 grow basis-0 p-0! md:flex">
                 <h5 class="exercise-title">{{ exercise().title }}</h5>
             </div>
             @if (!isPresentationMode()) {
-                <jhi-submission-result-status [exercise]="enrichedExercise()" [studentParticipation]="gradedStudentParticipation()" [triggerLastGraded]="false" class="result" />
+                <jhi-submission-result-status
+                    [exercise]="enrichedExercise()"
+                    [studentParticipation]="gradedStudentParticipation()"
+                    [triggerLastGraded]="false"
+                    class="result max-w-full shrink-0 px-2"
+                />
             }
         </div>
-        <div class="row" style="justify-content: space-between">
+        <div class="exercise-row-line -mx-2 flex flex-wrap justify-between">
             @if (!isPresentationMode()) {
                 <jhi-exercise-details-student-actions
                     [smallButtons]="true"
@@ -33,22 +38,27 @@
                     [smallColumns]="true"
                     [equalColumns]="false"
                     [exercise]="enrichedExercise()"
-                    [ngClass]="'mt-2 mb-2 raised-actions'"
+                    class="raised-actions mt-2! mb-2! max-w-full px-2!"
                 />
             }
             <jhi-exercise-categories
                 [exercise]="enrichedExercise()"
                 [showTags]="{ difficulty: true, includedInScore: true, notReleased: true, quizLive: !isPresentationMode() }"
-                class="exercise-tags col-auto col-sm justify-content-center d-none d-md-flex"
+                class="exercise-tags hidden max-w-full shrink-0 grow basis-0 justify-center px-2 md:flex"
             />
             @if (dueDate()) {
-                <div class="col-sm-auto mb-2 due-date" [ngClass]="getUrgentClass(dueDate()) || ''" [ngbTooltip]="dueDate() | artemisDate" [routerLink]="routerLink()">
-                    <span class="d-none d-sm-inline"> {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}: </span>
-                    <span class="d-sm-none"> {{ 'artemisApp.courseOverview.exerciseList.shortDueDate' | artemisTranslate }}: </span>
+                <div
+                    class="due-date mb-2 w-full max-w-full shrink-0 px-2 min-[576px]:w-auto"
+                    [ngClass]="getUrgentClass(dueDate()) || ''"
+                    [tumAetUiTooltip]="dueDate() | artemisDate"
+                    [routerLink]="routerLink()"
+                >
+                    <span class="hidden min-[576px]:inline"> {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}: </span>
+                    <span class="min-[576px]:hidden"> {{ 'artemisApp.courseOverview.exerciseList.shortDueDate' | artemisTranslate }}: </span>
                     {{ dueDate() | artemisTimeAgo }}
                 </div>
             } @else {
-                <div class="col-auto mb-2" jhiTranslate="artemisApp.courseOverview.exerciseList.noDueDate"></div>
+                <div class="mb-2 w-auto max-w-full flex-none px-2!" jhiTranslate="artemisApp.courseOverview.exerciseList.noDueDate"></div>
             }
         </div>
     </div>

@@ -1,13 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { Logger, compileString } from 'sass';
 
 /**
  * Contrast guard for the digits of the rating squares. Each of the five steps of the rating scale has a theme property for its background and one for
- * the colour of text on it. Both theme variable files are compiled with the same `generate-css-vars` mixin that produces the theme style sheets, so the
- * values checked here are the ones the squares render. The digits are 12 to 14 pixels, so they need the AA contrast of normal text.
+ * the colour of text on it. The test reads the same light and dark theme stylesheets as the application. The digits are 12 to 14 pixels, so they need the AA contrast of normal text.
  */
-const THEME_DIRECTORY = 'src/main/webapp/content/scss/themes';
+const THEME_DIRECTORY = 'src/main/webapp/content/css/themes';
 
 /** WCAG 2.x AA contrast for normal-sized text. */
 const AA_TEXT = 4.5;
@@ -16,11 +14,8 @@ const STEPS = ['lowest', 'low', 'neutral', 'high', 'highest'];
 
 type Rgb = [number, number, number];
 
-function compileThemeTokens(variablesModule: 'default-variables' | 'dark-variables'): Map<string, string> {
-    const { css } = compileString(`@use '${THEME_DIRECTORY}/generate-css-vars';\nhtml { @include generate-css-vars.generate('${variablesModule}'); }`, {
-        loadPaths: [process.cwd()],
-        logger: Logger.silent,
-    });
+function readThemeTokens(theme: 'light' | 'dark'): Map<string, string> {
+    const css = readFileSync(`${THEME_DIRECTORY}/${theme}.css`, 'utf8');
     const tokens = new Map<string, string>();
     for (const [, name, value] of css.matchAll(/--([\w-]+):\s*([^;]+);/g)) {
         tokens.set(name, value.trim());
@@ -59,8 +54,8 @@ function contrastRatio(first: Rgb, second: Rgb): number {
 }
 
 describe('rating scale contrast', () => {
-    for (const theme of ['default-variables', 'dark-variables'] as const) {
-        const tokens = compileThemeTokens(theme);
+    for (const theme of ['light', 'dark'] as const) {
+        const tokens = readThemeTokens(theme);
 
         it.each(STEPS)(`should keep the digits on the %s step readable in ${theme}`, (step) => {
             const background = tokens.get(`rating-scale-${step}`);
@@ -73,10 +68,10 @@ describe('rating scale contrast', () => {
     }
 
     it('should give the digits of every step of the square the colour of that step', () => {
-        const styles = readFileSync('src/main/webapp/app/metis/shared/rating-square/rating-square.component.scss', 'utf8');
+        const styles = readFileSync('src/main/webapp/app/metis/shared/rating-square/rating-square.component.css', 'utf8');
 
         for (const step of STEPS) {
-            expect(styles).toMatch(new RegExp(`&--${step} \\{\\s*background: var\\(--rating-scale-${step}\\);\\s*color: var\\(--rating-scale-${step}-contrast\\);`));
+            expect(styles).toMatch(new RegExp(`\\.rating-square--${step} \\{\\s*background: var\\(--rating-scale-${step}\\);\\s*color: var\\(--rating-scale-${step}-contrast\\);`));
         }
     });
 });

@@ -37,6 +37,8 @@ describe('CalendarMobileOverviewComponent', () => {
             eventMap: signal(new Map<string, IdentifiableCalendarEvent[]>()),
             loadEventsForCurrentMonth: vi.fn().mockReturnValue(of([])),
             subscriptionToken: signal('testToken'),
+            subscriptionTokenRotating: signal(false),
+            subscriptionTokenLoadFailed: signal(false),
             includedEventFilterOptions: signal([
                 CalendarEventFilterOption.LectureEvents,
                 CalendarEventFilterOption.ExerciseEvents,

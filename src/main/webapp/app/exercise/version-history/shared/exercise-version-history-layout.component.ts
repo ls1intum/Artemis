@@ -2,7 +2,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { TumAetUiSplitterComponent } from '@tumaet/ui-angular';
+import { TumAetUiSplitterComponent } from '@tumaet/ui-angular/splitter';
 
 /**
  * Resizable two-pane layout shell for the version history page.
@@ -14,7 +14,7 @@ import { TumAetUiSplitterComponent } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-exercise-version-history-layout',
     templateUrl: './exercise-version-history-layout.component.html',
-    styleUrls: ['./exercise-version-history-layout.component.scss'],
+    styleUrls: ['./exercise-version-history-layout.component.css'],
     imports: [TumAetUiSplitterComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

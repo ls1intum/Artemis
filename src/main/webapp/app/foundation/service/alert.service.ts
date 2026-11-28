@@ -163,6 +163,16 @@ export class AlertService {
                     // Disabled
                     break;
 
+                case 429: {
+                    const seconds = Math.ceil(Number(httpErrorResponse.headers?.get('Retry-After')));
+                    if (Number.isFinite(seconds) && seconds > 0) {
+                        this.addErrorAlert('Too many requests. Please try again in a few seconds.', 'error.http.429Wait', { seconds });
+                    } else {
+                        this.addErrorAlert('Too many requests. Please try again later.', 'error.http.429');
+                    }
+                    break;
+                }
+
                 default:
                     if (httpErrorResponse.error && httpErrorResponse.error.title) {
                         this.addErrorAlert(httpErrorResponse.error.title, httpErrorResponse.error.message, httpErrorResponse.error.params);
@@ -205,6 +215,8 @@ export class AlertService {
                 return !this.conflictErrorKeysToSkip.includes(httpErrorResponse.error?.errorKey);
             case 404:
                 return false;
+            case 429:
+                return true;
             default:
                 return !!httpErrorResponse.error?.title;
         }
@@ -245,30 +257,32 @@ export class AlertService {
             },
         };
 
-        if (!alert.disableTranslation && (alert.translationKey || alert.message)) {
-            // in case a translation key is defined, we use it to create the message
-            // Note: in most cases, our code passes the translation key as message
-            let translationKey: string;
-            if (alert.translationKey) {
-                translationKey = alert.translationKey;
+        // Callers may forward a server or error field typed `any`, which is not necessarily a string. ngx-translate throws on a key that is not a string.
+        // in case a translation key is defined, we use it to create the message
+        // Note: in most cases, our code passes the translation key as message
+        const translationKey: unknown = alert.translationKey || alert.message;
+        if (!alert.disableTranslation && translationKey) {
+            if (typeof translationKey !== 'string') {
+                alertInternal.message = String(alert.message ?? '');
             } else {
-                translationKey = alert.message!;
-            }
+                const translatedMessage = this.translateService.instant(translationKey, alert.translationParams);
 
-            const translatedMessage = this.translateService.instant(translationKey, alert.translationParams);
+                const translationFound = !translatedMessage.startsWith(translationNotFoundMessage);
+                if (translationFound) {
+                    alertInternal.message = translatedMessage;
+                } else {
+                    // Report the unknown translation key. A text with whitespace cannot be a key: some callers pass an English text or the message of a failed
+                    // request as `message`, which is shown as it is and is no missing translation.
+                    if (!/\s/.test(translationKey)) {
+                        captureException(new Error('Unknown translation key: ' + translationKey));
+                    }
 
-            const translationFound = !translatedMessage.startsWith(translationNotFoundMessage);
-            if (translationFound) {
-                alertInternal.message = translatedMessage;
-            } else {
-                // Report the unknown translation key
-                captureException(new Error('Unknown translation key: ' + translationKey));
-
-                // Fallback to displaying the translation key
-                // Keeping the original message if it exists in case the message field is supplied with a default english version, and
-                // the translationKey field is used for translations
-                if (!alert.message) {
-                    alertInternal.message = translationKey;
+                    // Fallback to displaying the translation key
+                    // Keeping the original message if it exists in case the message field is supplied with a default english version, and
+                    // the translationKey field is used for translations
+                    if (!alert.message) {
+                        alertInternal.message = translationKey;
+                    }
                 }
             }
         }

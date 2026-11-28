@@ -189,7 +189,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     @MockitoSpyBean
     protected PyrisFaqApi pyrisFaqApi;
 
-    // we explicitly want a mock here, as we don't want to test the actual chat model calls and avoid any autoconfiguration or instantiation of Spring AI internals
+    // every LLM preset answers through this mock (see MockChatModelLlmConfiguration), so no test reaches a provider
     @MockitoBean
     protected ChatModel azureOpenAiChatModel;
 

@@ -6,7 +6,7 @@
                 @if (success()) {
                     <tumaet-ui-message severity="success">
                         <span jhiTranslate="activate.messages.success"><strong>Your user account has been activated.</strong> Please </span>
-                        <a class="underline" [routerLink]="['/']" jhiTranslate="global.messages.info.authenticated.link"></a>.
+                        <a [routerLink]="['/']" jhiTranslate="global.messages.info.authenticated.link"></a>.
                     </tumaet-ui-message>
                 }
                 @if (error()) {

@@ -100,7 +100,7 @@ function isTransientFailure(error: unknown): boolean {
 @Component({
     selector: 'jhi-comprehension-check-panel',
     templateUrl: './comprehension-check-panel.component.html',
-    styleUrl: './comprehension-check-panel.component.scss',
+    styleUrl: './comprehension-check-panel.component.css',
     imports: [
         NgTemplateOutlet,
         TranslateDirective,

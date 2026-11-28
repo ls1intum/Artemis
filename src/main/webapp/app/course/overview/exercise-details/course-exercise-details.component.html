@@ -1,5 +1,5 @@
 @if (exercise) {
-    <div id="course-exercise-details" class="d-flex flex-column h-100 overflow-hidden">
+    <div id="course-exercise-details" class="flex h-full flex-col overflow-hidden">
         <jhi-exercise-header
             [exercise]="exercise"
             [courseId]="courseId"
@@ -29,7 +29,7 @@
         <jhi-programming-exercise-build-window-notice [exercise]="exercise" [participation]="activeParticipation()" [practiceMode]="participationMode() === 'practice'" />
 
         <jhi-exercise-split-panel
-            class="flex-fill overflow-hidden"
+            class="flex-auto overflow-hidden"
             [exercise]="exercise"
             [participationMode]="participationMode()"
             [studentParticipation]="activeParticipation()"
@@ -47,6 +47,7 @@
             [athenaEnabled]="athenaEnabled"
             [quizLiveStatus]="participationMode() === 'graded' ? liveQuizStatus() : undefined"
             [titleBarShowsPills]="titleBarShowsPills()"
+            [collapseSidePanels]="focusMode() ?? false"
             (quizSubmitted)="onQuizSubmitted($event)"
             (liveQuizStatusChange)="onLiveQuizStatusChange($event)"
             (quizPracticeParticipationChanged)="onNewParticipation($event)"

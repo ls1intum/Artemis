@@ -39,8 +39,10 @@ A single class while iterating:
 | Anything that lowercases or uppercases | Case conversion                                     |
 | Anything that serializes JSON          | Jackson version                                     |
 | A websocket topic or message handler   | Websocket topics                                    |
+| Anything that calls a language model   | Language models                                     |
 | An endpoint a coding agent should call | Endpoints opted in to access tokens                 |
 | A quiz endpoint or a DTO it uses       | Quiz OpenAPI specification                          |
+| A dependency in `build.gradle`         | Runtime classpath                                   |
 
 The detail for each, with the reason and the failing rule name, is in `reference/gates.md`. Read
 it rather than guessing; several of these rules forbid something that looks completely reasonable.

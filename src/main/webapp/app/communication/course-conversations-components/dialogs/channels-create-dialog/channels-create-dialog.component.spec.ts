@@ -10,7 +10,7 @@ import { ChannelDTO } from 'app/communication/shared/entities/conversation/chann
 import { initializeDialog } from 'test/helpers/dialog-test-helpers';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { Subject } from 'rxjs';
 
 describe('ChannelsCreateDialogComponent', () => {
@@ -22,8 +22,8 @@ describe('ChannelsCreateDialogComponent', () => {
         TestBed.configureTestingModule({
             imports: [ChannelsCreateDialogComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
-                { provide: DynamicDialogRef, useValue: { close: vi.fn(), destroy: vi.fn(), onClose: new Subject() } },
-                { provide: DynamicDialogConfig, useValue: { data: {} } },
+                { provide: TumAetUiDialogRef, useValue: { close: vi.fn(), dismiss: vi.fn(), onClose: new Subject() } },
+                { provide: TumAetUiDialogConfig, useValue: new TumAetUiDialogConfig({ data: {} }) },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
@@ -48,11 +48,11 @@ describe('ChannelsCreateDialogComponent', () => {
     });
 
     it('clicking close button in modal header should dismiss the modal', () => {
-        const closeButton = fixture.debugElement.nativeElement.querySelector('.modal-header button');
-        const dialogRef = TestBed.inject(DynamicDialogRef);
-        const destroySpy = vi.spyOn(dialogRef, 'destroy');
+        const closeButton = fixture.debugElement.nativeElement.querySelector('[data-testid="dialog-close-button"]');
+        const dialogRef = TestBed.inject(TumAetUiDialogRef);
+        const dismissSpy = vi.spyOn(dialogRef, 'dismiss');
         closeButton.click();
-        expect(destroySpy).toHaveBeenCalledOnce();
+        expect(dismissSpy).toHaveBeenCalledOnce();
     });
 
     it('should change channel type when channel type is changed in channel form', () => {
@@ -85,7 +85,7 @@ describe('ChannelsCreateDialogComponent', () => {
     });
 
     it('should close modal with the channel to create when form is submitted', () => {
-        const dialogRef = TestBed.inject(DynamicDialogRef);
+        const dialogRef = TestBed.inject(TumAetUiDialogRef);
         const closeSpy = vi.spyOn(dialogRef, 'close');
 
         const formComponentDebug = fixture.debugElement.query(By.css('jhi-channel-form'));
@@ -127,7 +127,7 @@ describe('ChannelsCreateDialogComponent', () => {
     });
 
     it('should close modal when createChannel is called', () => {
-        const dialogRef = TestBed.inject(DynamicDialogRef);
+        const dialogRef = TestBed.inject(TumAetUiDialogRef);
         const closeSpy = vi.spyOn(dialogRef, 'close');
 
         const formData: ChannelFormData = {

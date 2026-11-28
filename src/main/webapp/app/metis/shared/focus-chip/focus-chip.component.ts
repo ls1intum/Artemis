@@ -14,7 +14,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 @Component({
     selector: 'jhi-focus-chip',
     templateUrl: './focus-chip.component.html',
-    styleUrl: './focus-chip.component.scss',
+    styleUrl: './focus-chip.component.css',
     imports: [TranslateDirective],
     host: {
         class: 'relative inline-flex min-w-0 max-w-full items-center gap-1',

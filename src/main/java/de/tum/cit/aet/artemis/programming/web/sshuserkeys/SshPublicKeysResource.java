@@ -86,8 +86,9 @@ public class SshPublicKeysResource {
      *
      * @param sshPublicKey the ssh public key to create
      *
-     * @return the ResponseEntity with status 200 (OK), with status 400 (Bad Request) when the SSH key is malformed, the label is too long, or when a key with the same hash
-     *         already exists, or with status 401 (Unauthorized) if the session was established before the credentials of the account last changed
+     * @return the ResponseEntity with status 200 (OK), with status 400 (Bad Request) when the SSH key is malformed, the label is too long, the expiry date lies in the past, the
+     *         user has reached the maximum number of keys, or when the key cannot be added because it is already registered, or with status 401 (Unauthorized) if the session was
+     *         established before the credentials of the account last changed
      */
     @PostMapping({ "public-keys", "public-key" })
     @EnforceAtLeastStudent

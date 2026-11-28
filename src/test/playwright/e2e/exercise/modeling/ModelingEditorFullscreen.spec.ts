@@ -79,6 +79,9 @@ test.describe('Fullscreen modeling editor', { tag: '@fast' }, () => {
         const popover = page.locator('.apollon-popover');
         await expect(popover).toBeVisible();
         const name = popover.getByRole('textbox', { name: 'Name', exact: true }).first();
+        // toBeVisible() and fill() both pass on a popover painted behind the fullscreen frame; click() only
+        // succeeds on the element that receives the pointer, so it fails if anything stacks the popover below the frame.
+        await name.click();
         await name.fill('Fullscreen class');
         await expect(name).toHaveValue('Fullscreen class');
         await page.keyboard.press('Escape');

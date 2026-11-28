@@ -65,7 +65,6 @@ const courseRoutes: { name: string; routes: Routes; expectedPaths: string[] }[] 
             'programming-exercises/:exerciseId/edit',
             'programming-exercises/import/:exerciseId',
             'programming-exercises/import-from-file',
-            'programming-exercises/import-from-sharing',
             'programming-exercises/:exerciseId',
             'programming-exercises/:exerciseId/version-history',
             'programming-exercises/:exerciseId/generation/runs/:runId',

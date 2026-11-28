@@ -1,7 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { By } from '@angular/platform-browser';
-import { Dialog } from 'primeng/dialog';
 import { MatchPercentageInfoModalComponent } from './match-percentage-info-modal.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -41,10 +39,21 @@ describe('MatchPercentageInfoModalComponent', () => {
         expect(component.isVisible()).toBe(true);
     });
 
-    it('should configure a responsive breakpoint so the 50rem dialog stays within narrow viewports', () => {
+    it('should render the explanation in a labelled dialog and close it with the close button', async () => {
+        component.open();
         fixture.detectChanges();
+        await fixture.whenStable();
 
-        const dialog = fixture.debugElement.query(By.directive(Dialog)).componentInstance as Dialog;
-        expect(dialog.breakpoints).toEqual({ '850px': '95vw' });
+        const dialog = document.querySelector('[role="dialog"]');
+        expect(dialog).not.toBeNull();
+        expect(dialog!.textContent).toContain('artemisApp.quizExercise.matchLetterCase.title');
+
+        const closeButton = Array.from(dialog!.querySelectorAll('button')).find((button) => button.textContent?.includes('entity.action.close'));
+        closeButton!.click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.isVisible()).toBe(false);
+        expect(document.querySelector('[role="dialog"]')).toBeNull();
     });
 });

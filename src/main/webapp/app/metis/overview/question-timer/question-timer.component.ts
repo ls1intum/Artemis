@@ -23,7 +23,7 @@ const CRITICAL_SECONDS = 30;
 @Component({
     selector: 'jhi-question-timer',
     templateUrl: './question-timer.component.html',
-    styleUrl: './question-timer.component.scss',
+    styleUrl: './question-timer.component.css',
     imports: [TranslateDirective, ArtemisTranslatePipe, TumAetUiProgressBarComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

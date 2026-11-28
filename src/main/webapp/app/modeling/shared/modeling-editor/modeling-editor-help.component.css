@@ -1,0 +1,211 @@
+.modeling-editor-help h2,
+.modeling-editor-help h3 {
+    font-size: 1.25rem;
+}
+
+.modeling-editor-help__intro {
+    max-width: 48rem;
+    margin-bottom: 1rem;
+}
+
+.modeling-editor-help__intro h2 {
+    margin-bottom: 0.35rem;
+}
+
+.modeling-editor-help__intro p {
+    margin: 0;
+    color: var(--tumaet-ui-muted-color);
+    line-height: 1.5;
+}
+
+.modeling-editor-help__muted {
+    color: var(--tumaet-ui-muted-color);
+}
+
+.modeling-editor-help__walkthrough {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    gap: 1rem;
+    list-style: none;
+}
+
+.modeling-editor-help__step {
+    display: grid;
+    overflow: clip;
+    grid-template-columns: minmax(20rem, 1.5fr) minmax(15rem, 1fr);
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-xl);
+    background: var(--tumaet-ui-content-background);
+}
+
+.modeling-editor-help__step-copy {
+    display: grid;
+    align-self: center;
+    padding: 1.25rem;
+    grid-template-columns: auto 1fr;
+    column-gap: 0.65rem;
+}
+
+.modeling-editor-help__step h3 {
+    align-self: center;
+    margin-bottom: 0.5rem;
+}
+
+.modeling-editor-help__step p {
+    grid-column: 2;
+    margin: 0;
+    color: var(--tumaet-ui-text-color);
+    line-height: 1.5;
+}
+
+.modeling-editor-help__step-number {
+    display: inline-grid;
+    width: 1.75rem;
+    height: 1.75rem;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--tumaet-ui-hover-background);
+    color: var(--tumaet-ui-accent-color);
+    font-size: 0.8125rem;
+    font-weight: 700;
+}
+
+.modeling-editor-help__image {
+    display: grid;
+    min-width: 0;
+    place-items: center;
+    border-inline-end: 1px solid var(--tumaet-ui-border-color);
+    background: var(--tumaet-ui-hover-background);
+}
+
+.modeling-editor-help__image img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.modeling-editor-help__shortcut-groups {
+    display: grid;
+    margin-top: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: 0.75rem;
+}
+
+.modeling-editor-help__shortcut-groups > section {
+    padding: 1rem;
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-xl);
+    background: var(--tumaet-ui-content-background);
+}
+
+.modeling-editor-help__refine {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--tumaet-ui-border-color);
+}
+
+.modeling-editor-help__refine dl {
+    display: grid;
+    margin: 0;
+}
+
+.modeling-editor-help__section-heading {
+    max-width: 48rem;
+    margin-bottom: 0.5rem;
+}
+
+.modeling-editor-help__section-heading h2 {
+    margin-bottom: 0.35rem;
+}
+
+.modeling-editor-help__section-heading p {
+    margin: 0;
+    color: var(--tumaet-ui-muted-color);
+}
+
+.modeling-editor-help__technique {
+    display: grid;
+    padding: 0.8rem 0;
+    grid-template-columns: minmax(10rem, 0.38fr) minmax(0, 1fr);
+    gap: 1rem;
+}
+
+.modeling-editor-help__technique + .modeling-editor-help__technique {
+    border-top: 1px solid var(--tumaet-ui-border-color);
+}
+
+.modeling-editor-help__technique dt {
+    font-weight: 600;
+}
+
+.modeling-editor-help__technique dd {
+    margin: 0;
+    color: var(--body-color);
+    line-height: 1.5;
+}
+
+.modeling-editor-help__shortcut-groups dl {
+    display: grid;
+    margin: 0;
+    gap: 0.25rem;
+}
+
+.modeling-editor-help__shortcut {
+    display: flex;
+    min-height: 2rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.modeling-editor-help__shortcut dt {
+    font-weight: 500;
+}
+
+.modeling-editor-help__shortcut dd {
+    display: flex;
+    margin: 0;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.modeling-editor-help__key-combo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+
+.modeling-editor-help__or {
+    color: var(--tumaet-ui-muted-color);
+    font-size: 0.75rem;
+}
+
+kbd {
+    min-width: 1.7rem;
+    padding: 0.2rem 0.4rem;
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-sm);
+    background: var(--tumaet-ui-content-background);
+    box-shadow: 0 1px 0 var(--tumaet-ui-border-color);
+    color: var(--tumaet-ui-text-color);
+    font-family: inherit;
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+@media screen and (max-width: 700px) {
+    .modeling-editor-help__step {
+        grid-template-columns: 1fr;
+    }
+
+    .modeling-editor-help__step .modeling-editor-help__image {
+        border-inline-end: 0;
+        border-block-end: 1px solid var(--tumaet-ui-border-color);
+    }
+
+    .modeling-editor-help__technique {
+        grid-template-columns: 1fr;
+        gap: 0.25rem;
+    }
+}

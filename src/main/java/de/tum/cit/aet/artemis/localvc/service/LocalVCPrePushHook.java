@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
@@ -23,20 +25,29 @@ import org.slf4j.LoggerFactory;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
 import de.tum.cit.aet.artemis.localvc.service.git.GitPathNames;
+import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 
 /**
  * Contains an onPreReceive method that is called by JGit before a push is received (i.e. before the pushed files are written to disk but after the authorization check was
  * successful).
  */
-public record LocalVCPrePushHook(LocalVCServletService localVCServletService, User user) implements PreReceiveHook {
+public record LocalVCPrePushHook(LocalVCServletService localVCServletService, User user, GitOperationAudit audit, Supplier<AuthenticationMechanism> mechanism)
+        implements PreReceiveHook {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCPrePushHook.class);
 
     private static final String BRANCH_CHECK_ERROR = "An error occurred while checking the branch.";
 
-    public LocalVCPrePushHook(LocalVCServletService localVCServletService, @NonNull User user) {
+    public LocalVCPrePushHook(LocalVCServletService localVCServletService, @NonNull User user, GitOperationAudit audit, Supplier<AuthenticationMechanism> mechanism) {
         this.localVCServletService = localVCServletService;
         this.user = user;
+        this.audit = audit;
+        this.mechanism = mechanism;
+    }
+
+    /** A hook for a push whose credential is not looked at, such as one over ssh. */
+    public LocalVCPrePushHook(LocalVCServletService localVCServletService, @NonNull User user, GitOperationAudit audit) {
+        this(localVCServletService, user, audit, () -> null);
     }
 
     private static final String REPOSITORY_SIZE_DOCUMENTATION_URL = "https://docs.artemis.tum.de/instructor/exercises/programming-exercise/write-code-and-tests#keep-repositories-small";
@@ -68,6 +79,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
      */
     @Override
     public void onPreReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
+        markPushReceived(receivePack, commands);
         examine(receivePack, commands);
         // JGit passes only the commands that it did not reject itself, so these alone cannot tell: a push whose only command JGit rejected passes none. The objects are stored
         // only for a push that has commands, all of which, also those that JGit rejected on its own, are still to be applied.
@@ -94,6 +106,7 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
         if (commands.isEmpty()) {
             return;
         }
+        markPushReceived(receivePack, commands);
         // There should only be one ReceiveCommand. If there are multiple, e.g. because the user pushes to multiple branches simultaneously, we reject the push.
         // Every single command has to be rejected here: JGit applies every command that a hook leaves on NOT_ATTEMPTED, so rejecting only one of them would let
         // the remaining refs through without any of the checks below.
@@ -123,8 +136,13 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
         // If branching is allowed, reject pushes to anything other than branch names that match the branch regex
         // If branching is not allowed, reject pushes to anything other than the default branch
         String branchPath = command.getRefName();
-        if (!branchPath.equals("refs/heads/" + defaultBranchName)) {
-            String branchName = branchPath.substring("refs/heads/".length());
+        if (!branchPath.equals(Constants.R_HEADS + defaultBranchName)) {
+            // Only branches can be pushed: the checks below judge the name as the name of a branch
+            if (!branchPath.startsWith(Constants.R_HEADS) || branchPath.length() == Constants.R_HEADS.length()) {
+                command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You can only push to a branch.");
+                return;
+            }
+            String branchName = branchPath.substring(Constants.R_HEADS.length());
             LocalVCServletService.BranchingStatus branchingStatus = localVCServletService.isBranchNameAllowedForRepository(repository, branchName);
             switch (branchingStatus) {
                 case BRANCHING_DISABLED -> {
@@ -153,6 +171,24 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
         }
     }
 
+    /**
+     * Tells the audit that the push brought commands, so that it is an operation and not only the announcement of one. This is the first moment that every push with commands
+     * reaches, and it is before the push changes anything, so the commit that is read is the one a rejected push leaves in the repository.
+     *
+     * @param receivePack the process handling the current receive
+     * @param commands    the commands that JGit passes to the hook, which leave out those that it rejected itself
+     */
+    private void markPushReceived(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
+        if (!commands.isEmpty() || hasReadCommands(receivePack)) {
+            audit.onPushReceived(LocalVCFetchPreUploadHook.headCommitOf(receivePack.getRepository()));
+        }
+    }
+
+    /** JGit has read the commands of every push that reaches a hook, and counts those that it rejected itself, which the hook is not given. */
+    private static boolean hasReadCommands(ReceivePack receivePack) {
+        return !receivePack.getAllCommands().isEmpty();
+    }
+
     private void examine(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
 
         if (commands.isEmpty()) {
@@ -171,6 +207,9 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
         Repository repository = receivePack.getRepository();
 
         try {
+            if (mechanism.get() == AuthenticationMechanism.AGENT_ACCESS_TOKEN && !examineAgentPush(command, repository)) {
+                return;
+            }
             // Prevent force push.
             if (command.getType() == ReceiveCommand.Type.UPDATE_NONFASTFORWARD) {
                 try {
@@ -190,6 +229,32 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
         catch (IOException e) {
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, BRANCH_CHECK_ERROR);
         }
+    }
+
+    /**
+     * The rules that a personal access token has on top of those of its owner: it never rewrites history, because a bare repository keeps nothing from which that could be
+     * undone, and it pushes only while the exercise is still a draft, which is judged again here because a push can take long to arrive.
+     *
+     * @return true if the push may go on, false if the command was rejected
+     */
+    private boolean examineAgentPush(ReceiveCommand command, Repository repository) {
+        if (command.getType() == ReceiveCommand.Type.UPDATE_NONFASTFORWARD) {
+            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "A personal access token cannot force push.");
+            return false;
+        }
+        try {
+            Optional<String> blocked = localVCServletService.examineAgentPush(user, repository, command);
+            if (blocked.isPresent()) {
+                command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, blocked.get());
+                return false;
+            }
+        }
+        catch (Exception e) {
+            log.warn("Could not examine the push of a personal access token to {}: {}", repository.getDirectory(), e.getMessage());
+            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the permissions of the token.");
+            return false;
+        }
+        return true;
     }
 
     private static void rejectFilesLargerThan10MbOrSymlinksOrSubModulesOrOversizedRepository(Repository repository, ReceiveCommand command, long maxRepositorySizeBytes)

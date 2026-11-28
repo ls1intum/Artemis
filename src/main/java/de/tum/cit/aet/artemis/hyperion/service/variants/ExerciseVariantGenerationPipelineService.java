@@ -28,6 +28,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionLlmPresets;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionChatClientService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionPromptTemplateService;
 
 /**
@@ -119,12 +121,11 @@ public class ExerciseVariantGenerationPipelineService {
 
     private final UserRepository userRepository;
 
-    @Nullable
     private final ChatClient chatClient;
 
     public ExerciseVariantGenerationPipelineService(VariantTypeRegistryService typeRegistry, VariantAgentLoopService agentLoopRunner, ExerciseVariantJobService jobService,
             HyperionPromptTemplateService templateService, ExerciseRepository exerciseRepository, ExerciseDeletionService exerciseDeletionService,
-            LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, @Nullable ChatClient chatClient) {
+            LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, HyperionChatClientService chatClients) {
         this.typeRegistry = typeRegistry;
         this.agentLoopRunner = agentLoopRunner;
         this.jobService = jobService;
@@ -133,7 +134,7 @@ public class ExerciseVariantGenerationPipelineService {
         this.exerciseDeletionService = exerciseDeletionService;
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
-        this.chatClient = chatClient;
+        this.chatClient = chatClients.forTask(HyperionLlmPresets.Task.VARIANTS);
     }
 
     /**
@@ -368,9 +369,6 @@ public class ExerciseVariantGenerationPipelineService {
      * {@value MAX_PLANNING_RETRIES} re-prompts, then the job fails.
      */
     private ChangePlan planChanges(VariantJob job, String sourceContext) {
-        if (chatClient == null) {
-            throw new PhaseFailedException("Failed in PLANNING: AI chat client is not configured");
-        }
         var outputConverter = new BeanOutputConverter<>(ChangePlan.class);
         String systemPrompt = templateService.render(planPromptTemplate(job), promptVariables(job, sourceContext));
         String userMessage = "Produce the change plan for the requested variant." + "\n\n" + outputConverter.getFormat();
@@ -438,9 +436,6 @@ public class ExerciseVariantGenerationPipelineService {
      * @return the summary, or null when it could not be produced
      */
     private String generateInstructorSummary(VariantJob job, String templatePath, String pipelineId, Map<String, String> outcomeContext) {
-        if (chatClient == null) {
-            return null;
-        }
         try {
             // The local job copy is stale (step outputs are recorded via the job service) — read the map record.
             VariantJob currentJob = jobService.getJob(job.getJobId(), job.getInitiatorLogin()).orElse(job);

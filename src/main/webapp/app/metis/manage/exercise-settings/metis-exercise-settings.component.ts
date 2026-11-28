@@ -99,7 +99,7 @@ type QueuedWrite = SettingsWrite & { exerciseId: number; version: number };
 @Component({
     selector: 'jhi-metis-exercise-settings',
     templateUrl: './metis-exercise-settings.component.html',
-    styleUrl: './metis-exercise-settings.component.scss',
+    styleUrl: './metis-exercise-settings.component.css',
     imports: [
         FormsModule,
         TranslateDirective,

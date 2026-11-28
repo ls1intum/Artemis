@@ -1,6 +1,7 @@
+import { AiModeSelectorComponent } from './ai-mode-selector.component';
 import { Component, OnDestroy, OnInit, inject, output, signal } from '@angular/core';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { Router } from '@angular/router';
@@ -11,8 +12,8 @@ import { LLMModalResult, LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/a
 @Component({
     selector: 'jhi-llm-selection-modal',
     templateUrl: './llm-selection-popup.component.html',
-    styleUrls: ['./llm-selection-popup.component.scss'],
-    imports: [TranslateDirective, TumAetUiDialogComponent, ArtemisTranslatePipe],
+    styleUrls: ['./llm-selection-popup.component.css'],
+    imports: [TranslateDirective, AiModeSelectorComponent, TumAetUiDialogComponent, ArtemisTranslatePipe],
 })
 export class LLMSelectionModalComponent implements OnInit, OnDestroy {
     private modalService = inject(LLMSelectionModalService);
@@ -51,6 +52,20 @@ export class LLMSelectionModalComponent implements OnInit, OnDestroy {
         this.choice.emit(LLM_MODAL_DISMISSED);
         this.modalService.emitChoice(LLM_MODAL_DISMISSED);
         this.close();
+    }
+
+    selectMode(choice: LLMSelectionDecision): void {
+        switch (choice) {
+            case LLMSelectionDecision.CLOUD_AI:
+                this.selectCloud();
+                break;
+            case LLMSelectionDecision.LOCAL_AI:
+                this.selectLocal();
+                break;
+            case LLMSelectionDecision.NO_AI:
+                this.selectNone();
+                break;
+        }
     }
 
     selectCloud(): void {

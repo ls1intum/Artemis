@@ -1,8 +1,8 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, input, model, output, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { TranslateService } from '@ngx-translate/core';
 import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
 import { EMPTY, Observable, Subscription, of, throwError } from 'rxjs';
@@ -31,13 +31,13 @@ import { CodeEditorResolveConflictModalComponent } from 'app/programming/shared/
     selector: 'jhi-code-editor-actions',
     templateUrl: './code-editor-actions.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [TumAetUiButtonDirective, FeatureToggleDirective, NgbTooltip, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink],
+    imports: [TumAetUiButtonDirective, FeatureToggleDirective, TumAetUiTooltipDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, RouterLink],
 })
 export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     private readonly repositoryService = inject(CodeEditorRepositoryService);
     private readonly repositoryFileService = inject(CodeEditorRepositoryFileService);
     private readonly conflictService = inject(CodeEditorConflictStateService);
-    private readonly dialogService = inject(DialogService);
+    private readonly dialogService = inject(TumAetUiDialogService);
     private readonly translateService = inject(TranslateService);
     private readonly submissionService = inject(CodeEditorSubmissionService);
     private readonly route = inject(ActivatedRoute);
@@ -79,8 +79,8 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
     autoSaveTimer = 0;
     autoSaveInterval?: number;
 
-    private refreshModalRef?: DynamicDialogRef;
-    private conflictModalRef?: DynamicDialogRef;
+    private refreshModalRef?: TumAetUiDialogRef<boolean, CodeEditorConfirmRefreshModalComponent>;
+    private conflictModalRef?: TumAetUiDialogRef<boolean, CodeEditorResolveConflictModalComponent>;
 
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
@@ -184,11 +184,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
         }
         if (this.editorState() !== EditorState.CLEAN) {
             this.refreshModalRef =
-                this.dialogService.open(CodeEditorConfirmRefreshModalComponent, {
+                this.dialogService.open<CodeEditorConfirmRefreshModalComponent, boolean>(CodeEditorConfirmRefreshModalComponent, {
                     header: this.translateService.instant('artemisApp.editor.refresh.refreshExplanationShort'),
-                    width: '50rem',
-                    modal: true,
-                    closable: true,
+                    size: 'large',
                     closeOnEscape: true,
                     dismissableMask: false,
                 }) ?? undefined;
@@ -330,11 +328,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy {
             return;
         }
         this.conflictModalRef =
-            this.dialogService.open(CodeEditorResolveConflictModalComponent, {
+            this.dialogService.open<CodeEditorResolveConflictModalComponent, boolean>(CodeEditorResolveConflictModalComponent, {
                 header: this.translateService.instant('artemisApp.editor.conflict.conflictExplanationShort'),
-                width: '50rem',
-                modal: true,
-                closable: true,
+                size: 'large',
                 closeOnEscape: true,
                 dismissableMask: false,
             }) ?? undefined;

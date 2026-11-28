@@ -23,7 +23,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 @Component({
     selector: 'tumaet-ui-list',
     templateUrl: './tumaet-ui-list.component.html',
-    styleUrl: './tumaet-ui-list.component.scss',
+    styleUrl: './tumaet-ui-list.component.css',
     host: {
         class: 'tumaet-ui-list',
     },

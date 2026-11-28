@@ -2,10 +2,11 @@
 set -euo pipefail
 
 # Called only by the dedicated E2E runner after its containers have been stopped.
-# Immutable application image tags otherwise accumulate across runs. Keep recent images,
-# all images in use, and the exercise/browser/database images cached by this runner.
+# Immutable application image tags otherwise accumulate across runs. Keep recent images
+# when space allows, all images in use, and the exercise/browser/database image cache.
+application_source_label=org.opencontainers.image.source=https://github.com/ls1intum/Artemis
 docker image prune --all --force \
-    --filter label=org.opencontainers.image.source=https://github.com/ls1intum/Artemis \
+    --filter "label=$application_source_label" \
     --filter until=24h
 
 docker_root=$(docker info --format '{{.DockerRootDir}}')
@@ -24,12 +25,25 @@ read_headroom
 
 if ((available_kib < required_kib)); then
     echo 'Docker disk headroom is low; reclaiming unused build cache to meet the reserve before checking again.'
-    # Use the daemon's default builder, whose storage is checked above. Buildx
-    # evicts least-recently-used, reclaimable cache only until the required free
-    # space is available, with a 512 MB cache floor. Cached application/exercise/
+    # Use the daemon's default builder, whose storage is checked above. Drop all
+    # unused build cache but 512 MB. Buildx's --min-free-space is not used: on the
+    # E2E runners (Docker 29, containerd image store) it reclaimed 8 kB of 19 GB of
+    # unused cache and left the job failing. Cached application/exercise/
     # browser/database images, containers and volumes remain untouched.
-    if ! docker buildx prune --builder default --force --min-free-space "$((required_kib * 1024))" --reserved-space 512MB; then
+    if ! docker buildx prune --builder default --force --reserved-space 512MB; then
         echo '::error::Cannot reclaim unused Docker build cache on the E2E runner.' >&2
+        exit 1
+    fi
+    read_headroom
+fi
+
+if ((available_kib < required_kib)); then
+    echo 'Docker disk headroom is still low; reclaiming unused Artemis images regardless of age.'
+    # Busy runners can fill with application images created within the last day.
+    # Drop only their retention window under pressure. Docker keeps images referenced
+    # by containers; other images, containers and volumes remain untouched.
+    if ! docker image prune --all --force --filter "label=$application_source_label"; then
+        echo '::error::Cannot reclaim unused Artemis images on the E2E runner.' >&2
         exit 1
     fi
     read_headroom

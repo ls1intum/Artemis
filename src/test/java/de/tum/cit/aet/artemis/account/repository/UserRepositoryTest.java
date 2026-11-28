@@ -161,7 +161,7 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
     /**
      * Creates a not-enrolled-user-cleanup test fixture: a saved user with the given authorities/deleted flag and a
      * backdated last login date (set via a bulk update so it is the effective activity signal). An enrolled user is
-     * given a course role, which is what "enrolled" means since course group names were replaced by user course roles.
+     * given a course role, which is what "enrolled" means.
      */
     private User createUser(String login, boolean enrolled, Set<Authority> authorities, boolean deleted, Instant lastLoginDate) {
         User user = userUtilService.createAndSaveUser(login);
@@ -486,6 +486,56 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(userRepository.isAtLeastTeachingAssistantInLectureUnit(regularUser.getLogin(), lectureUnit.getId())).isFalse();
         assertThat(userRepository.isAtLeastEditorInLectureUnit(regularUser.getLogin(), lectureUnit.getId())).isFalse();
         assertThat(userRepository.isAtLeastInstructorInLectureUnit(regularUser.getLogin(), lectureUnit.getId())).isFalse();
+    }
+
+    @Test
+    void testLectureAndLectureUnitMembershipFollowsTheRoleInTheCourseOfTheLecture() {
+        Course course = courseUtilService.createCourse();
+        Course otherCourse = courseUtilService.createCourse();
+        Lecture lecture = lectureUtilService.createLecture(course);
+        LectureUnit lectureUnit = lectureUtilService.createTextUnit(lecture);
+        Lecture lectureOfOtherCourse = lectureUtilService.createLecture(otherCourse);
+        LectureUnit lectureUnitOfOtherCourse = lectureUtilService.createTextUnit(lectureOfOtherCourse);
+
+        User student = userUtilService.createAndSaveUser(TEST_PREFIX + "lecturestudent");
+        User tutor = userUtilService.createAndSaveUser(TEST_PREFIX + "lecturetutor");
+        User editor = userUtilService.createAndSaveUser(TEST_PREFIX + "lectureeditor");
+        User instructor = userUtilService.createAndSaveUser(TEST_PREFIX + "lectureinstructor");
+        User instructorOfOtherCourse = userUtilService.createAndSaveUser(TEST_PREFIX + "lectureotherinstructor");
+        userUtilService.enrollUserInCourse(student, course, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(tutor, course, CourseRole.TEACHING_ASSISTANT);
+        userUtilService.enrollUserInCourse(editor, course, CourseRole.EDITOR);
+        userUtilService.enrollUserInCourse(instructor, course, CourseRole.INSTRUCTOR);
+        userUtilService.enrollUserInCourse(instructorOfOtherCourse, otherCourse, CourseRole.INSTRUCTOR);
+
+        // every role includes the roles below it
+        assertLectureAndUnitMembership(student, lecture, lectureUnit, true, false, false, false);
+        assertLectureAndUnitMembership(tutor, lecture, lectureUnit, true, true, false, false);
+        assertLectureAndUnitMembership(editor, lecture, lectureUnit, true, true, true, false);
+        assertLectureAndUnitMembership(instructor, lecture, lectureUnit, true, true, true, true);
+
+        // a role in another course gives nothing in this one, and the role of that course counts for its own lecture
+        assertLectureAndUnitMembership(instructorOfOtherCourse, lecture, lectureUnit, false, false, false, false);
+        assertLectureAndUnitMembership(instructorOfOtherCourse, lectureOfOtherCourse, lectureUnitOfOtherCourse, true, true, true, true);
+        assertLectureAndUnitMembership(instructor, lectureOfOtherCourse, lectureUnitOfOtherCourse, false, false, false, false);
+
+        // a login and an id that do not exist
+        assertThat(userRepository.isAtLeastStudentInLecture(TEST_PREFIX + "nobody", lecture.getId())).isFalse();
+        assertThat(userRepository.isAtLeastStudentInLectureUnit(TEST_PREFIX + "nobody", lectureUnit.getId())).isFalse();
+        assertThat(userRepository.isAtLeastStudentInLecture(instructor.getLogin(), lectureOfOtherCourse.getId() + 100_000)).isFalse();
+        assertThat(userRepository.isAtLeastStudentInLectureUnit(instructor.getLogin(), lectureUnitOfOtherCourse.getId() + 100_000)).isFalse();
+    }
+
+    private void assertLectureAndUnitMembership(User user, Lecture lecture, LectureUnit lectureUnit, boolean student, boolean tutor, boolean editor, boolean instructor) {
+        String login = user.getLogin();
+        assertThat(userRepository.isAtLeastStudentInLecture(login, lecture.getId())).as("student in lecture").isEqualTo(student);
+        assertThat(userRepository.isAtLeastTeachingAssistantInLecture(login, lecture.getId())).as("tutor in lecture").isEqualTo(tutor);
+        assertThat(userRepository.isAtLeastEditorInLecture(login, lecture.getId())).as("editor in lecture").isEqualTo(editor);
+        assertThat(userRepository.isAtLeastInstructorInLecture(login, lecture.getId())).as("instructor in lecture").isEqualTo(instructor);
+        assertThat(userRepository.isAtLeastStudentInLectureUnit(login, lectureUnit.getId())).as("student in lecture unit").isEqualTo(student);
+        assertThat(userRepository.isAtLeastTeachingAssistantInLectureUnit(login, lectureUnit.getId())).as("tutor in lecture unit").isEqualTo(tutor);
+        assertThat(userRepository.isAtLeastEditorInLectureUnit(login, lectureUnit.getId())).as("editor in lecture unit").isEqualTo(editor);
+        assertThat(userRepository.isAtLeastInstructorInLectureUnit(login, lectureUnit.getId())).as("instructor in lecture unit").isEqualTo(instructor);
     }
 
     @Test

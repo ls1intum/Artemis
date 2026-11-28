@@ -16,6 +16,7 @@ import jakarta.validation.constraints.Min;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -291,6 +292,11 @@ public class ResultResource {
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, ineligibility.get().getErrorKey(), ineligibility.get().getDefaultMessage())).build();
         }
 
+        // checked on the raw value before the conversion rounds it (which fails on a non-finite score) and before the participation and the
+        // empty submission are created; an unrated external result may have no score at all
+        if (resultDTO.score() != null) {
+            exercise.checkScoreWithinBoundsElseThrow(resultDTO.score());
+        }
         Result result = resultDTO.toEntity();
         resultService.validateGradingInstructions(result.getFeedbacks(), exercise.getId());
 
@@ -394,7 +400,7 @@ public class ResultResource {
     @GetMapping("exercises/{exerciseId}/feedback-details")
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<FeedbackAnalysisResponseDTO> getFeedbackDetailsPaged(@PathVariable long exerciseId, @RequestParam("groupFeedback") boolean groupFeedback,
-            @ModelAttribute FeedbackPageableDTO data) {
+            @ParameterObject @ModelAttribute FeedbackPageableDTO data) {
         FeedbackAnalysisResponseDTO response = resultService.getFeedbackDetailsOnPage(exerciseId, data, groupFeedback);
         return ResponseEntity.ok(response);
     }
