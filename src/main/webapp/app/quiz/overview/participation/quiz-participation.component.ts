@@ -915,8 +915,12 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
                     }
                 },
                 error: (error: HttpErrorResponse) => {
-                    if (this.finishLiveSave(submission)) {
-                        this.onSaveError(error.message);
+                    if (!this.finishLiveSave(submission)) {
+                        return;
+                    }
+                    this.onSaveError(error.message);
+                    if (this.answerRevision !== revision) {
+                        this.triggerSave();
                     }
                 },
             });
