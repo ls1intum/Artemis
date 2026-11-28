@@ -7,7 +7,9 @@ const sidebars: SidebarsConfig = {
         'course-management',
         'access-rights',
         'artemis-intelligence',
+        'llm-configuration',
         'agent-access',
+        'course-home-ai',
         'scaling',
         {
             type: 'category',

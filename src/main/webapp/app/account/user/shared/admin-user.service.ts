@@ -63,7 +63,7 @@ export class AdminUserService {
     }
 
     /**
-     * Update a user on the server: this should only be used when groups and authorities are included, otherwise they might be lost on the server
+     * Update a user on the server: this should only be used when the authorities are included, otherwise they might be lost on the server
      * @param user The user to update.
      * @return Observable<HttpResponse<User>> with the updated user as body.
      */

@@ -1,4 +1,5 @@
-import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { TutorLeaderboardElement } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { Course } from 'app/course/shared/entities/course.model';

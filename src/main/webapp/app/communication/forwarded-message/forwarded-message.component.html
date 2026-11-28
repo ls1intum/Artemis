@@ -2,19 +2,20 @@
     <div class="forwarded-message-container">
         <div class="left-border-line"></div>
         <div class="forwarded-message-content">
-            <span class="forwarded-message-channel fs-x-small d-flex align-items-center">
-                <fa-icon [icon]="faShare" class="item-icon" style="margin-right: 0.3rem" />
+            <span class="forwarded-message-channel text-[0.75rem] flex items-center">
+                <fa-icon [icon]="faShare" class="item-icon me-[0.3rem]" />
                 <span>
                     <span [jhiTranslate]="'artemisApp.communication.forward.' + (isSourceUnavailable() ? 'forwardedFromUnknown' : 'forwardedFrom')"></span>&nbsp;{{ sourceName() }}
                 </span>
                 @if (viewButtonVisible()) {
                     <button
                         type="button"
-                        class="btn btn-link p-0"
-                        style="width: fit-content; font-size: 0.7rem; margin-left: 0.2rem"
+                        class="w-fit cursor-pointer border-0 bg-transparent p-0 text-(--tumaet-ui-accent-color) underline"
                         (click)="onTriggerNavigateToPost()"
                         jhiTranslate="artemisApp.communication.forward.viewConversation"
-                    ></button>
+                    >
+                        View conversation
+                    </button>
                 }
             </span>
             @if (isSourceUnavailable()) {
@@ -33,15 +34,18 @@
                         [authorId]="originalPostDetails()?.author?.id"
                         [authorName]="originalPostDetails()?.author?.name"
                         [imageUrl]="addPublicFilePrefix(originalPostDetails()?.author?.imageUrl)"
-                        style="margin-right: 0.2rem"
+                        class="me-[0.2rem]"
                     />
                     <span class="forwarded-message-author">{{ originalPostDetails()?.author?.name }}</span>
                     <span class="post-header-date-separator">-</span>
                     <span class="post-header-date">
                         @if (postingIsOfToday()) {
-                            <span [jhiTranslate]="todayFlag() ?? ''" id="today-flag" class="fs-x-small"></span>
+                            <span [jhiTranslate]="todayFlag() ?? ''" id="today-flag" class="text-[0.75rem]"></span>
                         }
-                        <span class="fs-x-small" [disableTooltip]="postingIsOfToday()" ngbTooltip="{{ originalPostDetails()?.creationDate | artemisDate: 'time' }}"
+                        <span
+                            class="text-[0.75rem]"
+                            [tumAetUiTooltip]="postingIsOfToday() ? '' : (originalPostDetails()?.creationDate | artemisDate: 'time')"
+                            tumAetUiTooltipDescribesHost="false"
                             >{{
                                 postingIsOfToday() ? (originalPostDetails()?.creationDate | artemisDate: 'time') : (originalPostDetails()?.creationDate | artemisDate: 'short-date')
                             }}
@@ -64,8 +68,7 @@
                 @if (isContentLong()) {
                     <button
                         type="button"
-                        class="btn btn-link p-0"
-                        style="width: fit-content; font-size: 0.7rem"
+                        class="w-fit cursor-pointer border-0 bg-transparent p-0 text-left text-(--tumaet-ui-accent-color) underline"
                         [attr.aria-expanded]="showFullForwardedMessage()"
                         data-testid="forwarded-message-expand"
                         (click)="toggleShowFullForwardedMessage()"

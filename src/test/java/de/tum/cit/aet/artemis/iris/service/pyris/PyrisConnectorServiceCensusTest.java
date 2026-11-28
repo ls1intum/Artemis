@@ -20,7 +20,7 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 
 import de.tum.cit.aet.artemis.communication.dto.FaqCensusDTO;
 import de.tum.cit.aet.artemis.communication.dto.FaqCensusEntryDTO;
@@ -35,21 +35,19 @@ class PyrisConnectorServiceCensusTest {
 
     private static final String PYRIS_URL = "http://pyris.test";
 
-    private RestTemplate censusRestTemplate;
-
     private MockRestServiceServer server;
 
     private PyrisConnectorService connector;
 
     @BeforeEach
     void setUp() {
-        censusRestTemplate = new RestTemplate();
-        server = MockRestServiceServer.bindTo(censusRestTemplate).build();
-        connector = connectorFor(censusRestTemplate, PYRIS_URL);
+        RestClient.Builder builder = RestClient.builder();
+        server = MockRestServiceServer.bindTo(builder).build();
+        connector = connectorFor(builder.build(), PYRIS_URL);
     }
 
-    private static PyrisConnectorService connectorFor(RestTemplate censusTemplate, String pyrisUrl) {
-        PyrisConnectorService service = new PyrisConnectorService(new RestTemplate(), censusTemplate, JsonObjectMapper.get(), mock(PyrisCallbackTokenService.class));
+    private static PyrisConnectorService connectorFor(RestClient censusClient, String pyrisUrl) {
+        PyrisConnectorService service = new PyrisConnectorService(RestClient.create(), censusClient, JsonObjectMapper.get(), mock(PyrisCallbackTokenService.class));
         ReflectionTestUtils.setField(service, "pyrisUrl", pyrisUrl);
         ReflectionTestUtils.setField(service, "artemisBaseUrl", "https://artemis.test");
         return service;
@@ -117,7 +115,7 @@ class PyrisConnectorServiceCensusTest {
             SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
             factory.setConnectTimeout(1000);
             factory.setReadTimeout(300);
-            PyrisConnectorService slowConnector = connectorFor(new RestTemplate(factory), "http://localhost:" + silentServer.getLocalPort());
+            PyrisConnectorService slowConnector = connectorFor(RestClient.builder().requestFactory(factory).build(), "http://localhost:" + silentServer.getLocalPort());
 
             long start = System.nanoTime();
             IngestionCensusDTO census = slowConnector.getIngestionCensus(7);

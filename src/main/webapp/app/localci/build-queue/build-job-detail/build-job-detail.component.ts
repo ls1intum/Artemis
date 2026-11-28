@@ -19,7 +19,9 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 import { downloadFile } from 'app/foundation/util/download.util';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { BuildAgentsService } from 'app/localci/build-agents.service';
 import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { createAddressToAgentInfoMap, getAgentInfoByAddress } from 'app/localci/shared/build-agent-address.utils';
@@ -30,7 +32,7 @@ import { AccountService } from 'app/core/auth/account.service';
 @Component({
     selector: 'jhi-build-job-detail',
     templateUrl: './build-job-detail.component.html',
-    styleUrl: './build-job-detail.component.scss',
+    styleUrl: './build-job-detail.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
@@ -315,6 +317,10 @@ export class BuildJobDetailComponent implements OnInit, OnDestroy {
         // First try to get from buildAgent object (for running jobs)
         if (job.buildAgent?.displayName || job.buildAgent?.name) {
             return job.buildAgent.displayName || job.buildAgent.name;
+        }
+        // The course view of a finished job carries the display name instead of the address
+        if (job.buildAgentDisplayName) {
+            return job.buildAgentDisplayName;
         }
         // For finished jobs, try to resolve address to displayName using online agents
         if (job.buildAgentAddress) {

@@ -1,0 +1,275 @@
+/* Wrapper for animation - needs width and margin for proper layout */
+.alert-animation-wrapper {
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+/*
+ * CSS animations to replace @angular/animations
+ * Enter animation: wrapper height expands (pushing other alerts) + alert slides in from right
+ * overflow: visible allows alert to be seen even when wrapper height is 0
+ */
+.alert-entering {
+    max-height: 0;
+    margin-bottom: 0;
+    overflow: visible;
+    animation:
+        alert-height-in 0.35s ease-in-out forwards,
+        alert-margin-in 0.35s ease-in-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .alert-entering {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
+
+.alert-entering > * {
+    transform: translateX(120%);
+    animation: alert-slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .alert-entering > * {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
+
+@keyframes alert-height-in {
+    from {
+        max-height: 0;
+    }
+
+    to {
+        max-height: 200px;
+    }
+}
+
+@keyframes alert-margin-in {
+    from {
+        margin-bottom: 0;
+    }
+
+    to {
+        margin-bottom: 15px;
+    }
+}
+
+@keyframes alert-slide-in {
+    from {
+        transform: translateX(120%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
+}
+
+/* Leave animation: alert slides out + wrapper height collapses */
+.alert-leaving {
+    max-height: 200px;
+    margin-bottom: 15px;
+    overflow: visible;
+    animation:
+        alert-height-out 0.25s ease-in-out forwards,
+        alert-margin-out 0.25s ease-in-out forwards;
+}
+
+.alert-leaving > * {
+    transform: translateX(0);
+    animation: alert-slide-out 0.25s ease-in forwards;
+}
+
+/* A short duration, not `animation: none`: the removal of the element waits for the end of the animation. */
+@media (prefers-reduced-motion: reduce) {
+    .alert-leaving,
+    .alert-leaving > * {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
+
+@keyframes alert-height-out {
+    to {
+        max-height: 0;
+    }
+}
+
+@keyframes alert-margin-out {
+    to {
+        margin-bottom: 0;
+    }
+}
+
+@keyframes alert-slide-out {
+    to {
+        transform: translateX(120%);
+    }
+}
+
+:host {
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    z-index: 100000;
+    padding: 20px;
+    overflow: hidden;
+}
+
+:host .alert-wrap {
+    width: 100%;
+    overflow: visible;
+    position: relative;
+}
+
+:host .alert-wrap .alert-inner {
+    width: 100%;
+    pointer-events: all;
+    min-height: 70px;
+    position: relative;
+    border: 1px solid;
+    padding: 15px 20px;
+    border-radius: 0.3rem;
+    box-shadow: var(--artemis-alerts-shadow) 0 5px 15px;
+    flex: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+:host .alert-wrap .alert-inner .left {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    justify-content: center;
+}
+
+:host .alert-wrap .alert-inner .left .message {
+    white-space: break-spaces;
+    text-overflow: ellipsis;
+}
+
+:host .alert-wrap .alert-inner .left .ng-fa-icon {
+    animation: 0.4s highlight;
+    animation-delay: 0.6s;
+    animation-iteration-count: 3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :host .alert-wrap .alert-inner .left .ng-fa-icon {
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
+
+:host .alert-wrap .alert-inner .time-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    border-radius: 0 3px 3px;
+    animation: scale-down cubic-bezier(0.79, 0.98, 0.79, 0.98);
+}
+
+:host .alert-wrap .info {
+    color: var(--artemis-alert-info-color);
+    background-color: var(--artemis-alert-info-background);
+    border-color: var(--artemis-alert-info-border);
+}
+
+:host .alert-wrap .info .left > .ng-fa-icon {
+    color: var(--artemis-alert-info-border);
+}
+
+:host .alert-wrap .info .time-bar {
+    background-color: var(--artemis-alert-info-border);
+}
+
+:host .alert-wrap .danger {
+    color: var(--artemis-alert-danger-color);
+    background-color: var(--artemis-alert-danger-background);
+    border-color: var(--artemis-alert-danger-border);
+}
+
+:host .alert-wrap .danger .left > .ng-fa-icon {
+    color: var(--artemis-alert-danger-border);
+}
+
+:host .alert-wrap .danger .time-bar {
+    background-color: var(--artemis-alert-danger-border);
+}
+
+:host .alert-wrap .warning {
+    color: var(--artemis-alert-warning-color);
+    background-color: var(--artemis-alert-warning-background);
+    border-color: var(--artemis-alert-warning-border);
+}
+
+:host .alert-wrap .warning .left > .ng-fa-icon {
+    color: var(--artemis-alert-warning-border);
+}
+
+:host .alert-wrap .warning .time-bar {
+    background-color: var(--artemis-alert-warning-border);
+}
+
+:host .alert-wrap .success {
+    color: var(--artemis-alert-success-color);
+    background-color: var(--artemis-alert-success-background);
+    border-color: var(--artemis-alert-success-border);
+}
+
+:host .alert-wrap .success .left > .ng-fa-icon {
+    color: var(--artemis-alert-success-border);
+}
+
+:host .alert-wrap .success .time-bar {
+    background-color: var(--artemis-alert-success-border);
+}
+
+:host .dismiss-all {
+    width: 100%;
+}
+
+:host .dismiss-all button {
+    pointer-events: all;
+    border-radius: 0.3rem;
+    box-shadow: var(--artemis-alerts-shadow) 0 5px 15px;
+    width: 100%;
+}
+
+@media screen and (min-width: 800px) {
+    :host .alert-animation-wrapper {
+        width: 75%;
+        max-width: 800px;
+    }
+}
+
+@keyframes highlight {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.3);
+    }
+}
+
+@keyframes scale-down {
+    0% {
+        width: 100%;
+    }
+
+    100% {
+        width: 0;
+    }
+}

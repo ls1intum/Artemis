@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
-import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -41,13 +40,7 @@ describe('JhiResetRepoButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [
-                ResetRepoButtonComponent,
-                NgbPopoverModule,
-                MockComponent(ExerciseActionButtonComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(FeatureToggleDirective),
-            ],
+            imports: [ResetRepoButtonComponent, MockComponent(ExerciseActionButtonComponent), MockPipe(ArtemisTranslatePipe), MockDirective(FeatureToggleDirective)],
             providers: [
                 { provide: ParticipationService, useClass: MockParticipationService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleServiceWithPluralMethod },
@@ -164,7 +157,7 @@ describe('JhiResetRepoButtonComponent', () => {
         TestBed.tick();
         fixture.detectChanges();
 
-        comp.popover()!.open();
+        comp.popover()!.open(fixture.nativeElement.querySelector('button'));
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();

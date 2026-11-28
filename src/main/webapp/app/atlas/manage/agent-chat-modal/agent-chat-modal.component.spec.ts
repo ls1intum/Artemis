@@ -16,7 +16,7 @@ import { ElementRef, signal } from '@angular/core';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 
 describe('AgentChatModalComponent', () => {
     let fixture: ComponentFixture<AgentChatModalComponent>;
@@ -78,8 +78,8 @@ describe('AgentChatModalComponent', () => {
             imports: [AgentChatModalComponent, FormsModule, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe, (value: string) => `translated:${value}`)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: DynamicDialogRef, useValue: { close: vi.fn() } },
-                { provide: DynamicDialogConfig, useValue: { data: { courseId: 123 } } },
+                { provide: TumAetUiDialogRef, useValue: { close: vi.fn() } },
+                { provide: TumAetUiDialogConfig, useValue: new TumAetUiDialogConfig({ data: { courseId: 123 } }) },
                 { provide: AgentChatService, useValue: mockAgentChatService },
                 { provide: CompetencyService, useValue: mockCompetencyService },
             ],
@@ -414,7 +414,7 @@ describe('AgentChatModalComponent', () => {
             vi.clearAllMocks();
             translateSpy.mockReturnValue(errorMessage);
 
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
             sendButton.click();
             const messages = component.messages();
             expect(component.isAgentTyping()).toBeFalsy();
@@ -428,7 +428,7 @@ describe('AgentChatModalComponent', () => {
             component.currentMessage.set('');
             fixture.detectChanges();
 
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
             sendButton.click();
 
             expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
@@ -492,14 +492,14 @@ describe('AgentChatModalComponent', () => {
 
             fixture.changeDetectorRef.detectChanges();
 
-            const messageElements = fixture.debugElement.nativeElement.querySelectorAll('.message-wrapper');
+            const messageElements = fixture.debugElement.nativeElement.querySelectorAll('[data-testid="agent-chat-message"]');
             expect(messageElements).toHaveLength(2);
 
             const userMessageElement = messageElements[0];
             const agentMessageElement = messageElements[1];
 
-            expect(userMessageElement.classList.contains('user-message')).toBeTruthy();
-            expect(agentMessageElement.classList.contains('agent-message')).toBeTruthy();
+            expect(userMessageElement.dataset['sender']).toBe('user');
+            expect(agentMessageElement.dataset['sender']).toBe('agent');
         });
 
         it('should show typing indicator when isAgentTyping is true', () => {
@@ -507,7 +507,7 @@ describe('AgentChatModalComponent', () => {
 
             fixture.changeDetectorRef.detectChanges();
 
-            const typingIndicator = fixture.debugElement.nativeElement.querySelector('.typing-indicator');
+            const typingIndicator = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-typing-indicator"]');
             expect(typingIndicator).toBeTruthy();
         });
 
@@ -516,7 +516,7 @@ describe('AgentChatModalComponent', () => {
 
             fixture.changeDetectorRef.detectChanges();
 
-            const typingIndicator = fixture.debugElement.nativeElement.querySelector('.typing-indicator');
+            const typingIndicator = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-typing-indicator"]');
             expect(typingIndicator).toBeFalsy();
         });
 
@@ -533,7 +533,7 @@ describe('AgentChatModalComponent', () => {
 
             fixture.changeDetectorRef.detectChanges();
 
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
             expect(sendButton.disabled).toBeTruthy();
         });
 
@@ -543,7 +543,7 @@ describe('AgentChatModalComponent', () => {
 
             fixture.changeDetectorRef.detectChanges();
 
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
             expect(sendButton.disabled).toBeFalsy();
         });
 
@@ -552,7 +552,7 @@ describe('AgentChatModalComponent', () => {
 
             fixture.changeDetectorRef.detectChanges();
 
-            const charCountElement = fixture.debugElement.nativeElement.querySelector('.text-end');
+            const charCountElement = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-char-count"]');
             expect(charCountElement.textContent.trim()).toContain('12 / 8000');
         });
 
@@ -561,31 +561,23 @@ describe('AgentChatModalComponent', () => {
 
             fixture.changeDetectorRef.detectChanges();
 
-            const charCountElement = fixture.debugElement.nativeElement.querySelector('.text-danger');
+            const charCountElement = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-char-count"].text-state-danger');
             expect(charCountElement).toBeTruthy();
 
-            const errorMessage = fixture.debugElement.nativeElement.querySelector('small.text-danger.mt-1');
+            const errorMessage = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-message-too-long"]');
             expect(errorMessage).toBeTruthy();
         });
     });
 
     describe('Modal interaction', () => {
-        it('should close modal when closeModal is called', () => {
-            const dialogRef = TestBed.inject(DynamicDialogRef);
-            const closeSpy = vi.spyOn(dialogRef, 'close');
-            component['closeModal']();
-
-            expect(closeSpy).toHaveBeenCalled();
-        });
-
-        it('should call closeModal when close button is clicked', () => {
-            const closeModalSpy = vi.spyOn(component as unknown as Record<string, () => void>, 'closeModal');
+        it('should close the dialog when the close button is clicked', () => {
+            const dialogRef = TestBed.inject(TumAetUiDialogRef);
             fixture.detectChanges();
 
-            const closeButton = fixture.debugElement.nativeElement.querySelector('button[aria-label="Close"]');
+            const closeButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-close-button"]');
             closeButton.click();
 
-            expect(closeModalSpy).toHaveBeenCalled();
+            expect(dialogRef.close).toHaveBeenCalledOnce();
         });
     });
 
@@ -610,7 +602,7 @@ describe('AgentChatModalComponent', () => {
             const emitSpy = vi.spyOn(component.competencyChanged, 'emit');
             fixture.detectChanges();
 
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
             sendButton.click();
 
             expect(emitSpy).toHaveBeenCalledOnce();
@@ -630,7 +622,7 @@ describe('AgentChatModalComponent', () => {
             const emitSpy = vi.spyOn(component.competencyChanged, 'emit');
             fixture.detectChanges();
 
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
             sendButton.click();
 
             expect(emitSpy).not.toHaveBeenCalled();
@@ -718,7 +710,7 @@ describe('AgentChatModalComponent', () => {
             mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse));
             fixture.detectChanges();
 
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
             sendButton.click();
 
             expect(component.currentMessage()).toBe('');
@@ -742,7 +734,7 @@ describe('AgentChatModalComponent', () => {
             );
 
             fixture.detectChanges();
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
             sendButton.click();
 
             expect(component.isAgentTyping()).toBeFalsy(); // After response completes
@@ -767,7 +759,7 @@ describe('AgentChatModalComponent', () => {
             );
 
             fixture.detectChanges();
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
             sendButton.click();
 
             expect(component.messages().length).toBeGreaterThan(initialMessageCount);
@@ -798,7 +790,7 @@ describe('AgentChatModalComponent', () => {
                 mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
                 fixture.detectChanges();
 
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
                 sendButton.click();
                 // With ?? (nullish coalescing), empty string is a valid message and used as-is
                 const messages = component.messages();
@@ -821,7 +813,7 @@ describe('AgentChatModalComponent', () => {
                 mockAgentChatService.sendMessage.mockReturnValue(of(mockResponse as unknown as AgentChatResponse));
                 fixture.detectChanges();
 
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
                 sendButton.click();
 
                 expect(translateSpy).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
@@ -853,7 +845,7 @@ describe('AgentChatModalComponent', () => {
                 component.currentMessage.set('Create OOP competency');
                 fixture.detectChanges();
 
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
                 sendButton.click();
 
                 const agentMessage = component.messages().find((msg) => !msg.isUser && msg.competencyPreviews && msg.competencyPreviews.length > 0);
@@ -884,7 +876,7 @@ describe('AgentChatModalComponent', () => {
                 component.currentMessage.set('Create data structures competency');
                 fixture.detectChanges();
 
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
                 sendButton.click();
 
                 const agentMessage = component.messages().find((msg) => !msg.isUser && msg.competencyPreviews && msg.competencyPreviews.length > 0);
@@ -916,7 +908,7 @@ describe('AgentChatModalComponent', () => {
                 component.currentMessage.set('Update competency 42');
                 fixture.detectChanges();
 
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
                 sendButton.click();
 
                 const agentMessage = component.messages().find((msg) => !msg.isUser && msg.competencyPreviews && msg.competencyPreviews.length > 0);
@@ -947,7 +939,7 @@ describe('AgentChatModalComponent', () => {
                 component.currentMessage.set('Show me competency');
                 fixture.detectChanges();
 
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
                 sendButton.click();
 
                 const agentMessage = component.messages().find((msg) => !msg.isUser && msg.competencyPreviews && msg.competencyPreviews.length > 0);
@@ -967,7 +959,7 @@ describe('AgentChatModalComponent', () => {
                 component.currentMessage.set('Some message');
                 fixture.detectChanges();
 
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
                 sendButton.click();
 
                 const agentMessage = component.messages().find((msg) => !msg.isUser);
@@ -987,7 +979,7 @@ describe('AgentChatModalComponent', () => {
                 component.currentMessage.set('Normal message');
                 fixture.detectChanges();
 
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
                 sendButton.click();
                 const messages = component.messages();
                 const agentMessage = messages[component.messages().length - 1];
@@ -1035,7 +1027,7 @@ describe('AgentChatModalComponent', () => {
                 component.currentMessage.set('Create multiple competencies');
                 fixture.detectChanges();
 
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
                 sendButton.click();
 
                 const agentMessage = component.messages().find((msg) => !msg.isUser && msg.competencyPreviews);
@@ -1076,7 +1068,7 @@ describe('AgentChatModalComponent', () => {
                 component.currentMessage.set('Create batch');
                 fixture.detectChanges();
 
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
                 sendButton.click();
 
                 const agentMessage = component.messages().find((msg) => !msg.isUser && msg.competencyPreviews);
@@ -1097,7 +1089,7 @@ describe('AgentChatModalComponent', () => {
                 component.currentMessage.set('Empty batch');
                 fixture.detectChanges();
 
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
                 sendButton.click();
 
                 const agentMessage = component.messages().find((msg) => !msg.isUser && msg.competencyPreviews !== undefined);
@@ -1122,7 +1114,7 @@ describe('AgentChatModalComponent', () => {
                     component.currentMessage.set('Create a plan');
                     fixture.detectChanges();
 
-                    const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+                    const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
                     sendButton.click();
 
                     const agentMessage = component.messages().find((msg) => !msg.isUser && msg.planPending);
@@ -1398,7 +1390,7 @@ describe('AgentChatModalComponent', () => {
                     );
                     fixture.detectChanges();
 
-                    const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+                    const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
                     sendButton.click();
                     const messages = component.messages();
                     expect(messages[0].planPending).toBeFalsy();
@@ -1651,7 +1643,7 @@ describe('AgentChatModalComponent', () => {
                 component.currentMessage.set('Test');
                 fixture.detectChanges();
 
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
                 sendButton.click();
 
                 const agentMessage = component.messages().find((msg) => !msg.isUser);
@@ -1672,7 +1664,7 @@ describe('AgentChatModalComponent', () => {
                 component.currentMessage.set('Test');
                 fixture.detectChanges();
 
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
                 sendButton.click();
 
                 const agentMessage = component.messages().find((msg) => !msg.isUser);
@@ -1692,7 +1684,7 @@ describe('AgentChatModalComponent', () => {
                 component.currentMessage.set('Test');
                 fixture.detectChanges();
 
-                const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+                const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
                 sendButton.click();
 
                 const agentMessage = component.messages().find((msg) => !msg.isUser);
@@ -1856,7 +1848,7 @@ describe('AgentChatModalComponent', () => {
             component.currentMessage.set('Show relations');
             fixture.detectChanges();
 
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
             sendButton.click();
 
             const agentMessage = component.messages().find((msg) => !msg.isUser && msg.relationPreviews);
@@ -1884,7 +1876,7 @@ describe('AgentChatModalComponent', () => {
             component.currentMessage.set('No rels');
             fixture.detectChanges();
 
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
             sendButton.click();
 
             const agentMessage = component.messages().find((msg) => msg.content === 'No relations');
@@ -1954,7 +1946,7 @@ describe('AgentChatModalComponent', () => {
             component.currentMessage.set('Create a plan');
             fixture.detectChanges();
 
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
             sendButton.click();
 
             const agentMessage = component.messages().find((msg) => !msg.isUser && msg.planPending);
@@ -2054,7 +2046,7 @@ describe('AgentChatModalComponent', () => {
             component.currentMessage.set('Show me the competency graph');
             fixture.detectChanges();
 
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
             sendButton.click();
 
             const agentMessage = component.messages().find((msg) => !msg.isUser && msg.relationGraphPreview);
@@ -2083,7 +2075,7 @@ describe('AgentChatModalComponent', () => {
             component.currentMessage.set('Graph');
             fixture.detectChanges();
 
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
             sendButton.click();
 
             const agentMessage = component.messages().find((msg) => !msg.isUser && msg.graphCompetencies);
@@ -2116,7 +2108,7 @@ describe('AgentChatModalComponent', () => {
             component.currentMessage.set('Relations');
             fixture.detectChanges();
 
-            const sendButton = fixture.debugElement.nativeElement.querySelector('.send-button');
+            const sendButton = fixture.debugElement.nativeElement.querySelector('[data-testid="agent-chat-send-button"]');
             sendButton.click();
 
             const agentMessage = component.messages().find((msg) => !msg.isUser && msg.graphRelations);

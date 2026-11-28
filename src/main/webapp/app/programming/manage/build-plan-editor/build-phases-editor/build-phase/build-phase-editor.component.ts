@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, model, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 
-import { faArrowDown, faArrowUp, faPlus, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDown, faArrowUp, faPlus, faTrash, faTriangleExclamation, faXmark } from '@fortawesome/free-solid-svg-icons';
 import {
     BUILD_PHASE_CONDITION,
     BUILD_PHASE_NAME_PATTERN,
@@ -11,19 +11,18 @@ import {
     hasExpectedTestsBeforeDueDate,
 } from 'app/programming/shared/entities/build-plan-phases.model';
 import { FormsModule } from '@angular/forms';
-import { Select } from 'primeng/select';
-import { InputText } from 'primeng/inputtext';
-import { ButtonDirective, ButtonIcon, ButtonLabel } from 'primeng/button';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MonacoEditorFitTextComponent } from 'app/programming/manage/build-plan-editor/build-phases-editor/monaco-editor-auto-size/monaco-editor-fit-text.component';
-import { Badge } from 'primeng/badge';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { Tooltip } from 'primeng/tooltip';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
-import { Checkbox } from 'primeng/checkbox';
-import { Message } from 'primeng/message';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
@@ -31,20 +30,17 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
     selector: 'jhi-build-phase',
     imports: [
         FormsModule,
-        Select,
-        InputText,
-        ButtonDirective,
-        ButtonIcon,
         FaIconComponent,
         MonacoEditorFitTextComponent,
-        ButtonLabel,
-        Badge,
         HelpIconComponent,
-        Tooltip,
         TranslateDirective,
         ArtemisTranslatePipe,
-        Checkbox,
-        Message,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiSelectComponent,
+        TumAetUiTooltipDirective,
     ],
     templateUrl: './build-phase-editor.component.html',
     styles: `
@@ -52,6 +48,24 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
             border: none;
             padding: 0;
             margin-bottom: 0;
+        }
+
+        .phase-divider {
+            border-block-end: 1px solid var(--border-color);
+        }
+
+        .phase-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 1.5rem;
+            height: 1.5rem;
+            padding: 0 0.5rem;
+            border-radius: 9999px;
+            background: var(--primary);
+            color: var(--white);
+            font-size: 0.75rem;
+            font-weight: 700;
         }
     `,
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,6 +79,7 @@ export class BuildPhaseEditorComponent {
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
     protected readonly faPlus = faPlus;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly faXmark = faXmark;
     protected readonly faTrash = faTrash;
     protected readonly faArrowDown = faArrowDown;

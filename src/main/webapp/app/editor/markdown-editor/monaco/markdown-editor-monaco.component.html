@@ -12,19 +12,23 @@
     >
         <!-- Tab header row: tabs and (in edit mode) the action toolbar share one wrapping flex row. -->
         <div #actionPalette class="md-action-palette flex items-center flex-wrap gap-x-[0.1rem]">
-            <p-tabs [value]="activeTab()" (valueChange)="onTabChange($event)" class="md-tabs shrink-0">
-                <p-tablist>
+            <tumaet-ui-tabs [value]="activeTab()" (valueChange)="onTabChange($event)" class="shrink-0 w-auto">
+                <tumaet-ui-tab-list class="border-b-0">
                     @if (showEditButton()) {
-                        <p-tab [value]="TAB_EDIT"><span jhiTranslate="entity.action.edit"></span></p-tab>
+                        <tumaet-ui-tab [value]="TAB_EDIT" class="py-[0.1rem] px-[0.5rem] text-[0.9rem] font-normal"><span jhiTranslate="entity.action.edit"></span></tumaet-ui-tab>
                     }
                     @if (showVisualButton()) {
-                        <p-tab [value]="TAB_VISUAL"><span jhiTranslate="entity.action.visual"></span></p-tab>
+                        <tumaet-ui-tab [value]="TAB_VISUAL" class="py-[0.1rem] px-[0.5rem] text-[0.9rem] font-normal"
+                            ><span jhiTranslate="entity.action.visual"></span
+                        ></tumaet-ui-tab>
                     }
                     @if (showPreviewButton()) {
-                        <p-tab [value]="TAB_PREVIEW"><span jhiTranslate="entity.action.preview"></span></p-tab>
+                        <tumaet-ui-tab [value]="TAB_PREVIEW" class="py-[0.1rem] px-[0.5rem] text-[0.9rem] font-normal"
+                            ><span jhiTranslate="entity.action.preview"></span
+                        ></tumaet-ui-tab>
                     }
-                </p-tablist>
-            </p-tabs>
+                </tumaet-ui-tab-list>
+            </tumaet-ui-tabs>
 
             @if (inEditMode()) {
                 <div class="flex items-center flex-wrap">
@@ -38,35 +42,37 @@
                     <!-- Headers -->
                     @if (displayedActions().header.length) {
                         <div class="flex" role="group" aria-label="Button group with nested dropdown">
-                            <button class="md-toolbar-btn" type="button" (click)="headerPopover.toggle($event)">
+                            <button class="md-toolbar-btn" type="button" [tumAetUiPopoverTrigger]="headerPopover">
                                 <span [jhiTranslate]="headerActions()?.translationKey ?? ''"></span>
                             </button>
-                            <p-popover #headerPopover [dismissable]="true" styleClass="md-action-popover">
-                                @for (action of displayedActions().header; track action.id) {
-                                    <button type="button" class="md-dropdown-item" (click)="action.executeInCurrentEditor(); headerPopover.hide()">
-                                        <span [jhiTranslate]="action.translationKey"></span>
-                                    </button>
-                                }
-                            </p-popover>
+                            <tumaet-ui-popover #headerPopover padding="none" [ariaLabel]="headerActions()?.translationKey ?? '' | artemisTranslate">
+                                <div class="md-action-popover">
+                                    @for (action of displayedActions().header; track action.id) {
+                                        <button type="button" class="md-dropdown-item" (click)="runFromPopover(headerPopover, () => action.executeInCurrentEditor())">
+                                            <span [jhiTranslate]="action.translationKey"></span>
+                                        </button>
+                                    }
+                                </div>
+                            </tumaet-ui-popover>
                         </div>
                     }
                     @if (displayedActions().color; as color) {
                         <div class="flex">
-                            <button type="button" class="color-preview md-toolbar-btn" (click)="colorPopover.toggle($event)">
+                            <button type="button" class="color-preview md-toolbar-btn" [tumAetUiPopoverTrigger]="colorPopover">
                                 <span [jhiTranslate]="color.translationKey"></span>
                             </button>
-                            <p-popover #colorPopover [dismissable]="true" styleClass="md-action-popover">
+                            <tumaet-ui-popover #colorPopover [ariaLabel]="color.translationKey | artemisTranslate">
                                 <div class="flex flex-wrap gap-1 w-[13.75rem]">
                                     @for (tagColor of colors; track tagColor) {
                                         <button
                                             type="button"
-                                            class="w-[2.625rem] h-[2.625rem] p-0 cursor-pointer rounded-[3px] border border-[var(--color-selector-border)] hover:outline-2 hover:outline-[var(--color-selector-border)]"
+                                            class="w-[2.625rem] h-[2.625rem] p-0 cursor-pointer border border-(--border-color) hover:outline-2 hover:outline-[var(--color-selector-border)]"
                                             [style.background-color]="tagColor"
-                                            (click)="onSelectColor(tagColor); colorPopover.hide()"
+                                            (click)="runFromPopover(colorPopover, () => onSelectColor(tagColor))"
                                         ></button>
                                     }
                                 </div>
-                            </p-popover>
+                            </tumaet-ui-popover>
                         </div>
                     }
                     <!-- Domain (without options) -->
@@ -76,20 +82,26 @@
                     <!-- Domain (with options) -->
                     @for (action of displayedActions().domain.withOptions; track action.id) {
                         <div class="flex" role="group" aria-label="Button group with nested dropdown">
-                            <button class="md-toolbar-btn" type="button" (click)="domainPopover.toggle($event)">
+                            <button class="md-toolbar-btn" type="button" [tumAetUiPopoverTrigger]="domainPopover">
                                 <span [jhiTranslate]="action.translationKey"></span>
                             </button>
-                            <p-popover #domainPopover [dismissable]="true" styleClass="md-action-popover">
-                                @if (action.values.length) {
-                                    @for (value of action.values; track value.id) {
-                                        <button type="button" class="md-dropdown-item" (click)="action.executeInCurrentEditor({ selectedItem: value }); domainPopover.hide()">
-                                            <span>{{ value.value }}</span>
-                                        </button>
+                            <tumaet-ui-popover #domainPopover padding="none" [ariaLabel]="action.translationKey | artemisTranslate">
+                                <div class="md-action-popover">
+                                    @if (action.values.length) {
+                                        @for (value of action.values; track value.id) {
+                                            <button
+                                                type="button"
+                                                class="md-dropdown-item"
+                                                (click)="runFromPopover(domainPopover, () => action.executeInCurrentEditor({ selectedItem: value }))"
+                                            >
+                                                <span>{{ value.value }}</span>
+                                            </button>
+                                        }
+                                    } @else {
+                                        <button type="button" class="md-dropdown-item" [disabled]="true" jhiTranslate="global.generic.emptyList"></button>
                                     }
-                                } @else {
-                                    <button type="button" class="md-dropdown-item" [disabled]="true" jhiTranslate="global.generic.emptyList"></button>
-                                }
-                            </p-popover>
+                                </div>
+                            </tumaet-ui-popover>
                         </div>
                     }
                     <!-- Special case: Lecture attachment reference (nested PrimeNG tiered menu). -->
@@ -102,18 +114,20 @@
                                 <button
                                     class="md-toolbar-btn"
                                     type="button"
-                                    (click)="aiPopover.toggle($event)"
-                                    [pTooltip]="'artemisApp.markdownEditor.artemisIntelligence.tooltip' | artemisTranslate"
+                                    [tumAetUiPopoverTrigger]="aiPopover"
+                                    [tumAetUiTooltip]="'artemisApp.markdownEditor.artemisIntelligence.tooltip' | artemisTranslate"
                                 >
                                     <fa-icon [icon]="facArtemisIntelligence" />
                                 </button>
-                                <p-popover #aiPopover [dismissable]="true" styleClass="md-action-popover">
-                                    @for (action of displayedActions().artemisIntelligence; track action.id) {
-                                        <button type="button" class="md-dropdown-item" (click)="action.executeInCurrentEditor(); aiPopover.hide()">
-                                            <span [jhiTranslate]="action.translationKey"></span>
-                                        </button>
-                                    }
-                                </p-popover>
+                                <tumaet-ui-popover #aiPopover padding="none" [ariaLabel]="'artemisApp.markdownEditor.artemisIntelligence.tooltip' | artemisTranslate">
+                                    <div class="md-action-popover">
+                                        @for (action of displayedActions().artemisIntelligence; track action.id) {
+                                            <button type="button" class="md-dropdown-item" (click)="runFromPopover(aiPopover, () => action.executeInCurrentEditor())">
+                                                <span [jhiTranslate]="action.translationKey"></span>
+                                            </button>
+                                        }
+                                    </div>
+                                </tumaet-ui-popover>
                             </div>
                         }
                     }
@@ -127,7 +141,7 @@
 
         <!-- Edit content: always rendered so the Monaco editor is never destroyed; visibility toggled by the active tab. -->
         <div
-            class="markdown-editor markdown-editor-wrapper flex-col border border-[var(--border-color)]"
+            class="markdown-editor markdown-editor-wrapper flex-col border! border-[var(--border-color)]"
             data-testid="markdown-editor"
             [ngClass]="{ flex: inEditMode(), hidden: !inEditMode() }"
             (dragover)="enableFileUpload() ? $event.preventDefault() : undefined"
@@ -137,19 +151,19 @@
                 @if (renderSideBySide()) {
                     <!-- Split-view column headers so users know which side is which -->
                     <div #diffHeader class="flex border-b">
-                        <div class="flex items-center shrink-0 px-2 py-1 bg-[var(--p-content-background)]" [style.width.px]="diffOriginalPaneWidth()">
-                            <p-tag severity="danger" [value]="diffOriginalLabel()" />
+                        <div class="flex items-center shrink-0 px-2 py-1 bg-surface-raised" [style.width.px]="diffOriginalPaneWidth()">
+                            <tumaet-ui-tag severity="danger" [value]="diffOriginalLabel()" />
                         </div>
-                        <div class="flex items-center shrink-0 flex-1 border-l px-2 py-1 bg-[var(--p-content-background)]">
-                            <p-tag severity="success" [value]="diffSuggestionLabel()" />
+                        <div class="flex items-center shrink-0 flex-1 border-l px-2 py-1 bg-surface-raised">
+                            <tumaet-ui-tag severity="success" [value]="diffSuggestionLabel()" />
                         </div>
                     </div>
                 } @else {
                     <!-- Inline/unified diff: single explanatory row -->
-                    <div #diffHeader class="flex items-center gap-2 px-2 py-1 border-b bg-[var(--p-content-background)]">
-                        <p-tag severity="danger" [value]="diffOriginalLabel()" />
+                    <div #diffHeader class="flex items-center gap-2 px-2 py-1 border-b bg-surface-raised">
+                        <tumaet-ui-tag severity="danger" [value]="diffOriginalLabel()" />
                         <span class="text-[0.78rem] text-muted-color">{{ diffUnifiedHint() }}</span>
-                        <p-tag severity="success" [value]="diffSuggestionLabel()" />
+                        <tumaet-ui-tag severity="success" [value]="diffSuggestionLabel()" />
                     </div>
                 }
             }
@@ -173,7 +187,7 @@
                     <input
                         #fileUploadInput
                         [id]="'file-upload ' + uniqueMarkdownEditorId()"
-                        class="absolute -z-[1] w-[0.1px] h-[0.1px] opacity-0 overflow-hidden"
+                        class="absolute -z-[1] w-[0.1px] h-[0.1px] opacity-0! overflow-hidden"
                         type="file"
                         [accept]="allowedFileExtensions()"
                         [multiple]="true"
@@ -181,7 +195,7 @@
                     />
                     <label
                         [for]="'file-upload ' + uniqueMarkdownEditorId()"
-                        class="inline w-full cursor-pointer rounded-r-[0.15em]"
+                        class="w-full cursor-pointer rounded-r-[0.15em]"
                         [style.cursor]="isResizing() ? 'ns-resize !important' : undefined"
                     >
                         <div class="flex mx-0 items-baseline">
@@ -193,7 +207,7 @@
                     </label>
                     @if (!showMarkdownInfoText()) {
                         <a class="shrink-0 mx-1" href="https://markdown-it.github.io/">
-                            <fa-icon [icon]="faQuestionCircle" [pTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
+                            <fa-icon [icon]="faQuestionCircle" [tumAetUiTooltip]="'artemisApp.markdownEditor.guide' | artemisTranslate" />
                         </a>
                     }
                 </div>
@@ -215,13 +229,13 @@
         <div class="mt-1 mb-2 mx-2 overflow-auto" [ngClass]="{ hidden: !inPreviewMode() }">
             <ng-content class="overflow-auto p-1" select="#previewMonaco">
                 @if (showDefaultPreview()) {
-                    <div class="p-0 m-0 overflow-auto markdown-preview" [innerHTML]="defaultPreviewHtml()"></div>
+                    <div class="p-0 m-0 overflow-auto! markdown-preview" [innerHTML]="defaultPreviewHtml()"></div>
                 }
             </ng-content>
         </div>
     </div>
     @if (enableResize() && inEditMode()) {
-        <div #resizePlaceholder [style.cursor]="isResizing() ? 'ns-resize' : undefined" class="flex justify-center border border-[var(--border-color)]">
+        <div #resizePlaceholder [style.cursor]="isResizing() ? 'ns-resize' : undefined" class="flex justify-center border border-(--border-color)">
             <fa-icon
                 cdkDrag
                 cdkDragLockAxis="y"
@@ -238,7 +252,7 @@
 </div>
 
 <ng-template #simpleActionButton let-action="action">
-    <button type="button" class="md-toolbar-btn" [pTooltip]="action.icon ? (action.translationKey | artemisTranslate) : undefined" (click)="action.executeInCurrentEditor()">
+    <button type="button" class="md-toolbar-btn" [tumAetUiTooltip]="action.icon ? (action.translationKey | artemisTranslate) : undefined" (click)="action.executeInCurrentEditor()">
         @if (action.icon) {
             <fa-icon [icon]="action.icon" />
         } @else {

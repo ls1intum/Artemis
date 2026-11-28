@@ -1,0 +1,55 @@
+name: Publish Hyperion Sandbox Image
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: hyperion-sandbox-image
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  version:
+    name: Validate Hyperion Sandbox Version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+      - name: Read the reviewed toolchain version
+        id: version
+        run: |
+          python3 - <<'PYTHON'
+          import os
+          import re
+          from pathlib import Path
+
+          config = Path('src/main/resources/config/application-aiworker.yml').read_text()
+          versions = re.findall(
+              r'^\s+image: \$\{AI_WORKER_SANDBOX_IMAGE:ghcr\.io/ls1intum/artemis-hyperion-sandbox:(java[0-9]+-[0-9]+)\}$',
+              config, re.MULTILINE,
+          )
+          if len(versions) != 1:
+              raise SystemExit('Expected one versioned Hyperion sandbox default in application-aiworker.yml')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write(f'tag={versions[0]}\n')
+          PYTHON
+
+  publish:
+    name: Build and Push Hyperion Sandbox Image
+    needs: version
+    permissions:
+      contents: read
+      packages: write
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@ee1b52f07891ed489887681c09c52b4a83fa9fb2 # v1.2.0
+    with:
+      ref: ${{ github.sha }}
+      image-name: ls1intum/artemis-hyperion-sandbox
+      docker-file: ./deployment/docker/hyperion/Dockerfile
+      tags: type=raw,value=${{ needs.version.outputs.tag }}

@@ -16,6 +16,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { QuizExerciseReEvaluate } from '../model/quiz-exercise-re-evaluate';
+import { appendFiles, appendJson } from './multipart';
 
 @Injectable({ providedIn: 'root' })
 export class QuizExerciseEvaluationApi {
@@ -44,12 +45,8 @@ export class QuizExerciseEvaluationApi {
     reEvaluateQuizExercise(quizExerciseId: number, exercise: QuizExerciseReEvaluate, files?: Array<File>, options?: import('./request-options').RequestOptions): Observable<void> {
         const url = `${this.basePath}/api/quiz/quiz-exercises/${quizExerciseId}/re-evaluate`;
         const formData = new FormData();
-        if (exercise !== undefined && exercise !== null) {
-            formData.append('exercise', new Blob([JSON.stringify(exercise)], { type: 'application/json' }));
-        }
-        if (files !== undefined && files !== null) {
-            files.forEach(item => { if (item !== undefined && item !== null) { formData.append('files', item); } });
-        }
+        appendJson(formData, 'exercise', exercise);
+        appendFiles(formData, 'files', files);
         return this.http.put<void>(url, formData, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 

@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { ImportAllCourseCompetenciesModalComponent } from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -15,7 +15,7 @@ describe('ImportAllCourseCompetenciesModalComponent', () => {
     let component: ImportAllCourseCompetenciesModalComponent;
     let fixture: ComponentFixture<ImportAllCourseCompetenciesModalComponent>;
 
-    let dialogRef: DynamicDialogRef;
+    let dialogRef: TumAetUiDialogRef;
     let closeModalSpy: ReturnType<typeof vi.spyOn>;
 
     const courseId = 1;
@@ -31,19 +31,19 @@ describe('ImportAllCourseCompetenciesModalComponent', () => {
                     useClass: MockTranslateService,
                 },
                 {
-                    provide: DynamicDialogRef,
+                    provide: TumAetUiDialogRef,
                     useValue: {
                         close: vi.fn(),
                     },
                 },
                 {
-                    provide: DynamicDialogConfig,
+                    provide: TumAetUiDialogConfig,
                     useValue: { data: { courseId } },
                 },
             ],
         }).compileComponents();
 
-        dialogRef = TestBed.inject(DynamicDialogRef);
+        dialogRef = TestBed.inject(TumAetUiDialogRef);
         closeModalSpy = vi.spyOn(dialogRef, 'close');
 
         fixture = TestBed.createComponent(ImportAllCourseCompetenciesModalComponent);
@@ -59,15 +59,6 @@ describe('ImportAllCourseCompetenciesModalComponent', () => {
 
     it('should set disabledIds', () => {
         expect(component.disabledIds()).toEqual([courseId]);
-    });
-
-    it('should close modal on close button', () => {
-        fixture.detectChanges();
-
-        const closeButton = fixture.debugElement.nativeElement.querySelector('#close-button');
-        closeButton.click();
-
-        expect(closeModalSpy).toHaveBeenCalledOnce();
     });
 
     it('should select course and close modal', () => {

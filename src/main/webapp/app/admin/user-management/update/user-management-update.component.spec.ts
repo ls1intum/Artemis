@@ -33,7 +33,7 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { PROFILE_JENKINS } from 'app/app.constants';
 import { AccountService } from 'app/core/auth/account.service';
-import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
 
 // Mock the error reporter before tests run to prevent actual error reporting
 vi.mock('app/core/error-reporting/capture-exception', async () => {

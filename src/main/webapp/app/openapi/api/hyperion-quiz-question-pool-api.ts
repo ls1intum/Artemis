@@ -16,11 +16,16 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { QuizQuestionPoolDeletion } from '../model/quiz-question-pool-deletion';
+import { QuizQuestionPoolLectureUnit } from '../model/quiz-question-pool-lecture-unit';
 import { QuizQuestionPoolPlan } from '../model/quiz-question-pool-plan';
 import { QuizQuestionPoolProgress } from '../model/quiz-question-pool-progress';
 import { QuizQuestionPoolPage } from '../model/quiz-question-pool-page';
+import { QuizQuestionPoolSelectionCandidate } from '../model/quiz-question-pool-selection-candidate';
 import { HyperionCourseSettings } from '../model/hyperion-course-settings';
+import { QuizQuestionPoolSelection } from '../model/quiz-question-pool-selection';
+import { QuizQuestionPoolSelectionRequest } from '../model/quiz-question-pool-selection-request';
 import { QuizQuestionPoolBuildStart } from '../model/quiz-question-pool-build-start';
+import { QuizQuestionPoolLectureUnitRelevance } from '../model/quiz-question-pool-lecture-unit-relevance';
 import { QuizQuestionPoolReview } from '../model/quiz-question-pool-review';
 import { QuizQuestionPoolItem } from '../model/quiz-question-pool-item';
 import { appendQueryParam } from './query-params';
@@ -74,6 +79,17 @@ export class HyperionQuizQuestionPoolApi {
      * @param courseId
      * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
+    getQuizQuestionPoolLectureUnits(courseId: number, options?: import('./request-options').RequestOptions): Observable<Array<QuizQuestionPoolLectureUnit>> {
+        const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/lecture-units`;
+        return this.http.get<Array<QuizQuestionPoolLectureUnit>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+    }
+
+    /**
+     *
+     *
+     * @param courseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
+     */
     getQuizQuestionPoolPlan(courseId: number, options?: import('./request-options').RequestOptions): Observable<QuizQuestionPoolPlan> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/plan`;
         return this.http.get<QuizQuestionPoolPlan>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
@@ -117,9 +133,32 @@ export class HyperionQuizQuestionPoolApi {
      * @param courseId
      * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
      */
+    getQuizQuestionPoolSelectionCandidates(courseId: number, options?: import('./request-options').RequestOptions): Observable<Array<QuizQuestionPoolSelectionCandidate>> {
+        const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/selection-candidates`;
+        return this.http.get<Array<QuizQuestionPoolSelectionCandidate>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+    }
+
+    /**
+     *
+     *
+     * @param courseId
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
+     */
     getQuizQuestionPoolSettings(courseId: number, options?: import('./request-options').RequestOptions): Observable<HyperionCourseSettings> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/settings`;
         return this.http.get<HyperionCourseSettings>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+    }
+
+    /**
+     *
+     *
+     * @param courseId
+     * @param quizQuestionPoolSelectionRequest
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
+     */
+    selectQuizQuestionPoolQuestions(courseId: number, quizQuestionPoolSelectionRequest: QuizQuestionPoolSelectionRequest, options?: import('./request-options').RequestOptions): Observable<QuizQuestionPoolSelection> {
+        const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/select`;
+        return this.http.post<QuizQuestionPoolSelection>(url, quizQuestionPoolSelectionRequest, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**
@@ -131,6 +170,19 @@ export class HyperionQuizQuestionPoolApi {
     startQuizQuestionPoolBuild(courseId: number, options?: import('./request-options').RequestOptions): Observable<QuizQuestionPoolBuildStart> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/build`;
         return this.http.post<QuizQuestionPoolBuildStart>(url, null, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+    }
+
+    /**
+     *
+     *
+     * @param courseId
+     * @param lectureUnitId
+     * @param quizQuestionPoolLectureUnitRelevance
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
+     */
+    updateQuizQuestionPoolLectureUnitRelevance(courseId: number, lectureUnitId: number, quizQuestionPoolLectureUnitRelevance: QuizQuestionPoolLectureUnitRelevance, options?: import('./request-options').RequestOptions): Observable<QuizQuestionPoolLectureUnitRelevance> {
+        const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/lecture-units/${lectureUnitId}/relevance`;
+        return this.http.put<QuizQuestionPoolLectureUnitRelevance>(url, quizQuestionPoolLectureUnitRelevance, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
     }
 
     /**

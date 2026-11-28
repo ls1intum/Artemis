@@ -143,6 +143,7 @@ export class ProfileInfo {
     public defaultContainerCpuCount!: number;
     public defaultContainerMemoryLimitInMB!: number;
     public defaultContainerMemorySwapLimitInMB!: number;
+    public deimosMaxWindowDays?: number; // only available when the Deimos module is enabled
     public externalCredentialProvider!: string;
     public externalPasswordResetLinkMap!: { [key: string]: string };
     public features!: ActiveFeatureToggles;
@@ -165,6 +166,12 @@ export class ProfileInfo {
     public useExternal!: boolean;
     public versionControlName!: string;
     public versionControlUrl!: string;
+    public courseHomeAiAvailable?: boolean;
+    public courseHomeAiLocation?: 'LOCAL' | 'CLOUD';
     public localLLMDeploymentEnabled!: boolean;
+    /** Whether the server can send emails, which confirming an email change requires */
+    public mailConfigured!: boolean;
     public allowedCustomDockerNetworks!: string[];
+    /** Comma separated hosts that images of rendered markdown may come from. Empty or absent allows every host. */
+    public allowedImageHosts?: string;
 }

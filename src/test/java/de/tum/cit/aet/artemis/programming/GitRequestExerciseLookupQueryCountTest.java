@@ -66,8 +66,7 @@ class GitRequestExerciseLookupQueryCountTest extends AbstractSpringIntegrationIn
 
     /**
      * A course exercise leaves the whole exam side of the join empty. Every value taken from it has to survive that,
-     * which a primitive component would not: the projection failed to instantiate for every course exercise until
-     * {@code testExam} became nullable. It also has to stay within the same budget as the exam case, since the empty
+     * including the nullable {@code examMode}. It also has to stay within the same budget as the exam case, since the empty
      * side of the join is where a follow-up load would be easiest to introduce unnoticed.
      */
     @Test
@@ -82,6 +81,7 @@ class GitRequestExerciseLookupQueryCountTest extends AbstractSpringIntegrationIn
         assertThat(projection).singleElement().satisfies(access -> {
             assertThat(access.isExamExercise()).isFalse();
             assertThat(access.examId()).isNull();
+            assertThat(access.examMode()).isNull();
             assertThat(access.isTestExamExercise()).isFalse();
             assertThat(access.courseId()).isEqualTo(courseExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         });

@@ -1,16 +1,13 @@
 import { Component, effect, input, output, signal } from '@angular/core';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { faCheck } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'faq-consistency-check',
     templateUrl: './faq-consistency.component.html',
-    imports: [TranslateDirective, FontAwesomeModule],
+    imports: [TranslateDirective, TumAetUiMessageComponent],
 })
 export class FaqConsistencyComponent {
-    protected readonly faCheck = faCheck;
-
     suggestions = input<string[] | undefined>([]);
     inconsistencies = input<string[] | undefined>([]);
     improvement = input<string | undefined>('');

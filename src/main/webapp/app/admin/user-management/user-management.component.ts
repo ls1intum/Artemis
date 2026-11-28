@@ -14,21 +14,16 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { ASC, DESC, ITEMS_PER_PAGE, SIZE, SORT } from 'app/foundation/constants/pagination.constants';
 import { faEye, faFileImport, faFilter, faPencil, faPlus, faSearch, faSync, faTrash } from '@fortawesome/free-solid-svg-icons';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiDialogComponent,
-    TumAetUiInputDirective,
-    TumAetUiMessageComponent,
-    TumAetUiPaginatorComponent,
-    TumAetUiRadioButtonComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
+import { TumAetUiRadioButtonComponent } from '@tumaet/ui-angular/radio-button';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AdminUserService } from 'app/account/user/shared/admin-user.service';

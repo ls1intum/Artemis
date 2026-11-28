@@ -12,7 +12,11 @@ assert.equal(manifest.type, 'module');
 assert.equal(manifest.scripts, undefined, 'The published artifact must not contain lifecycle scripts');
 assert.equal(manifest.devDependencies, undefined);
 assert.equal(manifest.publishConfig.access, 'public');
-assert.deepEqual(Object.keys(manifest.exports).sort(), ['.', './package.json', './styles.css']);
+// The published exports are the root, the stylesheet, `package.json` and the entry points that the source manifest declares, one per component directory.
+const sourceManifest = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'));
+const entryPoints = Object.keys(sourceManifest.exports).filter((subpath) => subpath !== '.' && subpath !== './styles.css');
+assert.ok(entryPoints.length > 0, 'The package declares no entry point of a component');
+assert.deepEqual(Object.keys(manifest.exports).sort(), ['.', './package.json', './styles.css', ...entryPoints].sort());
 for (const version of Object.values({ ...manifest.dependencies, ...manifest.peerDependencies })) {
     assert.doesNotMatch(version, /^(?:workspace|catalog|file|link):/);
 }
@@ -21,7 +25,8 @@ await rm(destination, { recursive: true, force: true });
 await mkdir(destination, { recursive: true });
 const [packed] = JSON.parse(execFileSync('npm', ['pack', '--json', '--ignore-scripts', '--pack-destination', destination], { cwd: resolve(root, 'dist-pack'), encoding: 'utf8' }));
 const files = packed.files.map(({ path }) => path);
-for (const required of ['package.json', 'README.md', 'LICENSE', 'styles.css', manifest.exports['.'].types.slice(2), manifest.exports['.'].default.slice(2)]) {
+const entryFiles = ['.', ...entryPoints].flatMap((subpath) => [manifest.exports[subpath].types.slice(2), manifest.exports[subpath].default.slice(2)]);
+for (const required of ['package.json', 'README.md', 'LICENSE', 'styles.css', ...entryFiles]) {
     assert.ok(files.includes(required), `Missing published file: ${required}`);
 }
 for (const path of files) {
@@ -30,7 +35,7 @@ for (const path of files) {
 const tarball = resolve(destination, packed.filename);
 const options = { cwd: root, stdio: 'inherit' };
 execFileSync('pnpm', ['exec', 'publint', '--strict', tarball], options);
-execFileSync('pnpm', ['exec', 'attw', tarball, '--entrypoints', '.', '--profile', 'esm-only'], options);
+execFileSync('pnpm', ['exec', 'attw', tarball, '--entrypoints', '.', ...entryPoints, '--profile', 'esm-only'], options);
 const { integrity } = packed;
 await writeFile(resolve(destination, 'package.json'), JSON.stringify({ filename: packed.filename, name: manifest.name, version: manifest.version, integrity }, null, 2) + '\n');
 console.log(`Validated ${packed.filename} (${packed.size} bytes, ${files.length} files, ${integrity})`);

@@ -16,14 +16,14 @@
     </div>
     @if (casesFiltered()) {
         <div class="filter-disclaimer">
-            <fa-icon class="text-warning disclaimer-icon" [icon]="faExclamationTriangle" />
+            <fa-icon class="text-state-warning disclaimer-icon" [icon]="faExclamationTriangle" />
             <span jhiTranslate="artemisApp.plagiarism.casesFiltered"></span>
         </div>
     }
     <!--  Temporary solution until #6593 is fixed  -->
     @if (comparisons()?.length === 100) {
         <div class="filter-disclaimer">
-            <fa-icon class="text-warning disclaimer-icon" [icon]="faExclamationTriangle" />
+            <fa-icon class="text-state-warning disclaimer-icon" [icon]="faExclamationTriangle" />
             <span jhiTranslate="artemisApp.plagiarism.casesTrimmed"></span>
         </div>
     }

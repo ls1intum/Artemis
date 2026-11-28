@@ -1,4 +1,6 @@
-import { TumAetUiDialogService, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -41,7 +43,7 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 @Component({
     selector: 'jhi-result',
     templateUrl: './result.component.html',
-    styleUrls: ['./result.component.scss'],
+    styleUrls: ['./result.component.css'],
     imports: [
         TumAetUiTagComponent,
         TumAetUiTooltipDirective,

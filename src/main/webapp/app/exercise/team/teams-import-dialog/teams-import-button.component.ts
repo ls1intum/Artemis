@@ -1,12 +1,12 @@
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
 import { Component, inject, input, output } from '@angular/core';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TeamsImportDialogComponent } from 'app/exercise/team/teams-import-dialog/teams-import-dialog.component';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({

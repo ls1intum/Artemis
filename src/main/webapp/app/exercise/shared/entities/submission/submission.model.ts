@@ -3,23 +3,8 @@ import { Participation, ParticipationWithExerciseDTO } from 'app/exercise/shared
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-
-export const enum SubmissionType {
-    MANUAL = 'MANUAL',
-    TIMEOUT = 'TIMEOUT',
-    INSTRUCTOR = 'INSTRUCTOR',
-    EXTERNAL = 'EXTERNAL',
-    TEST = 'TEST',
-}
-
-// IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Submission.java
-export const enum SubmissionExerciseType {
-    PROGRAMMING = 'programming',
-    MODELING = 'modeling',
-    QUIZ = 'quiz',
-    TEXT = 'text',
-    FILE_UPLOAD = 'file-upload',
-}
+import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission-exercise-type.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 export abstract class Submission implements BaseEntity {
     public id?: number;

@@ -1,5 +1,5 @@
 import { By } from '@angular/platform-browser';
-import { TumAetUiProgressBarComponent } from '@tumaet/ui-angular';
+import { TumAetUiProgressBarComponent } from '@tumaet/ui-angular/progress-bar';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgressBarComponent } from 'app/exercise/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';

@@ -467,4 +467,52 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             await programmingExerciseSubmissions.checkStudentSubmission();
         });
     });
+
+    // Regression test for #14612. The "Online editor" action of the participations page linked to the exercise page of the
+    // student, which only ever shows the participation of the viewer: an instructor without one saw "Start exercise" and no
+    // code, and an instructor with one had the participation in the URL replaced with their own. So the instructor starts the
+    // exercise here as well, and the repository of the student holds a file that the one of the instructor does not.
+    test.describe('Instructor opens the code of a student in the online editor', () => {
+        const studentOnlyFile = 'studentOnly.c';
+        let exercise: ProgrammingExercise;
+
+        test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
+            await login(admin);
+            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
+        });
+
+        test('Shows the repository of the student although the instructor has a participation of their own', async ({
+            login,
+            page,
+            exerciseAPIRequests,
+            programmingExerciseParticipations,
+            programmingExerciseEditor,
+        }) => {
+            await login(studentOne);
+            const studentParticipation: Participation = await (await exerciseAPIRequests.startExerciseParticipation(exercise.id!)).json();
+            const createResponse = await exerciseAPIRequests.createProgrammingExerciseFile(studentParticipation.id!, studentOnlyFile);
+            expect(createResponse.ok(), `Creating the file failed: ${createResponse.status()}`).toBeTruthy();
+            const commitResponse = await page.request.put(`/api/programming/participations/${studentParticipation.id}/repository/files?commit=yes`, {
+                data: [{ fileName: studentOnlyFile, fileContent: 'int studentOnly(void) { return 1; }\n' }],
+            });
+            expect(commitResponse.ok(), `Committing the file failed: ${commitResponse.status()}`).toBeTruthy();
+
+            await login(instructor);
+            const instructorParticipation: Participation = await (await exerciseAPIRequests.startExerciseParticipation(exercise.id!)).json();
+            expect(instructorParticipation.id).not.toBe(studentParticipation.id);
+
+            await page.goto(`/course-management/${course.id}/programming-exercises/${exercise.id}/participations`);
+            // The participations table fills asynchronously after navigation.
+            const studentRow = programmingExerciseParticipations.getStudentParticipation(studentOne);
+            await studentRow.waitFor({ state: 'visible', timeout: 60_000 });
+            await studentRow.getByTestId('participation-online-editor').click();
+
+            const studentEditorUrl = new RegExp(`/course-management/${course.id}/programming-exercises/${exercise.id}/code-editor/participations/${studentParticipation.id}$`);
+            await expect(page).toHaveURL(studentEditorUrl);
+            const fileOfStudent = programmingExerciseEditor.findFileBrowser(exercise.id!).getByTestId('file-browser-file').filter({ hasText: studentOnlyFile });
+            await expect(fileOfStudent).toBeVisible({ timeout: 30_000 });
+            // The URL still names the participation of the student, so nothing replaced it with the one of the instructor.
+            await expect(page).toHaveURL(studentEditorUrl);
+        });
+    });
 });

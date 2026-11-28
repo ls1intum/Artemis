@@ -17,8 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
+import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
@@ -50,12 +53,15 @@ public class ProgrammingExerciseGradingResource {
 
     private final ResultRepository resultRepository;
 
+    private final RateLimitService rateLimitService;
+
     public ProgrammingExerciseGradingResource(ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingExerciseRepository programmingExerciseRepository,
-            UserRepository userRepository, ResultRepository resultRepository) {
+            UserRepository userRepository, ResultRepository resultRepository, RateLimitService rateLimitService) {
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
+        this.rateLimitService = rateLimitService;
     }
 
     /**
@@ -63,6 +69,7 @@ public class ProgrammingExerciseGradingResource {
      *
      * @param exerciseId the id of the exercise to re-evaluate the test case weights of.
      * @return the number of results that were updated.
+     * @throws RateLimitExceededException if the user has requested too many re-evaluations in the last minute
      */
     @FeatureUsage(UserFeature.PROGRAMMING_REEVALUATION)
     @PutMapping("programming-exercises/{exerciseId}/grading/re-evaluate")
@@ -72,6 +79,7 @@ public class ProgrammingExerciseGradingResource {
     @EnforceAtLeastInstructorInExercise
     public ResponseEntity<Integer> reEvaluateGradedResults(@PathVariable Long exerciseId) {
         log.debug("REST request to re-evaluate the graded results of exercise {}", exerciseId);
+        rateLimitService.enforceBudget(userRepository.getCurrentUserLogin(), RateLimitType.RE_EVALUATION);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         User user = userRepository.getUserWithAuthorities();

@@ -3,7 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
 import { ExternalSubmissionService } from 'app/exercise/external-submission/external-submission.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Subject, throwError } from 'rxjs';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -14,7 +15,7 @@ import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 
 describe('ExternalSubmissionDialogComponent', () => {
     let fixture: ComponentFixture<ExternalSubmissionDialogComponent>;
@@ -22,6 +23,7 @@ describe('ExternalSubmissionDialogComponent', () => {
     let externalSubmissionService: ExternalSubmissionService;
     let dialogRef: TumAetUiDialogRef;
     let dialogRefCloseSpy: ReturnType<typeof vi.fn>;
+    const httpMock = () => TestBed.inject(HttpTestingController);
 
     beforeEach(async () => {
         dialogRefCloseSpy = vi.fn();
@@ -34,6 +36,7 @@ describe('ExternalSubmissionDialogComponent', () => {
                 MockProvider(EventManager),
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         }).compileComponents();
 
@@ -43,6 +46,7 @@ describe('ExternalSubmissionDialogComponent', () => {
     });
 
     afterEach(() => {
+        TestBed.inject(HttpTestingController).verify();
         vi.restoreAllMocks();
     });
 
@@ -84,56 +88,52 @@ describe('ExternalSubmissionDialogComponent', () => {
         expect(dialogRefCloseSpy).toHaveBeenCalledWith('cancel');
     });
 
-    it('should save feedback correctly', () => {
+    it('should post the result with its manual feedback and close with the created result', () => {
         const result: Result = new Result();
+        result.score = 80;
+        result.rated = true;
         component.result = result;
-        const exercise = { id: 2 } as Exercise;
-        fixture.componentRef.setInput('exercise', exercise);
-        const student: ExternalSubmissionCandidate = { login: 'student3', name: 'Student Three' };
-        component.selectedStudent.set(student);
-
-        const subject: Subject<HttpResponse<Result>> = new Subject<HttpResponse<Result>>();
-        const createMock = vi.spyOn(externalSubmissionService, 'create').mockReturnValue(subject.asObservable());
-
-        const eventManager = TestBed.inject(EventManager);
-        const eventManagerSpy = vi.spyOn(eventManager, 'broadcast').mockImplementation(() => {});
-
-        component.feedbacks = [new Feedback(), new Feedback()];
-
-        component.feedbacks[0].type = FeedbackType.AUTOMATIC;
-        component.feedbacks[1].type = FeedbackType.AUTOMATIC_ADAPTED;
+        fixture.componentRef.setInput('exercise', { id: 2 } as Exercise);
+        component.selectedStudent.set({ login: 'student3', name: 'Student Three' });
+        const eventManagerSpy = vi.spyOn(TestBed.inject(EventManager), 'broadcast').mockImplementation(() => {});
+        const feedbackA = new Feedback();
+        feedbackA.type = FeedbackType.AUTOMATIC;
+        feedbackA.detailText = 'detail';
+        const feedbackB = new Feedback();
+        feedbackB.type = FeedbackType.AUTOMATIC_ADAPTED;
+        component.feedbacks = [feedbackA, feedbackB];
 
         component.save();
 
         expect(component.isSaving()).toBe(true);
-        expect(result.feedbacks).toBe(component.feedbacks);
-        expect(result.feedbacks?.every((feedback) => feedback.type === FeedbackType.MANUAL)).toBe(true);
-        expect(createMock).toHaveBeenCalledOnce();
-        expect(createMock).toHaveBeenCalledWith(exercise, student, result);
+        const request = httpMock().expectOne({ method: 'POST', url: '/api/assessment/exercises/2/external-submission-results?studentLogin=student3' });
+        expect(request.request.body).toEqual({
+            score: 80,
+            rated: true,
+            feedbacks: [expect.objectContaining({ type: 'MANUAL', detailText: 'detail' }), expect.objectContaining({ type: 'MANUAL' })],
+        });
         expect(dialogRefCloseSpy).not.toHaveBeenCalled();
 
-        subject.next(new HttpResponse<Result>({ body: result }));
+        request.flush({ id: 9, score: 80 });
 
-        expect(dialogRefCloseSpy).toHaveBeenCalledOnce();
-        expect(dialogRefCloseSpy).toHaveBeenCalledWith(result);
+        expect(dialogRefCloseSpy).toHaveBeenCalledExactlyOnceWith({ id: 9, score: 80 });
         expect(component.isSaving()).toBe(false);
-        expect(eventManagerSpy).toHaveBeenCalledOnce();
-        expect(eventManagerSpy).toHaveBeenCalledWith({ name: 'resultListModification', content: 'Added a manual result' });
+        expect(eventManagerSpy).toHaveBeenCalledExactlyOnceWith({ name: 'resultListModification', content: 'Added a manual result' });
     });
 
     it('should set isSaving to false on saveError', () => {
         component.result = new Result();
-        component.isSaving.set(true);
         fixture.componentRef.setInput('exercise', { id: 2 } as Exercise);
         component.selectedStudent.set({ login: 'student1' });
 
-        const createMock = vi.spyOn(externalSubmissionService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
-        const onSaveErrorSpy = vi.spyOn(component, 'onSaveError');
-
         component.save();
-        expect(createMock).toHaveBeenCalledOnce();
-        expect(onSaveErrorSpy).toHaveBeenCalledOnce();
+        expect(component.isSaving()).toBe(true);
+        httpMock()
+            .expectOne({ method: 'POST', url: '/api/assessment/exercises/2/external-submission-results?studentLogin=student1' })
+            .flush(null, { status: 400, statusText: 'Bad Request' });
+
         expect(component.isSaving()).toBe(false);
+        expect(dialogRefCloseSpy).not.toHaveBeenCalled();
     });
 
     describe('student selection', () => {
@@ -190,20 +190,17 @@ describe('ExternalSubmissionDialogComponent', () => {
         });
 
         it('posts the login of the selected student when saving', async () => {
-            const createMock = vi.spyOn(externalSubmissionService, 'create').mockReturnValue(new Subject<HttpResponse<Result>>().asObservable());
             studentSearch().studentSelected.emit(student);
             await render();
 
             saveButton().click();
 
-            expect(createMock).toHaveBeenCalledOnce();
-            expect(createMock.mock.calls[0][1].login).toBe('ga12abc');
+            httpMock().expectOne({ method: 'POST', url: '/api/assessment/exercises/2/external-submission-results?studentLogin=ga12abc' });
         });
 
         it('does not save without a selected student', () => {
-            const createMock = vi.spyOn(externalSubmissionService, 'create');
             component.save();
-            expect(createMock).not.toHaveBeenCalled();
+            httpMock().expectNone((request) => request.url.includes('external-submission-results'));
             expect(component.isSaving()).toBe(false);
         });
     });

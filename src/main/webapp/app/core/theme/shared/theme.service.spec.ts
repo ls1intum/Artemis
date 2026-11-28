@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { THEME_LOCAL_STORAGE_KEY, THEME_OVERRIDE_ID, Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { THEME_LOCAL_STORAGE_KEY, Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { readFileSync } from 'node:fs';
+import { runInThisContext } from 'node:vm';
 import { TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
@@ -7,13 +9,6 @@ describe('ThemeService', () => {
     let service: ThemeService;
     let localStorageService: LocalStorageService;
 
-    let linkElement: HTMLElement;
-    let documentGetElementMock: ReturnType<typeof vi.spyOn>;
-    let headElement: HTMLElement;
-    let documentGetElementsByTagNameMock: ReturnType<typeof vi.spyOn>;
-    let headElementGetElementsByTagNameMock: ReturnType<typeof vi.spyOn>;
-    let newElement: HTMLLinkElement;
-    let documentCreateElementMock: ReturnType<typeof vi.spyOn>;
     let storeSpy: ReturnType<typeof vi.spyOn>;
     let windowMatchMediaSpy: ReturnType<typeof vi.spyOn>;
 
@@ -25,21 +20,6 @@ describe('ThemeService', () => {
 
         service = TestBed.inject(ThemeService);
         localStorageService = TestBed.inject(LocalStorageService);
-        linkElement = {
-            remove: vi.fn(),
-        } as unknown as HTMLElement;
-        documentGetElementMock = vi.spyOn(document, 'getElementById').mockReturnValue(linkElement);
-
-        headElement = {
-            getElementsByTagName: vi.fn().mockReturnValue([{}, {}]),
-            insertBefore: vi.fn(),
-        } as unknown as HTMLElement;
-        documentGetElementsByTagNameMock = vi.spyOn(document, 'getElementsByTagName').mockReturnValue([headElement] as unknown as HTMLCollectionOf<HTMLElement>);
-        headElementGetElementsByTagNameMock = vi.spyOn(headElement, 'getElementsByTagName');
-
-        newElement = {} as HTMLLinkElement;
-        documentCreateElementMock = vi.spyOn(document, 'createElement').mockReturnValue(newElement);
-
         storeSpy = vi.spyOn(localStorageService, 'store');
 
         windowMatchMediaSpy = vi.spyOn(window, 'matchMedia').mockImplementation((query: string) => {
@@ -51,72 +31,33 @@ describe('ThemeService', () => {
             }
             throw new Error('Should not happen');
         });
+        // the service has read the colour scheme of the system when it was created above
+        windowMatchMediaSpy.mockClear();
     });
 
     afterEach(() => {
         vi.restoreAllMocks();
-        documentGetElementMock.mockRestore();
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.removeItem(THEME_LOCAL_STORAGE_KEY);
         windowMatchMediaSpy.mockRestore();
     });
 
     it('applies theme changes correctly', () => {
         TestBed.tick();
-        expect(documentGetElementMock).toHaveBeenCalledOnce();
+        expect(document.documentElement.getAttribute('data-theme')).toBe('light');
 
         service.applyThemePreference(Theme.DARK);
         TestBed.tick();
 
-        expect(documentGetElementMock).toHaveBeenCalledTimes(2);
-        expect(documentGetElementMock).toHaveBeenCalledWith(THEME_OVERRIDE_ID);
-
-        expect(documentGetElementsByTagNameMock).toHaveBeenCalledOnce();
-        expect(documentGetElementsByTagNameMock).toHaveBeenCalledWith('head');
-        expect(documentCreateElementMock).toHaveBeenCalledOnce();
-        expect(documentCreateElementMock).toHaveBeenCalledWith('link');
-
-        expect(newElement.id).toBe(THEME_OVERRIDE_ID);
-        expect(newElement.rel).toBe('stylesheet');
-        expect(newElement.href).toMatch(new RegExp(`^${String('theme-dark.css')}`));
-        expect(newElement.onload).toEqual(expect.any(Function));
-        expect(headElementGetElementsByTagNameMock).toHaveBeenCalledOnce();
-        expect(headElementGetElementsByTagNameMock).toHaveBeenCalledWith('link');
-        expect(headElement.insertBefore).toHaveBeenCalledOnce();
-        expect(headElement.insertBefore).toHaveBeenCalledWith(newElement, undefined);
-
         expect(service.currentTheme()).toBe(Theme.DARK);
         expect(storeSpy).toHaveBeenCalledWith(THEME_LOCAL_STORAGE_KEY, 'DARK');
-
-        expect(linkElement.remove).toHaveBeenCalledOnce();
-        expect(service.currentTheme()).toBe(Theme.DARK);
         expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
 
         service.applyThemePreference(Theme.LIGHT);
         TestBed.tick();
 
-        expect(documentGetElementMock).toHaveBeenCalledTimes(3);
-        expect(documentGetElementMock).toHaveBeenNthCalledWith(3, THEME_OVERRIDE_ID);
-        expect(linkElement.remove).toHaveBeenCalledTimes(2);
         expect(service.currentTheme()).toBe(Theme.LIGHT);
         expect(document.documentElement.getAttribute('data-theme')).toBe('light');
-    });
-
-    it('bumps appliedThemeRevision only once the theme stylesheet is in effect', () => {
-        TestBed.tick();
-        const initialRevision = service.appliedThemeRevision();
-
-        service.applyThemePreference(Theme.DARK);
-        TestBed.tick();
-
-        // The dark stylesheet has not loaded yet, so the revision must not change
-        expect(service.appliedThemeRevision()).toBe(initialRevision);
-
-        newElement.onload!(new Event('load'));
-        expect(service.appliedThemeRevision()).toBe(initialRevision + 1);
-
-        // Switching back to the light theme removes the override synchronously
-        service.applyThemePreference(Theme.LIGHT);
-        TestBed.tick();
-        expect(service.appliedThemeRevision()).toBe(initialRevision + 2);
     });
 
     it('restores stored theme correctly', () => {
@@ -127,6 +68,113 @@ describe('ThemeService', () => {
 
         expect(retrieveSpy).toHaveBeenCalledOnce();
         expect(service.currentTheme()).toBe(Theme.LIGHT);
+    });
+
+    it('follows a theme change of another tab', () => {
+        service.initialize();
+        TestBed.tick();
+        expect(service.currentTheme()).toBe(Theme.LIGHT);
+
+        // The other tab has stored the preference; this tab only receives the storage event.
+        vi.spyOn(localStorageService, 'retrieve').mockReturnValue('DARK');
+        window.dispatchEvent(new StorageEvent('storage', { key: THEME_LOCAL_STORAGE_KEY }));
+        TestBed.tick();
+
+        expect(service.currentTheme()).toBe(Theme.DARK);
+        expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    });
+
+    it('keeps the theme that the script of index.html has set before the application started', () => {
+        // The user has chosen the dark theme; the script has set the attribute and the service is created afterwards.
+        localStorage.setItem(THEME_LOCAL_STORAGE_KEY, JSON.stringify('DARK'));
+        document.documentElement.setAttribute('data-theme', 'dark');
+        TestBed.resetTestingModule();
+        TestBed.configureTestingModule({});
+
+        const freshService = TestBed.inject(ThemeService);
+        TestBed.tick();
+
+        expect(freshService.currentTheme()).toBe(Theme.DARK);
+        expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    });
+
+    it('reads the key and the values in index.html that the service stores', () => {
+        const html = readFileSync('src/main/webapp/index.html', 'utf8');
+
+        expect(html).toContain(`localStorage.getItem('${THEME_LOCAL_STORAGE_KEY}')`);
+        for (const theme of Theme.all) {
+            expect(html).toContain(`stored === '${theme.identifier}') theme = '${theme.attributeValue}'`);
+        }
+    });
+
+    it('starts with the dark theme of the system when the user has made no choice', () => {
+        windowMatchMediaSpy.mockImplementation(() => ({ matches: true, media: '(prefers-color-scheme: dark)', addEventListener: vi.fn() }) as unknown as MediaQueryList);
+        document.documentElement.setAttribute('data-theme', 'dark');
+        TestBed.resetTestingModule();
+        TestBed.configureTestingModule({});
+
+        const freshService = TestBed.inject(ThemeService);
+        TestBed.tick();
+
+        expect(freshService.currentTheme()).toBe(Theme.DARK);
+        expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
+    });
+
+    it('follows the system when the stored preference cannot be read', () => {
+        localStorage.setItem(THEME_LOCAL_STORAGE_KEY, '{not json');
+        TestBed.resetTestingModule();
+        TestBed.configureTestingModule({});
+
+        expect(() => TestBed.inject(ThemeService)).not.toThrow();
+        expect(TestBed.inject(ThemeService).currentTheme()).toBe(Theme.LIGHT);
+    });
+
+    describe('the script of index.html', () => {
+        /** The source of the script that sets the theme before the application starts. */
+        function bootScript(): string {
+            const html = readFileSync('src/main/webapp/index.html', 'utf8');
+            const script = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((match) => match[1]).find((source) => source.includes(THEME_LOCAL_STORAGE_KEY));
+            if (!script) {
+                throw new Error('index.html has no script that reads the theme preference');
+            }
+            return script;
+        }
+
+        afterEach(() => {
+            localStorage.removeItem(THEME_LOCAL_STORAGE_KEY);
+            vi.unstubAllGlobals();
+        });
+
+        it.each([
+            { stored: JSON.stringify('DARK'), systemDark: false, expected: 'dark' },
+            { stored: JSON.stringify('LIGHT'), systemDark: true, expected: 'light' },
+            { stored: undefined, systemDark: true, expected: 'dark' },
+            { stored: undefined, systemDark: false, expected: 'light' },
+            { stored: '{not json', systemDark: true, expected: 'dark' },
+            { stored: JSON.stringify('UNKNOWN'), systemDark: false, expected: 'light' },
+        ])('sets $expected for the stored value $stored and a dark system scheme of $systemDark', ({ stored, systemDark, expected }) => {
+            if (stored === undefined) {
+                localStorage.removeItem(THEME_LOCAL_STORAGE_KEY);
+            } else {
+                localStorage.setItem(THEME_LOCAL_STORAGE_KEY, stored);
+            }
+            windowMatchMediaSpy.mockImplementation(() => ({ matches: systemDark }) as MediaQueryList);
+            document.documentElement.removeAttribute('data-theme');
+
+            runInThisContext(bootScript());
+
+            expect(document.documentElement.getAttribute('data-theme')).toBe(expected);
+        });
+
+        it('falls back to the light theme where the browser has no matchMedia', () => {
+            localStorage.removeItem(THEME_LOCAL_STORAGE_KEY);
+            vi.stubGlobal('matchMedia', undefined);
+            document.documentElement.removeAttribute('data-theme');
+
+            runInThisContext(bootScript());
+
+            expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+        });
     });
 
     it('applies dark OS preferences', () => {
@@ -144,8 +192,6 @@ describe('ThemeService', () => {
 
         service.initialize();
         TestBed.tick();
-        // @ts-ignore
-        newElement?.onload();
 
         expect(retrieveSpy).toHaveBeenCalledOnce();
         expect(windowMatchMediaSpy).toHaveBeenCalledOnce();
@@ -165,26 +211,29 @@ describe('ThemeService', () => {
         expect(service.currentTheme()).toBe(Theme.LIGHT);
     });
 
-    it('does print correctly', async () => {
+    it('prints in the light theme and restores the theme afterwards', async () => {
         vi.useFakeTimers();
         const initialDisplayClass = 'someDisplayClass';
+        service.applyThemePreference(Theme.DARK);
+        TestBed.tick();
 
-        const winSpy = vi.spyOn(window, 'print').mockImplementation(() => {});
-        const returnedElement = { rel: 'stylesheet', style: { display: initialDisplayClass }, remove: vi.fn() };
+        let themeWhilePrinting: string | null = null;
+        const winSpy = vi.spyOn(window, 'print').mockImplementation(() => {
+            themeWhilePrinting = document.documentElement.getAttribute('data-theme');
+        });
+        const returnedElement = { style: { display: initialDisplayClass } };
         const docSpy = vi.spyOn(document, 'getElementById').mockReturnValue(returnedElement as unknown as HTMLElement);
 
         service.print();
-        TestBed.tick();
 
-        expect(docSpy).toHaveBeenCalledTimes(2);
-        expect(docSpy).toHaveBeenCalledWith(THEME_OVERRIDE_ID);
-        expect(returnedElement.rel).toBe('none-tmp');
+        expect(document.documentElement.getAttribute('data-theme')).toBe('light');
         await vi.advanceTimersByTimeAsync(250);
         expect(docSpy).toHaveBeenCalledWith('notification-sidebar');
-        expect(docSpy).toHaveBeenCalledTimes(4); // 1x for theme override, 2x for notification sidebar (changing style to display: none and back to initial value)
+        expect(docSpy).toHaveBeenCalledTimes(2); // changing the style of the notification sidebar to display: none and back to the initial value
         expect(winSpy).toHaveBeenCalledOnce();
+        expect(themeWhilePrinting).toBe('light');
         await vi.advanceTimersByTimeAsync(250);
-        expect(returnedElement.rel).toBe('stylesheet');
+        expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
         expect(returnedElement.style.display).toBe(initialDisplayClass);
         vi.useRealTimers();
     });

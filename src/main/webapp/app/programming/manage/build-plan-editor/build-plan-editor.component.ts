@@ -10,7 +10,8 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -18,9 +19,18 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-build-plan-editor',
     templateUrl: './build-plan-editor.component.html',
-    styleUrls: ['./build-plan-editor.scss'],
+    styleUrls: ['./build-plan-editor.css'],
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, UpdatingResultComponent, NgbTooltip, FaIconComponent, CodeEditorHeaderComponent, MonacoEditorComponent, ArtemisTranslatePipe],
+    imports: [
+        TranslateDirective,
+        UpdatingResultComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTooltipDirective,
+        FaIconComponent,
+        CodeEditorHeaderComponent,
+        MonacoEditorComponent,
+        ArtemisTranslatePipe,
+    ],
 })
 export class BuildPlanEditorComponent implements AfterViewInit, OnInit {
     private buildPlanService = inject(BuildPlanService);

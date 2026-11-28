@@ -4,12 +4,12 @@ import { captureException } from 'app/core/error-reporting/capture-exception';
 import { BuildJobStatistics, SpanType } from 'app/localci/shared/entities/build-job.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SelectButtonModule } from 'primeng/selectbutton';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 import { onError } from 'app/foundation/util/global.utils';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
-import { TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
+import { TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular/chart';
 import { BuildOverviewService } from 'app/localci/build-queue/build-overview.service';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -30,9 +30,9 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
  */
 @Component({
     selector: 'jhi-build-job-statistics',
-    imports: [TranslateDirective, TumAetUiDoughnutChartComponent, HelpIconComponent, SelectButtonModule, FormsModule, ArtemisTranslatePipe],
+    imports: [TranslateDirective, TumAetUiDoughnutChartComponent, HelpIconComponent, TumAetUiSelectButtonComponent, FormsModule, ArtemisTranslatePipe],
     templateUrl: './build-job-statistics.component.html',
-    styleUrl: './build-job-statistics.component.scss',
+    styleUrl: './build-job-statistics.component.css',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BuildJobStatisticsComponent implements OnInit {

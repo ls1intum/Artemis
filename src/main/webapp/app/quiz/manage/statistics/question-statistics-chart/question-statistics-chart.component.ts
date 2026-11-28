@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
-import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig } from '@tumaet/ui-angular/chart';
 import { TumAetUiChartData } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -9,7 +10,7 @@ import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-sv
 @Component({
     selector: 'jhi-question-statistics-chart',
     templateUrl: './question-statistics-chart.component.html',
-    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss'],
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.css'],
     imports: [TumAetUiBarChartComponent, TumAetUiButtonDirective, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { class: 'contents' },

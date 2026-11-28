@@ -495,6 +495,33 @@ class CompetencyExpertToolsServiceTest {
         }
 
         @Test
+        void resolvesMissingIdsOnTheCachedOperationInstances() {
+            String sessionId = "mutable_cached_operations";
+            CompetencyExpertToolsService.setCurrentSessionId(sessionId);
+            CompetencyOperation operation = objectMapper.readValue("""
+                    {"title":"object-oriented programming","description":"Draft","taxonomy":"APPLY"}
+                    """, CompetencyOperation.class);
+            List<CompetencyOperation> cachedData = List.of(operation);
+            when(mockSessionCacheService.getCachedPendingCompetencyOperations(sessionId)).thenReturn(cachedData);
+            when(competencyRepository.findAllByCourseId(123L)).thenReturn(Set.of(testCompetency));
+            CompetencyExpertToolsService service = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, mockSessionCacheService);
+
+            try {
+                String response = service.getLastPreviewedCompetency(123L);
+
+                assertThat(operation.getCompetencyId()).isEqualTo(testCompetency.getId());
+                verify(mockSessionCacheService).cachePendingCompetencyOperations(sessionId, cachedData);
+                assertThat(objectMapper.readTree(response).get("competencies").get(0).get("competencyId").asLong()).isEqualTo(testCompetency.getId());
+                assertThat(operation.getTitle()).isEqualTo("object-oriented programming");
+                assertThat(operation.getDescription()).isEqualTo("Draft");
+                assertThat(operation.getTaxonomy()).isEqualTo(CompetencyTaxonomy.APPLY);
+            }
+            finally {
+                CompetencyExpertToolsService.clearCurrentSessionId();
+            }
+        }
+
+        @Test
         void shouldReturnCachedDataWhenAvailable() throws JacksonException {
             CompetencyExpertToolsService service = new CompetencyExpertToolsService(objectMapper, competencyRepository, courseRepository, mockSessionCacheService);
 
@@ -531,8 +558,8 @@ class CompetencyExpertToolsServiceTest {
             String result = competencyExpertToolsService.previewCompetencies(testCourse.getId(), List.of(op), true);
 
             assertThat(result).contains("Preview generated successfully for 1 competency");
-            // The cache should not be updated for view-only previews
-            // This is verified indirectly as the implementation skips caching when viewOnly is true
+            verify(sessionCacheService).clearCachedPendingCompetencyOperations(sessionId);
+            verify(sessionCacheService, never()).cachePendingCompetencyOperations(any(), any());
 
             CompetencyExpertToolsService.clearCurrentSessionId();
         }
@@ -547,6 +574,25 @@ class CompetencyExpertToolsServiceTest {
             String result = competencyExpertToolsService.previewCompetencies(testCourse.getId(), List.of(op), false);
 
             assertThat(result).contains("Preview generated successfully for 1 competency");
+            verify(sessionCacheService).cachePendingCompetencyOperations(sessionId, List.of(op));
+            verify(sessionCacheService, never()).clearCachedPendingCompetencyOperations(any());
+
+            CompetencyExpertToolsService.clearCurrentSessionId();
+        }
+
+        @Test
+        void shouldCacheCompetenciesWhenViewOnlyIsLeftOut() {
+            String sessionId = "default_session";
+            CompetencyExpertToolsService.setCurrentSessionId(sessionId);
+
+            CompetencyOperation op = new CompetencyOperation(null, "Default", "Description", CompetencyTaxonomy.APPLY);
+
+            // The model leaves out the optional flag, which reaches the tool as null
+            String result = competencyExpertToolsService.previewCompetencies(testCourse.getId(), List.of(op), null);
+
+            assertThat(result).contains("Preview generated successfully for 1 competency");
+            verify(sessionCacheService).cachePendingCompetencyOperations(sessionId, List.of(op));
+            verify(sessionCacheService, never()).clearCachedPendingCompetencyOperations(any());
 
             CompetencyExpertToolsService.clearCurrentSessionId();
         }

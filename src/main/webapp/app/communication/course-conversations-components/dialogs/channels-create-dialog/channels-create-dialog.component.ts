@@ -1,4 +1,7 @@
 import { Component, signal } from '@angular/core';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { ChannelFormData, ChannelType } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -10,9 +13,11 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-channels-create-dialog',
     templateUrl: './channels-create-dialog.component.html',
-    imports: [TranslateDirective, ChannelFormComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, ChannelFormComponent, ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective],
 })
 export class ChannelsCreateDialogComponent extends AbstractDialogComponent {
+    protected readonly faXmark = faXmark;
+
     course = signal<Course | undefined>(undefined);
 
     override initialize() {

@@ -1,3 +1,4 @@
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -20,8 +21,7 @@ import { ScienceService } from 'app/foundation/science/science.service';
 @Component({
     selector: 'jhi-course-competencies',
     templateUrl: './course-competencies.component.html',
-    styleUrls: ['../../../course/overview/course-overview/course-overview.scss'],
-    imports: [CompetencyCardComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [CompetencyCardComponent, TumAetUiTagComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);

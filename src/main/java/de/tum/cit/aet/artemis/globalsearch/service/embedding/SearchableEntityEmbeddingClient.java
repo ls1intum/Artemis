@@ -1,69 +1,73 @@
 package de.tum.cit.aet.artemis.globalsearch.service.embedding;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
 
+import com.openai.errors.OpenAIException;
+import com.openai.models.embeddings.CreateEmbeddingResponse;
+import com.openai.models.embeddings.Embedding;
+import com.openai.models.embeddings.EmbeddingValue;
+
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
+import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEmbeddingProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
-import de.tum.cit.aet.artemis.globalsearch.dto.embedding.EmbeddingRequestDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.embedding.EmbeddingResponseDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.EmbeddingFailedException;
 
 /**
- * Computes global search embeddings through the configured OpenAI-compatible endpoint
- * ({@code POST {open-ai-base-url}/v1/embeddings}, the same base URL convention Weaviate's OpenAI module uses).
+ * Computes global search embeddings with the preset assigned in {@code embedding-llm-preset}, through {@link LlmClientService}.
  * <p>
- * Two clients with separate timeouts: a short one for user searches, which fall back to keyword search when it is
- * exceeded, and a longer one for index writes, which the outbox retries. Every response is validated before use: one
- * finite, non-zero vector of one dimension per input, in input order. Anything else is an
- * {@link EmbeddingFailedException}, so a write never stores a partial or invalid result.
+ * Two time limits: a short one for user searches, which fall back to keyword search when it is exceeded, and a longer one for index writes,
+ * which the outbox retries. SDK retries are disabled for both. Every response is validated before use: one finite, non-zero vector of one
+ * dimension per input, in input order. Anything else is an {@link EmbeddingFailedException}, so a write never stores a partial or invalid result.
  */
 @Lazy
 @Service
 @Conditional(WeaviateEnabled.class)
 public class SearchableEntityEmbeddingClient {
 
-    private static final String EMBEDDINGS_PATH = "/v1/embeddings";
-
-    private static final Duration MAX_CONNECT_TIMEOUT = Duration.ofSeconds(5);
-
-    private static final Pattern TRAILING_SLASHES = Pattern.compile("/+$");
-
     private final WeaviateConfigurationProperties properties;
 
     private final WeaviateEmbeddingProperties embeddingProperties;
 
-    private final RestClient queryClient;
+    private final LlmClientService llmClientService;
 
-    private final RestClient writeClient;
+    @Nullable
+    private final String presetName;
 
-    public SearchableEntityEmbeddingClient(RestClient.Builder restClientBuilder, WeaviateConfigurationProperties properties, WeaviateEmbeddingProperties embeddingProperties) {
+    public SearchableEntityEmbeddingClient(WeaviateConfigurationProperties properties, WeaviateEmbeddingProperties embeddingProperties, LlmClientService llmClientService) {
         this.properties = properties;
         this.embeddingProperties = embeddingProperties;
-        this.queryClient = buildClient(restClientBuilder.clone(), embeddingProperties.queryTimeout());
-        this.writeClient = buildClient(restClientBuilder.clone(), embeddingProperties.writeTimeout());
+        this.llmClientService = llmClientService;
+        this.presetName = presetName(properties);
     }
 
-    private RestClient buildClient(RestClient.Builder builder, Duration readTimeout) {
-        var requestFactory = new SimpleClientHttpRequestFactory();
-        // The connection may not use more time than the response, so an unreachable endpoint fails a search as fast as a slow one.
-        requestFactory.setConnectTimeout(readTimeout.compareTo(MAX_CONNECT_TIMEOUT) < 0 ? readTimeout : MAX_CONNECT_TIMEOUT);
-        requestFactory.setReadTimeout(readTimeout);
-        String baseUrl = properties.openAiBaseUrl() == null ? "" : TRAILING_SLASHES.matcher(properties.openAiBaseUrl()).replaceAll("");
-        return builder.requestFactory(requestFactory).baseUrl(baseUrl).defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + properties.gpuApiKey()).build();
+    /**
+     * Resolves the embedding model of hybrid search.
+     *
+     * @param properties    the Weaviate configuration
+     * @param llmProperties the LLM catalog
+     * @return the configured model of the {@code embedding-llm-preset}, or null when none is assigned
+     */
+    public static @Nullable String embeddingModel(WeaviateConfigurationProperties properties, LlmProperties llmProperties) {
+        String presetName = presetName(properties);
+        LlmProperties.Preset preset = presetName == null ? null : llmProperties.preset(presetName);
+        return preset == null ? null : preset.model();
+    }
+
+    private static @Nullable String presetName(WeaviateConfigurationProperties properties) {
+        String presetName = properties.embeddingLlmPreset();
+        return presetName == null || presetName.isBlank() ? null : presetName.strip();
     }
 
     /**
@@ -94,7 +98,7 @@ public class SearchableEntityEmbeddingClient {
     public float[] embedQuery(String query) {
         String instruction = properties.openAiQueryInstruction();
         String input = instruction == null || instruction.isEmpty() ? query : instruction + query;
-        return embed(queryClient, List.of(input)).getFirst();
+        return embed(List.of(input), embeddingProperties.queryTimeout()).getFirst();
     }
 
     /**
@@ -111,19 +115,62 @@ public class SearchableEntityEmbeddingClient {
         if (texts.isEmpty()) {
             return List.of();
         }
-        return embed(writeClient, texts);
+        return embed(texts, embeddingProperties.writeTimeout());
     }
 
-    private List<float[]> embed(RestClient client, List<String> texts) {
-        EmbeddingResponseDTO response;
-        try {
-            response = client.post().uri(EMBEDDINGS_PATH).contentType(MediaType.APPLICATION_JSON).body(new EmbeddingRequestDTO(properties.openAiEmbeddingModel(), texts)).retrieve()
-                    .body(EmbeddingResponseDTO.class);
+    private List<float[]> embed(List<String> texts, Duration timeout) {
+        if (presetName == null) {
+            throw new EmbeddingFailedException("No embedding-llm-preset is assigned");
         }
-        catch (RestClientException e) {
+        CreateEmbeddingResponse rawResponse;
+        try {
+            rawResponse = llmClientService.embed(presetName, texts, timeout);
+        }
+        catch (OpenAIException e) {
             throw new EmbeddingFailedException("Embedding request failed: " + e.getMessage(), e);
         }
+        EmbeddingResponseDTO response;
+        try {
+            response = toResponse(rawResponse);
+        }
+        catch (OpenAIException | IllegalStateException | IllegalArgumentException e) {
+            throw new EmbeddingFailedException("Malformed embedding response: " + e.getMessage(), e);
+        }
         return validate(response, texts.size());
+    }
+
+    /**
+     * Copies the vectors and their positions out of the provider's response; a missing field fails here, before the validation.
+     */
+    private static EmbeddingResponseDTO toResponse(CreateEmbeddingResponse response) {
+        List<EmbeddingResponseDTO.EmbeddingDataDTO> data = new ArrayList<>(response.data().size());
+        for (Embedding embedding : response.data()) {
+            if (embedding == null) {
+                // the validation rejects the empty entry
+                data.add(null);
+                continue;
+            }
+            EmbeddingValue embeddingValue = embedding.embeddingValue();
+            if (embeddingValue.isBase64()) {
+                byte[] decoded = Base64.getDecoder().decode(embeddingValue.asBase64());
+                if (decoded.length % Float.BYTES != 0) {
+                    throw new EmbeddingFailedException("Base64 embedding byte length " + decoded.length + " is not a multiple of " + Float.BYTES);
+                }
+            }
+            List<Float> values = embeddingValue.asFloats();
+            float[] vector = new float[values.size()];
+            for (int i = 0; i < vector.length; i++) {
+                Float value = values.get(i);
+                if (value == null) {
+                    throw new EmbeddingFailedException("Embedding contains an empty value");
+                }
+                vector[i] = value;
+            }
+            // an index beyond int becomes -1, which the validation rejects like any other index outside the inputs
+            long index = embedding.index();
+            data.add(new EmbeddingResponseDTO.EmbeddingDataDTO(index < 0 || index > Integer.MAX_VALUE ? -1 : (int) index, vector));
+        }
+        return new EmbeddingResponseDTO(data);
     }
 
     static List<float[]> validate(@Nullable EmbeddingResponseDTO response, int expectedCount) {

@@ -1,0 +1,10 @@
+{
+  "version" : "0.1",
+  "pluginName" : "Artemis",
+  "actions" : [ {
+    "actionId" : "import",
+    "actionTransferURL" : "https://artemis.example.org/sharingImport",
+    "actionName" : "Export to Artemis",
+    "filterELExpression" : null
+  } ]
+}

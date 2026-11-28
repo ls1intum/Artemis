@@ -20,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import de.tum.cit.aet.artemis.communication.api.ConversationFileAccessApi;
 import de.tum.cit.aet.artemis.core.domain.FileUpload;
 import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
 import de.tum.cit.aet.artemis.core.repository.FileUploadRepository;
@@ -34,11 +35,14 @@ class FileUploadServiceTest {
     @Mock
     private FileService fileService;
 
+    @Mock
+    private ConversationFileAccessApi conversationFileAccessApi;
+
     private FileUploadService fileUploadService;
 
     @BeforeEach
     void setUp() {
-        fileUploadService = new FileUploadService(fileUploadRepository, fileService);
+        fileUploadService = new FileUploadService(fileUploadRepository, fileService, conversationFileAccessApi);
     }
 
     @Test

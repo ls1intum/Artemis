@@ -94,8 +94,10 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void testCreateRating_asTutor_FORBIDDEN() throws Exception {
-        request.post("/api/assessment/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.FORBIDDEN);
+    void testCreateRating_asTutor_NOT_FOUND() throws Exception {
+        // A non-owner must not be able to tell an existing foreign result from a missing one: both answer 404.
+        request.post("/api/assessment/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.NOT_FOUND);
+        assertThat(ratingService.findRatingByResultId(result.getId())).isEmpty();
     }
 
     @Test
@@ -108,9 +110,20 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void testGetRating_asUser_FORBIDDEN() throws Exception {
+    void testGetRating_asUser_NOT_FOUND() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
-        request.get("/api/assessment/results/" + savedRating.getResult().getId() + "/rating", HttpStatus.FORBIDDEN, Integer.class);
+        request.get("/api/assessment/results/" + savedRating.getResult().getId() + "/rating", HttpStatus.NOT_FOUND, Integer.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetRating_foreignAndMissingResult_sameNotFound() throws Exception {
+        ratingService.saveRating(result.getId(), rating.getRating());
+        long missingResultId = result.getId() + 100_000L;
+        // A foreign existing result and a non-existent result must be indistinguishable (both 404), so the response
+        // cannot be used to probe whether a foreign result exists.
+        request.get("/api/assessment/results/" + result.getId() + "/rating", HttpStatus.NOT_FOUND, Integer.class);
+        request.get("/api/assessment/results/" + missingResultId + "/rating", HttpStatus.NOT_FOUND, Integer.class);
     }
 
     @Test
@@ -141,9 +154,9 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
-    void testUpdateRating_asTutor_FORBIDDEN() throws Exception {
+    void testUpdateRating_asTutor_NOT_FOUND() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
-        request.put("/api/assessment/results/" + savedRating.getResult().getId() + "/rating/" + 5, null, HttpStatus.FORBIDDEN);
+        request.put("/api/assessment/results/" + savedRating.getResult().getId() + "/rating/" + 5, null, HttpStatus.NOT_FOUND);
 
         // check that rating is not updated
         Rating updatedRating = ratingService.findRatingByResultId(savedRating.getResult().getId()).orElseThrow();

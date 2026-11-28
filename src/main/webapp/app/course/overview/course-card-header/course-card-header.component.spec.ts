@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, RouterLink, provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';
-import { Logger, compile } from 'sass';
+import { readFileSync } from 'node:fs';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { CourseCardHeaderComponent } from 'app/course/overview/course-card-header/course-card-header.component';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
@@ -52,7 +52,7 @@ describe('CourseCardHeaderComponent', () => {
         const router = TestBed.inject(Router);
         const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
 
-        const link = fixture.nativeElement.querySelector('a.stretched-link') as HTMLElement;
+        const link = fixture.nativeElement.querySelector('a.cover-link') as HTMLElement;
         link.click();
 
         expect(navigateByUrlSpy).toHaveBeenCalledTimes(1);
@@ -61,13 +61,13 @@ describe('CourseCardHeaderComponent', () => {
     // Regression test for issue #12526: a long course title used to be cut off in the middle of its fourth line (the
     // title box had a fixed max-height without a line clamp) and a long unbreakable word overflowed the card, because
     // the flex item holding the title could not shrink below its content width.
-    // Vitest does not apply component styles, so the component's SCSS is compiled and attached to the document here.
+    // Vitest does not apply component styles, so the stylesheet of the component is read and attached to the document here.
     describe('long course titles', () => {
         const longTitle = 'Funktionale Programmierung und Verifikation (Sommersemester 2023)';
         let styleElement: HTMLStyleElement;
 
         beforeEach(() => {
-            const { css } = compile('src/main/webapp/app/course/overview/course-card-header/course-card-header.component.scss', { logger: Logger.silent });
+            const css = readFileSync('src/main/webapp/app/course/overview/course-card-header/course-card-header.component.css', 'utf8');
             styleElement = document.createElement('style');
             // ::ng-deep is Angular-specific and not valid CSS for the DOM implementation of the test environment
             styleElement.textContent = css.replaceAll('::ng-deep', '');
@@ -80,7 +80,7 @@ describe('CourseCardHeaderComponent', () => {
             fixture.componentRef.setInput('courseTitle', longTitle);
             fixture.detectChanges();
 
-            const title = fixture.nativeElement.querySelector('.card-title') as HTMLElement;
+            const title = fixture.nativeElement.querySelector('.course-title') as HTMLElement;
             expect(title.textContent?.trim()).toBe(longTitle);
             expect(title.getAttribute('title')).toBe(longTitle);
         });
@@ -90,7 +90,7 @@ describe('CourseCardHeaderComponent', () => {
             fixture.componentRef.setInput('courseTitle', longTitle);
             fixture.detectChanges();
 
-            const stretchedLink = fixture.nativeElement.querySelector('a.stretched-link') as HTMLElement;
+            const stretchedLink = fixture.nativeElement.querySelector('a.cover-link') as HTMLElement;
             expect(stretchedLink.getAttribute('title')).toBe(longTitle);
         });
 
@@ -105,7 +105,7 @@ describe('CourseCardHeaderComponent', () => {
             fixture.detectChanges();
 
             const container = fixture.nativeElement.querySelector('.course-title-container') as HTMLElement;
-            const title = fixture.nativeElement.querySelector('.card-title') as HTMLElement;
+            const title = fixture.nativeElement.querySelector('.course-title') as HTMLElement;
             const titleStyle = getComputedStyle(title);
             // Without min-width: 0 a flex item never shrinks below its longest word and overflows the card.
             expect(getComputedStyle(container).minWidth).toBe('0px');

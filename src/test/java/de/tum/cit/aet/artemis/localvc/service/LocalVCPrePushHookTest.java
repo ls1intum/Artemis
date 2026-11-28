@@ -3,13 +3,17 @@ package de.tum.cit.aet.artemis.localvc.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.CommitBuilder;
@@ -31,6 +35,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 
 /**
  * Unit tests for the checks Artemis runs before it accepts a push.
@@ -62,10 +67,11 @@ class LocalVCPrePushHookTest {
         repository = Git.init().setDirectory(repositoryPath.toFile()).setBare(true).setInitialBranch(DEFAULT_BRANCH).call().getRepository();
         // Most tests reject a push before the branching check is reached, so this stub stays lenient.
         lenient().when(localVCServletService.isBranchNameAllowedForRepository(any(), anyString())).thenReturn(LocalVCServletService.BranchingStatus.BRANCH_ALLOWED);
+        lenient().when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(Long.MAX_VALUE);
         User user = new User();
         user.setId(1L);
         user.setLogin("ge12abc");
-        hook = new LocalVCPrePushHook(localVCServletService, user);
+        hook = new LocalVCPrePushHook(localVCServletService, user, new GitOperationAudit());
     }
 
     @AfterEach
@@ -93,6 +99,25 @@ class LocalVCPrePushHookTest {
         }
     }
 
+    /** Builds a commit with one file of the given size per entry, named file0, file1, ... (kept below ten files so that the names are in the order Git expects). */
+    private ObjectId commitWithFilesOfSize(int... sizesInBytes) throws IOException {
+        try (ObjectInserter inserter = repository.newObjectInserter()) {
+            TreeFormatter treeFormatter = new TreeFormatter();
+            for (int i = 0; i < sizesInBytes.length; i++) {
+                treeFormatter.append("file" + i, FileMode.REGULAR_FILE, inserter.insert(Constants.OBJ_BLOB, new byte[sizesInBytes[i]]));
+            }
+            CommitBuilder commitBuilder = new CommitBuilder();
+            commitBuilder.setTreeId(inserter.insert(treeFormatter));
+            PersonIdent author = new PersonIdent("Ada Lovelace", "ada@example.com");
+            commitBuilder.setAuthor(author);
+            commitBuilder.setCommitter(author);
+            commitBuilder.setMessage("a commit");
+            ObjectId commitId = inserter.insert(commitBuilder);
+            inserter.flush();
+            return commitId;
+        }
+    }
+
     private ObjectId commitWithRegularFile(String path, byte[] content) throws IOException {
         return commitWith(path, FileMode.REGULAR_FILE, content);
     }
@@ -101,14 +126,29 @@ class LocalVCPrePushHookTest {
         return new ReceiveCommand(ObjectId.zeroId(), newId, refName);
     }
 
+    /**
+     * A receive process that has received the given commands, as JGit's has when it calls the hooks. A process that has not received any has no list of commands, which the
+     * hook reads to tell whether the push brought commands.
+     */
+    private ReceivePack receivePackOf(ReceiveCommand... commands) {
+        List<ReceiveCommand> received = List.of(commands);
+        return new ReceivePack(repository) {
+
+            @Override
+            public List<ReceiveCommand> getAllCommands() {
+                return received;
+            }
+        };
+    }
+
     private void run(ReceiveCommand... commands) {
-        hook.onPreReceive(new ReceivePack(repository), List.of(commands));
+        hook.onPreReceive(receivePackOf(commands), List.of(commands));
     }
 
     @Test
     void onPreReceive_withoutAnyCommand_doesNothing() {
         // A push that updates no ref has nothing to judge, and there is no command to reject on either.
-        hook.onPreReceive(new ReceivePack(repository), List.of());
+        hook.onPreReceive(receivePackOf(), List.of());
     }
 
     @Test
@@ -207,6 +247,66 @@ class LocalVCPrePushHookTest {
         assertThat(forcePush.getResult()).as("an instructor who may force push is let through").isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
     }
 
+    private void useHookOfPersonalAccessToken() {
+        User owner = new User();
+        owner.setId(1L);
+        owner.setLogin("ge12abc");
+        hook = new LocalVCPrePushHook(localVCServletService, owner, new GitOperationAudit(), () -> AuthenticationMechanism.AGENT_ACCESS_TOKEN);
+    }
+
+    @Test
+    void onPreReceive_aPersonalAccessTokenCannotForcePushEvenWhenItsOwnerCan() throws Exception {
+        // A bare repository keeps nothing from which a rewritten history could be restored, so a token never gets this permission, whatever its owner may do.
+        ObjectId firstCommit = commitWithRegularFile("Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8));
+        ObjectId rewrittenCommit = commitWithRegularFile("Main.java", "class Main { int rewritten; }".getBytes(StandardCharsets.UTF_8));
+        pointDefaultBranchAt(firstCommit);
+        useHookOfPersonalAccessToken();
+        ReceiveCommand forcePush = new ReceiveCommand(firstCommit, rewrittenCommit, DEFAULT_REF, ReceiveCommand.Type.UPDATE_NONFASTFORWARD);
+
+        run(forcePush);
+
+        assertThat(forcePush.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(forcePush.getMessage()).isEqualTo("A personal access token cannot force push.");
+        verify(localVCServletService, never()).isUserAllowedToForcePush(any(), any());
+        verify(localVCServletService, never()).examineAgentPush(any(), any(), any());
+    }
+
+    @Test
+    void onPreReceive_aPersonalAccessTokenPushIsRefusedWhenTheExerciseWasReleasedMeanwhile() throws Exception {
+        useHookOfPersonalAccessToken();
+        when(localVCServletService.examineAgentPush(any(), any(), any())).thenReturn(Optional.of("It is visible to students."));
+        ReceiveCommand command = receive(commitWithRegularFile("Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8)), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(command.getMessage()).isEqualTo("It is visible to students.");
+    }
+
+    @Test
+    void onPreReceive_aPersonalAccessTokenPushOfADraftIsLetThrough() throws Exception {
+        useHookOfPersonalAccessToken();
+        when(localVCServletService.examineAgentPush(any(), any(), any())).thenReturn(Optional.empty());
+        ReceiveCommand command = receive(commitWithRegularFile("Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8)), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+        verify(localVCServletService).examineAgentPush(any(), any(), eq(command));
+    }
+
+    @Test
+    void onPreReceive_aPersonalAccessTokenPushIsRefusedWhenTheExerciseCannotBeExamined() throws Exception {
+        useHookOfPersonalAccessToken();
+        when(localVCServletService.examineAgentPush(any(), any(), any())).thenThrow(new IllegalStateException("exercise vanished"));
+        ReceiveCommand command = receive(commitWithRegularFile("Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8)), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(command.getMessage()).isEqualTo("An error occurred while checking the permissions of the token.");
+    }
+
     @Test
     void onPreReceive_aPushCarryingASymbolicLink_isRejectedAndSaysHowToFixIt() throws Exception {
         // A symbolic link points wherever its author chose, which on the server means outside the repository.
@@ -243,6 +343,124 @@ class LocalVCPrePushHookTest {
     }
 
     @Test
+    void onPreReceive_aRepositoryLargerThanTheLimit_isRejectedAndPointsToTheDocumentation() throws Exception {
+        // Many files that are each below the file limit still add up to a repository that every build agent and every student has to copy.
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(5L * 1024 * 1024);
+        ReceiveCommand command = receive(commitWithFilesOfSize(3 * 1024 * 1024, 3 * 1024 * 1024), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(command.getMessage()).contains("The repository would be 6.0 MB large, but the limit is 5 MB.").contains("Download them during the build instead")
+                .contains("https://docs.artemis.tum.de/instructor/exercises/programming-exercise/write-code-and-tests#keep-repositories-small");
+    }
+
+    @Test
+    void onPreReceive_aRepositoryExactlyAtTheSizeLimit_isAccepted() throws Exception {
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(6L * 1024 * 1024);
+        ReceiveCommand command = receive(commitWithFilesOfSize(3 * 1024 * 1024, 3 * 1024 * 1024), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+    }
+
+    @Test
+    void onPreReceive_aPushThatMakesARepositoryAboveTheLimitLarger_isRejected() throws Exception {
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(5L * 1024 * 1024);
+        ObjectId previous = commitWithFilesOfSize(6 * 1024 * 1024);
+        pointDefaultBranchAt(previous);
+        ReceiveCommand command = new ReceiveCommand(previous, commitWithFilesOfSize(6 * 1024 * 1024, 1024), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(command.getMessage()).contains("limit is 5 MB");
+    }
+
+    @Test
+    void onPreReceive_aPushThatDoesNotMakeARepositoryAboveTheLimitLarger_isAccepted() throws Exception {
+        // Repositories created from a large template before the limit existed must stay usable: students can still push, and can shrink the repository step by step.
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(5L * 1024 * 1024);
+        ObjectId previous = commitWithFilesOfSize(6 * 1024 * 1024, 1024);
+        pointDefaultBranchAt(previous);
+        ReceiveCommand sameSize = new ReceiveCommand(previous, commitWithFilesOfSize(6 * 1024 * 1024, 1024), DEFAULT_REF);
+        ReceiveCommand smaller = new ReceiveCommand(previous, commitWithFilesOfSize(6 * 1024 * 1024), DEFAULT_REF);
+
+        run(sameSize);
+        run(smaller);
+
+        assertThat(sameSize.getResult()).isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+        assertThat(smaller.getResult()).isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+    }
+
+    @Test
+    void onPreReceive_creatingABranchAtACommitOfARepositoryAboveTheLimit_isAccepted() throws Exception {
+        // A new branch at an existing commit adds no files, so it is no growth even though its old id is the zero id.
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(5L * 1024 * 1024);
+        ObjectId existing = commitWithFilesOfSize(6 * 1024 * 1024);
+        pointDefaultBranchAt(existing);
+        ReceiveCommand command = receive(existing, Constants.R_HEADS + "feature");
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+    }
+
+    @Test
+    void onPreReceive_creatingABranchThatIsLargerThanEveryExistingBranch_isRejected() throws Exception {
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(5L * 1024 * 1024);
+        pointDefaultBranchAt(commitWithFilesOfSize(6 * 1024 * 1024));
+        ReceiveCommand command = receive(commitWithFilesOfSize(6 * 1024 * 1024, 1024), Constants.R_HEADS + "feature");
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(command.getMessage()).contains("limit is 5 MB");
+    }
+
+    @Test
+    void onPreReceive_aPushThatRemovesASubmoduleFromARepositoryAboveTheLimit_isAccepted() throws Exception {
+        // The object of a submodule is not stored in this repository, so measuring the previous commit must not try to open it.
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(5L * 1024 * 1024);
+        ObjectId previous = commitWithFileAndSubmodule(7 * 1024 * 1024);
+        pointDefaultBranchAt(previous);
+        ReceiveCommand command = new ReceiveCommand(previous, commitWithFilesOfSize(6 * 1024 * 1024), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+    }
+
+    private ObjectId commitWithFileAndSubmodule(int fileSizeInBytes) throws IOException {
+        try (ObjectInserter inserter = repository.newObjectInserter()) {
+            TreeFormatter treeFormatter = new TreeFormatter();
+            treeFormatter.append("file0", FileMode.REGULAR_FILE, inserter.insert(Constants.OBJ_BLOB, new byte[fileSizeInBytes]));
+            treeFormatter.append("submodule", FileMode.GITLINK, ObjectId.fromString("0123456789012345678901234567890123456789"));
+            CommitBuilder commitBuilder = new CommitBuilder();
+            commitBuilder.setTreeId(inserter.insert(treeFormatter));
+            PersonIdent author = new PersonIdent("Ada Lovelace", "ada@example.com");
+            commitBuilder.setAuthor(author);
+            commitBuilder.setCommitter(author);
+            commitBuilder.setMessage("a commit with a submodule");
+            ObjectId commitId = inserter.insert(commitBuilder);
+            inserter.flush();
+            return commitId;
+        }
+    }
+
+    @Test
+    void onPreReceive_aSymbolicLinkIsReportedEvenIfTheRepositoryIsAlsoTooLarge() throws Exception {
+        // The first violation that is found is the one that is reported, and the size check must not replace it.
+        when(localVCServletService.getMaxRepositorySizeBytes(any())).thenReturn(1L);
+        ReceiveCommand command = receive(commitWith("link-to-secrets", FileMode.SYMLINK, "/etc/passwd".getBytes(StandardCharsets.UTF_8)), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getMessage()).contains("Symbolic links are not allowed");
+    }
+
+    @Test
     void onPreReceive_anOrdinaryPushToTheDefaultBranch_isAccepted() throws Exception {
         ReceiveCommand command = receive(commitWithRegularFile("src/Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8)), DEFAULT_REF);
 
@@ -268,5 +486,188 @@ class LocalVCPrePushHookTest {
         refUpdate.setNewObjectId(commitId);
         refUpdate.setForceUpdate(true);
         refUpdate.update();
+    }
+
+    /** Builds a commit with the given root tree. */
+    private ObjectId commitWithTree(ObjectInserter inserter, ObjectId treeId) throws IOException {
+        CommitBuilder commitBuilder = new CommitBuilder();
+        commitBuilder.setTreeId(treeId);
+        PersonIdent author = new PersonIdent("Ada Lovelace", "ada@example.com");
+        commitBuilder.setAuthor(author);
+        commitBuilder.setCommitter(author);
+        commitBuilder.setMessage("a commit");
+        ObjectId commitId = inserter.insert(commitBuilder);
+        inserter.flush();
+        return commitId;
+    }
+
+    @Test
+    void onPreReceive_treeThatReferencesSubtreesRepeatedly_isRejectedAfterTheEntryLimit() throws Exception {
+        // Three levels of 100 entries that all point to the same subtree: a few kilobytes of objects, but a million paths when the tree is walked.
+        try (ObjectInserter inserter = repository.newObjectInserter()) {
+            ObjectId blobId = inserter.insert(Constants.OBJ_BLOB, "x".getBytes(StandardCharsets.UTF_8));
+            ObjectId level = null;
+            for (int depth = 0; depth < 3; depth++) {
+                TreeFormatter formatter = new TreeFormatter();
+                for (int index = 0; index < 100; index++) {
+                    String name = "e%03d".formatted(index);
+                    if (level == null) {
+                        formatter.append(name, FileMode.REGULAR_FILE, blobId);
+                    }
+                    else {
+                        formatter.append(name, FileMode.TREE, level);
+                    }
+                }
+                level = inserter.insert(formatter);
+            }
+            ReceiveCommand command = receive(commitWithTree(inserter, level), DEFAULT_REF);
+
+            run(command);
+
+            assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+            assertThat(command.getMessage()).contains("limits for the number of files");
+        }
+    }
+
+    @Test
+    void onPreReceive_treeNestedDeeperThanTheLimit_isRejected() throws Exception {
+        try (ObjectInserter inserter = repository.newObjectInserter()) {
+            ObjectId blobId = inserter.insert(Constants.OBJ_BLOB, "x".getBytes(StandardCharsets.UTF_8));
+            TreeFormatter leaf = new TreeFormatter();
+            leaf.append("file", FileMode.REGULAR_FILE, blobId);
+            ObjectId tree = inserter.insert(leaf);
+            for (int depth = 0; depth <= LocalVCPrePushHook.MAX_TREE_DEPTH; depth++) {
+                TreeFormatter formatter = new TreeFormatter();
+                formatter.append("d", FileMode.TREE, tree);
+                tree = inserter.insert(formatter);
+            }
+            ReceiveCommand command = receive(commitWithTree(inserter, tree), DEFAULT_REF);
+
+            run(command);
+
+            assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+            assertThat(command.getMessage()).contains("limits for the number of files");
+        }
+    }
+
+    @Test
+    void onPreReceive_ordinaryTree_isAccepted() throws Exception {
+        ReceiveCommand command = receive(commitWithRegularFile("src/Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8)), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+    }
+
+    @Test
+    void onPreReceive_pathThatNamesTheMetadataDirectory_isRejected() throws Exception {
+        ReceiveCommand command = receive(commitWithRegularFile("src/.GIT./config", "[core]".getBytes(StandardCharsets.UTF_8)), DEFAULT_REF);
+
+        run(command);
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(command.getMessage()).contains("metadata directory");
+    }
+
+    @Test
+    void onPreReceive_treeThatReferencesEmptySubtreesRepeatedly_isRejected() throws Exception {
+        // The same repeated structure as above, but every leaf is an empty directory, so the walk never returns a file.
+        try (ObjectInserter inserter = repository.newObjectInserter()) {
+            ObjectId level = inserter.insert(new TreeFormatter());
+            for (int depth = 0; depth < 3; depth++) {
+                TreeFormatter formatter = new TreeFormatter();
+                for (int index = 0; index < 100; index++) {
+                    formatter.append("e%03d".formatted(index), FileMode.TREE, level);
+                }
+                level = inserter.insert(formatter);
+            }
+            ReceiveCommand command = receive(commitWithTree(inserter, level), DEFAULT_REF);
+
+            run(command);
+
+            assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+            assertThat(command.getMessage()).contains("limits for the number of files");
+        }
+    }
+
+    @Test
+    void examineBeforeObjects_rejectsABranchThatIsNotAllowedWithoutLookingAtTheObjects() throws Exception {
+        when(localVCServletService.isBranchNameAllowedForRepository(any(), anyString())).thenReturn(LocalVCServletService.BranchingStatus.BRANCHING_DISABLED);
+        // the commit does not exist in the repository: the commands alone decide
+        ReceiveCommand command = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), Constants.R_HEADS + "feature");
+
+        hook.examineBeforeObjects(receivePackOf(command), List.of(command));
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(command.getMessage()).isEqualTo("You cannot push to a branch other than the default branch.");
+    }
+
+    @Test
+    void examineBeforeObjects_rejectsARefThatIsNotABranch() {
+        ObjectId id = ObjectId.fromString("0123456789012345678901234567890123456789");
+        for (String refName : List.of("refs/tags/v1", "refs/notes/x", "refs/x", "HEAD", "refs/heads/")) {
+            ReceiveCommand command = receive(id, refName);
+
+            hook.examineBeforeObjects(receivePackOf(command), List.of(command));
+
+            assertThat(command.getResult()).as(refName).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+            assertThat(command.getMessage()).as(refName).isEqualTo("You can only push to a branch.");
+        }
+    }
+
+    @Test
+    void examineBeforeObjects_doesNotEvaluateTheBranchExpressionForAPushToTheDefaultBranch() {
+        ReceiveCommand command = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), DEFAULT_REF);
+
+        hook.examineBeforeObjects(receivePackOf(command), List.of(command));
+
+        verify(localVCServletService, never()).isBranchNameAllowedForRepository(any(), anyString());
+    }
+
+    @Test
+    void examineBeforeObjects_acceptsTheDefaultBranchWithoutLookingAtTheObjects() {
+        ReceiveCommand command = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), DEFAULT_REF);
+
+        hook.examineBeforeObjects(receivePackOf(command), List.of(command));
+
+        assertThat(command.getResult()).as("the content is judged later, when the objects are there").isEqualTo(ReceiveCommand.Result.NOT_ATTEMPTED);
+    }
+
+    @Test
+    void examineBeforeObjects_rejectsEveryCommandOfAPushOfSeveralRefs() {
+        ReceiveCommand first = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), DEFAULT_REF);
+        ReceiveCommand second = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), Constants.R_HEADS + "other");
+
+        hook.examineBeforeObjects(receivePackOf(first, second), List.of(first, second));
+
+        assertThat(List.of(first, second)).allSatisfy(command -> assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON));
+    }
+
+    @Test
+    void examineBeforeObjects_withoutCommandsDoesNothing() {
+        hook.examineBeforeObjects(receivePackOf(), List.of());
+    }
+
+    @Test
+    void examineBeforeObjects_leavesACommandThatIsRejectedAlreadyAsItIs() {
+        ReceiveCommand command = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), DEFAULT_REF);
+        command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "rejected earlier");
+
+        hook.examineBeforeObjects(receivePackOf(command), List.of(command));
+
+        assertThat(command.getMessage()).isEqualTo("rejected earlier");
+    }
+
+    @Test
+    void examineBeforeObjects_runningTwiceGivesTheSameResult() {
+        when(localVCServletService.isBranchNameAllowedForRepository(any(), anyString())).thenReturn(LocalVCServletService.BranchingStatus.NAME_DOES_NOT_MATCH_REGEX);
+        ReceiveCommand command = receive(ObjectId.fromString("0123456789012345678901234567890123456789"), Constants.R_HEADS + "feature");
+
+        hook.examineBeforeObjects(receivePackOf(command), List.of(command));
+        String message = command.getMessage();
+        hook.examineBeforeObjects(receivePackOf(command), List.of(command));
+
+        assertThat(command.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(command.getMessage()).isEqualTo(message);
     }
 }

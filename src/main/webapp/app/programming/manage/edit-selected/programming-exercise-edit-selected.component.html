@@ -1,6 +1,6 @@
 <tumaet-ui-dialog [(visible)]="visible" [header]="'entity.action.editSelected' | artemisTranslate" [closable]="true" [closeOnEscape]="true" [dismissableMask]="false" size="large">
     @if (failureOccurred()) {
-        <div class="row justify-content-center">
+        <div class="flex flex-col">
             <span class="mb-1" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.errorOccurred"></span>
             <div class="m-2 p-1">
                 <tumaet-ui-table-layout class="[--table-layout-offset:30rem] max-md:[--table-layout-offset:38rem]">
@@ -20,13 +20,19 @@
                     </table>
                 </tumaet-ui-table-layout>
             </div>
-            <button type="button" class="btn ms-2 btn-primary" (click)="closeModal()" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.errorReadButton"></button>
+            <button
+                type="button"
+                tumAetUiButton
+                class="ms-2 self-start"
+                (click)="closeModal()"
+                jhiTranslate="artemisApp.programmingExercise.editSelectedModal.errorReadButton"
+            ></button>
         </div>
     }
     @if (!failureOccurred()) {
-        <div class="row justify-content-center">
-            <div class="col-lg-8 col-sm-12">
-                <span style="font-weight: bold" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.currentlyEdited"></span>
+        <div class="flex flex-wrap justify-center -mx-2">
+            <div class="w-full px-2 min-[992px]:w-2/3">
+                <span class="font-bold" jhiTranslate="artemisApp.programmingExercise.editSelectedModal.currentlyEdited"></span>
                 <div class="m-2 p-1">
                     <tumaet-ui-table-layout class="[--table-layout-offset:30rem] max-md:[--table-layout-offset:38rem]">
                         <table tumAetUiTable size="small" striped>
@@ -45,12 +51,21 @@
                         </table>
                     </tumaet-ui-table-layout>
                 </div>
-                <div class="form-group-narrow">
-                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text"></label>
-                    <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" [(ngModel)]="notificationText" />
+                <div class="mb-[0.2rem]">
+                    <label jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text"></label>
+                    <input
+                        minlength="3"
+                        type="text"
+                        tumAetUiInput
+                        class="w-full"
+                        name="notificationText"
+                        id="field_notification_text"
+                        tumAetUiInputId="field_notification_text"
+                        [(ngModel)]="notificationText"
+                    />
                 </div>
                 <form name="editForm" role="form" novalidate (ngSubmit)="saveAll()">
-                    <div class="form-group-narrow mt-2">
+                    <div class="mb-[0.2rem] mt-2">
                         @let exampleSolutionPublicationDateSet =
                             !!newProgrammingExercise.exampleSolutionPublicationDate || !!newProgrammingExercise.exerciseGroup?.exam?.exampleSolutionPublicationDate;
                         <jhi-programming-exercise-timeline

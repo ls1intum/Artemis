@@ -10,14 +10,14 @@ import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/pr
 import { ConfirmAutofocusModalComponent } from 'app/shared-ui/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { Subject, of, throwError } from 'rxjs';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission-type.model';
 
 describe('ProgrammingExercise Instructor Trigger Build Component', () => {
     const course = { id: 123 } as Course;
@@ -30,14 +30,14 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
     let comp: ProgrammingExerciseInstructorTriggerBuildButtonComponent;
     let fixture: ComponentFixture<ProgrammingExerciseInstructorTriggerBuildButtonComponent>;
     let submissionService: ProgrammingSubmissionService;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
     let dialogClose: Subject<any>;
 
     beforeEach(() => {
         dialogClose = new Subject<any>();
         TestBed.configureTestingModule({
             providers: [
-                { provide: DialogService, useValue: { open: vi.fn(() => ({ onClose: dialogClose })) } },
+                { provide: TumAetUiDialogService, useValue: { open: vi.fn(() => ({ onClose: dialogClose })) } },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -50,7 +50,7 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
         fixture = TestBed.createComponent(ProgrammingExerciseInstructorTriggerBuildButtonComponent);
         comp = fixture.componentInstance;
         submissionService = TestBed.inject(ProgrammingSubmissionService);
-        dialogService = TestBed.inject(DialogService);
+        dialogService = TestBed.inject(TumAetUiDialogService);
 
         fixture.componentRef.setInput('exercise', programmingExercise);
         fixture.componentRef.setInput('participation', participation);
@@ -95,7 +95,7 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
         expect(dialogService.open).toHaveBeenCalledWith(
             ConfirmAutofocusModalComponent,
             expect.objectContaining({
-                width: '50rem',
+                size: 'medium',
                 data: expect.objectContaining({
                     title: 'artemisApp.programmingExercise.resubmitSingle',
                 }),
