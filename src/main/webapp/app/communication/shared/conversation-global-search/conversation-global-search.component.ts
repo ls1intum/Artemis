@@ -15,7 +15,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
-import { TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { AccountService } from 'app/core/auth/account.service';
 
 export interface ConversationGlobalSearchConfig {

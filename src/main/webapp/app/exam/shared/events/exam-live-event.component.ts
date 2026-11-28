@@ -9,7 +9,7 @@ import {
     WorkingTimeUpdateEvent,
 } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { NgClass } from '@angular/common';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { WorkingTimeChangeComponent } from '../working-time-change/working-time-change.component';

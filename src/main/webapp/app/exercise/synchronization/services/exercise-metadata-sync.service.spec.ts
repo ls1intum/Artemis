@@ -4,7 +4,7 @@ import { Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { Subject } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Competency, CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';

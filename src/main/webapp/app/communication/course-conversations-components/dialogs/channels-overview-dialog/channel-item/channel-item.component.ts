@@ -1,5 +1,6 @@
 import { Component, input, output } from '@angular/core';
-import { TumAetUiButtonDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';

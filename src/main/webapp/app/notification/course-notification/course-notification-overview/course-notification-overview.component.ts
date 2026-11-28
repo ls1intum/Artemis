@@ -16,10 +16,11 @@ import { CourseNotificationViewingStatus } from 'app/notification/shared/entitie
 import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RouterLink } from '@angular/router';
-import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { UserCourseNotificationSettingPreset as CourseNotificationSettingPreset } from 'app/openapi/model/user-course-notification-setting-preset';
 import { CourseNotificationInfo } from 'app/openapi/model/course-notification-info';
 import { CourseNotificationSettingInfo } from 'app/openapi/model/course-notification-setting-info';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
 import { CourseNotificationPresetPickerComponent } from 'app/notification/course-notification/course-notification-preset-picker/course-notification-preset-picker.component';
 

@@ -326,3 +326,31 @@ applied to the auto-configured `JsonMapper`, the `XmlMapper` and the shared stat
 pins the Jackson 3 defaults that would otherwise change the JSON on the wire, each with a TODO naming what
 has to happen before it can go. `JacksonSerializationContractTest` records the payloads those pins protect:
 remove a pin, run it, and the failing fixture is the payload that would change.
+
+## Runtime classpath
+
+**Rule:** `./gradlew verifyRuntimeClasspathHygiene -x webapp` (`gradle/dependency-hygiene.gradle`), run by the
+Server Code Style job and by `check`.
+
+It reads the resolved `runtimeClasspath`, i.e. what the WAR ships, and fails when
+
+- an artifact of `forbiddenRuntimeModules` is on it (Lombok, the Jersey client, the Kubernetes client's Vert.x
+  transports, `sshd-osgi`, the old `com.sun.xml.bind` JAXB jars, `jakarta.servlet-api`), or
+- the same class is contained in more than one jar and exactly that set of jars is not in
+  `allowedDuplicateClassJars`.
+
+**Why the rule exists rather than the compiler:** two jars with different coordinates but the same classes are
+invisible to Gradle's conflict resolution and to `verifyDependencyFamilies`. The JVM loads whichever copy comes
+first, so bumping only one of them is a `LinkageError` or a silent behaviour change. The 10.8 review found
+`sshd-osgi` next to `sshd-core` (every SSH class twice), two JAXB implementations, and the Jersey client stack of an
+unused GitLab client that nothing had failed on.
+
+**When it fails:** do not add to the allowlist first. Run `./gradlew dependencies --configuration runtimeClasspath`
+or `dependencyInsight --dependency <artifact> --configuration runtimeClasspath` to see who brings the jar, and
+exclude it at that dependency in `build.gradle` with a comment saying why. Add an allowlist entry only when both
+jars are wanted (the existing `commons-logging` and `jcl-over-slf4j` pair), with the reason. Entries whose jars
+stop overlapping fail the task, so the list cannot rot.
+
+**H2 is not on the production classpath.** `build.gradle` adds `com.h2database:h2` as `runtimeOnly` for every
+build except `-Pprod`, which is the WAR and the Docker image. Development (`bootRun`), the tests, the OpenAPI
+generation and the bean instantiation job start without `-Pprod` and keep it.

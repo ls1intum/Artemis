@@ -20,7 +20,9 @@ import { ConversationService } from 'app/communication/conversations/service/con
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCalendarPlus, faUser, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseNotificationSettingService } from 'app/notification/course-notification/course-notification-setting.service';
 import { CourseNotificationSettingInfo } from 'app/openapi/model/course-notification-setting-info';

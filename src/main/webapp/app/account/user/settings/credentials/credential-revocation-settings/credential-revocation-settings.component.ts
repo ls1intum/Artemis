@@ -1,6 +1,7 @@
 import { Component, OnDestroy, computed, inject, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
 import { CredentialRevocationChoice } from 'app/account/password/password.service';
 import { CredentialRevocationService } from 'app/account/user/settings/credentials/credential-revocation-settings/credential-revocation.service';
 import { AlertService } from 'app/foundation/service/alert.service';

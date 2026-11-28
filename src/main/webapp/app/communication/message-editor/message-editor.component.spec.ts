@@ -10,7 +10,7 @@ import { MessageEditorResources } from './message-editor-resources';
 import { FileUploaderService } from 'app/foundation/service/file-uploader.service';
 import { By } from '@angular/platform-browser';
 import { OverlayRef } from '@angular/cdk/overlay';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 describe('Formatted message composer', () => {
     let fixture: ComponentFixture<MessageEditorComponent>;

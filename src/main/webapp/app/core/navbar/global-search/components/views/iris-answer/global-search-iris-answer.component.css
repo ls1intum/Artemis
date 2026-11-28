@@ -199,6 +199,7 @@
 
 /* ── Answer collapse ────────────────────────────────────────────────────────── */
 .iris-answer-region {
+    position: relative;
     padding: 0.625rem 0.75rem 0;
 }
 
@@ -384,10 +385,6 @@
 }
 
 /* ── Inline citation chips (rendered inside the markdown innerHTML) ────────── */
-.iris-answer-region {
-    position: relative;
-}
-
 :host ::ng-deep .iris-cite {
     display: inline-block;
     padding: 0 0.3rem;

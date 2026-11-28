@@ -1,6 +1,9 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiIconFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiIconFieldComponent } from '@tumaet/ui-angular/icon-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';

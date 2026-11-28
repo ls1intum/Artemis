@@ -1,12 +1,6 @@
-import {
-    TumAetUiButtonDirective,
-    TumAetUiDialogRef,
-    TumAetUiTabComponent,
-    TumAetUiTabListComponent,
-    TumAetUiTabPanelComponent,
-    TumAetUiTabPanelsComponent,
-    TumAetUiTabsComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabPanelComponent, TumAetUiTabPanelsComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular/tabs';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { faBan, faDownload, faXmark } from '@fortawesome/free-solid-svg-icons';
