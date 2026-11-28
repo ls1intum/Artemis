@@ -105,6 +105,8 @@ public class UserReferenceCleanupService {
         bindings.put(UserDeletionReferencePolicy.SSH_PUBLIC_KEY, bind(programming::countSshPublicKeys, programming::deleteSshPublicKeys));
         bindings.put(UserDeletionReferencePolicy.IDE_MAPPING, bind(programming::countIdeMappings, programming::deleteIdeMappings));
         bindings.put(UserDeletionReferencePolicy.VCS_ACCESS_LOG, bind(programming::countVcsAccessLogs, programming::detachVcsAccessLogs));
+        bindings.put(UserDeletionReferencePolicy.VCS_STAFF_REPOSITORY_ACCESS_LOG,
+                bind(programming::countVcsStaffRepositoryAccessLogs, programming::detachVcsStaffRepositoryAccessLogs));
 
         bindings.put(UserDeletionReferencePolicy.QUIZ_QUESTION_PROGRESS, bind(learning::countQuizQuestionProgress, learning::deleteQuizQuestionProgress));
         bindings.put(UserDeletionReferencePolicy.QUIZ_TRAINING_LEADERBOARD, bind(learning::countQuizLeaderboardEntries, learning::deleteQuizLeaderboardEntries));

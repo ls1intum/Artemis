@@ -171,18 +171,19 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     }
 
     /**
-     * Get the vcs access log for a given exercise id and the repository type.
+     * Get the vcs access log for a given exercise id and the repository type: the template, the solution, the tests or an auxiliary repository.
      * The current user needs to be at least a instructor in the course of the participation.
      * @param exerciseId      of the exercise to get the vcs Access log
      * @param repositoryType  of the repository of the exercise, to get the vcs Access log
+     * @param repositoryId    of the auxiliary repository, which has to be given for the type AUXILIARY
      */
-    getVcsAccessLogForRepository(exerciseId: number, repositoryType: string): Observable<VcsAccessLogDTO[] | undefined> {
-        const params: { [key: string]: number | string } = {};
-        if (repositoryType) {
-            params['repositoryType'] = repositoryType;
+    getVcsAccessLogForRepository(exerciseId: number, repositoryType: string, repositoryId?: number): Observable<VcsAccessLogDTO[] | undefined> {
+        const params: { [key: string]: number } = {};
+        if (repositoryId !== undefined) {
+            params['repositoryId'] = repositoryId;
         }
         return this.http
-            .get<VcsAccessLogDTO[]>(`${this.resourceUrl}${exerciseId}/vcs-access-log/${repositoryType}`, { observe: 'response' })
+            .get<VcsAccessLogDTO[]>(`${this.resourceUrl}${exerciseId}/vcs-access-log/${repositoryType}`, { params, observe: 'response' })
             .pipe(map((res: HttpResponse<VcsAccessLogDTO[]>) => res.body ?? undefined));
     }
 

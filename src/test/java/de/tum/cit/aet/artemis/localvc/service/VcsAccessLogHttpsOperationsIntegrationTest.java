@@ -176,7 +176,8 @@ class VcsAccessLogHttpsOperationsIntegrationTest extends AbstractProgrammingInte
     private MockHttpServletRequest authorizedRequest(String method, RepositoryActionType action, AuthenticationMechanism mechanism) {
         var request = new MockHttpServletRequest(method,
                 "/git/" + projectKey1 + "/" + assignmentRepositorySlug + ".git/" + (method.equals("GET") ? "info/refs" : "git-upload-pack"));
-        accessLogRecorder.rememberSubjectHTTPS(request, userUtilService.getUserByLogin(student1Login), Optional.of(participation), mechanism);
+        accessLogRecorder.rememberSubjectHTTPS(request, userUtilService.getUserByLogin(student1Login), Optional.of(new AccessLogTarget.OfParticipation(participation.getId())),
+                mechanism);
         return request;
     }
 

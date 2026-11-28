@@ -195,6 +195,20 @@ describe('ProgrammingExerciseParticipation Service', () => {
         httpMock.expectOne({ method: 'GET', url: expectedURL });
     });
 
+    it('should make GET request to retrieve the vcs access log of the tests repository', () => {
+        const exerciseId = 42;
+        service.getVcsAccessLogForRepository(exerciseId, 'TESTS').subscribe();
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}${exerciseId}/vcs-access-log/TESTS` });
+        expect(req.request.params.keys()).toEqual([]);
+    });
+
+    it('should send the id of the auxiliary repository to retrieve its vcs access log', () => {
+        const exerciseId = 42;
+        service.getVcsAccessLogForRepository(exerciseId, 'AUXILIARY', 7).subscribe();
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}${exerciseId}/vcs-access-log/AUXILIARY?repositoryId=7` });
+        expect(req.request.params.get('repositoryId')).toBe('7');
+    });
+
     it('should make GET request to retrieve commit history for auxiliary repository', () => {
         const exerciseId = 42;
         const auxiliaryRepositoryId = 123;

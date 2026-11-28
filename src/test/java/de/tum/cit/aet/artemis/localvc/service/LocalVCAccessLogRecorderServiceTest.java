@@ -49,8 +49,10 @@ import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
+import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
@@ -71,6 +73,9 @@ class LocalVCAccessLogRecorderServiceTest {
 
     @Mock
     private UserVcsAccessTokenService userVcsAccessTokenService;
+
+    @Mock
+    private AuxiliaryRepositoryService auxiliaryRepositoryService;
 
     @InjectMocks
     private LocalVCAccessLogRecorderService accessLogRecorder;
@@ -121,7 +126,7 @@ class LocalVCAccessLogRecorderServiceTest {
                 .thenReturn(Optional.of(testParticipation));
         var expected = action == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
 
-        accessLogRecorder.recordFailedAuthenticationHTTPS(request, testRepositoryUri, action);
+        accessLogRecorder.recordFailedAuthenticationHTTPS(request, testRepositoryUri, testExercise.getId(), action);
 
         verify(vcsAccessLogService).saveAccessLog(eq(testUser), eq(testParticipation.getId()), eq(expected), eq(AuthenticationMechanism.PASSWORD), eq(""), eq("10.0.0.1"));
     }
@@ -136,7 +141,8 @@ class LocalVCAccessLogRecorderServiceTest {
         // The caller is in the middle of answering a rejected authentication with 401. An exception escaping here
         // reaches the servlet container instead, and the client is told the server is broken rather than being asked
         // for credentials.
-        assertThatCode(() -> accessLogRecorder.recordFailedAuthenticationHTTPS(request, testRepositoryUri, RepositoryActionType.READ)).doesNotThrowAnyException();
+        assertThatCode(() -> accessLogRecorder.recordFailedAuthenticationHTTPS(request, testRepositoryUri, testExercise.getId(), RepositoryActionType.READ))
+                .doesNotThrowAnyException();
         verifyNoInteractions(vcsAccessLogService);
     }
 
@@ -239,7 +245,8 @@ class LocalVCAccessLogRecorderServiceTest {
         when(request.getHeader(HttpHeaders.AUTHORIZATION)).thenReturn(basicAuth("testuser", "wrong-password"));
         when(userRepository.findOneByLogin("testuser")).thenReturn(Optional.empty());
 
-        assertThatCode(() -> accessLogRecorder.recordFailedAuthenticationHTTPS(request, testRepositoryUri, RepositoryActionType.READ)).doesNotThrowAnyException();
+        assertThatCode(() -> accessLogRecorder.recordFailedAuthenticationHTTPS(request, testRepositoryUri, testExercise.getId(), RepositoryActionType.READ))
+                .doesNotThrowAnyException();
 
         verifyNoInteractions(vcsAccessLogService);
     }
@@ -259,7 +266,7 @@ class LocalVCAccessLogRecorderServiceTest {
     private MockHttpServletRequest authorizedRequest(String method, AuthenticationMechanism mechanism) {
         var request = new MockHttpServletRequest(method, "/git/TEST/EXERCISE-testuser.git/" + (method.equals("GET") ? "info/refs" : "git-upload-pack"));
         request.setRemoteAddr("10.0.0.1");
-        accessLogRecorder.rememberSubjectHTTPS(request, testUser, Optional.of(testParticipation), mechanism);
+        accessLogRecorder.rememberSubjectHTTPS(request, testUser, Optional.of(new AccessLogTarget.OfParticipation(testParticipation.getId())), mechanism);
         return request;
     }
 
@@ -433,7 +440,7 @@ class LocalVCAccessLogRecorderServiceTest {
 
     @Test
     void anSshFetchThatMovedNoDataIsAReadAndAnSshPushWithoutCommandsIsAWrite() throws Exception {
-        var subject = new AccessLogSubject(testUser, testParticipation.getId(), AuthenticationMechanism.SSH, "10.0.0.2");
+        var subject = new AccessLogSubject(testUser, new AccessLogTarget.OfParticipation(testParticipation.getId()), AuthenticationMechanism.SSH, "10.0.0.2");
         try (var repository = new InMemoryRepository(new DfsRepositoryDescription("empty"))) {
             accessLogRecorder.recordFetchSSH(subject, new GitOperationAudit(), repository);
             accessLogRecorder.recordPushSSH(subject, new GitOperationAudit(), repository);
@@ -449,7 +456,7 @@ class LocalVCAccessLogRecorderServiceTest {
         var audit = new GitOperationAudit();
         audit.onBeginNegotiateRound(0);
         audit.onPackSent("head");
-        var subject = new AccessLogSubject(testUser, testParticipation.getId(), AuthenticationMechanism.SSH, "10.0.0.2");
+        var subject = new AccessLogSubject(testUser, new AccessLogTarget.OfParticipation(testParticipation.getId()), AuthenticationMechanism.SSH, "10.0.0.2");
 
         accessLogRecorder.recordFetch(subject, audit);
         accessLogRecorder.recordPush(subject, audit);
@@ -460,7 +467,7 @@ class LocalVCAccessLogRecorderServiceTest {
 
     @Test
     void anSshPushIsOnePushOrOneFailedPush() {
-        var subject = new AccessLogSubject(testUser, testParticipation.getId(), AuthenticationMechanism.SSH, "10.0.0.2");
+        var subject = new AccessLogSubject(testUser, new AccessLogTarget.OfParticipation(testParticipation.getId()), AuthenticationMechanism.SSH, "10.0.0.2");
         var accepted = new GitOperationAudit();
         accepted.onPushReceived("before");
         accepted.onPushAccepted("pushed");
@@ -483,7 +490,7 @@ class LocalVCAccessLogRecorderServiceTest {
 
     @Test
     void anEntryIsWrittenByAThreadThatWasInterruptedAndTheInterruptIsPassedOn() {
-        var subject = new AccessLogSubject(testUser, testParticipation.getId(), AuthenticationMechanism.SSH, "10.0.0.2");
+        var subject = new AccessLogSubject(testUser, new AccessLogTarget.OfParticipation(testParticipation.getId()), AuthenticationMechanism.SSH, "10.0.0.2");
         var stored = new AtomicInteger();
         doAnswer(invocation -> {
             if (Thread.currentThread().isInterrupted()) {
@@ -510,7 +517,7 @@ class LocalVCAccessLogRecorderServiceTest {
 
     @Test
     void anEntryIsWrittenOnceMoreWhenTheInterruptArrivesWhileItIsWritten() {
-        var subject = new AccessLogSubject(testUser, testParticipation.getId(), AuthenticationMechanism.SSH, "10.0.0.2");
+        var subject = new AccessLogSubject(testUser, new AccessLogTarget.OfParticipation(testParticipation.getId()), AuthenticationMechanism.SSH, "10.0.0.2");
         var stored = new AtomicInteger();
         var timeOfRetry = new AtomicReference<ZonedDateTime>();
         var timeInsideTheFirstAttempt = new AtomicReference<ZonedDateTime>();
@@ -552,7 +559,7 @@ class LocalVCAccessLogRecorderServiceTest {
 
     @Test
     void aFailureThatIsNoInterruptIsNotWrittenAgainAndLeavesTheThreadAlone() {
-        var subject = new AccessLogSubject(testUser, testParticipation.getId(), AuthenticationMechanism.SSH, "10.0.0.2");
+        var subject = new AccessLogSubject(testUser, new AccessLogTarget.OfParticipation(testParticipation.getId()), AuthenticationMechanism.SSH, "10.0.0.2");
         doThrow(new IllegalStateException("the database is away")).when(vcsAccessLogService).createAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
 
         try {
@@ -586,10 +593,12 @@ class LocalVCAccessLogRecorderServiceTest {
     void cacheAttributesInSshSession_remembersTheSubjectAndTheParticipationWithoutWritingAnything() {
         ServerSession session = mock(ServerSession.class);
 
-        accessLogRecorder.cacheAttributesInSshSession(testUser, Optional.of(testParticipation), AuthenticationMechanism.SSH, "10.0.0.2", session);
+        accessLogRecorder.cacheAttributesInSshSession(testUser, Optional.of(testParticipation), Optional.of(new AccessLogTarget.OfParticipation(testParticipation.getId())),
+                AuthenticationMechanism.SSH, "10.0.0.2", session);
 
         verify(session).setAttribute(SshConstants.PARTICIPATION_KEY, testParticipation);
-        verify(session).setAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY, new AccessLogSubject(testUser, testParticipation.getId(), AuthenticationMechanism.SSH, "10.0.0.2"));
+        verify(session).setAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY,
+                new AccessLogSubject(testUser, new AccessLogTarget.OfParticipation(testParticipation.getId()), AuthenticationMechanism.SSH, "10.0.0.2"));
         verifyNoInteractions(vcsAccessLogService);
     }
 
@@ -597,7 +606,7 @@ class LocalVCAccessLogRecorderServiceTest {
     void cacheAttributesInSshSession_dropsTheStateOfTheCommandBefore() {
         ServerSession session = mock(ServerSession.class);
 
-        accessLogRecorder.cacheAttributesInSshSession(testUser, Optional.empty(), AuthenticationMechanism.SSH, "10.0.0.2", session);
+        accessLogRecorder.cacheAttributesInSshSession(testUser, Optional.empty(), Optional.empty(), AuthenticationMechanism.SSH, "10.0.0.2", session);
 
         // a command whose repository has no participation must not be handled with the participation of the one before
         verify(session).removeAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY);
@@ -608,6 +617,127 @@ class LocalVCAccessLogRecorderServiceTest {
 
     private static String basicAuth(String username, String password) {
         return "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void theTestsRepositoryIsLoggedForTheExerciseAndTheNamedAuxiliaryRepositoryForItself() {
+        when(auxiliaryRepositoryService.findAuxiliaryRepositoryIdOfExercise("extras", 1L)).thenReturn(Optional.of(9L));
+
+        assertThat(accessLogRecorder.staffRepositoryTargetOf(1L, "tests")).contains(new AccessLogTarget.OfStaffRepository(1L, RepositoryType.TESTS, null, null));
+        assertThat(accessLogRecorder.staffRepositoryTargetOf(1L, "extras")).contains(new AccessLogTarget.OfStaffRepository(1L, RepositoryType.AUXILIARY, 9L, "extras"));
+    }
+
+    @Test
+    void theTemplateAndTheSolutionAreNotStaffRepositoriesAndAreNeverLookedUpAsAuxiliaryOnes() {
+        assertThat(accessLogRecorder.staffRepositoryTargetOf(1L, "exercise")).isEmpty();
+        assertThat(accessLogRecorder.staffRepositoryTargetOf(1L, "solution")).isEmpty();
+        verifyNoInteractions(auxiliaryRepositoryService);
+    }
+
+    @Test
+    void aFailureToFindTheAuxiliaryRepositoryDoesNotRejectTheAuthorizedOperation() {
+        when(auxiliaryRepositoryService.findAuxiliaryRepositoryIdOfExercise("extras", 1L)).thenThrow(new IllegalStateException("the database is away"));
+
+        assertThat(accessLogRecorder.targetOf(Optional.empty(), 1L, "extras")).isEmpty();
+    }
+
+    @Test
+    void aStudentIsNotAStaffRepositoryUnlessTheNameIsThatOfAnAuxiliaryRepository() {
+        when(auxiliaryRepositoryService.findAuxiliaryRepositoryIdOfExercise("student1", 1L)).thenReturn(Optional.empty());
+
+        assertThat(accessLogRecorder.staffRepositoryTargetOf(1L, "student1")).isEmpty();
+        verify(auxiliaryRepositoryService).findAuxiliaryRepositoryIdOfExercise("student1", 1L);
+    }
+
+    @Test
+    void theParticipationIsThePreferredTargetAndTheStaffRepositoryTheFallback() {
+        var participationTarget = accessLogRecorder.targetOf(Optional.of(testParticipation), 1L, "tests");
+        var staffTarget = accessLogRecorder.targetOf(Optional.empty(), 1L, "tests");
+
+        assertThat(participationTarget).contains(new AccessLogTarget.OfParticipation(testParticipation.getId()));
+        assertThat(staffTarget).contains(new AccessLogTarget.OfStaffRepository(1L, RepositoryType.TESTS, null, null));
+        assertThat(accessLogRecorder.targetOf(Optional.empty(), 1L, "exercise")).isEmpty();
+    }
+
+    @Test
+    void anOperationOnTheTestsRepositoryIsWrittenToTheLogOfTheStaffRepositories() {
+        var target = new AccessLogTarget.OfStaffRepository(1L, RepositoryType.TESTS, null, null);
+        var subject = new AccessLogSubject(testUser, target, AuthenticationMechanism.PASSWORD, "10.0.0.2");
+        var clone = new GitOperationAudit();
+        clone.onBeginNegotiateRound(0);
+        clone.onPackSent("head");
+        var push = new GitOperationAudit();
+        push.onPushReceived("before");
+        push.onPushAccepted("pushed");
+
+        accessLogRecorder.recordFetch(subject, clone);
+        accessLogRecorder.recordPush(subject, push);
+
+        verify(vcsAccessLogService).createStaffRepositoryAccessLog(eq(testUser), eq(target), eq(RepositoryActionType.CLONE), eq(AuthenticationMechanism.PASSWORD), eq("head"),
+                eq("10.0.0.2"), any(ZonedDateTime.class));
+        verify(vcsAccessLogService).createStaffRepositoryAccessLog(eq(testUser), eq(target), eq(RepositoryActionType.PUSH), eq(AuthenticationMechanism.PASSWORD), eq("pushed"),
+                eq("10.0.0.2"), any(ZonedDateTime.class));
+        verifyNoMoreInteractions(vcsAccessLogService);
+    }
+
+    @Test
+    void anSshSessionRemembersTheStaffRepositoryItsCommandIsFor() {
+        ServerSession session = mock(ServerSession.class);
+        var target = new AccessLogTarget.OfStaffRepository(1L, RepositoryType.TESTS, null, null);
+
+        accessLogRecorder.cacheAttributesInSshSession(testUser, Optional.empty(), Optional.of(target), AuthenticationMechanism.SSH, "10.0.0.2", session);
+
+        verify(session).setAttribute(SshConstants.ACCESS_LOG_SUBJECT_KEY, new AccessLogSubject(testUser, target, AuthenticationMechanism.SSH, "10.0.0.2"));
+        // there is no participation to remember, and the one of the command before is dropped
+        verify(session).removeAttribute(SshConstants.PARTICIPATION_KEY);
+        verify(session, never()).setAttribute(eq(SshConstants.PARTICIPATION_KEY), any());
+    }
+
+    @Test
+    void aFailedAuthenticationOnTheRepositoryOfAStudentNamedLikeAnAuxiliaryRepositoryIsWrittenForTheParticipation() {
+        HttpServletRequest request = failedRequest();
+        lenient().when(testRepositoryUri.getRepositoryTypeOrUserName()).thenReturn("extras");
+        when(userRepository.findOneByLogin("testuser")).thenReturn(Optional.of(testUser));
+        when(programmingExerciseParticipationService.getParticipationReferenceForRepository(anyString(), anyString(), eq(testExercise.getProjectKey())))
+                .thenReturn(Optional.of(testParticipation));
+
+        accessLogRecorder.recordFailedAuthenticationHTTPS(request, testRepositoryUri, testExercise.getId(), RepositoryActionType.READ);
+
+        verify(vcsAccessLogService).saveAccessLog(eq(testUser), eq(testParticipation.getId()), eq(RepositoryActionType.CLONE_FAIL), eq(AuthenticationMechanism.PASSWORD), eq(""),
+                eq("10.0.0.1"));
+        verifyNoInteractions(auxiliaryRepositoryService);
+    }
+
+    @Test
+    void aFailedAuthenticationOnAnAuxiliaryRepositoryIsWrittenForTheExerciseWhenNoParticipationHasTheName() {
+        HttpServletRequest request = failedRequest();
+        lenient().when(testRepositoryUri.getRepositoryTypeOrUserName()).thenReturn("extras");
+        when(userRepository.findOneByLogin("testuser")).thenReturn(Optional.of(testUser));
+        when(programmingExerciseParticipationService.getParticipationReferenceForRepository(anyString(), anyString(), eq(testExercise.getProjectKey())))
+                .thenReturn(Optional.empty());
+        when(auxiliaryRepositoryService.findAuxiliaryRepositoryIdOfExercise("extras", testExercise.getId())).thenReturn(Optional.of(9L));
+
+        accessLogRecorder.recordFailedAuthenticationHTTPS(request, testRepositoryUri, testExercise.getId(), RepositoryActionType.WRITE);
+
+        verify(vcsAccessLogService).saveStaffRepositoryAccessLog(testUser, new AccessLogTarget.OfStaffRepository(testExercise.getId(), RepositoryType.AUXILIARY, 9L, "extras"),
+                RepositoryActionType.PUSH_FAIL, AuthenticationMechanism.PASSWORD, "", "10.0.0.1");
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = RepositoryActionType.class, names = { "READ", "WRITE" })
+    void aFailedAuthenticationOnTheTestsRepositoryIsWrittenForTheExerciseAndNotForTheSolution(RepositoryActionType action) {
+        HttpServletRequest request = failedRequest();
+        lenient().when(testRepositoryUri.getRepositoryTypeOrUserName()).thenReturn("tests");
+        when(userRepository.findOneByLogin("testuser")).thenReturn(Optional.of(testUser));
+        var expected = action == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
+
+        accessLogRecorder.recordFailedAuthenticationHTTPS(request, testRepositoryUri, testExercise.getId(), action);
+
+        verify(vcsAccessLogService).saveStaffRepositoryAccessLog(testUser, new AccessLogTarget.OfStaffRepository(testExercise.getId(), RepositoryType.TESTS, null, null), expected,
+                AuthenticationMechanism.PASSWORD, "", "10.0.0.1");
+        verify(vcsAccessLogService, never()).saveAccessLog(any(), anyLong(), any(), any(), anyString(), anyString());
+        // the tests repository used to be looked up as the solution participation
+        verifyNoInteractions(programmingExerciseParticipationService);
     }
 
     private static String vcsAccessToken(char fill) {

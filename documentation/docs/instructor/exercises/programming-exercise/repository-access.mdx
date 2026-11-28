@@ -2,7 +2,7 @@
 id: repository-access
 title: Repository Access Configuration
 sidebar_label: Repository Access Configuration
-last_reviewed: 2026-11-06
+last_reviewed: 2026-11-26
 ---
 
 import Callout from '../../../../src/components/Callout/Callout';
@@ -125,7 +125,7 @@ Practice repositories, Teaching Assistant assignment, and instructor assignment 
 
 Artemis records every fetch and push to a repository, which is useful when you need to establish what a participant actually did — for example when investigating a suspected exam irregularity or a disputed submission time.
 
-Open the repository from **Course Management** and click **Open Access Log**. Each entry shows:
+Open the repository from **Course Management** and click **Open Access Log**. This works for the repositories of students, for the template and solution repositories, and for the tests and auxiliary repositories of an exercise. Each entry shows:
 
 | Column      | Meaning                                                                                                                                                                                                                                                                                   |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -143,6 +143,8 @@ Every access to a repository is exactly one entry, whether it runs over HTTPS or
 - An attempt that was rejected is a **failed clone** or **failed push**: credentials that do not hold, an account that is not active, a participant who may not access the repository, or the use of an offline IDE where it is not allowed. It names the account that was tried and the repository.
 
 An access that transferred nothing is recorded too, because somebody reached the repository: a fetch that is up to date, a push with nothing new, and listing the references of a repository are a **read** or a **write** with the newest commit of the repository. Over HTTPS the first request of every operation, which carries no credentials because git waits to be asked for them, is not an access. The log is not a record of every request to the server: an attempt can only be attributed to an account and repository if both can be identified, so a wrong user name, a rejection by the rate limit, and an SSH key that is not accepted, which happens before the repository is named, leave no entry.
+
+The tests and auxiliary repositories belong to the exercise and not to a participation, so their entries are kept for the exercise and the repository, and each of these repositories has a log of its own. Attempts that were rejected on them are part of that log too. Rejected attempts on the tests repository that were recorded before this log existed appear in the access log of the solution repository, because they were written for the solution participation.
 
 Build agents clone the repository for every build job, over HTTPS with the token of the job or over SSH with their key, and each clone records one **pull** entry that names the agent and job. These entries are hidden by default, because the log is usually read to see what people did. Switch on **Include build agent access** above the table to see them.
 

@@ -229,7 +229,7 @@ public class LocalVCServletService {
         catch (LocalVCAuthException | AuthenticationException e) {
             // A request without a password is the first request of an operation, because git waits to be asked, and is no attempt. Every other rejection of the credentials is.
             if (!(e instanceof LocalVCAuthException authException && authException.isExpectedDuringHandshake())) {
-                accessLogRecorder.recordFailedAuthenticationHTTPS(request, localVCRepositoryUri, repositoryAction);
+                accessLogRecorder.recordFailedAuthenticationHTTPS(request, localVCRepositoryUri, exercise.exerciseId(), repositoryAction);
             }
             throw e;
         }
@@ -254,7 +254,8 @@ public class LocalVCServletService {
             var optionalParticipation = authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, false, participationForRepository);
             // The operation is written once, by the filter, when it is over. The requests of one operation have nothing in common that would let one find the entry of
             // another, so here only who this request is for is remembered.
-            accessLogRecorder.rememberSubjectHTTPS(request, user, optionalParticipation, authenticated.mechanism());
+            accessLogRecorder.rememberSubjectHTTPS(request, user, accessLogRecorder.targetOf(optionalParticipation, exercise.exerciseId(), repositoryTypeOrUserName),
+                    authenticated.mechanism());
         }
         catch (LocalVCForbiddenException e) {
             log.warn("User {} does not have access to the repository {}", user.getLogin(), localVCRepositoryUri);
@@ -284,8 +285,17 @@ public class LocalVCServletService {
     public void saveFailedAccessVcsAccessLog(AuthenticationContext context, String repositoryTypeOrUserName, long exerciseId, LocalVCRepositoryUri localVCRepositoryUri, User user,
             RepositoryActionType repositoryAction) {
         try {
-            var participation = tryToLoadParticipation(false, repositoryTypeOrUserName, localVCRepositoryUri, exerciseId,
-                    participationResolver(repositoryTypeOrUserName, localVCRepositoryUri, exerciseId));
+            // The tests and auxiliary repositories have no participation, so the attempt is written for the exercise and the repository. It used to be written for the solution
+            // participation, which put it in the log of the solution repository. A participation comes first, as for an accepted request: a student whose login is the name of an
+            // auxiliary repository owns the repository of that name.
+            boolean testsRepository = repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString());
+            Optional<Long> participationId = testsRepository ? Optional.empty() : findParticipationId(repositoryTypeOrUserName, localVCRepositoryUri, exerciseId);
+            Optional<AccessLogTarget.OfStaffRepository> staffRepository = participationId.isPresent() ? Optional.empty()
+                    : accessLogRecorder.staffRepositoryTargetOf(exerciseId, repositoryTypeOrUserName);
+            if (participationId.isEmpty() && staffRepository.isEmpty()) {
+                throw new LocalVCInternalException(
+                        "No participation or staff repository found for repository type or username " + repositoryTypeOrUserName + " in exercise " + exerciseId);
+            }
             // A request that advertises the references is refused before the repository is reached, so the entry carries no commit. That is what lets the log tell it from a
             // transfer that was refused after an advertisement was stored, see VcsAccessLogOperations.
             boolean refusedBeforeAdvertisement = context instanceof AuthenticationContext.Request(var request) && "GET".equals(request.getMethod());
@@ -293,7 +303,14 @@ public class LocalVCServletService {
             var authenticationMechanism = accessLogRecorder.resolveAuthenticationMechanismFromSessionOrRequest(context, user, localVCRepositoryUri);
             var action = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
             var ipAddress = context.getIpAddress();
-            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation.getId(), action, authenticationMechanism, commitHash, ipAddress));
+            vcsAccessLogService.ifPresent(service -> {
+                if (participationId.isPresent()) {
+                    service.saveAccessLog(user, participationId.get(), action, authenticationMechanism, commitHash, ipAddress);
+                }
+                else {
+                    service.saveStaffRepositoryAccessLog(user, staffRepository.orElseThrow(), action, authenticationMechanism, commitHash, ipAddress);
+                }
+            });
         }
         catch (Exception e) {
             log.warn("Failed to save VCS access log for failed access attempt by user {} to repository {}: {}", user.getLogin(), localVCRepositoryUri, e.getMessage());
@@ -734,6 +751,23 @@ public class LocalVCServletService {
         // instructor. Loading the course roles and authorities here keeps that check in memory; without them it re-reads
         // the whole user row (User#authorities is lazy) and then issues its own membership query, on every push.
         return userRepository.findOneWithCourseRolesAndAuthoritiesByLogin(username).orElseThrow(LocalVCAuthException::new);
+    }
+
+    /**
+     * The id of the participation behind a repository, without the fallback of {@link #tryToLoadParticipation} that takes an auxiliary repository for the solution.
+     *
+     * @param repositoryTypeOrUserName the repository type or the user name taken from the repository URI
+     * @param localVCRepositoryUri     the URI of the requested repository
+     * @param exerciseId               the id of the exercise the repository belongs to
+     * @return the id, or empty if the repository has no participation
+     */
+    private Optional<Long> findParticipationId(String repositoryTypeOrUserName, LocalVCRepositoryUri localVCRepositoryUri, long exerciseId) {
+        try {
+            return Optional.of(participationResolver(repositoryTypeOrUserName, localVCRepositoryUri, exerciseId).get().getId());
+        }
+        catch (EntityNotFoundException e) {
+            return Optional.empty();
+        }
     }
 
     /**

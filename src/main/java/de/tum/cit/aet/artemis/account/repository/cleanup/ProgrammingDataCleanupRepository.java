@@ -65,6 +65,30 @@ public interface ProgrammingDataCleanupRepository extends ArtemisJpaRepository<U
             """)
     List<UserReferenceCount> countVcsAccessLogs(@Param("userIds") Collection<Long> userIds);
 
+    /**
+     * The access log of the tests and auxiliary repositories records what happened to a repository like the access log of a participation, so its entries are detached rather
+     * than deleted as well.
+     *
+     * @param userId the account being deleted
+     * @return how many entries were detached
+     */
+    @Modifying
+    @Transactional // ok because of update
+    @Query("""
+            UPDATE VcsStaffRepositoryAccessLog log
+            SET log.user = NULL
+            WHERE log.user.id = :userId
+            """)
+    int detachVcsStaffRepositoryAccessLogs(@Param("userId") long userId);
+
+    @Query("""
+            SELECT log.user.id AS userId, COUNT(log) AS count
+            FROM VcsStaffRepositoryAccessLog log
+            WHERE log.user.id IN :userIds
+            GROUP BY log.user.id
+            """)
+    List<UserReferenceCount> countVcsStaffRepositoryAccessLogs(@Param("userIds") Collection<Long> userIds);
+
     @Query("""
             SELECT token.user.id AS userId, COUNT(token) AS count
             FROM ParticipationVCSAccessToken token
