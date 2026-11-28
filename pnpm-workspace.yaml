@@ -166,7 +166,7 @@ overrides:
   # and the production build, the client tests and lint pass.
   # Must stay >= 3.1.6, which fixed CVE-2026-76172, CVE-2026-75899, CVE-2026-75975
   # and CVE-2026-75931 (host confusion / SSRF via URI normalization).
-  fast-uri: '4.2.3'
+  fast-uri: '4.2.4'
   globals: '17.14.0'
   http-proxy-middleware: '4.2.1'
   immutable: '5.2.1'

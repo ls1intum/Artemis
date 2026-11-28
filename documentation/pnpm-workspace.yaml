@@ -38,7 +38,7 @@ overrides:
   # Kept on the 3.x line (consumers require ^3); 4.x is an API break.
   # Must stay >= 3.1.6, which fixed CVE-2026-76172, CVE-2026-75899, CVE-2026-75975
   # and CVE-2026-75931 (host confusion / SSRF via URI normalization).
-  fast-uri: '4.2.3'
+  fast-uri: '4.2.4'
   follow-redirects: '1.16.3'
   http-proxy-middleware: '4.2.1'
   # Must stay >= 2.0.3, which fixed GHSA-5p2g-fcmc-qvqq (JXL/HEIF) and GHSA-w3rx-r6r6-pgpr (ICNS): crafted images made
