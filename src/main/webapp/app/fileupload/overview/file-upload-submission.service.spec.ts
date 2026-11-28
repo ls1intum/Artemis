@@ -12,11 +12,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockService } from 'ng-mocks';
 
 import { FileUploadSubmissionService } from './file-upload-submission.service';
-import { FileUploadExerciseContextDTO, FileUploadParticipation, FileUploadSubmission, FileUploadSubmissionDTO } from 'app/fileupload/shared/entities/file-upload-submission.model';
+import { FileUploadParticipation, FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
+import { FileUploadSubmission as FileUploadSubmissionResponse } from 'app/openapi/model/file-upload-submission';
+import { FileUploadExerciseContext } from 'app/openapi/model/file-upload-exercise-context';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -24,7 +25,6 @@ import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-togg
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { User } from 'app/account/user/user.model';
 import { Authority } from 'app/foundation/constants/authority.constants';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -34,6 +34,17 @@ describe('FileUploadSubmissionService', () => {
     let httpMock: HttpTestingController;
     let submissionService: SubmissionService;
     let accountService: AccountService;
+    const searchParams = (url: string) => new URL(url, 'http://localhost').searchParams;
+    const path = (url: string) => new URL(url, 'http://localhost').pathname;
+
+    /** A submission as the server sends it. */
+    const createSubmissionDTO = (id: number, filePath = 'file-upload-exercises/1/submissions/1/test.pdf'): FileUploadSubmissionResponse => ({
+        id,
+        submitted: true,
+        submissionExerciseType: 'file-upload',
+        submissionDate: '2026-10-25T10:00:00.000Z',
+        filePath,
+    });
 
     const createSubmission = (id?: number): FileUploadSubmission => {
         const submission = new FileUploadSubmission();
@@ -72,7 +83,6 @@ describe('FileUploadSubmissionService', () => {
         submissionService = TestBed.inject(SubmissionService);
         accountService = TestBed.inject(AccountService);
         vi.spyOn(submissionService, 'convertSubmissionFromServer');
-        vi.spyOn(submissionService, 'convertSubmissionResponseFromServer');
     });
 
     afterEach(() => {
@@ -85,24 +95,24 @@ describe('FileUploadSubmissionService', () => {
             const submission = createSubmission();
             const file = createFile();
             const exerciseId = 123;
-            const expectedSubmission = Object.assign({}, submission, { id: 999 });
 
-            const resultPromise = new Promise<HttpResponse<FileUploadSubmission>>((resolve) => {
+            const resultPromise = new Promise<FileUploadSubmission>((resolve) => {
                 service.update(submission, exerciseId, file).subscribe((resp) => resolve(resp));
             });
 
             const req = httpMock.expectOne({
                 method: 'POST',
-                url: `api/fileupload/exercises/${exerciseId}/file-upload-submissions`,
+                url: `/api/fileupload/exercises/${exerciseId}/file-upload-submissions`,
             });
 
             // Verify FormData is sent
             expect(req.request.body).toBeInstanceOf(FormData);
 
-            req.flush(expectedSubmission);
+            req.flush(createSubmissionDTO(999));
 
             const response = await resultPromise;
-            expect(response.body).toBeDefined();
+            expect(response).toBeInstanceOf(FileUploadSubmission);
+            expect(response.id).toBe(999);
         });
 
         it('should include file in FormData', async () => {
@@ -114,14 +124,18 @@ describe('FileUploadSubmissionService', () => {
 
             const req = httpMock.expectOne({
                 method: 'POST',
-                url: `api/fileupload/exercises/${exerciseId}/file-upload-submissions`,
+                url: `/api/fileupload/exercises/${exerciseId}/file-upload-submissions`,
             });
 
             const formData = req.request.body as FormData;
-            expect(formData.has('file')).toBe(true);
-            expect(formData.has('submission')).toBe(true);
+            const filePart = formData.get('file');
+            expect(filePart).toBeInstanceOf(File);
+            expect(filePart instanceof File ? filePart.name : undefined).toBe('document.pdf');
+            const submissionPart = formData.get('submission');
+            expect(submissionPart).toBeInstanceOf(Blob);
+            expect(submissionPart instanceof Blob ? submissionPart.type : undefined).toBe('application/json');
 
-            req.flush({});
+            req.flush(createSubmissionDTO(1));
         });
 
         it('should serialize only the submission input DTO', async () => {
@@ -136,7 +150,7 @@ describe('FileUploadSubmissionService', () => {
             const formData = req.request.body as FormData;
             const submissionBlob = formData.get('submission') as Blob;
             const requestBody = JSON.parse(await submissionBlob.text());
-            req.flush({});
+            req.flush(createSubmissionDTO(1));
 
             expect(requestBody).toEqual({ id: submission.id, submitted: true, exerciseId: 123 });
             expect(requestBody.filePath).toBeUndefined();
@@ -146,71 +160,66 @@ describe('FileUploadSubmissionService', () => {
         it('should set filePathUrl from response', async () => {
             const submission = createSubmission();
             const file = createFile();
-            const responseSubmission = Object.assign({}, submission, { filePath: '/api/files/response.pdf' });
+            let response: FileUploadSubmission | undefined;
 
-            service.update(submission, 123, file).subscribe();
+            service.update(submission, 123, file).subscribe((saved) => (response = saved));
 
             const req = httpMock.expectOne({ method: 'POST' });
-            req.flush(responseSubmission);
+            req.flush(createSubmissionDTO(1, 'file-upload-exercises/1/submissions/1/response.pdf'));
 
-            // Service should process the response
-            expect(submissionService.convertSubmissionResponseFromServer).toHaveBeenCalled();
+            expect(submissionService.convertSubmissionFromServer).toHaveBeenCalled();
+            expect(response?.filePathUrl).toBe('api/core/files/file-upload-exercises/1/submissions/1/response.pdf');
         });
     });
 
     describe('get', () => {
         it('should get submission by ID', async () => {
-            const submission = createSubmission(456);
-
-            const resultPromise = new Promise<HttpResponse<FileUploadSubmission>>((resolve) => {
+            const resultPromise = new Promise<FileUploadSubmission>((resolve) => {
                 service.get(456).subscribe((resp) => resolve(resp));
             });
 
             const req = httpMock.expectOne({
                 method: 'GET',
-                url: 'api/fileupload/file-upload-submissions/456?correction-round=0',
+                url: '/api/fileupload/file-upload-submissions/456?correction-round=0',
             });
 
-            req.flush(submission);
+            req.flush(createSubmissionDTO(456));
 
             const response = await resultPromise;
-            expect(response.body?.id).toBe(456);
+            expect(response.id).toBe(456);
+            expect(dayjs.isDayjs(response.submissionDate)).toBe(true);
         });
 
         it('should pass correction round as parameter', async () => {
-            const submission = createSubmission();
-
             service.get(456, 2).subscribe();
 
             const req = httpMock.expectOne((r) => {
-                return r.url === 'api/fileupload/file-upload-submissions/456' && r.params.get('correction-round') === '2';
+                return path(r.url) === '/api/fileupload/file-upload-submissions/456' && searchParams(r.url).get('correction-round') === '2' && !searchParams(r.url).has('resultId');
             });
 
-            req.flush(submission);
+            req.flush(createSubmissionDTO(456));
         });
 
         it('should pass resultId when provided', async () => {
-            const submission = createSubmission();
-
             service.get(456, 0, 789).subscribe();
 
             const req = httpMock.expectOne((r) => {
-                return r.url === 'api/fileupload/file-upload-submissions/456' && r.params.get('resultId') === '789';
+                return path(r.url) === '/api/fileupload/file-upload-submissions/456' && searchParams(r.url).get('resultId') === '789';
             });
 
-            req.flush(submission);
+            req.flush(createSubmissionDTO(456));
         });
 
         it('should use resultId instead of correction-round when provided', async () => {
-            const submission = createSubmission();
-
             service.get(456, 1, 789).subscribe();
 
             const req = httpMock.expectOne((r) => {
-                return r.url === 'api/fileupload/file-upload-submissions/456' && r.params.get('resultId') === '789' && !r.params.has('correction-round');
+                return (
+                    path(r.url) === '/api/fileupload/file-upload-submissions/456' && searchParams(r.url).get('resultId') === '789' && !searchParams(r.url).has('correction-round')
+                );
             });
 
-            req.flush(submission);
+            req.flush(createSubmissionDTO(456));
         });
     });
 
@@ -276,21 +285,21 @@ describe('FileUploadSubmissionService', () => {
 
     describe('getSubmissionWithoutAssessment', () => {
         it('should get submission without assessment', async () => {
-            const submission = createSubmission();
-
             const resultPromise = new Promise<FileUploadSubmission | undefined>((resolve) => {
                 service.getSubmissionWithoutAssessment(123).subscribe((resp) => resolve(resp));
             });
 
+            // correction round 0 is the server's default, which the generated client sends explicitly
             const req = httpMock.expectOne({
                 method: 'GET',
-                url: 'api/fileupload/exercises/123/file-upload-submission-without-assessment',
+                url: '/api/fileupload/exercises/123/file-upload-submission-without-assessment?correction-round=0',
             });
 
-            req.flush(submission);
+            req.flush(createSubmissionDTO(5));
 
             const result = await resultPromise;
-            expect(result).toBeDefined();
+            expect(result).toBeInstanceOf(FileUploadSubmission);
+            expect(result?.id).toBe(5);
         });
 
         it('should return undefined when no submission available', async () => {
@@ -300,9 +309,10 @@ describe('FileUploadSubmissionService', () => {
 
             const req = httpMock.expectOne({
                 method: 'GET',
-                url: 'api/fileupload/exercises/123/file-upload-submission-without-assessment',
+                url: '/api/fileupload/exercises/123/file-upload-submission-without-assessment?correction-round=0',
             });
 
+            // The server answers 200 with an empty body when no submission is left to assess
             req.flush(null);
 
             const result = await resultPromise;
@@ -313,41 +323,42 @@ describe('FileUploadSubmissionService', () => {
             service.getSubmissionWithoutAssessment(123, true).subscribe();
 
             const req = httpMock.expectOne((r) => {
-                return r.url === 'api/fileupload/exercises/123/file-upload-submission-without-assessment' && r.params.get('lock') === 'true';
+                return path(r.url) === '/api/fileupload/exercises/123/file-upload-submission-without-assessment' && searchParams(r.url).get('lock') === 'true';
             });
 
-            req.flush({});
+            req.flush(createSubmissionDTO(5));
         });
 
         it('should pass correction round when not zero', async () => {
             service.getSubmissionWithoutAssessment(123, false, 2).subscribe();
 
             const req = httpMock.expectOne((r) => {
-                return r.url === 'api/fileupload/exercises/123/file-upload-submission-without-assessment' && r.params.get('correction-round') === '2';
+                return path(r.url) === '/api/fileupload/exercises/123/file-upload-submission-without-assessment' && searchParams(r.url).get('correction-round') === '2';
             });
 
-            req.flush({});
+            req.flush(createSubmissionDTO(5));
         });
     });
 
     describe('getDataForFileUploadEditor', () => {
         it('should get data for file upload editor', async () => {
-            const submission = createSubmission();
-            submission.participation = createParticipation(42);
-
             const resultPromise = new Promise<FileUploadSubmission>((resolve) => {
                 service.getDataForFileUploadEditor(42).subscribe((resp) => resolve(resp));
             });
 
             const req = httpMock.expectOne({
                 method: 'GET',
-                url: 'api/fileupload/participations/42/file-upload-editor',
+                url: '/api/fileupload/participations/42/file-upload-editor',
             });
 
-            req.flush(submission);
+            // The editor of a participation without a submission gets a placeholder without an id
+            req.flush({ submissionExerciseType: 'file-upload', participation: { id: 42, type: 'student', testRun: false } });
 
             const result = await resultPromise;
-            expect(result).toBeDefined();
+            expect(result).toBeInstanceOf(FileUploadSubmission);
+            expect(result.id).toBeUndefined();
+            expect(result.participation).toBeInstanceOf(FileUploadParticipation);
+            expect(result.participation?.id).toBe(42);
         });
 
         it('should preserve non-admin instructor access through the real submission conversion', async () => {
@@ -357,23 +368,33 @@ describe('FileUploadSubmissionService', () => {
                 authorities: [Authority.STUDENT],
                 courseRoles: [{ courseId, roles: ['INSTRUCTOR'] }],
             } as User);
-            const exercise: FileUploadExerciseContextDTO = {
-                type: ExerciseType.FILE_UPLOAD,
+            const exercise: FileUploadExerciseContext = {
+                id: 7,
+                type: 'file-upload',
+                teamMode: false,
                 exerciseGroup: {
                     id: 100,
                     exam: {
                         id: 200,
                         course: {
                             id: courseId,
+                            maxComplaintTimeDays: 7,
+                            maxRequestMoreFeedbackTimeDays: 7,
+                            maxComplaintTextLimit: 2000,
+                            maxComplaintResponseTextLimit: 2000,
+                            complaintsEnabled: true,
+                            requestMoreFeedbackEnabled: true,
                         },
                     },
                 },
             };
-            const dto: FileUploadSubmissionDTO = {
+            const dto: FileUploadSubmissionResponse = {
                 id: 1,
+                submissionExerciseType: 'file-upload',
                 participation: {
                     id: 42,
-                    type: ParticipationType.STUDENT,
+                    type: 'student',
+                    testRun: false,
                     exercise,
                 },
             };
@@ -384,7 +405,7 @@ describe('FileUploadSubmissionService', () => {
 
             const req = httpMock.expectOne({
                 method: 'GET',
-                url: 'api/fileupload/participations/42/file-upload-editor',
+                url: '/api/fileupload/participations/42/file-upload-editor',
             });
             req.flush(dto);
 
@@ -400,12 +421,10 @@ describe('FileUploadSubmissionService', () => {
         });
 
         it('should call convertSubmissionFromServer', async () => {
-            const submission = createSubmission();
-
             service.getDataForFileUploadEditor(42).subscribe();
 
             const req = httpMock.expectOne({ method: 'GET' });
-            req.flush(submission);
+            req.flush(createSubmissionDTO(1));
 
             expect(submissionService.convertSubmissionFromServer).toHaveBeenCalled();
         });
@@ -413,19 +432,16 @@ describe('FileUploadSubmissionService', () => {
 
     describe('filePathUrl conversion', () => {
         it('should set filePathUrl from filePath on conversion', async () => {
-            const submission = createSubmission();
-            submission.filePath = '/api/files/submissions/test.pdf';
-
-            const resultPromise = new Promise<HttpResponse<FileUploadSubmission>>((resolve) => {
+            const resultPromise = new Promise<FileUploadSubmission>((resolve) => {
                 service.get(123).subscribe((resp) => resolve(resp));
             });
 
             const req = httpMock.expectOne({ method: 'GET' });
-            req.flush(submission);
+            req.flush(createSubmissionDTO(123, 'file-upload-exercises/1/submissions/123/test.pdf'));
 
-            await resultPromise;
-            // The conversion should set filePathUrl
-            expect(submissionService.convertSubmissionResponseFromServer).toHaveBeenCalled();
+            const submission = await resultPromise;
+            expect(submission.filePath).toBe('file-upload-exercises/1/submissions/123/test.pdf');
+            expect(submission.filePathUrl).toBe('api/core/files/file-upload-exercises/1/submissions/123/test.pdf');
         });
     });
 
@@ -449,8 +465,8 @@ describe('FileUploadSubmissionService', () => {
     it.each(['owner', 'staff-preview'] as const)('selects file editor URL from explicit %s purpose', (purpose) => {
         service.getDataForFileUploadEditor(123, purpose).subscribe((data) => expect(data.id).toBe(123));
         const req = httpMock.expectOne({ method: 'GET' });
-        expect(req.request.url).toBe(`api/fileupload/participations/123/file-upload-editor${purpose === 'staff-preview' ? '/for-staff' : ''}`);
-        req.flush({ id: 123 });
+        expect(req.request.url).toBe(`/api/fileupload/participations/123/file-upload-editor${purpose === 'staff-preview' ? '/for-staff' : ''}`);
+        req.flush(createSubmissionDTO(123));
     });
     it.each(['owner', 'staff-preview'] as const)('normalizes nested editor results and feedback for %s without changing projection', async (purpose) => {
         const resultPromise = new Promise<FileUploadSubmission>((resolve) => service.getDataForFileUploadEditor(42, purpose).subscribe(resolve));

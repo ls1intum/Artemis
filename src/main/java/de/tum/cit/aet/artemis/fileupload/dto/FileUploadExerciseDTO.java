@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupReferenceDTO;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO-safe response contract for file upload exercise CRUD, import, search, and course-list endpoints.
@@ -64,15 +65,17 @@ import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
  * @param plagiarismDetectionConfig              the plagiarism-detection settings, when initialized
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadExerciseDTO(Long id, String type, @Nullable String title, @Nullable String channelName, @Nullable String shortName, @Nullable String problemStatement,
-        @Nullable Set<String> categories, @Nullable DifficultyLevel difficulty, @Nullable Double maxPoints, @Nullable Double bonusPoints,
-        @Nullable IncludedInOverallScore includedInOverallScore, @Nullable AssessmentType assessmentType, @Nullable ExerciseMode mode, boolean teamMode,
+public record FileUploadExerciseDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String type,
+        @Nullable String title, @Nullable String channelName, @Nullable String shortName, @Nullable String problemStatement, @Nullable Set<String> categories,
+        @Nullable DifficultyLevel difficulty, @Nullable Double maxPoints, @Nullable Double bonusPoints, @Nullable IncludedInOverallScore includedInOverallScore,
+        @Nullable AssessmentType assessmentType, @Nullable ExerciseMode mode, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean teamMode,
         @Nullable FileUploadTeamAssignmentConfigDTO teamAssignmentConfig, @Nullable Boolean allowComplaintsForAutomaticAssessments, @Nullable Boolean allowFeedbackRequests,
         @Nullable Boolean presentationScoreEnabled, @Nullable Boolean secondCorrectionEnabled, @Nullable String gradingInstructions, @Nullable ZonedDateTime releaseDate,
         @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime dueDate, @Nullable ZonedDateTime assessmentDueDate, @Nullable ZonedDateTime exampleSolutionPublicationDate,
-        @Nullable String exampleSolution, @Nullable String filePattern, boolean gradingInstructionFeedbackUsed, @Nullable CourseContextDTO course,
-        @Nullable ExerciseGroupContextDTO exerciseGroup, @Nullable ExerciseVariantGroupReferenceDTO exerciseVariantGroup, @Nullable List<GradingCriterionDTO> gradingCriteria,
-        @Nullable Set<CompetencyLinkDTO> competencyLinks, @Nullable FileUploadPlagiarismDetectionConfigDTO plagiarismDetectionConfig) implements CourseManagementExerciseDTO {
+        @Nullable String exampleSolution, @Nullable String filePattern, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean gradingInstructionFeedbackUsed,
+        @Nullable FileUploadExerciseCourseDTO course, @Nullable FileUploadExerciseExamGroupDTO exerciseGroup, @Nullable ExerciseVariantGroupReferenceDTO exerciseVariantGroup,
+        @Nullable List<GradingCriterionDTO> gradingCriteria, @Nullable Set<CompetencyLinkDTO> competencyLinks,
+        @Nullable FileUploadPlagiarismDetectionConfigDTO plagiarismDetectionConfig) implements CourseManagementExerciseDTO {
 
     /**
      * Maps a full create, import, detail, update, or re-evaluation response. Optional associations are included only when Hibernate has initialized them.
@@ -131,8 +134,9 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
         FileUploadPlagiarismDetectionConfigDTO plagiarismDetectionConfig = includeInitializedAssociations && initialized(exercise.getPlagiarismDetectionConfig())
                 ? FileUploadPlagiarismDetectionConfigDTO.of(exercise.getPlagiarismDetectionConfig())
                 : null;
-        CourseContextDTO course = includeContext && exercise.isCourseExercise() ? CourseContextDTO.of(exercise.getCourseViaExerciseGroupOrCourseMember()) : null;
-        ExerciseGroupContextDTO exerciseGroup = includeContext && exercise.isExamExercise() ? ExerciseGroupContextDTO.of(exercise.getExerciseGroup()) : null;
+        FileUploadExerciseCourseDTO course = includeContext && exercise.isCourseExercise() ? FileUploadExerciseCourseDTO.of(exercise.getCourseViaExerciseGroupOrCourseMember())
+                : null;
+        FileUploadExerciseExamGroupDTO exerciseGroup = includeContext && exercise.isExamExercise() ? FileUploadExerciseExamGroupDTO.of(exercise.getExerciseGroup()) : null;
         ExerciseVariantGroupReferenceDTO exerciseVariantGroup = ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup());
 
         return new FileUploadExerciseDTO(exercise.getId(), "file-upload", exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
@@ -176,8 +180,9 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
      * @param accuracyOfScores                      the score display accuracy
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record CourseContextDTO(Long id, @Nullable String title, @Nullable String shortName, @Nullable Boolean testCourse, @Nullable Integer presentationScore,
-            @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration, @Nullable Integer accuracyOfScores) {
+    public record FileUploadExerciseCourseDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, @Nullable String title, @Nullable String shortName,
+            @Nullable Boolean testCourse, @Nullable Integer presentationScore, @Nullable CourseInformationSharingConfiguration courseInformationSharingConfiguration,
+            @Nullable Integer accuracyOfScores) {
 
         /**
          * Maps a course without exposing exercises or other course graphs.
@@ -185,8 +190,8 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
          * @param course the course to map
          * @return the minimal course context
          */
-        public static CourseContextDTO of(Course course) {
-            return new CourseContextDTO(course.getId(), course.getTitle(), course.getShortName(), course.isTestCourse(), course.getPresentationScore(),
+        public static FileUploadExerciseCourseDTO of(Course course) {
+            return new FileUploadExerciseCourseDTO(course.getId(), course.getTitle(), course.getShortName(), course.isTestCourse(), course.getPresentationScore(),
                     course.getCourseInformationSharingConfiguration(), course.getAccuracyOfScores());
         }
     }
@@ -198,7 +203,7 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
      * @param exam the containing exam context
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ExerciseGroupContextDTO(Long id, @Nullable ExamContextDTO exam) {
+    public record FileUploadExerciseExamGroupDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, @Nullable FileUploadExerciseExamDTO exam) {
 
         /**
          * Maps an exercise group without exposing its exercise collection.
@@ -206,8 +211,8 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
          * @param exerciseGroup the exercise group to map
          * @return the minimal exercise-group context
          */
-        public static ExerciseGroupContextDTO of(ExerciseGroup exerciseGroup) {
-            return new ExerciseGroupContextDTO(exerciseGroup.getId(), exerciseGroup.getExam() == null ? null : ExamContextDTO.of(exerciseGroup.getExam()));
+        public static FileUploadExerciseExamGroupDTO of(ExerciseGroup exerciseGroup) {
+            return new FileUploadExerciseExamGroupDTO(exerciseGroup.getId(), exerciseGroup.getExam() == null ? null : FileUploadExerciseExamDTO.of(exerciseGroup.getExam()));
         }
     }
 
@@ -223,8 +228,9 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
      * @param numberOfCorrectionRoundsInExam the number of correction rounds
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record ExamContextDTO(Long id, @Nullable String title, @Nullable CourseContextDTO course, @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate,
-            @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable Integer numberOfCorrectionRoundsInExam) {
+    public record FileUploadExerciseExamDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, @Nullable String title, @Nullable FileUploadExerciseCourseDTO course,
+            @Nullable ZonedDateTime startDate, @Nullable ZonedDateTime endDate, @Nullable ZonedDateTime exampleSolutionPublicationDate,
+            @Nullable Integer numberOfCorrectionRoundsInExam) {
 
         /**
          * Maps an exam without exposing exercise groups, exercises, or student exams.
@@ -232,9 +238,9 @@ public record FileUploadExerciseDTO(Long id, String type, @Nullable String title
          * @param exam the exam to map
          * @return the minimal exam context
          */
-        public static ExamContextDTO of(Exam exam) {
-            return new ExamContextDTO(exam.getId(), exam.getTitle(), exam.getCourse() == null ? null : CourseContextDTO.of(exam.getCourse()), exam.getStartDate(),
-                    exam.getEndDate(), exam.getExampleSolutionPublicationDate(), exam.getNumberOfCorrectionRoundsInExam());
+        public static FileUploadExerciseExamDTO of(Exam exam) {
+            return new FileUploadExerciseExamDTO(exam.getId(), exam.getTitle(), exam.getCourse() == null ? null : FileUploadExerciseCourseDTO.of(exam.getCourse()),
+                    exam.getStartDate(), exam.getEndDate(), exam.getExampleSolutionPublicationDate(), exam.getNumberOfCorrectionRoundsInExam());
         }
     }
 }

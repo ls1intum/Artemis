@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springdoc.core.customizers.OpenApiCustomizer;
+import org.springdoc.core.customizers.OperationCustomizer;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -17,6 +18,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
+import de.tum.cit.aet.artemis.core.config.openapi.NullableSuccessBody;
+import de.tum.cit.aet.artemis.core.config.openapi.NullableSuccessBodyCustomizer;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.Operation;
@@ -225,6 +228,17 @@ public class OpenAPIConfiguration {
                             ? value.substring(0, value.length() - DTO_NUMBER_OF_CHARACTERS)
                             : value);
         }
+    }
+
+    /**
+     * Documents the {@code 200} response of every handler annotated with {@link NullableSuccessBody} as possibly empty, so the generated client types it as
+     * {@code T | null}.
+     *
+     * @return the {@link OperationCustomizer} that applies {@link NullableSuccessBody}
+     */
+    @Bean
+    public OperationCustomizer nullableSuccessBodyCustomizer() {
+        return new NullableSuccessBodyCustomizer();
     }
 
     /**

@@ -678,7 +678,7 @@ describe('Course Management Exercises Component', () => {
         it('deletes quiz, modeling and file-upload exercises via their services', () => {
             const quizDelete = vi.spyOn(TestBed.inject(QuizExerciseDeletionApi), 'deleteQuizExercise').mockReturnValue(of(undefined));
             const modelingDelete = vi.spyOn(TestBed.inject(ModelingExerciseService), 'delete').mockReturnValue(of(new HttpResponse<void>()));
-            const fileUploadDelete = vi.spyOn(TestBed.inject(FileUploadExerciseService), 'delete').mockReturnValue(of(new HttpResponse<void>()));
+            const fileUploadDelete = vi.spyOn(TestBed.inject(FileUploadExerciseService), 'delete').mockReturnValue(of(undefined));
             comp.exercises.set([
                 { id: 3, type: ExerciseType.QUIZ } as Exercise,
                 { id: 4, type: ExerciseType.MODELING } as Exercise,

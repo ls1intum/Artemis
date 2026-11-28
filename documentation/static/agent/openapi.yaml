@@ -1134,6 +1134,7 @@ components:
         competency: {$ref: '#/components/schemas/CompetencyDTO'}
         weight: {type: number, format: double}
         generatedByAi: {type: boolean, readOnly: true}
+      required: [weight]
     GradingCriterionDTO:
       type: object
       properties:

@@ -12,6 +12,8 @@ import { SortingOrder } from 'app/foundation/pagination/pageable-table';
 describe('FileUploadExercisePagingService', () => {
     let service: FileUploadExercisePagingService;
     let httpMock: HttpTestingController;
+    const searchParams = (url: string) => new URL(url, 'http://localhost').searchParams;
+    const path = (url: string) => new URL(url, 'http://localhost').pathname;
 
     beforeEach(() => {
         TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(), FileUploadExercisePagingService] });
@@ -23,19 +25,30 @@ describe('FileUploadExercisePagingService', () => {
 
     it('adapts paged response DTOs to file upload exercise models', async () => {
         const resultPromise = firstValueFrom(
-            service.search({ page: 0, pageSize: 10, sortingOrder: SortingOrder.ASCENDING, sortedColumn: 'id', searchTerm: 'upload' }, { isCourseFilter: true, isExamFilter: true }),
+            service.search(
+                { page: 0, pageSize: 10, sortingOrder: SortingOrder.ASCENDING, sortedColumn: 'id', searchTerm: 'upload' },
+                { isCourseFilter: false, isExamFilter: true },
+            ),
         );
 
-        const request = httpMock.expectOne((req) => req.url === 'api/fileupload/file-upload-exercises');
-        expect(request.request.params.get('isCourseFilter')).toBe('true');
-        expect(request.request.params.get('isExamFilter')).toBe('true');
+        const request = httpMock.expectOne((req) => req.method === 'GET' && path(req.url) === '/api/fileupload/file-upload-exercises');
+        const params = searchParams(request.request.url);
+        expect(Object.fromEntries(params.entries())).toEqual({
+            page: '0',
+            pageSize: '10',
+            sortingOrder: 'ASCENDING',
+            sortedColumn: 'id',
+            searchTerm: 'upload',
+            isCourseFilter: 'false',
+            isExamFilter: 'true',
+        });
         request.flush({
             resultsOnPage: [
                 {
                     id: 42,
-                    type: ExerciseType.FILE_UPLOAD,
+                    type: 'file-upload',
                     title: 'Upload',
-                    mode: ExerciseMode.TEAM,
+                    mode: 'TEAM',
                     teamMode: true,
                     gradingInstructionFeedbackUsed: false,
                     course: { id: 7, title: 'Course' },
@@ -48,6 +61,8 @@ describe('FileUploadExercisePagingService', () => {
         expect(result.numberOfPages).toBe(3);
         expect(result.resultsOnPage[0]).toBeInstanceOf(FileUploadExercise);
         expect(result.resultsOnPage[0].teamMode).toBe(true);
+        expect(result.resultsOnPage[0].mode).toBe(ExerciseMode.TEAM);
+        expect(result.resultsOnPage[0].type).toBe(ExerciseType.FILE_UPLOAD);
         expect(result.resultsOnPage[0].course?.title).toBe('Course');
     });
 
@@ -59,7 +74,7 @@ describe('FileUploadExercisePagingService', () => {
             ),
         );
 
-        const request = httpMock.expectOne((req) => req.url === 'api/fileupload/file-upload-exercises');
+        const request = httpMock.expectOne((req) => path(req.url) === '/api/fileupload/file-upload-exercises');
         request.flush({ numberOfPages: 0 });
 
         await expect(resultPromise).resolves.toEqual({ resultsOnPage: [], numberOfPages: 0 });

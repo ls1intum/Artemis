@@ -20,6 +20,6 @@ export class MockFileUploadSubmissionService {
     getDataForFileUploadEditor = (participationId: number) => of(createFileUploadSubmission());
     update = (fileUploadSubmission: FileUploadSubmission, exerciseId: number) => {
         fileUploadSubmission.results = [new Result()];
-        return of({ body: fileUploadSubmission });
+        return of(fileUploadSubmission);
     };
 }

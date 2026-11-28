@@ -243,7 +243,7 @@ describe('FileUploadAssessmentComponent', () => {
             const submission = createSubmission();
             const result = createResult(submission);
             setLatestSubmissionResult(submission, result);
-            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(submission));
 
             component.ngOnInit();
 
@@ -266,7 +266,7 @@ describe('FileUploadAssessmentComponent', () => {
             routeQueryParams$.next(convertToParamMap(param === undefined ? { testRun: 'false' } : { testRun: 'false', 'correction-round': param }));
             const submission = createSubmission();
             setLatestSubmissionResult(submission, createResult(submission));
-            const getSpy = vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            const getSpy = vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(submission));
 
             component.ngOnInit();
 
@@ -281,7 +281,7 @@ describe('FileUploadAssessmentComponent', () => {
             routeQueryParams$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
             const submission = createSubmission();
             setLatestSubmissionResult(submission, createResult(submission));
-            const getSpy = vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            const getSpy = vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(submission));
             component.ngOnInit();
             expect(component.correctionRound()).toBe(1);
 
@@ -299,7 +299,7 @@ describe('FileUploadAssessmentComponent', () => {
             routeQueryParams$.next(convertToParamMap({ testRun: 'false', 'correction-round': '1' }));
             const submission = createSubmission();
             setLatestSubmissionResult(submission, createResult(submission));
-            const getSpy = vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            const getSpy = vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(submission));
             component.ngOnInit();
             expect(component.correctionRound()).toBe(1);
 
@@ -311,7 +311,7 @@ describe('FileUploadAssessmentComponent', () => {
 
         it('should extract route params for course and exercise', () => {
             const submission = createSubmission();
-            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(submission));
 
             component.ngOnInit();
 
@@ -323,7 +323,7 @@ describe('FileUploadAssessmentComponent', () => {
             const submission = createSubmission();
             const result = createResult(submission);
             setLatestSubmissionResult(submission, result);
-            const getSpy = vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            const getSpy = vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(submission));
 
             component.ngOnInit();
 
@@ -388,7 +388,7 @@ describe('FileUploadAssessmentComponent', () => {
             const result = createResult(submission);
             result.feedbacks = [createFeedback({ credits: 1, detailText: 'Valid feedback' })];
             setLatestSubmissionResult(submission, result);
-            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(submission));
 
             component.ngOnInit();
 
@@ -398,7 +398,7 @@ describe('FileUploadAssessmentComponent', () => {
         it('should set examId and exerciseGroupId from route params for exam exercises', () => {
             routeParams$.next({ exerciseId: 20, courseId: 123, submissionId: 7, examId: 5, exerciseGroupId: 10 });
             const submission = createSubmission();
-            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(submission));
 
             component.ngOnInit();
 
@@ -413,7 +413,7 @@ describe('FileUploadAssessmentComponent', () => {
             const submission = createSubmission(exercise);
             const result = createResult(submission);
             setLatestSubmissionResult(submission, result);
-            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(submission));
 
             component.ngOnInit();
 
@@ -432,7 +432,7 @@ describe('FileUploadAssessmentComponent', () => {
             const feedback2 = createFeedback({ credits: 10, detailText: 'Feedback 2' });
             result.feedbacks = [feedback1, feedback2];
             setLatestSubmissionResult(submission, result);
-            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(submission));
 
             component.ngOnInit();
 
@@ -447,7 +447,7 @@ describe('FileUploadAssessmentComponent', () => {
             const complaint = new ComplaintDTO();
             complaint.id = 555;
             complaint.complaintText = 'Test complaint';
-            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(submission));
             vi.spyOn(complaintService, 'findBySubmissionIdForAssessment').mockReturnValue(of({ body: complaint } as HttpResponse<ComplaintDTO>));
 
             component.ngOnInit();
@@ -465,7 +465,7 @@ describe('FileUploadAssessmentComponent', () => {
             result.assessor = { id: 1, internal: false };
             result.completionDate = undefined;
             setLatestSubmissionResult(submission, result);
-            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(submission));
             const alertInfoSpy = vi.spyOn(alertService, 'info');
 
             component.ngOnInit();
@@ -516,7 +516,7 @@ describe('FileUploadAssessmentComponent', () => {
 
             const submission = createSubmission();
             setLatestSubmissionResult(submission, createResult(submission));
-            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(submission));
             routeParams$.next({ exerciseId: 20, courseId: 123, submissionId: 8 });
 
             expect(component.assessmentNotPossibleYet()).toBeUndefined();
@@ -528,7 +528,7 @@ describe('FileUploadAssessmentComponent', () => {
             // one is assessable — the previous submission must not stay on screen in place of the explanation
             const submission = createSubmission();
             setLatestSubmissionResult(submission, createResult(submission));
-            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(new HttpResponse({ body: submission })));
+            vi.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of(submission));
 
             component.ngOnInit();
             expect(component.submission()).toBe(submission);
@@ -944,7 +944,7 @@ describe('FileUploadAssessmentComponent', () => {
         it('should update assessment after complaint on valid assessments', () => {
             component.unreferencedFeedback.set([createFeedback({ credits: 5, detailText: 'Valid' })]);
             const updatedResult = createResult();
-            vi.spyOn(fileUploadAssessmentService, 'updateAssessmentAfterComplaint').mockReturnValue(of(new HttpResponse({ body: updatedResult })));
+            vi.spyOn(fileUploadAssessmentService, 'updateAssessmentAfterComplaint').mockReturnValue(of(updatedResult));
             let onSuccessCalled = false;
             const assessmentAfterComplaint = {
                 complaintResponse: new ComplaintResponse(),

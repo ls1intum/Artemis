@@ -543,7 +543,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
 
         it('should call create service for new exercise', async () => {
             const createdExercise = Object.assign({}, component.fileUploadExercise(), { id: 789 });
-            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(of(new HttpResponse({ body: createdExercise })));
+            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(of(createdExercise));
 
             await component.save();
 
@@ -552,7 +552,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
 
         it('should refresh calendar after successful creation', async () => {
             const createdExercise = Object.assign({}, component.fileUploadExercise(), { id: 789 });
-            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(of(new HttpResponse({ body: createdExercise })));
+            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(of(createdExercise));
 
             await component.save();
 
@@ -561,7 +561,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
 
         it('should navigate forward after successful creation', async () => {
             const createdExercise = Object.assign({}, component.fileUploadExercise(), { id: 789 });
-            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(of(new HttpResponse({ body: createdExercise })));
+            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(of(createdExercise));
 
             await component.save();
 
@@ -570,7 +570,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
 
         it('should set isSaving to false after save completes', async () => {
             const createdExercise = Object.assign({}, component.fileUploadExercise(), { id: 789 });
-            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(of(new HttpResponse({ body: createdExercise })));
+            vi.spyOn(fileUploadExerciseService, 'create').mockReturnValue(of(createdExercise));
 
             await component.save();
 
@@ -592,7 +592,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
 
         it('should call update service for existing exercise', async () => {
             const updatedExercise = component.fileUploadExercise();
-            vi.spyOn(fileUploadExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: updatedExercise })));
+            vi.spyOn(fileUploadExerciseService, 'update').mockReturnValue(of(updatedExercise));
 
             await component.save();
 
@@ -601,7 +601,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
 
         it('should refresh calendar after successful update', async () => {
             const updatedExercise = component.fileUploadExercise();
-            vi.spyOn(fileUploadExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: updatedExercise })));
+            vi.spyOn(fileUploadExerciseService, 'update').mockReturnValue(of(updatedExercise));
 
             await component.save();
 
@@ -623,7 +623,7 @@ describe('FileUploadExerciseUpdateComponent', () => {
 
         it('should call import service for import', async () => {
             const importedExercise = Object.assign({}, component.fileUploadExercise(), { id: 999 });
-            vi.spyOn(fileUploadExerciseService, 'import').mockReturnValue(of(new HttpResponse({ body: importedExercise })));
+            vi.spyOn(fileUploadExerciseService, 'import').mockReturnValue(of(importedExercise));
 
             await component.save();
 

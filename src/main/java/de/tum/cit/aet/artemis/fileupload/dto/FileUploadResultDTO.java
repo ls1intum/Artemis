@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO representing a result / assessment of a file upload submission.
@@ -34,10 +35,10 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
  * @param submission      the submission context if requested
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadResultDTO(Long id, @Nullable ZonedDateTime completionDate, @Nullable Boolean successful, @Nullable Double score, boolean rated,
-        @Nullable AssessmentType assessmentType, @Nullable Integer correctionRound, @Nullable Boolean hasComplaint, @Nullable Boolean exampleResult,
-        @Nullable FileUploadAssessmentNoteDTO assessmentNote, @Nullable FileUploadUserDTO assessor, @Nullable List<FileUploadFeedbackDTO> feedbacks,
-        @Nullable FileUploadSubmissionDTO submission) {
+public record FileUploadResultDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, @Nullable ZonedDateTime completionDate, @Nullable Boolean successful,
+        @Nullable Double score, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean rated, @Nullable AssessmentType assessmentType, @Nullable Integer correctionRound,
+        @Nullable Boolean hasComplaint, @Nullable Boolean exampleResult, @Nullable FileUploadAssessmentNoteDTO assessmentNote, @Nullable FileUploadUserDTO assessor,
+        @Nullable List<FileUploadFeedbackDTO> feedbacks, @Nullable FileUploadSubmissionDTO submission) {
 
     /**
      * Factory method to map a {@link Result} entity to a nested {@link FileUploadResultDTO} (without including submission loop).

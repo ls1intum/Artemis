@@ -37,6 +37,7 @@ api/tutorial-groups-configuration-resources.ts
 api/quiz-exercise-evaluation-resources.ts
 api/lecture-resources.ts
 api/hyperion-programming-variant-resources.ts
+api/file-upload-assessment-resources.ts
 api/hyperion-exercise-generation-resources.ts
 api/quiz-exercise-deletion-resources.ts
 api/quiz-training-resources.ts
@@ -47,6 +48,7 @@ api/quiz-participation-resources.ts
 api/hyperion-assessment-criteria-generation-resources.ts
 api/athena-resources.ts
 api/tum-live-upload-resources.ts
+api/file-upload-exercise-resources.ts
 api/admin-hyperion-generation-monitoring-resources.ts
 api/quiz-exercise-resources.ts
 api/calendar-resources.ts
@@ -84,4 +86,5 @@ api/attachment-video-unit-resources.ts
 api/hyperion-faq-resources.ts
 api/tutor-effort-resources.ts
 api/complaint-response-resources.ts
+api/file-upload-submission-resources.ts
 api/attachment-video-unit-playlist-resources.ts

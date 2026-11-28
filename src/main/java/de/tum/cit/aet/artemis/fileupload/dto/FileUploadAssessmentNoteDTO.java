@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO representing an assessment note for a file upload submission.
@@ -16,7 +17,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
  * @param creator the user who created the assessment note
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadAssessmentNoteDTO(Long id, @Nullable String note, @Nullable FileUploadUserDTO creator) {
+public record FileUploadAssessmentNoteDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) Long id, @Nullable String note, @Nullable FileUploadUserDTO creator) {
 
     /**
      * Factory method to create a {@link FileUploadAssessmentNoteDTO} from an {@link AssessmentNote} entity.

@@ -1,49 +1,13 @@
-import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { CompetencyLinkDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
-import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient } from 'app/foundation/util/date.utils';
 import { toCompetencyLinkDTO } from 'app/fileupload/shared/entities/file-upload-exercise-dto';
-
-export interface UpdateFileUploadExerciseDto {
-    id: number;
-
-    title: string;
-    channelName?: string;
-    shortName?: string;
-    problemStatement?: string;
-    categories?: string[];
-
-    difficulty?: DifficultyLevel;
-    maxPoints?: number;
-    bonusPoints?: number;
-    includedInOverallScore?: IncludedInOverallScore;
-    allowComplaintsForAutomaticAssessments?: boolean;
-    presentationScoreEnabled?: boolean;
-    secondCorrectionEnabled?: boolean;
-
-    releaseDate?: string;
-    startDate?: string;
-    dueDate?: string;
-    assessmentDueDate?: string;
-    exampleSolutionPublicationDate?: string;
-
-    exampleSolution?: string;
-    filePattern?: string;
-
-    courseId?: number;
-    exerciseGroupId?: number;
-
-    gradingCriteria?: GradingCriterion[];
-    gradingInstructions?: string;
-    competencyLinks?: CompetencyLinkDTO[];
-}
+import { UpdateFileUploadExercise } from 'app/openapi/model/update-file-upload-exercise';
 
 /**
  * Convert FileUploadExercise → Update DTO.
  */
-export function toUpdateFileUploadExerciseDTO(fileUploadExercise: FileUploadExercise): UpdateFileUploadExerciseDto {
+export function toUpdateFileUploadExerciseDTO(fileUploadExercise: FileUploadExercise): UpdateFileUploadExercise {
     const id = fileUploadExercise.id;
     const title = fileUploadExercise.title;
     if (id === undefined) {

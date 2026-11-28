@@ -9,7 +9,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Params, provideRouter } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { provideTranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
@@ -504,7 +504,7 @@ describe('FileUploadSubmissionComponent', () => {
             component.submissionFile.set(file);
             const newSubmission = createSubmittedSubmission();
             newSubmission.participation = component.participation();
-            vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: newSubmission })));
+            vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(newSubmission));
             const alertSpy = vi.spyOn(alertService, 'success');
 
             await component.submitExercise();
@@ -529,7 +529,7 @@ describe('FileUploadSubmissionComponent', () => {
             component.submissionFile.set(file);
             const newSubmission = createSubmittedSubmission();
             newSubmission.participation = component.participation();
-            vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: newSubmission })));
+            vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(newSubmission));
             const alertSpy = vi.spyOn(alertService, 'warning');
 
             await component.submitExercise();
@@ -572,7 +572,7 @@ describe('FileUploadSubmissionComponent', () => {
             component.submissionFile.set(file);
             const newSubmission = createSubmittedSubmission();
             newSubmission.participation = component.participation();
-            vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: newSubmission })));
+            vi.spyOn(fileUploadSubmissionService, 'update').mockReturnValue(of(newSubmission));
 
             await component.submitExercise();
 

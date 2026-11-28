@@ -14,126 +14,61 @@ import {
     IncludedInOverallScore,
     PlagiarismDetectionConfig,
 } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { CompetencyDTO, CompetencyLinkDTO, GradingCriterionDTO, GradingInstructionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
+import { CompetencyLinkDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { convertDateFromClient, convertDateStringFromServer } from 'app/foundation/util/date.utils';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { parseJson } from 'app/foundation/util/json.util';
+import {
+    FileUploadExerciseAssessmentTypeEnum,
+    FileUploadExerciseDifficultyEnum,
+    FileUploadExerciseIncludedInOverallScoreEnum,
+    FileUploadExerciseModeEnum,
+    FileUploadExercise as FileUploadExerciseResponse,
+} from 'app/openapi/model/file-upload-exercise';
+import { FileUploadExerciseInput } from 'app/openapi/model/file-upload-exercise-input';
+import { FileUploadTeamAssignmentConfig } from 'app/openapi/model/file-upload-team-assignment-config';
+import { FileUploadPlagiarismDetectionConfig } from 'app/openapi/model/file-upload-plagiarism-detection-config';
+import { FileUploadExerciseCourse, FileUploadExerciseCourseCourseInformationSharingConfigurationEnum } from 'app/openapi/model/file-upload-exercise-course';
+import { FileUploadExerciseExamGroup } from 'app/openapi/model/file-upload-exercise-exam-group';
+import { FileUploadExerciseExam } from 'app/openapi/model/file-upload-exercise-exam';
+import type { ExerciseVariantGroupReference as GeneratedExerciseVariantGroupReference } from 'app/openapi/model/exercise-variant-group-reference';
+import type { GradingCriterion as GeneratedGradingCriterion } from 'app/openapi/model/grading-criterion';
+import type { GradingInstruction as GeneratedGradingInstruction } from 'app/openapi/model/grading-instruction';
+import type { CompetencyLink as GeneratedCompetencyLink } from 'app/openapi/model/competency-link';
+import type { Competency as GeneratedCompetency } from 'app/openapi/model/competency';
 
-export interface FileUploadTeamAssignmentConfigDto {
-    id?: number;
-    minTeamSize?: number;
-    maxTeamSize?: number;
-}
+/** Every generated enum maps to the client enum of the same values; a missing entry fails to compile. */
+const DIFFICULTY_LEVELS: Record<FileUploadExerciseDifficultyEnum, DifficultyLevel> = { EASY: DifficultyLevel.EASY, MEDIUM: DifficultyLevel.MEDIUM, HARD: DifficultyLevel.HARD };
 
-export type FileUploadPlagiarismDetectionConfigDto = PlagiarismDetectionConfig;
+const INCLUDED_IN_OVERALL_SCORE: Record<FileUploadExerciseIncludedInOverallScoreEnum, IncludedInOverallScore> = {
+    INCLUDED_COMPLETELY: IncludedInOverallScore.INCLUDED_COMPLETELY,
+    INCLUDED_AS_BONUS: IncludedInOverallScore.INCLUDED_AS_BONUS,
+    NOT_INCLUDED: IncludedInOverallScore.NOT_INCLUDED,
+};
 
-export interface CourseContextDto {
-    id: number;
-    title?: string;
-    shortName?: string;
-    testCourse?: boolean;
-    presentationScore?: number;
-    courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
-    accuracyOfScores?: number;
-}
+const ASSESSMENT_TYPES: Record<FileUploadExerciseAssessmentTypeEnum, AssessmentType> = {
+    AUTOMATIC: AssessmentType.AUTOMATIC,
+    SEMI_AUTOMATIC: AssessmentType.SEMI_AUTOMATIC,
+    MANUAL: AssessmentType.MANUAL,
+    AUTOMATIC_ATHENA: AssessmentType.AUTOMATIC_ATHENA,
+};
 
-export interface ExamContextDto {
-    id: number;
-    title?: string;
-    course?: CourseContextDto;
-    startDate?: string;
-    endDate?: string;
-    exampleSolutionPublicationDate?: string;
-    numberOfCorrectionRoundsInExam?: number;
-}
+const EXERCISE_MODES: Record<FileUploadExerciseModeEnum, ExerciseMode> = { INDIVIDUAL: ExerciseMode.INDIVIDUAL, TEAM: ExerciseMode.TEAM };
 
-export interface ExerciseGroupContextDto {
-    id: number;
-    exam?: ExamContextDto;
-}
+const COURSE_INFORMATION_SHARING_CONFIGURATIONS: Record<FileUploadExerciseCourseCourseInformationSharingConfigurationEnum, CourseInformationSharingConfiguration> = {
+    DISABLED: CourseInformationSharingConfiguration.DISABLED,
+    COMMUNICATION_AND_MESSAGING: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
+    COMMUNICATION_ONLY: CourseInformationSharingConfiguration.COMMUNICATION_ONLY,
+};
 
-export interface ExerciseVariantGroupReferenceDto {
-    id?: number;
-    title?: string;
-    maxPoints?: number;
-    releaseDate?: string;
-    startDate?: string;
-    dueDate?: string;
-    assessmentDueDate?: string;
-    exampleSolutionPublicationDate?: string;
-}
-
-export interface FileUploadExerciseDto {
-    id: number;
-    type: ExerciseType.FILE_UPLOAD;
-    title?: string;
-    channelName?: string;
-    shortName?: string;
-    problemStatement?: string;
-    categories?: string[];
-    difficulty?: DifficultyLevel;
-    maxPoints?: number;
-    bonusPoints?: number;
-    includedInOverallScore?: IncludedInOverallScore;
-    assessmentType?: AssessmentType;
-    mode?: ExerciseMode;
-    teamMode: boolean;
-    teamAssignmentConfig?: FileUploadTeamAssignmentConfigDto;
-    allowComplaintsForAutomaticAssessments?: boolean;
-    presentationScoreEnabled?: boolean;
-    secondCorrectionEnabled?: boolean;
-    gradingInstructions?: string;
-    releaseDate?: string;
-    startDate?: string;
-    dueDate?: string;
-    assessmentDueDate?: string;
-    exampleSolutionPublicationDate?: string;
-    exampleSolution?: string;
-    filePattern?: string;
-    gradingInstructionFeedbackUsed: boolean;
-    course?: CourseContextDto;
-    exerciseGroup?: ExerciseGroupContextDto;
-    exerciseVariantGroup?: ExerciseVariantGroupReferenceDto;
-    gradingCriteria?: GradingCriterionDTO[];
-    competencyLinks?: CompetencyLinkDTO[];
-    plagiarismDetectionConfig?: FileUploadPlagiarismDetectionConfigDto;
-}
-
-export interface FileUploadExerciseInputDto {
-    id?: number;
-    title?: string;
-    channelName?: string;
-    shortName?: string;
-    problemStatement?: string;
-    categories?: string[];
-    difficulty?: DifficultyLevel;
-    maxPoints?: number;
-    bonusPoints?: number;
-    includedInOverallScore?: IncludedInOverallScore;
-    mode?: ExerciseMode;
-    teamAssignmentConfig?: FileUploadTeamAssignmentConfigDto;
-    allowComplaintsForAutomaticAssessments?: boolean;
-    presentationScoreEnabled?: boolean;
-    secondCorrectionEnabled?: boolean;
-    gradingInstructions?: string;
-    releaseDate?: string;
-    startDate?: string;
-    dueDate?: string;
-    assessmentDueDate?: string;
-    exampleSolutionPublicationDate?: string;
-    exampleSolution?: string;
-    filePattern?: string;
-    courseId?: number;
-    exerciseGroupId?: number;
-    gradingCriteria?: GradingCriterionDTO[];
-    competencyLinks?: CompetencyLinkDTO[];
-    plagiarismDetectionConfig?: FileUploadPlagiarismDetectionConfigDto;
+function mapEnum<K extends string, V>(values: Record<K, V>, value: K | undefined): V | undefined {
+    return value === undefined ? undefined : values[value];
 }
 
 /** Converts the component-facing exercise into the scalar create/import wire contract. */
-export function toFileUploadExerciseInputDTO(fileUploadExercise: FileUploadExercise): FileUploadExerciseInputDto {
+export function toFileUploadExerciseInputDTO(fileUploadExercise: FileUploadExercise): FileUploadExerciseInput {
     return {
         id: fileUploadExercise.id,
         title: fileUploadExercise.title,
@@ -167,24 +102,25 @@ export function toFileUploadExerciseInputDTO(fileUploadExercise: FileUploadExerc
 }
 
 /** Rebuilds the component-facing model and its minimal course/exam context from a response DTO. */
-export function fromFileUploadExerciseDTO(dto: FileUploadExerciseDto): FileUploadExercise {
+export function fromFileUploadExerciseDTO(dto: FileUploadExerciseResponse): FileUploadExercise {
     const course = dto.course ? toCourse(dto.course) : undefined;
     const exerciseGroup = dto.exerciseGroup ? toExerciseGroup(dto.exerciseGroup) : undefined;
     const exercise = new FileUploadExercise(course, exerciseGroup);
 
     exercise.id = dto.id;
-    exercise.type = dto.type;
+    // The server always sends file-upload here; the class keeps the client enum.
+    exercise.type = ExerciseType.FILE_UPLOAD;
     exercise.title = dto.title;
     exercise.channelName = dto.channelName;
     exercise.shortName = dto.shortName;
     exercise.problemStatement = dto.problemStatement;
     exercise.categories = dto.categories?.map(toExerciseCategory).filter((category): category is ExerciseCategory => category !== undefined);
-    exercise.difficulty = dto.difficulty;
+    exercise.difficulty = mapEnum(DIFFICULTY_LEVELS, dto.difficulty);
     exercise.maxPoints = dto.maxPoints;
     exercise.bonusPoints = dto.bonusPoints;
-    exercise.includedInOverallScore = dto.includedInOverallScore;
-    exercise.assessmentType = dto.assessmentType;
-    exercise.mode = dto.mode;
+    exercise.includedInOverallScore = mapEnum(INCLUDED_IN_OVERALL_SCORE, dto.includedInOverallScore);
+    exercise.assessmentType = mapEnum(ASSESSMENT_TYPES, dto.assessmentType);
+    exercise.mode = mapEnum(EXERCISE_MODES, dto.mode);
     exercise.teamMode = dto.teamMode;
     exercise.teamAssignmentConfig = dto.teamAssignmentConfig ? fromTeamAssignmentConfigDTO(dto.teamAssignmentConfig) : undefined;
     exercise.allowComplaintsForAutomaticAssessments = dto.allowComplaintsForAutomaticAssessments;
@@ -206,7 +142,7 @@ export function fromFileUploadExerciseDTO(dto: FileUploadExerciseDto): FileUploa
     return exercise;
 }
 
-function fromTeamAssignmentConfigDTO(dto: FileUploadTeamAssignmentConfigDto): TeamAssignmentConfig {
+function fromTeamAssignmentConfigDTO(dto: FileUploadTeamAssignmentConfig): TeamAssignmentConfig {
     const config = new TeamAssignmentConfig();
     config.id = dto.id;
     config.minTeamSize = dto.minTeamSize;
@@ -214,7 +150,7 @@ function fromTeamAssignmentConfigDTO(dto: FileUploadTeamAssignmentConfigDto): Te
     return config;
 }
 
-function fromGradingCriterionDTO(dto: GradingCriterionDTO): GradingCriterion {
+function fromGradingCriterionDTO(dto: GeneratedGradingCriterion): GradingCriterion {
     const criterion = new GradingCriterion();
     criterion.id = dto.id;
     criterion.title = dto.title ?? '';
@@ -222,7 +158,7 @@ function fromGradingCriterionDTO(dto: GradingCriterionDTO): GradingCriterion {
     return criterion;
 }
 
-function fromGradingInstructionDTO(dto: GradingInstructionDTO): GradingInstruction {
+function fromGradingInstructionDTO(dto: GeneratedGradingInstruction): GradingInstruction {
     const instruction = new GradingInstruction();
     instruction.id = dto.id;
     if (dto.credits !== undefined) {
@@ -241,25 +177,25 @@ function fromGradingInstructionDTO(dto: GradingInstructionDTO): GradingInstructi
     return instruction;
 }
 
-function fromCompetencyLinkDTO(dto: CompetencyLinkDTO, exercise: FileUploadExercise): CompetencyExerciseLink {
-    return new CompetencyExerciseLink(fromCompetencyDTO(dto.competency), exercise, dto.weight);
+function fromCompetencyLinkDTO(dto: GeneratedCompetencyLink, exercise: FileUploadExercise): CompetencyExerciseLink {
+    return new CompetencyExerciseLink(dto.competency ? fromCompetencyDTO(dto.competency) : undefined, exercise, dto.weight);
 }
 
-function fromCompetencyDTO(dto: CompetencyDTO): Competency {
+function fromCompetencyDTO(dto: GeneratedCompetency): Competency {
     const competency = new Competency();
     competency.id = dto.id;
     competency.title = dto.title;
     return competency;
 }
 
-function toTeamAssignmentConfigDTO(config?: TeamAssignmentConfig): FileUploadTeamAssignmentConfigDto | undefined {
+function toTeamAssignmentConfigDTO(config?: TeamAssignmentConfig): FileUploadTeamAssignmentConfig | undefined {
     if (!config) {
         return undefined;
     }
     return { id: config.id, minTeamSize: config.minTeamSize, maxTeamSize: config.maxTeamSize };
 }
 
-function toPlagiarismDetectionConfigDTO(config?: PlagiarismDetectionConfig): FileUploadPlagiarismDetectionConfigDto | undefined {
+function toPlagiarismDetectionConfigDTO(config?: PlagiarismDetectionConfig): FileUploadPlagiarismDetectionConfig | undefined {
     if (!config) {
         return undefined;
     }
@@ -273,26 +209,26 @@ function toPlagiarismDetectionConfigDTO(config?: PlagiarismDetectionConfig): Fil
     };
 }
 
-function toCourse(dto: CourseContextDto): Course {
+function toCourse(dto: FileUploadExerciseCourse): Course {
     const course = new Course();
     course.id = dto.id;
     course.title = dto.title;
     course.shortName = dto.shortName;
     course.testCourse = dto.testCourse;
     course.presentationScore = dto.presentationScore;
-    course.courseInformationSharingConfiguration = dto.courseInformationSharingConfiguration;
+    course.courseInformationSharingConfiguration = mapEnum(COURSE_INFORMATION_SHARING_CONFIGURATIONS, dto.courseInformationSharingConfiguration);
     course.accuracyOfScores = dto.accuracyOfScores;
     return course;
 }
 
-function toExerciseGroup(dto: ExerciseGroupContextDto): ExerciseGroup {
+function toExerciseGroup(dto: FileUploadExerciseExamGroup): ExerciseGroup {
     const exerciseGroup = new ExerciseGroup();
     exerciseGroup.id = dto.id;
     exerciseGroup.exam = dto.exam ? toExam(dto.exam) : undefined;
     return exerciseGroup;
 }
 
-function toExerciseVariantGroup(dto: ExerciseVariantGroupReferenceDto): ExerciseVariantGroupReference {
+function toExerciseVariantGroup(dto: GeneratedExerciseVariantGroupReference): ExerciseVariantGroupReference {
     return {
         id: dto.id,
         title: dto.title,
@@ -305,7 +241,7 @@ function toExerciseVariantGroup(dto: ExerciseVariantGroupReferenceDto): Exercise
     };
 }
 
-function toExam(dto: ExamContextDto): Exam {
+function toExam(dto: FileUploadExerciseExam): Exam {
     const exam = new Exam();
     exam.id = dto.id;
     exam.title = dto.title;

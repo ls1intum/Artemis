@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO representing the input for creating or updating a file upload submission.
@@ -14,7 +15,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
  * @param exerciseId the ID of the file upload exercise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FileUploadSubmissionInputDTO(@Nullable Long id, boolean submitted, @Nullable Long exerciseId) {
+public record FileUploadSubmissionInputDTO(@Nullable Long id, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) boolean submitted, @Nullable Long exerciseId) {
 
     /**
      * Converts this DTO to a {@link FileUploadSubmission} entity.

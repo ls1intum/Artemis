@@ -1,23 +1,14 @@
 import { convertFeedbackFromServer } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { convertDateFromServer } from 'app/foundation/util/date.utils';
+import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
 import { EditorViewingPurpose } from 'app/exercise/shared/exercise-submission.interface';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import {
-    FileUploadCourseContextDTO,
-    FileUploadExamContextDTO,
-    FileUploadExerciseContextDTO,
-    FileUploadExerciseGroupContextDTO,
-    FileUploadParticipation,
-    FileUploadParticipationDTO,
-    FileUploadSubmission,
-    FileUploadSubmissionDTO,
-    FileUploadSubmissionInputDTO,
-} from 'app/fileupload/shared/entities/file-upload-submission.model';
+import { FileUploadParticipation, FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { createRequestOption } from 'app/foundation/util/request.util';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { addPublicFilePrefix } from 'app/app.constants';
@@ -26,12 +17,20 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
-
-export type EntityResponseType = HttpResponse<FileUploadSubmissionDTO>;
+import { FileUploadSubmissionApi } from 'app/openapi/api/file-upload-submission-api';
+import { FileUploadSubmission as FileUploadSubmissionResponse } from 'app/openapi/model/file-upload-submission';
+import { FileUploadParticipation as FileUploadParticipationResponse } from 'app/openapi/model/file-upload-participation';
+import { FileUploadExerciseContext } from 'app/openapi/model/file-upload-exercise-context';
+import { FileUploadExerciseGroupContext } from 'app/openapi/model/file-upload-exercise-group-context';
+import { FileUploadExamContext } from 'app/openapi/model/file-upload-exam-context';
+import { FileUploadCourseContext } from 'app/openapi/model/file-upload-course-context';
+import { FileUploadResult } from 'app/openapi/model/file-upload-result';
+import { toFeedbackFromServer } from 'app/fileupload/shared/entities/file-upload-assessment-dto.model';
 
 @Service()
 export class FileUploadSubmissionService {
     private http = inject(HttpClient);
+    private fileUploadSubmissionApi = inject(FileUploadSubmissionApi);
     private submissionService = inject(SubmissionService);
 
     /**
@@ -40,41 +39,30 @@ export class FileUploadSubmissionService {
      * @param exerciseId id of the exercise
      * @param submissionFile the file submitted that will for the exercise
      */
-    update(fileUploadSubmission: FileUploadSubmission, exerciseId: number, submissionFile: File): Observable<HttpResponse<FileUploadSubmission>> {
-        const submissionInput: FileUploadSubmissionInputDTO = {
+    update(fileUploadSubmission: FileUploadSubmission, exerciseId: number, submissionFile: File): Observable<FileUploadSubmission> {
+        const submissionInput = {
             id: fileUploadSubmission.id,
             submitted: fileUploadSubmission.submitted ?? false,
             exerciseId,
         };
-        const formData = new FormData();
-        const submissionBlob = new Blob([JSON.stringify(submissionInput)], { type: 'application/json' });
-        formData.append('file', submissionFile);
-        formData.append('submission', submissionBlob);
-        return this.http
-            .post<FileUploadSubmissionDTO>(`api/fileupload/exercises/${exerciseId}/file-upload-submissions`, formData, {
-                observe: 'response',
-            })
-            .pipe(map((res: EntityResponseType) => this.convertFileSubmissionResponseFromServer(res)));
+        return this.fileUploadSubmissionApi
+            .createFileUploadSubmission(exerciseId, submissionInput, submissionFile)
+            .pipe(map((submission) => this.convertFileSubmissionFromServer(submission)));
     }
 
     /**
      * Returns File Upload submission from the server
      * @param fileUploadSubmissionId the id of the File Upload submission
-     * @param correctionRound
-     * @param resultId
+     * @param correctionRound the correction round to load, used only without a result id
+     * @param resultId the result to load; when set, the correction round is not sent
      */
-    get(fileUploadSubmissionId: number, correctionRound = 0, resultId?: number): Observable<HttpResponse<FileUploadSubmission>> {
-        const url = `api/fileupload/file-upload-submissions/${fileUploadSubmissionId}`;
-        let params = new HttpParams();
-        if (resultId && resultId > 0) {
-            // in case resultId is set, we do not need the correction round
-            params = params.set('resultId', resultId.toString());
-        } else {
-            params = params.set('correction-round', correctionRound.toString());
-        }
-        return this.http
-            .get<FileUploadSubmissionDTO>(url, { params, observe: 'response' })
-            .pipe(map((res: HttpResponse<FileUploadSubmissionDTO>) => this.convertFileSubmissionResponseFromServer(res)));
+    get(fileUploadSubmissionId: number, correctionRound = 0, resultId?: number): Observable<FileUploadSubmission> {
+        // in case resultId is set, we do not need the correction round
+        const request =
+            resultId && resultId > 0
+                ? this.fileUploadSubmissionApi.getFileUploadSubmission(fileUploadSubmissionId, undefined, resultId)
+                : this.fileUploadSubmissionApi.getFileUploadSubmission(fileUploadSubmissionId, correctionRound, undefined);
+        return request.pipe(map((submission) => this.convertFileSubmissionFromServer(submission)));
     }
 
     /**
@@ -102,100 +90,80 @@ export class FileUploadSubmissionService {
             params = params.set('correction-round', correctionRound.toString());
         }
         return this.http
-            .get<FileUploadSubmissionDTO[]>(url, {
+            .get<FileUploadSubmissionResponse[]>(url, {
                 params,
                 observe: 'response',
             })
             .pipe(
-                map((res: HttpResponse<FileUploadSubmissionDTO[]>) => res.clone({ body: res.body?.map((submission) => this.convertFileSubmissionFromServer(submission)) ?? null })),
+                map((res: HttpResponse<FileUploadSubmissionResponse[]>) =>
+                    res.clone({ body: res.body?.map((submission) => this.convertFileSubmissionFromServer(submission)) ?? null }),
+                ),
             );
     }
 
     /**
      * Returns next File Upload submission without assessment from the server
      * @param exerciseId the id of the exercise
-     * @param lock
+     * @param lock whether to lock the submission for the current assessor
      * @param correctionRound for which to get the Submissions
+     * @returns the submission, or undefined when no submission is left to assess
      */
     getSubmissionWithoutAssessment(exerciseId: number, lock?: boolean, correctionRound = 0): Observable<FileUploadSubmission | undefined> {
-        const url = `api/fileupload/exercises/${exerciseId}/file-upload-submission-without-assessment`;
-        let params = new HttpParams();
-        if (correctionRound !== 0) {
-            params = params.set('correction-round', correctionRound.toString());
-        }
-        if (lock) {
-            params = params.set('lock', 'true');
-        }
-
-        return this.http.get<FileUploadSubmissionDTO | undefined>(url, { params }).pipe(
-            map((res?: FileUploadSubmissionDTO) => {
-                if (!res) {
-                    return undefined;
-                }
-                return this.convertFileSubmissionFromServer(res);
-            }),
-        );
+        return this.fileUploadSubmissionApi
+            .getFileUploadSubmissionWithoutAssessment(exerciseId, lock, correctionRound)
+            .pipe(map((submission) => (submission ? this.convertFileSubmissionFromServer(submission) : undefined)));
     }
 
     /**
      * Returns data for File Upload editor from the server
      * @param participationId the id of the participation
+     * @param purpose whether the owner or a staff member opens the editor
      */
     getDataForFileUploadEditor(participationId: number, purpose: EditorViewingPurpose = 'owner'): Observable<FileUploadSubmission> {
-        return this.http
-            .get<FileUploadSubmissionDTO>(`api/fileupload/participations/${participationId}/file-upload-editor${purpose === 'staff-preview' ? '/for-staff' : ''}`, {
-                responseType: 'json',
-            })
-            .pipe(map((res: FileUploadSubmissionDTO) => this.convertFileSubmissionFromServer(res)));
+        const request =
+            purpose === 'staff-preview'
+                ? this.fileUploadSubmissionApi.getDataForFileUploadForStaff(participationId)
+                : this.fileUploadSubmissionApi.getDataForFileUpload(participationId);
+        return request.pipe(map((submission) => this.convertFileSubmissionFromServer(submission)));
     }
 
     /**
      * In {@link submissionService.convertSubmissionFromServer} {@link object.assign} is used, which means that we never actually call the
      * constructor of the {@link FileUploadSubmission} class, which would set {@link FileUploadSubmission.filePathUrl}, therefore we need to set it manually here.
      */
-    private convertFileSubmissionFromServer(res: FileUploadSubmissionDTO): FileUploadSubmission {
-        const convertedBaseSubmission = this.submissionService.convertSubmissionFromServer(this.mapSubmissionDtoToModel(res));
-        convertedBaseSubmission.filePathUrl = addPublicFilePrefix(res.filePath);
+    private convertFileSubmissionFromServer(dto: FileUploadSubmissionResponse): FileUploadSubmission {
+        const convertedBaseSubmission = this.submissionService.convertSubmissionFromServer(this.mapSubmissionDtoToModel(dto));
+        convertedBaseSubmission.filePathUrl = addPublicFilePrefix(dto.filePath);
         return convertedBaseSubmission;
     }
 
-    /**
-     * See {@link convertFileSubmissionFromServer}
-     */
-    private convertFileSubmissionResponseFromServer(res: HttpResponse<FileUploadSubmissionDTO>): HttpResponse<FileUploadSubmission> {
-        if (!res.body) {
-            return res.clone<FileUploadSubmission>({ body: null });
-        }
-
-        const responseWithModel = res.clone({ body: this.mapSubmissionDtoToModel(res.body) });
-        const convertedBaseSubmission = this.submissionService.convertSubmissionResponseFromServer(responseWithModel);
-        if (convertedBaseSubmission.body) {
-            convertedBaseSubmission.body.filePathUrl = addPublicFilePrefix(convertedBaseSubmission.body.filePath);
-        }
-        return convertedBaseSubmission;
-    }
-
-    private mapSubmissionDtoToModel(dto: FileUploadSubmissionDTO): FileUploadSubmission {
-        const submission = hydrate(new FileUploadSubmission(), dto);
-        submission.submissionDate = convertDateFromServer(dto.submissionDate);
-        submission.results = dto.results?.map((result) => {
-            const converted: Result = hydrate(new Result(), result);
-            converted.completionDate = convertDateFromServer(result.completionDate);
-            converted.feedbacks = result.feedbacks?.map(convertFeedbackFromServer);
-            return converted;
-        });
+    private mapSubmissionDtoToModel(dto: FileUploadSubmissionResponse): FileUploadSubmission {
+        // The class types several enums that the generated model types as string literals, so the intersection hydrate() returns
+        // collapses to never. Annotating the target keeps the class view of the data.
+        const submission: FileUploadSubmission = hydrate(new FileUploadSubmission(), dto);
+        submission.submissionDate = convertDateStringFromServer(dto.submissionDate);
+        submission.results = dto.results?.map((result) => this.mapResultDtoToModel(result));
         submission.participation = this.mapParticipationDtoToModel(dto.participation);
         return submission;
     }
 
-    private mapParticipationDtoToModel(dto: FileUploadParticipationDTO | undefined): FileUploadParticipation | undefined {
+    private mapResultDtoToModel(dto: FileUploadResult): Result {
+        const result: Result = hydrate(new Result(), dto);
+        result.completionDate = convertDateStringFromServer(dto.completionDate);
+        result.feedbacks = dto.feedbacks?.map((feedback) => convertFeedbackFromServer(toFeedbackFromServer(feedback)));
+        return result;
+    }
+
+    private mapParticipationDtoToModel(dto: FileUploadParticipationResponse | undefined): FileUploadParticipation | undefined {
         if (!dto) {
             return undefined;
         }
-        return hydrate(new FileUploadParticipation(dto.type), dto, { exercise: this.mapExerciseDtoToModel(dto.exercise) });
+        // The participation class is built from its type, which the server sends as the client's participation type value.
+        const type = Object.values(ParticipationType).find((participationType) => participationType === dto.type);
+        return hydrate(new FileUploadParticipation(type), dto, { exercise: this.mapExerciseDtoToModel(dto.exercise) });
     }
 
-    private mapExerciseDtoToModel(dto: FileUploadExerciseContextDTO | undefined): FileUploadExercise | undefined {
+    private mapExerciseDtoToModel(dto: FileUploadExerciseContext | undefined): FileUploadExercise | undefined {
         if (!dto) {
             return undefined;
         }
@@ -204,21 +172,21 @@ export class FileUploadSubmissionService {
         return hydrate(new FileUploadExercise(course, exerciseGroup), dto, { course, exerciseGroup });
     }
 
-    private mapExerciseGroupDtoToModel(dto: FileUploadExerciseGroupContextDTO | undefined): ExerciseGroup | undefined {
+    private mapExerciseGroupDtoToModel(dto: FileUploadExerciseGroupContext | undefined): ExerciseGroup | undefined {
         if (!dto) {
             return undefined;
         }
         return hydrate(new ExerciseGroup(), dto, { exam: this.mapExamDtoToModel(dto.exam) });
     }
 
-    private mapExamDtoToModel(dto: FileUploadExamContextDTO | undefined): Exam | undefined {
+    private mapExamDtoToModel(dto: FileUploadExamContext | undefined): Exam | undefined {
         if (!dto) {
             return undefined;
         }
         return hydrate(new Exam(), dto, { course: this.mapCourseDtoToModel(dto.course) });
     }
 
-    private mapCourseDtoToModel(dto: FileUploadCourseContextDTO | undefined): Course | undefined {
+    private mapCourseDtoToModel(dto: FileUploadCourseContext | undefined): Course | undefined {
         return dto ? hydrate(new Course(), dto) : undefined;
     }
 }
