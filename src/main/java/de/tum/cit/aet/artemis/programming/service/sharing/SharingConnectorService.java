@@ -10,13 +10,13 @@ import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import jakarta.annotation.PostConstruct;
 
-import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -284,7 +284,7 @@ public class SharingConnectorService {
                 "metadata.format.stream().anyMatch(entry->entry=='artemis' || entry=='Artemis').get()");
         lastHealthStati.add(new HealthStatus("Delivered Sharing Config Status to " + apiBaseUrl));
         lastHealthStati.setLastConnect();
-        return new SharingPluginConfig("Artemis Sharing Connector", new SharingPluginConfig.Action[] { action });
+        return new SharingPluginConfig("Artemis Sharing Connector", List.of(action));
     }
 
     /**

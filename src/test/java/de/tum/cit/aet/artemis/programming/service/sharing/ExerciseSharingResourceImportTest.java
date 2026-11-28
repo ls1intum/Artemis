@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
-import org.codeability.sharing.plugins.api.ShoppingBasket;
-import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,6 +45,7 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
+import de.tum.cit.aet.artemis.core.util.SharingChecksum;
 import de.tum.cit.aet.artemis.core.web.SharingSupportResource;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
@@ -200,7 +199,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
         // Add params to request
         paramsToCheckSum.forEach(request::queryParam);
 
-        String checkSum = SecretChecksumCalculator.calculateChecksum(paramsToCheckSum, sharingPlatformMockProvider.getTestSharingApiKey());
+        String checkSum = SharingChecksum.calculateChecksum(paramsToCheckSum, sharingPlatformMockProvider.getTestSharingApiKey());
         request.queryParam("checksum", checkSum);
         return request;
     }
@@ -471,7 +470,7 @@ class ExerciseSharingResourceImportTest extends AbstractProgrammingIntegrationLo
         String content = result.getResponse().getContentAsString();
 
         ShoppingBasket sb = objectMapper.readerFor(ShoppingBasket.class).readValue(content);
-        assertThat(sb.userInfo.email).isEqualTo("test.user@example.com");
+        assertThat(sb.userInfo().email()).isEqualTo("test.user@example.com");
     }
 
     @ParameterizedTest

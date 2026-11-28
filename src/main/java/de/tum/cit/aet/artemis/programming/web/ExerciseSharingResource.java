@@ -12,8 +12,6 @@ import java.util.Optional;
 import jakarta.ws.rs.core.UriBuilder;
 
 import org.apache.commons.lang3.StringUtils;
-import org.codeability.sharing.plugins.api.ShoppingBasket;
-import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
@@ -42,6 +40,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.SharingChecksum;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
@@ -54,6 +53,7 @@ import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorServic
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingEnabled;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingException;
 import de.tum.cit.aet.artemis.programming.service.sharing.SharingSetupInfoDTO;
+import de.tum.cit.aet.artemis.programming.service.sharing.ShoppingBasket;
 
 /**
  * REST controller that orchestrates importing and exporting programming exercises
@@ -153,7 +153,7 @@ public class ExerciseSharingResource {
     @EnforceAtLeastStudent
     public ResponseEntity<ShoppingBasket> loadShoppingBasket(@RequestParam String basketToken, @RequestParam String returnURL, @RequestParam String apiBaseURL,
             @RequestParam String checksum) {
-        if (SecretChecksumCalculator.checkChecksum(Map.of("returnURL", returnURL, "apiBaseURL", apiBaseURL), sharingConnectorService.getSharingApiKey(), checksum)
+        if (SharingChecksum.checkChecksum(Map.of("returnURL", returnURL, "apiBaseURL", apiBaseURL), sharingConnectorService.getSharingApiKey(), checksum)
                 && sharingConnectorService.matchesConfiguredApiBaseUrl(apiBaseURL)) {
             Optional<ShoppingBasket> sharingInfoDTO = exerciseSharingService.getBasketInfo(basketToken, apiBaseURL);
             return ResponseUtil.wrapOrNotFound(sharingInfoDTO);
