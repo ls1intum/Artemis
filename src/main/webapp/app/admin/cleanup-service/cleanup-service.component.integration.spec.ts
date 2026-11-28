@@ -1,4 +1,3 @@
-import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,7 +22,7 @@ describe('CleanupServiceComponent date range integration', () => {
                 {
                     provide: DataCleanupService,
                     useValue: {
-                        getLastExecutions: vi.fn().mockReturnValue(of(new HttpResponse({ body: [] }))),
+                        getLastExecutions: vi.fn().mockReturnValue(of([])),
                         getCleanupConfiguration: vi.fn().mockReturnValue(
                             of({
                                 gradeRelevantRetentionYears: 5,

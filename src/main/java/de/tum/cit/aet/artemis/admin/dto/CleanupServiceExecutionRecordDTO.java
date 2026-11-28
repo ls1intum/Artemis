@@ -5,6 +5,7 @@ import java.time.ZonedDateTime;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.admin.domain.CleanupJobExecution;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO representing a record of a cleanup service execution.
@@ -12,6 +13,7 @@ import de.tum.cit.aet.artemis.admin.domain.CleanupJobExecution;
  * The JSON serialization will include non-empty fields only.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Schema(requiredProperties = { "jobType" })
 public record CleanupServiceExecutionRecordDTO(ZonedDateTime executionDate, String jobType) {
 
     public static CleanupServiceExecutionRecordDTO of(CleanupJobExecution cleanupJobExecution) {

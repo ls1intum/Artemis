@@ -64,6 +64,7 @@ api/tutor-participation-resources.ts
 api/quiz-statistics-resources.ts
 api/hyperion-exercise-variant-resources.ts
 api/hyperion-problem-statement-resources.ts
+api/admin-cleanup-resources.ts
 api/long-feedback-text-resources.ts
 api/admin-hyperion-generation-resources.ts
 api/online-unit-resources.ts
