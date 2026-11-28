@@ -209,6 +209,45 @@ describe('Team overview service', () => {
         ]);
     });
 
+    it('does not replay earlier team assignment updates to a later subscriber', async () => {
+        vi.useFakeTimers();
+        try {
+            const authentication = new Subject<User | undefined>();
+            const connection = new Subject<ConnectionState>();
+            const assignments = new Subject<TeamAssignmentPayload>();
+            vi.spyOn(TestBed.inject(AccountService), 'getAuthenticationState').mockReturnValue(authentication);
+            vi.spyOn(TestBed.inject(WebsocketService), 'connectionState', 'get').mockReturnValue(connection);
+            vi.spyOn(TestBed.inject(WebsocketService), 'subscribe').mockReturnValue(assignments);
+            const streamPromise = service.teamAssignmentUpdates;
+            authentication.next({ id: 3, internal: true });
+            await vi.advanceTimersByTimeAsync(500);
+            connection.next(new ConnectionState(true, false));
+            const stream = await streamPromise;
+            const early: TeamAssignmentPayload[] = [];
+            const earlySubscription = stream.subscribe((value) => early.push(value));
+
+            // The student was removed from a team while the course overview was open. A page that opens later loads its data from the server, which already contains that change,
+            // so replaying the removal to it would overwrite what it just loaded, for example a practice participation that the student started since.
+            const removal = { exerciseId: 7 } as TeamAssignmentPayload;
+            assignments.next(removal);
+            const late: TeamAssignmentPayload[] = [];
+            const lateSubscription = stream.subscribe((value) => late.push(value));
+            expect(late).toEqual([]);
+
+            // Later messages still reach every subscriber.
+            const live = { exerciseId: 7, teamId: 9 } as TeamAssignmentPayload;
+            assignments.next(live);
+            expect(early).toEqual([removal, live]);
+            expect(late).toEqual([live]);
+
+            earlySubscription.unsubscribe();
+            lateSubscription.unsubscribe();
+            service.ngOnDestroy();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it('shares authenticated team assignment updates and tears down its connection listener', async () => {
         vi.useFakeTimers();
         try {
