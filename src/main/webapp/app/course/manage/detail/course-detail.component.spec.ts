@@ -184,6 +184,10 @@ describe('Course Management Detail Component', () => {
 
     it.each([
         { cost: 82.3, unpriced: 0, expected: '82.30 USD' },
+        { cost: 70.30455752, unpriced: 2, expected: '≥ 70.30 USD' },
+        { cost: 70.309, unpriced: 0, expected: '70.31 USD' },
+        { cost: 70.309, unpriced: 2, expected: '≥ 70.30 USD' },
+        { cost: 12345678, unpriced: 0, expected: '12.35M USD' },
         { cost: 0, unpriced: 0, expected: '0.00 USD' },
         { cost: 0.004, unpriced: 2, expected: '≥ 0.004 USD' },
         { cost: 0.00000001, unpriced: 0, expected: '0.00000001 USD' },

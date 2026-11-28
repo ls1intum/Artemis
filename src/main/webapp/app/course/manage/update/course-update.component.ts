@@ -160,6 +160,7 @@ export class CourseUpdateComponent implements OnInit {
     private readonly accountService = inject(AccountService);
     private readonly competencyOrchestrationApiService = inject(CompetencyOrchestrationApiService);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly translatePipe = inject(ArtemisTranslatePipe);
     private courseStorageService = inject(CourseStorageService);
 
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
@@ -271,6 +272,8 @@ export class CourseUpdateComponent implements OnInit {
         this._course();
         return this.collectIssues();
     });
+
+    protected readonly issueLabels = computed(() => this.issues().map((issue) => this.translatePipe.transform(issue.labelKey)));
 
     /** Live character count of the description control, for the inline counter. Bridged to reactive-form changes via formRevision. */
     readonly descriptionLength = computed(() => {

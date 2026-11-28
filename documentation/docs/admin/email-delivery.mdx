@@ -2,14 +2,14 @@
 id: email-delivery
 title: E-Mail Delivery
 sidebar_label: E-Mail Delivery
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-28
 ---
 
 import Callout from '../../src/components/Callout/Callout';
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
 
 Artemis sends e-mail for account security (new logins, password changes, password resets), for course notifications such as announcements,
-and for system tasks such as maintenance notices and data retention warnings. Every server of an Artemis deployment hands its mail to one
+and for system tasks such as system announcements and data retention warnings. Every server of an Artemis deployment hands its mail to one
 SMTP server, and most universities give that server one account with one limit for all of it. This page describes how Artemis keeps that
 shared limit from being used up by accounts that do not need mail, what happens to a mail the SMTP server does not accept, and how to
 find out what was sent.
@@ -36,7 +36,7 @@ For a test user, the notification settings behave as follows.
   the default preset, because the default preset delivers e-mail. Choosing a preset, including the default preset, counts as a
   choice and switches the e-mail of that preset on. Customizing the settings starts from "no e-mail" instead of copying the e-mail of
   the default preset.
-- The maintenance e-mail goes to a test user only if it switched the notification on, and the recipient count that the administration
+- A system announcement e-mail goes to a test user only if it switched the notification on, and the recipient count that the administration
   shows before sending a system notification applies the same rule.
 - Mails that have no setting of their own, such as activation and password reset mails and the warnings of the data retention
   features, are not sent to a test user that has not enabled any e-mail. As soon as the account has enabled one, they are sent.
@@ -145,5 +145,5 @@ from starving the others.
 
 ## Related pages
 
-[System Notifications](/admin/system-notifications) describes the maintenance notices that are sent to instructors by e-mail.
+[System Notifications](/admin/system-notifications) describes how administrators can e-mail an announcement to instructors.
 [User Management](/admin/user-registration) describes the activation and password reset mails.

@@ -161,7 +161,7 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
         String body = getDeliveredEmailBody();
         assertThat(body).contains("Server-Aktualisierung");
-        assertThat(body).contains("Der Server wird aktualisiert.");
+        assertThat(body).contains("Der Server wird aktualisiert.", "Banner sichtbar von").doesNotContain("Wartung");
     }
 
     @Test
@@ -189,7 +189,8 @@ class MaintenanceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
                 Map.of("notificationTitle", "Date Format Test", "formattedStart", start, "formattedEnd", end));
 
         String body = getDeliveredEmailBody();
-        assertThat(body).contains("Maintenance window:");
+        assertThat(body).contains("Banner visible from").doesNotContainIgnoringCase("maintenance");
+        assertThat(greenMail.getReceivedMessages()[0].getSubject()).isEqualTo("Artemis system announcement");
         assertThat(body).contains(start);
         assertThat(body).contains(end);
     }

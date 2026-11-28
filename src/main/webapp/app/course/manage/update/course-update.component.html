@@ -873,6 +873,8 @@
                     id="save-entity"
                     tumAetUiButton
                     class="aria-disabled:opacity-60"
+                    [tumAetUiTooltip]="issueLabels()"
+                    [tumAetUiTooltipDescribesHost]="false"
                     [attr.aria-disabled]="issues().length > 0 || isSaving()"
                     [attr.aria-describedby]="issues().length ? 'course-form-status' : null"
                 >

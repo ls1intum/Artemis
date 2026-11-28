@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { ApplicationRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -1920,6 +1921,25 @@ describe('Course Management Update Component', () => {
             expect(saveButton.getAttribute('aria-disabled')).toBe('true');
             expect(saveButton.getAttribute('aria-describedby')).toBe('course-form-status');
             expect(fixture.nativeElement.querySelector('[data-testid="course-form-issues"]').textContent).toContain('artemisApp.course.title');
+        });
+
+        it('shows the missing fields when the blocked Save button receives keyboard focus', () => {
+            course.title = undefined;
+            course.semester = undefined;
+            fixture.detectChanges();
+            vi.useFakeTimers();
+            try {
+                const button = fixture.nativeElement.querySelector('#save-entity');
+                button.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+                vi.advanceTimersByTime(300);
+                TestBed.inject(ApplicationRef).tick();
+
+                const reasons = Array.from(document.querySelectorAll('[role="tooltip"] li'), (item) => item.textContent?.trim());
+                expect(reasons).toEqual(['artemisApp.course.title', 'artemisApp.course.semester']);
+                expect(button.getAttribute('aria-describedby')).toBe('course-form-status');
+            } finally {
+                vi.useRealTimers();
+            }
         });
 
         it('shows the required legend instead of issues when the course can be saved', () => {

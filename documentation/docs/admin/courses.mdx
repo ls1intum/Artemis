@@ -2,12 +2,13 @@
 id: courses
 title: Courses
 sidebar_label: Courses
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-28
 ---
 
 import Image, {ImageSize} from "../../src/components/Image/Image";
 
 import courseSettingsImg from "./assets/courses/course_settings.png";
+import courseValidationImg from "./assets/courses/course-form-validation.png";
 import courseOverviewImg from "./assets/courses/course_overview.png";
 import courseHeaderImg from "./assets/courses/course_header.png";
 import courseManagementImg from "./assets/courses/course_management.png";
@@ -23,8 +24,10 @@ and then **Create new course**.
 
 Administrators can then specify options in the creation form, Instructors can later change these values. Fields
 marked with a red asterisk are required. The bar at the bottom of the page keeps **Cancel** and **Save** in view and
-lists every field that still needs attention; select a field name there to jump to it. Pressing **Save** before
-everything is filled in highlights each missing or invalid field.
+lists every field that still needs attention. Select a field name to jump to it. Hover over **Save** or focus it
+with the keyboard to see the same list. Press **Save** to highlight the missing or invalid fields.
+
+<Image src={courseValidationImg} alt="The course form lists four missing fields in its footer and in the tooltip above Save." size={ImageSize.large} />
 
 **General Information**
 

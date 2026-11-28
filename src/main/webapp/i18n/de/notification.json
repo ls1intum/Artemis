@@ -44,7 +44,7 @@
             "created": "Eine neue Mitteilung wurde mit ID {{ param }} erstellt",
             "updated": "Eine Mitteilung mit ID {{ param }} wurde geändert",
             "deleted": "Eine Mitteilung mit ID {{ param }} wurde gelöscht",
-            "sendMaintenanceEmail": "Wartungsankündigung per E-Mail an alle Lehrenden senden",
+            "sendMaintenanceEmail": "Diese Benachrichtigung per E-Mail an Lehrende senden",
             "maintenanceEmailInfo": "Eine E-Mail wird an {{ count }} Lehrende aller laufenden Kurse gesendet.",
             "titleMaxlength": "Der Benachrichtigungstitel darf höchstens 255 Zeichen lang sein.",
             "textMaxlength": "Der Benachrichtigungstext darf höchstens 2000 Zeichen lang sein."

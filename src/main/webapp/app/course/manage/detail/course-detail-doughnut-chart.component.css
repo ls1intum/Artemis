@@ -37,11 +37,11 @@
     width: 70px;
     z-index: 1;
     text-align: center;
-    overflow-wrap: anywhere;
+    overflow-wrap: normal;
 }
 
 .doughnut .doughnut-chart-container .doughnut-chart-text.llm-cost-value .chart-value--large {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     line-height: 1.2;
     margin: 0;
 }
