@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ProgrammingExerciseSharingService } from 'app/programming/manage/services/programming-exercise-sharing.service';
+import { ProgrammingExerciseSharingService } from './programming-exercise-sharing.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { SharingInfo, ShoppingBasket } from 'app/sharing/sharing.model';
 import { TranslateService } from '@ngx-translate/core';

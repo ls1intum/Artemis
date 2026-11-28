@@ -75,7 +75,6 @@ import { DetailOverviewListComponent } from 'app/shared-ui/detail-overview-list/
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
 import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import * as downloadUtil from 'app/foundation/util/download.util';
-import { ProgrammingExerciseSharingService } from 'app/programming/manage/services/programming-exercise-sharing.service';
 import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
 import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
 import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
@@ -327,26 +326,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
         comp.downloadExercise();
         expect(error).toHaveBeenCalledWith('error.exportFailed');
-    });
-
-    it('preserves sharing errors and does not export an unsaved exercise', () => {
-        const sharing = vi
-            .spyOn(TestBed.inject(ProgrammingExerciseSharingService), 'exportProgrammingExerciseToSharing')
-            .mockReturnValueOnce(of(new HttpResponse<string>({ body: null })))
-            .mockReturnValueOnce(throwError(() => new HttpErrorResponse({ error: { message: 'Sharing unavailable' } })));
-        const error = vi.spyOn(alertService, 'error');
-        comp.programmingExercise.set(mockProgrammingExercise);
-
-        comp.exportExerciseToSharing();
-        expect(sharing).toHaveBeenCalledWith(mockProgrammingExercise.id, window.location.href);
-        expect(error).toHaveBeenCalledWith('artemisApp.programmingExercise.sharing.error.noRedirect');
-
-        comp.exportExerciseToSharing();
-        expect(error).toHaveBeenCalledWith('artemisApp.programmingExercise.sharing.error.export', { message: 'Sharing unavailable' });
-
-        comp.programmingExercise.set(new ProgrammingExercise(undefined, undefined));
-        comp.exportExerciseToSharing();
-        expect(sharing).toHaveBeenCalledTimes(2);
     });
 
     it('should reload on participation change', async () => {
