@@ -1,25 +1,18 @@
 package de.tum.cit.aet.artemis.core.service.distributed.local;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
-/**
- * {@link LocalMap} enforces expiry by purging on every read, so a purge runs concurrently with ordinary writes on
- * whichever thread happens to read. A value and its deadline therefore have to move together under the key lock.
- *
- * <p>
- * They did not: the purge decided an entry was expired and dropped its deadline, and only then took the key lock to
- * evict it. A write landing in that window stored a fresh value, and the purge deleted that instead of the expired one.
- * The key lock is used here to hold the purge inside exactly that window, so the test pins the ordering rather than
- * hoping to hit it.
- */
+/** Exercises expiry and lock lifetime under concurrent access to the single-node provider. */
 class LocalMapExpiryRaceTest {
 
     private static final Duration ALREADY_ELAPSED = Duration.ofNanos(1);
@@ -27,7 +20,8 @@ class LocalMapExpiryRaceTest {
     @Test
     void releasesKeyLocksAfterTheLastUser() {
         var map = new LocalMap<Integer, Integer>();
-        var locks = (Map<?, ?>) ReflectionTestUtils.getField(map, "locks");
+        var registry = ReflectionTestUtils.getField(map, "locks");
+        var locks = (Map<?, ?>) ReflectionTestUtils.getField(registry, "entries");
         for (int key = 0; key < 1000; key++) {
             assertThat(map.get(key)).isNull();
             map.lock(key);
@@ -41,6 +35,85 @@ class LocalMapExpiryRaceTest {
             }
         }
         assertThat(locks).isEmpty();
+    }
+
+    @Test
+    void readingAnExpiredKeyWhileHoldingItsLockDoesNotWaitForAnotherKey() throws Exception {
+        var map = new LocalMap<String, String>();
+        map.put("first", "expired", Duration.ZERO);
+        map.put("second", "expired", Duration.ZERO);
+        map.lock("first");
+        try {
+            var read = new FutureTask<>(() -> {
+                map.lock("second");
+                try {
+                    return map.get("second");
+                }
+                finally {
+                    map.unlock("second");
+                }
+            });
+            Thread.ofVirtual().start(read);
+            assertThat(read.get(5, TimeUnit.SECONDS)).isNull();
+            assertThat(map.get("first")).isNull();
+        }
+        finally {
+            map.unlock("first");
+        }
+    }
+
+    @Test
+    void namedLocksCoordinateSeparateHandlesAndReleaseTimedOutWaiters() throws Exception {
+        var provider = new LocalDataProviderService();
+        var owner = provider.getLock("session");
+        var secondHandle = provider.getLock("session");
+        owner.lock();
+        try {
+            assertThat(secondHandle.tryLock(Duration.ZERO)).isTrue();
+            secondHandle.unlock();
+            var attempt = new FutureTask<>(() -> secondHandle.tryLock(Duration.ZERO));
+            Thread.ofVirtual().start(attempt);
+            assertThat(attempt.get(5, TimeUnit.SECONDS)).isFalse();
+        }
+        finally {
+            owner.unlock();
+        }
+        assertThat(secondHandle.tryLock(Duration.ZERO)).isTrue();
+        secondHandle.unlock();
+        for (int i = 0; i < 1000; i++) {
+            var lock = provider.getLock("session-" + i);
+            lock.lock();
+            lock.unlock();
+        }
+        var registry = ReflectionTestUtils.getField(provider, "locks");
+        assertThat((Map<?, ?>) ReflectionTestUtils.getField(registry, "entries")).isEmpty();
+    }
+
+    @Test
+    void interruptedAcquisitionPreservesInterruptStatusAndReleasesTheName() {
+        var provider = new LocalDataProviderService();
+        var lock = provider.getLock("session");
+        Thread.currentThread().interrupt();
+        try {
+            assertThat(lock.tryLock(Duration.ZERO)).isFalse();
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        }
+        finally {
+            Thread.interrupted();
+        }
+        assertThatExceptionOfType(IllegalMonitorStateException.class).isThrownBy(lock::unlock);
+    }
+
+    @Test
+    void providerCleanupEvictsExpiredKeysWithoutSubsequentReads() {
+        var provider = new LocalDataProviderService();
+        var expiring = provider.<String, String>getExpiringMap("test", Duration.ofMinutes(1));
+        expiring.put("expired", "value", Duration.ZERO);
+        expiring.put("live", "value");
+        provider.purgeExpiredEntries();
+        var maps = (Map<?, ?>) ReflectionTestUtils.getField(provider, "expiringMaps");
+        var entries = (Map<?, ?>) ReflectionTestUtils.getField(maps.get("test"), "map");
+        assertThat(entries.keySet()).isEqualTo(java.util.Set.of("live"));
     }
 
     @Test
@@ -68,8 +141,8 @@ class LocalMapExpiryRaceTest {
             }
         }, "writer");
 
-        // Any read triggers the purge, which finds "victim" expired and tries to evict it.
-        var purger = new Thread(() -> map.get("trigger"), "purger");
+        // A bulk read checks every deadline, including the locked key.
+        var purger = new Thread(map::size, "purger");
 
         writer.start();
         assertThat(writerHoldsLock.await(10, TimeUnit.SECONDS)).as("the writer should have taken the key lock").isTrue();
@@ -90,8 +163,7 @@ class LocalMapExpiryRaceTest {
         map.put("victim", "expired", ALREADY_ELAPSED);
         map.put("trigger", "value");
 
-        // The read purges; nothing raced it, so the expired entry has to be gone.
-        map.get("trigger");
+        assertThat(map.get("trigger")).isEqualTo("value");
 
         assertThat(map.get("victim")).as("an entry nobody rewrote must still expire").isNull();
     }

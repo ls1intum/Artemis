@@ -9,7 +9,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.slf4j.Logger;
@@ -28,12 +27,11 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     private final ConcurrentHashMap<K, V> map;
 
-    private final ConcurrentHashMap<K, KeyLock> locks = new ConcurrentHashMap<>();
+    private final LocalLockRegistry<K> locks = new LocalLockRegistry<>();
 
     /**
-     * Nano-time deadlines for entries stored with a time-to-live. The local provider has no background eviction, so
-     * expiry is enforced by purging on every read; that keeps reads consistent with Redis,
-     * which also never returns an entry whose time-to-live has elapsed.
+     * Keyed operations check their own deadline under the key lock. Bulk reads and the provider's periodic cleanup
+     * also discard entries that nobody has accessed since they expired.
      */
     private final ConcurrentHashMap<K, Long> expiryDeadlines = new ConcurrentHashMap<>();
 
@@ -54,35 +52,30 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
         this.map = new ConcurrentHashMap<>();
     }
 
-    /** Removes expired entries and notifies removal listeners. */
-    private void purgeExpiredEntries() {
-        if (expiryDeadlines.isEmpty()) {
-            return;
-        }
+    /** Releases expired values, including entries whose key is never accessed again. */
+    void purgeExpiredEntries() {
         long now = System.nanoTime();
-        for (var deadline : expiryDeadlines.entrySet()) {
-            K key = deadline.getKey();
-            // Subtraction rather than comparison, so the check stays correct across nano-time wraparound.
-            if (deadline.getValue() - now > 0) {
-                continue;
-            }
-            // Re-read the deadline under the key lock rather than acting on what the scan saw. Between the two, a
-            // writer can replace the value and drop or renew its deadline; deciding outside the lock let purge delete
-            // that fresh value.
-            V expiredValue = null;
-            lock(key);
-            try {
-                Long current = expiryDeadlines.get(key);
-                if (current != null && current - now <= 0) {
-                    expiryDeadlines.remove(key);
-                    expiredValue = map.remove(key);
+        expiryDeadlines.forEach((key, deadline) -> {
+            if (deadline - now <= 0) {
+                lock(key);
+                try {
+                    expireEntryIfDue(key);
+                }
+                finally {
+                    unlock(key);
                 }
             }
-            finally {
-                unlock(key);
-            }
-            if (expiredValue != null) {
-                notifyEntryRemoved(key, expiredValue);
+        });
+    }
+
+    /** Called with the key locked, so a concurrent renewal cannot lose its value. */
+    private void expireEntryIfDue(K key) {
+        Long deadline = expiryDeadlines.get(key);
+        if (deadline != null && deadline - System.nanoTime() <= 0) {
+            expiryDeadlines.remove(key);
+            V expired = map.remove(key);
+            if (expired != null) {
+                notifyEntryRemoved(key, expired);
             }
         }
     }
@@ -103,19 +96,11 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
         }
     }
 
-    private static final class KeyLock {
-
-        private final ReentrantLock lock = new ReentrantLock();
-
-        // Counted under locks.compute, including threads waiting to acquire the lock and reentrant acquisitions.
-        private int users;
-    }
-
     @Override
     public V get(K key) {
-        purgeExpiredEntries();
         lock(key);
         try {
+            expireEntryIfDue(key);
             return map.get(key);
         }
         finally {
@@ -125,7 +110,6 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public Map<K, V> getAll(Set<K> keys) {
-        purgeExpiredEntries();
         Map<K, V> result = new HashMap<>();
         for (K key : keys) {
             V value = get(key);
@@ -160,6 +144,7 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
         lock(key);
         try {
+            expireEntryIfDue(key);
             oldValue = map.put(key, value);
             isUpdate = oldValue != null;
             writeDeadline(key, deadline);
@@ -193,10 +178,10 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
      * @return the value that was already there, or null if this call stored the value
      */
     private V putIfAbsentInternal(K key, V value, Long deadline) {
-        purgeExpiredEntries();
         V existing;
         lock(key);
         try {
+            expireEntryIfDue(key);
             existing = map.putIfAbsent(key, value);
             if (existing == null) {
                 // Only the caller that actually stored the value may set or drop the lifetime.
@@ -214,10 +199,10 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public boolean remove(K key, V value) {
-        purgeExpiredEntries();
         boolean removed;
         lock(key);
         try {
+            expireEntryIfDue(key);
             removed = map.remove(key, value);
             if (removed) {
                 expiryDeadlines.remove(key);
@@ -234,10 +219,10 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public boolean replace(K key, V expectedValue, V replacementValue) {
-        purgeExpiredEntries();
         boolean replaced;
         lock(key);
         try {
+            expireEntryIfDue(key);
             replaced = map.replace(key, expectedValue, replacementValue);
         }
         finally {
@@ -251,9 +236,9 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public boolean refreshTimeToLive(K key, Duration timeToLive) {
-        purgeExpiredEntries();
         lock(key);
         try {
+            expireEntryIfDue(key);
             if (!map.containsKey(key)) {
                 return false;
             }
@@ -271,6 +256,7 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
         lock(key);
         try {
+            expireEntryIfDue(key);
             oldValue = map.remove(key);
             expiryDeadlines.remove(key);
         }
@@ -325,20 +311,12 @@ public class LocalMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public void lock(K key) {
-        KeyLock entry = locks.compute(key, (_, current) -> {
-            KeyLock retained = current == null ? new KeyLock() : current;
-            retained.users++;
-            return retained;
-        });
-        entry.lock.lock();
+        locks.lock(key);
     }
 
     @Override
     public void unlock(K key) {
-        locks.computeIfPresent(key, (_, entry) -> {
-            entry.lock.unlock();
-            return --entry.users == 0 ? null : entry;
-        });
+        locks.unlock(key);
     }
 
     @Override

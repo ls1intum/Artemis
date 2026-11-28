@@ -10,6 +10,7 @@ import Callout from "../../src/components/Callout/Callout";
 import { CalloutVariant } from "../../src/components/Callout/Callout.types";
 import Image, { ImageSize } from "../../src/components/Image/Image";
 
+import adminMetrics from "./assets/scaling/admin-metrics.png";
 import deploymentSingleMulti from "./assets/scaling/deployment_single_multi.png";
 
 This is the reference for capacity planning and hardware requirements in an Artemis deployment. It
@@ -327,6 +328,11 @@ front of you:
 - The Build Agent View in the server administration, which shows which build agents are connected and
   what they are working on.
 - The CPU and memory of each machine, which is what actually identifies the bottleneck.
+
+Open **Server Administration → Metrics** to inspect JVM memory, threads and HTTP requests. In a multi-core
+deployment, use the node selector to compare individual Artemis processes.
+
+<Image src={adminMetrics} alt="Server administration Metrics page showing JVM memory, threads and system statistics" size={ImageSize.large} />
 
 An average response time tells you that something is wrong. A machine at 100% tells you what to buy.
 

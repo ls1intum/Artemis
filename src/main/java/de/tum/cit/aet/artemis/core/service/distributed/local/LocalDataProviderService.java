@@ -7,10 +7,12 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.LocalDataCondition;
@@ -37,11 +39,11 @@ public class LocalDataProviderService implements DistributedDataProvider {
      * {@link #getExpiringMap(String, Duration)} would let a TTL write expire an entry out from under readers of the
      * non-expiring view, which that view promises never happens.
      */
-    private final ConcurrentHashMap<String, DistributedMap<?, ?>> expiringMaps = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, LocalMap<?, ?>> expiringMaps = new ConcurrentHashMap<>();
 
     private final ConcurrentHashMap<String, DistributedSet<?>> sets = new ConcurrentHashMap<>();
 
-    private final ConcurrentHashMap<String, DistributedLock> locks = new ConcurrentHashMap<>();
+    private final LocalLockRegistry<String> locks = new LocalLockRegistry<>();
 
     private final ConcurrentHashMap<String, DistributedTopic<?>> topics = new ConcurrentHashMap<>();
 
@@ -83,6 +85,12 @@ public class LocalDataProviderService implements DistributedDataProvider {
         return new DefaultTimeToLiveDistributedMap<>((DistributedMap<K, V>) expiringMaps.computeIfAbsent(name, _ -> new LocalMap<K, V>()), defaultTimeToLive);
     }
 
+    /** Frees expired entries even when callers only ever access new keys. */
+    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
+    void purgeExpiredEntries() {
+        expiringMaps.values().forEach(LocalMap::purgeExpiredEntries);
+    }
+
     @Override
     public <T> DistributedTopic<T> getTopic(String name) {
         // noinspection unchecked
@@ -109,7 +117,7 @@ public class LocalDataProviderService implements DistributedDataProvider {
 
     @Override
     public DistributedLock getLock(String name) {
-        return locks.computeIfAbsent(name, _ -> new LocalLock());
+        return locks.namedLock(name);
     }
 
     @Override

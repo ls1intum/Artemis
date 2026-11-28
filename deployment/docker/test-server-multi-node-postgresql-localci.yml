@@ -103,11 +103,8 @@ services:
             artemis-app-node-2:
                 condition: service_started
         restart: always
-        # The build agents clone through the server's public hostname. Resolved through public DNS, their connection
-        # would leave the container network and come back through docker-proxy, which hides the agent behind the
-        # bridge gateway, so the address it presents would not be the one the build agent address check observed
-        # on its Valkey connection. With the hostname as an alias, docker's DNS resolves it to nginx inside the
-        # network and nginx announces the agent's own address.
+        # Resolve the public Git hostname to nginx on the container network so the core sees each agent's origin
+        # consistently on both the address-reporting request and the subsequent clone.
         networks:
             artemis:
                 aliases:
