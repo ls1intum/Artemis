@@ -26,7 +26,7 @@ import { CourseExamArchiveButtonComponent } from 'app/shared-ui/components/butto
 import { ExamChecklistComponent } from '../exam-checklist-component/exam-checklist.component';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { EventManager, EventWithContent } from 'app/foundation/service/event-manager.service';
 import { EXAM_DELETED_EVENT, ExamDeletedEventContent } from 'app/exam/shared/entities/exam-deleted-event.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

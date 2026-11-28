@@ -1,8 +1,8 @@
-import { TumAetUiRadioButtonComponent } from '@tumaet/ui-angular';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiRadioButtonComponent } from '@tumaet/ui-angular/radio-button';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';

@@ -5,7 +5,7 @@ import { ActivateService } from './activate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { mergeMap } from 'rxjs/operators';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 
 /**
  * Component that handles user account activation via email confirmation link.

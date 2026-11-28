@@ -183,7 +183,7 @@ public class QuizExerciseCreationUpdateResource {
      *                                  must equal the file path of the image in
      *                                  {@code updateQuizExerciseDTO}
      * @param notificationText      about the quiz exercise update that should
-     *                                  be displayed to the student group
+     *                                  be displayed to the students
      * @return the ResponseEntity with status 200 (OK) and with body the updated
      *         quizExercise, or with status 400 (Bad Request) if the quizExercise is
      *         not valid, or with status 500

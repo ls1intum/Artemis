@@ -425,20 +425,10 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * Sends a request to the server to delete the user's current vcsAccessToken
+     * Sends a request to the server to revoke the user's deprecated personal VCS access token
      */
     deleteUserVcsAccessToken(): Observable<void> {
         return this.http.delete<void>('api/account/user-vcs-access-token');
-    }
-
-    /**
-     * Sends a request to the server to create a new vcsAccessToken for the user
-     *
-     * @param expiryDate The expiry date which should get set for the vcsAccessToken
-     */
-    addNewVcsAccessToken(expiryDate: string): Observable<HttpResponse<User>> {
-        const params = new HttpParams().set('expiryDate', expiryDate);
-        return this.http.put<User>('api/account/user-vcs-access-token', null, { observe: 'response', params });
     }
 
     /**

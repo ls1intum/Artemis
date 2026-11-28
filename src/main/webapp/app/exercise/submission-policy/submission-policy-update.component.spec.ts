@@ -338,7 +338,7 @@ describe('Submission Policy Update Form Component', () => {
     });
 
     it('should carry a policy picked on a placeholder into the asynchronously fetched exercise (import)', async () => {
-        // Import-from-sharing renders an empty placeholder exercise first; the fetched exercise
+        // An asynchronous load can render a placeholder exercise first; the fetched exercise
         // replaces it with the id cleared, so it counts as the same unsaved exercise.
         programmingExercise.submissionPolicy = undefined;
         await detectChanges();

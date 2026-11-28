@@ -1,12 +1,8 @@
-import {
-    TumAetUiButtonDirective,
-    TumAetUiPaginatorComponent,
-    TumAetUiTableDirective,
-    TumAetUiTableLayoutComponent,
-    TumAetUiTableSortEvent,
-    TumAetUiTableSortableColumnComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RatingApi } from 'app/openapi/api/rating-api';
 import { RatingListItem, RatingListItemAssessmentTypeEnum, RatingListItemExerciseTypeEnum } from 'app/openapi/model/rating-list-item';

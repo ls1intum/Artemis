@@ -12,7 +12,7 @@ import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/st
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
 
 describe('RatingListComponent', () => {
     let component: RatingListComponent;

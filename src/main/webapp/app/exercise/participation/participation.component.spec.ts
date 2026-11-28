@@ -1,5 +1,7 @@
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
-import { TumAetUiDatePickerComponent, TumAetUiDialogService, TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
 import { signal } from '@angular/core';
 import { ParticipationPrivacyService } from './participation-privacy.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

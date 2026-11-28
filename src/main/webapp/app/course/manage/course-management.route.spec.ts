@@ -5,6 +5,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Subject, of } from 'rxjs';
 import { describe, expect, it, vi } from 'vitest';
+import { COURSE_MANAGEMENT_EXTENSION_ROUTES } from './course-management-extension-routes';
 import { courseManagementRoutes, presentationAssessmentUrlMatcher } from 'app/course/manage/course-management.route';
 import { ArtemisRouteReuseStrategy } from 'app/core/config/artemis-route-reuse.strategy';
 import { PresentationAssessmentManagementComponent } from 'app/presentation/manage/presentation-assessment-management.component';
@@ -169,10 +170,13 @@ describe('courseManagementRoutes', () => {
         expect(creationRoute!.data?.['usesModuleBackground']).toBe(false);
     });
 
-    it('uses tutor metadata only for preloading the eight lazy assessment and exercise subtrees', () => {
+    it('preloads the assessment, exercise and extension routes with tutor metadata', () => {
         const children = containerRoute!.children?.find((route) => route.path === ':courseId' && route.children)?.children ?? [];
         const lazyRoutes = children.filter((route) => route.path === '' && route.loadChildren);
-        expect(lazyRoutes).toHaveLength(8);
+        expect(lazyRoutes).toHaveLength(9);
+        const extensions: Routes = [{ path: 'optional-exercise' }];
+        TestBed.configureTestingModule({ providers: [{ provide: COURSE_MANAGEMENT_EXTENSION_ROUTES, useValue: extensions }] });
+        expect(TestBed.runInInjectionContext(() => lazyRoutes[3].loadChildren!())).toBe(extensions);
         for (const route of lazyRoutes) {
             expect(route.data).toEqual({ authorities: IS_AT_LEAST_TUTOR });
             expect(route.canActivate).toBeUndefined();

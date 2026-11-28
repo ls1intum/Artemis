@@ -1,7 +1,9 @@
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, Subscription } from 'rxjs';
-import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiProgressBarComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiProgressBarComponent } from '@tumaet/ui-angular/progress-bar';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheckCircle, faExclamationTriangle, faInfoCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';

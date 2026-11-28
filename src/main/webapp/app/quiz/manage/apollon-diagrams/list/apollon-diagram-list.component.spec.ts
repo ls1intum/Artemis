@@ -5,7 +5,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
-import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { Subject, of } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SortService } from 'app/foundation/service/sort.service';

@@ -4,8 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
-import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.session.SessionService;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -24,10 +23,10 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.SingleRelationPreviewResponse
 @Conditional(AtlasLLMEnabled.class)
 public class AtlasAgentPreviewService {
 
-    private final ChatMemory chatMemory;
+    private final SessionService sessionService;
 
-    public AtlasAgentPreviewService(@Nullable ChatMemory chatMemory) {
-        this.chatMemory = chatMemory;
+    public AtlasAgentPreviewService(@Nullable SessionService sessionService) {
+        this.sessionService = sessionService;
     }
 
     /**
@@ -60,8 +59,8 @@ public class AtlasAgentPreviewService {
      * @param message   the assistant message text
      */
     public void addAssistantMessageToMemory(String sessionId, String message) {
-        if (chatMemory != null) {
-            chatMemory.add(sessionId, new AssistantMessage(message));
+        if (sessionService != null) {
+            AtlasChatSessions.appendAssistantMessage(sessionService, sessionId, message);
         }
     }
 }

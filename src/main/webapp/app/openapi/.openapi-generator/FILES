@@ -265,10 +265,15 @@ model/point-counter.ts
 model/presentation-assessment-instance-request.ts
 model/presentation-assessment-instance.ts
 model/presentation-assessment-instances-batch-create.ts
+model/presentation-assessment-request.ts
 model/presentation-assessment-statistics.ts
 model/presentation-assessment-student-row.ts
 model/presentation-assessment-student.ts
 model/presentation-assessment.ts
+model/presentation-rubric-criterion.ts
+model/presentation-rubric-level.ts
+model/presentation-rubric-rating.ts
+model/presentation-rubric.ts
 model/problem-statement-generation-request.ts
 model/problem-statement-generation-response.ts
 model/problem-statement-global-refinement-request.ts
@@ -321,6 +326,9 @@ model/quiz-question-pool-page.ts
 model/quiz-question-pool-plan.ts
 model/quiz-question-pool-progress.ts
 model/quiz-question-pool-review.ts
+model/quiz-question-pool-selection-candidate.ts
+model/quiz-question-pool-selection-request.ts
+model/quiz-question-pool-selection.ts
 model/quiz-question-re-evaluate.ts
 model/quiz-question-refinement-failure.ts
 model/quiz-question-refinement-request.ts
