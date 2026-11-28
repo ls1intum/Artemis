@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.hyperion.protocol.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.FakeInteractiveSandbox;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationResources;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.AgentVerifyReport.TestFailureEvidence;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.SandboxBuildCommands;
@@ -69,13 +71,13 @@ class DifferentialVerifierTest {
     }
 
     private static DifferentialVerifier newVerifier() {
-        return new DifferentialVerifier(sandboxBuildCommandService(), new ApprovedSpecRegistry());
+        return new DifferentialVerifier(sandboxBuildCommandService(), new ApprovedSpecRegistry(), () -> false);
     }
 
     private static DifferentialVerifier newVerifier(String approvedSpecification) {
         ApprovedSpecRegistry approvedSpecs = new ApprovedSpecRegistry();
         approvedSpecs.approve("s", approvedSpecification);
-        return new DifferentialVerifier(sandboxBuildCommandService(), approvedSpecs);
+        return new DifferentialVerifier(sandboxBuildCommandService(), approvedSpecs, () -> false);
     }
 
     /**
@@ -206,6 +208,9 @@ class DifferentialVerifierTest {
 
         private final List<Map<String, String>> restoredWorkspaceSources = new ArrayList<>();
 
+        /** Served, one per build, before {@link #solution} for ordinary solution builds. */
+        private final java.util.ArrayDeque<BuildReportSpec> queuedSolutionBuilds = new java.util.ArrayDeque<>();
+
         /** Served instead of the solution build's reports, for the hardened-reader rejection paths. */
         private TarArchiveInputStream tamperedSolutionReports;
 
@@ -215,6 +220,11 @@ class DifferentialVerifierTest {
 
         private ScriptedSandbox withTamperedSolutionReports(TarArchiveInputStream reports) {
             this.tamperedSolutionReports = reports;
+            return this;
+        }
+
+        private ScriptedSandbox firstSolutionBuilds(BuildReportSpec... builds) {
+            queuedSolutionBuilds.addAll(List.of(builds));
             return this;
         }
 
@@ -277,8 +287,9 @@ class DifferentialVerifierTest {
             }
             boolean solutionBuild = joined.contains("solution");
             boolean structural = joined.contains("trusted-structural");
-            BuildReportSpec spec = solutionBuild ? structural && structuralSolution != null ? structuralSolution : solution
-                    : structural && structuralTemplate != null ? structuralTemplate : template;
+            BuildReportSpec spec = solutionBuild && !structural && !queuedSolutionBuilds.isEmpty() ? queuedSolutionBuilds.poll()
+                    : solutionBuild ? structural && structuralSolution != null ? structuralSolution : solution
+                            : structural && structuralTemplate != null ? structuralTemplate : template;
             if (solutionBuild) {
                 lastSolution = spec;
             }
@@ -335,6 +346,136 @@ class DifferentialVerifierTest {
 
     private static VerificationResult verify(BuildReportSpec solution, BuildReportSpec template, String problemStatement) {
         return verifyGenerate(newVerifier(), new ScriptedSandbox(solution, template, problemStatement), input());
+    }
+
+    @Test
+    void stoppedOptionalAssessmentDoesNotReportUnexecutedLearnerProbesAsPassing() {
+        var restores = new AtomicInteger();
+        var verifier = new DifferentialVerifier(sandboxBuildCommandService(), new ApprovedSpecRegistry(), () -> true);
+        var sandbox = new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK);
+        var outcomes = verifier.probeStudentTestAssertions(sandbox, "s", input(), Map.of(), learnerTests(), null, SeededStructuralTests.EMPTY, restores::incrementAndGet, _ -> {
+        });
+
+        assertThat(restores).hasValue(0);
+        assertThat(outcomes).hasSize(4).allSatisfy(outcome -> assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.INCONCLUSIVE));
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(ints = { 2, 4 })
+    void optionalAssessmentFinishesTheCurrentProbeAndStopsBeforeTheNextOne(int stopAfterRestore) {
+        var stopped = new AtomicBoolean();
+        var restores = new AtomicInteger();
+        var verifier = new DifferentialVerifier(sandboxBuildCommandService(), new ApprovedSpecRegistry(), stopped::get);
+        var sandbox = new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK);
+        var outcomes = verifier.probeStudentTestAssertions(sandbox, "s", input(), Map.of(), learnerTests(), null, SeededStructuralTests.EMPTY, () -> {
+            if (restores.incrementAndGet() == stopAfterRestore) {
+                stopped.set(true);
+            }
+        }, _ -> {
+        });
+
+        assertThat(restores).hasValue(stopAfterRestore);
+        assertThat(outcomes).hasSize(4);
+        assertThat(outcomes.getFirst().disposition())
+                .isEqualTo(stopAfterRestore == 2 ? SemanticMutantOutcome.Disposition.INCONCLUSIVE : SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
+        assertThat(outcomes.subList(1, 4)).allSatisfy(outcome -> assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.INCONCLUSIVE));
+    }
+
+    @Test
+    void anAdaptationWithoutAPlanDoesNotLetAZeroCreditDiagnosticKillAnEmptyLearnerTest() {
+        List<String> names = List.of("weightedCheck", "diagnostic");
+        var adaptation = new GenerationInput(1, "de.test", null, false, Set.of("weightedCheck()"), Set.of(), GenerationBuildTool.GRADLE);
+        var sandbox = new ScriptedSandbox(resultWithFails(1, names, List.of("diagnostic")), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK)
+                .firstSolutionBuilds(resultWithFails(0, names, List.of()));
+
+        var outcomes = newVerifier().probeStudentTestAssertions(sandbox, "s", adaptation, Map.of(), learnerTests(), null, SeededStructuralTests.EMPTY, NO_RESTORE, _ -> {
+        });
+
+        assertThat(outcomes).filteredOn(outcome -> outcome.mutant().evidence() != SemanticMutant.Evidence.ALWAYS_FAILING_STUDENT_TESTS).hasSize(4)
+                .allSatisfy(outcome -> assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE));
+    }
+
+    @Test
+    void completedLearnerTestEvidenceReachesTheObserverBeforeALaterBuildThrows() {
+        var completed = new ArrayList<SemanticMutantOutcome>();
+        var restores = new AtomicInteger();
+        var failure = new DifferentialVerifier.VerificationInfrastructureException("Later build lost its session", null);
+        var verifier = newVerifier();
+        var sandbox = new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK);
+
+        assertThatThrownBy(() -> verifier.probeStudentTestAssertions(sandbox, "s", input(), Map.of(), learnerTests(), null, SeededStructuralTests.EMPTY, () -> {
+            if (restores.incrementAndGet() == 5) {
+                assertThat(completed).hasSize(1);
+                throw failure;
+            }
+        }, completed::add)).isSameAs(failure);
+
+        assertThat(completed).singleElement().satisfies(outcome -> {
+            assertThat(outcome.mutant().testsLearnerAssertions()).isTrue();
+            assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
+        });
+        var retry = new ArrayList<SemanticMutantOutcome>();
+        var retryRestores = new AtomicInteger();
+        assertThatThrownBy(() -> verifier.probeStudentTestAssertions(sandbox, "s", input(), Map.of(), learnerTests(), null, SeededStructuralTests.EMPTY, () -> {
+            if (retryRestores.incrementAndGet() == 1) {
+                assertThat(retry).singleElement().satisfies(outcome -> {
+                    assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.INCONCLUSIVE);
+                    assertThat(outcome.diagnostic()).contains("previously confirmed");
+                });
+                throw failure;
+            }
+        }, retry::add)).isSameAs(failure);
+        var retained = verifier.pendingStudentTestAssessments("s");
+        assertThat(retained).singleElement().satisfies(outcome -> {
+            assertThat(outcome.disposition()).isEqualTo(SemanticMutantOutcome.Disposition.INCONCLUSIVE);
+            assertThat(outcome.diagnostic()).contains("previously confirmed");
+        });
+    }
+
+    @Test
+    void stoppedOutputAssessmentDoesNotStartAnotherTranscriptCapture() {
+        var restores = new AtomicInteger();
+        var verifier = new DifferentialVerifier(sandboxBuildCommandService(), new ApprovedSpecRegistry(), () -> true);
+        var sandbox = new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK);
+        var sources = Map.of("src/de/test/Main.java", "package de.test; public class Main { public static void main(String[] args) { System.out.println(1); } }");
+
+        var outcomes = verifier.probeOutputOnlyMains(sandbox, "s", input(), Map.of(), Map.of(), sources, null, SeededStructuralTests.EMPTY, Set.of(), restores::incrementAndGet,
+                _ -> {
+                });
+
+        assertThat(outcomes).isEmpty();
+        assertThat(restores).hasValue(0);
+    }
+
+    @Test
+    void stoppingBeforeTheStarterBuildCannotProduceAVerifiedCandidate() {
+        var stopped = new AtomicBoolean();
+        var restores = new AtomicInteger();
+        var verifier = new DifferentialVerifier(sandboxBuildCommandService(), new ApprovedSpecRegistry(), stopped::get);
+        var sandbox = new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK);
+
+        var result = verifier.verify(sandbox, "s", input(), new VerificationRequest(harness(), harness(), Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.of()),
+                () -> {
+                    if (restores.incrementAndGet() == 2) {
+                        stopped.set(true);
+                    }
+                });
+
+        assertThat(result.solutionPassed()).isTrue();
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(restores).hasValue(3);
+    }
+
+    private static Map<String, String> learnerTests() {
+        return Map.of("src/de/test/LearnerTest.java", """
+                package de.test;
+                import org.junit.jupiter.api.Test;
+                import static org.junit.jupiter.api.Assertions.assertEquals;
+                class LearnerTest {
+                    @Test void firstCase() { assertEquals(1, 1); }
+                    @Test void secondCase() { assertEquals(2, 2); }
+                }
+                """);
     }
 
     @Test
@@ -436,7 +577,7 @@ class DifferentialVerifierTest {
                 |---|---|---|
                 | `PlaybackStrategy` | abstraction students design | student-creates |
                 """);
-        DifferentialVerifier verifier = new DifferentialVerifier(sandboxBuildCommandService(), approvedSpecs);
+        DifferentialVerifier verifier = new DifferentialVerifier(sandboxBuildCommandService(), approvedSpecs, () -> false);
         VerificationRequest request = new VerificationRequest(harness(), Map.of(), Map.of(), harness(),
                 Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { /* TODO */ }"),
                 Map.of("src/PlaybackStrategy.java", "public interface PlaybackStrategy { int order(); }"), Set.of(), SeededStructuralTests.EMPTY, Set.of(),
@@ -464,7 +605,7 @@ class DifferentialVerifierTest {
                 | strategy | typical values | 3 | no |
                 """;
         String plan = "{\"tests\":[{\"name\":\"sortsUnsortedArray\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
-        DifferentialVerifier verifier = new DifferentialVerifier(sandboxBuildCommandService(), approvedSpecs);
+        DifferentialVerifier verifier = new DifferentialVerifier(sandboxBuildCommandService(), approvedSpecs, () -> false);
         VerificationRequest request = new VerificationRequest(harness(), Map.of(), Map.of(), harness(),
                 Map.of("src/de/test/PlaybackStrategy.java", "package de.test; public interface PlaybackStrategy { /* TODO */ }", "src/de/test/Track.java",
                         "package de.test; public class Track {}"),
@@ -703,6 +844,62 @@ class DifferentialVerifierTest {
 
         assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(reason -> reason.contains("Duplicate test names"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void everyAuthoringSelfCheckRejectsTheSameUnseededGraderAsFinalVerification(boolean testsStage) {
+        List<String> names = List.of(DEFAULT_BOUND_NAMES);
+        String unseeded = "package de.test; class SortTest { void sorts() { int pivot = new Random().nextInt(); } }";
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK)
+                .withRepositories(Map.of(), Map.of(), withHarness(Map.of("test/de/test/SortTest.java", unseeded)));
+        DifferentialVerifier verifier = newVerifier();
+
+        AgentVerifyReport report = testsStage ? verifier.selfCheckTestsStage(sandbox, "s", input(), harness(), SeededStructuralTests.EMPTY)
+                : verifier.selfCheck(sandbox, "s", input(), harness(), false, SeededStructuralTests.EMPTY);
+
+        assertThat(report.solutionPassed()).isTrue();
+        assertThat(report.templateFailed()).isTrue();
+        assertThat(report.wouldBeAccepted()).isFalse();
+        assertThat(report.blockingReasons()).anyMatch(reason -> reason.contains("unseeded randomness") && reason.contains("SortTest.java"));
+
+        sandbox.withRepositories(Map.of(), Map.of(), withHarness(Map.of("test/de/test/SortTest.java", unseeded.replace("new Random()", "new Random(42)"))));
+        AgentVerifyReport corrected = testsStage ? verifier.selfCheckTestsStage(sandbox, "s", input(), harness(), SeededStructuralTests.EMPTY)
+                : verifier.selfCheck(sandbox, "s", input(), harness(), false, SeededStructuralTests.EMPTY);
+
+        assertThat(corrected.wouldBeAccepted()).isTrue();
+        assertThat(corrected.blockingReasons()).noneMatch(reason -> reason.contains("unseeded randomness"));
+    }
+
+    @Test
+    void invalidPlanCannotMisclassifyExpectedStarterFailuresAsBrokenStudentScaffolding() {
+        List<String> names = List.of(DEFAULT_BOUND_NAMES);
+        String duplicatePlan = """
+                {"tests":[
+                {"name":"sortsUnsortedArray","seamWeightTier":3,"visibility":"ALWAYS"},
+                {"name":"sortsUnsortedArray","seamWeightTier":3,"visibility":"AFTER_DUE_DATE"},
+                {"name":"sortsArrayWithDuplicates","seamWeightTier":3,"visibility":"ALWAYS"}]}
+                """;
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK)
+                .withTestPlan(duplicatePlan);
+        DifferentialVerifier verifier = newVerifier();
+
+        AgentVerifyReport invalid = verifier.selfCheck(sandbox, "s", input(), harness(), false, SeededStructuralTests.EMPTY);
+
+        assertThat(invalid.solutionPassed()).isTrue();
+        assertThat(invalid.templateCompiled()).isTrue();
+        assertThat(invalid.gradingPlanValid()).isFalse();
+        assertThat(invalid.wouldBeAccepted()).isFalse();
+        assertThat(invalid.blockingReasons()).anyMatch(reason -> reason.contains("test names more than once"));
+        assertThat(invalid.toTestsStageObservation()).contains("Starter-policy assessment is unavailable", "test-plan.json")
+                .doesNotContain("Template does not satisfy the starter policy", "Template failure evidence");
+
+        sandbox.withTestPlan(FULL_PLAN_FOR_DEFAULT_BOUND_NAMES);
+        AgentVerifyReport corrected = verifier.selfCheck(sandbox, "s", input(), harness(), false, SeededStructuralTests.EMPTY);
+
+        assertThat(corrected.gradingPlanValid()).isTrue();
+        assertThat(corrected.templateFailed()).isTrue();
+        assertThat(corrected.wouldBeAccepted()).isTrue();
     }
 
     @Test
@@ -1010,6 +1207,104 @@ class DifferentialVerifierTest {
         assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.solutionPassed()).isFalse();
         assertThat(result.reasons()).anyMatch(r -> r.contains("does not pass its own tests"));
+    }
+
+    /**
+     * Each repair attempt is a fresh agent session that sees only this report, so the authoritative reason must name every failing test with its message, in a stable order,
+     * including the server-seeded structural lane's messages.
+     */
+    @Test
+    void authoritativeSolutionFailureCarriesEachFailingTestAndItsMessage() {
+        String structuralName = "testClass[Calculator]";
+        BuildReportSpec solution = BuildReportSpec.withJunitXml("""
+                <testsuite name="GeneratedSuite">
+                  <testcase name="sortsUnsortedArray"><failure message="expected: &lt;[1, 2, 9]&gt; but was: &lt;[9, 1, 2]&gt;"/></testcase>
+                  <testcase name="sortsArrayWithDuplicates"/>
+                </testsuite>
+                """, 1);
+        BuildReportSpec structuralSolution = BuildReportSpec.withJunitXml("""
+                <testsuite name="ClassTest">
+                  <testcase name="testClass[Calculator]"><failure message="Missing generic API contract: superclass:Enum"/></testcase>
+                </testsuite>
+                """, 1);
+        List<String> behaviorNames = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+        ScriptedSandbox sandbox = new ScriptedSandbox(solution, resultWithFails(1, behaviorNames, behaviorNames),
+                PROBLEM_STATEMENT_WITH_TASK + "\n[task][Create Calculator](" + structuralName + ")\nCreate the Calculator type.")
+                .withStructuralReports(structuralSolution, BuildReportSpec.of(List.of(structuralName), List.of(structuralName), 1));
+
+        VerificationResult result = newVerifier().verify(sandbox, "s", input(),
+                new VerificationRequest(harness(), harness(), Map.of(), Map.of(), Set.of(), structuralTests(Set.of(structuralName)), Set.of()), NO_RESTORE);
+
+        assertThat(result.mechanicallyVerified()).isFalse();
+        assertThat(result.reasons()).filteredOn(reason -> reason.contains("does not pass its own tests")).singleElement().asString()
+                .contains("2 failing of 3", "Solution failure evidence")
+                .containsSubsequence("- sortsUnsortedArray: expected: <[1, 2, 9]> but was: <[9, 1, 2]>", "- testClass[Calculator]: Missing generic API contract: superclass:Enum")
+                .doesNotContain("sortsArrayWithDuplicates:");
+        assertThat(result.report()).contains("Missing generic API contract: superclass:Enum");
+    }
+
+    @Test
+    void aTemplateThatDoesNotCompileReportsItsBuildOutput() {
+        VerificationResult result = verifyGenerate(newVerifier(),
+                new ScriptedSandbox(result(2, 0, 0, 0), result(0, 0, 0, 1), PROBLEM_STATEMENT_WITH_TASK, "Sorter.java:7: error: cannot find symbol Comparator"), input());
+
+        assertThat(result.reasons()).filteredOn(reason -> reason.contains("The template does not compile")).singleElement().asString()
+                .contains("Build output: (bounded, sanitized, untrusted)", "Sorter.java:7: error: cannot find symbol Comparator");
+    }
+
+    @Test
+    void aStructuralLaneThatRunsNoTestsReportsItsBuildOutput() {
+        String structuralName = "testClass[Calculator]";
+        List<String> behaviorNames = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+        ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, behaviorNames, List.of()), resultWithFails(1, behaviorNames, behaviorNames),
+                PROBLEM_STATEMENT_WITH_TASK + "\n[task][Create Calculator](" + structuralName + ")\nCreate the Calculator type.", "ClassTest.java:3: error: package does not exist")
+                .withStructuralReports(BuildReportSpec.of(List.of(), List.of(), 1), BuildReportSpec.of(List.of(structuralName), List.of(structuralName), 1));
+
+        VerificationResult result = newVerifier().verify(sandbox, "s", input(),
+                new VerificationRequest(harness(), harness(), Map.of(), Map.of(), Set.of(), structuralTests(Set.of(structuralName)), Set.of()), NO_RESTORE);
+
+        assertThat(result.reasons()).filteredOn(reason -> reason.contains("trusted structural solution lane")).singleElement().asString()
+                .contains("The solution ran no tests in this lane.", "ClassTest.java:3: error: package does not exist");
+    }
+
+    @Test
+    void aSeededStructuralCheckFailingOnAnApiConformingSolutionBesideOtherFailuresIsReportedWithoutEndingTheRun() {
+        String structuralName = "testClass[Level]";
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | Level | difficulty levels | stubbed |
+                ## Public API
+                ### Level
+                ```java
+                public enum Level { LOW, HIGH; }
+                ```
+                """;
+        List<String> behaviorNames = List.of("sortsUnsortedArray", "sortsArrayWithDuplicates");
+        VerificationRequest conforming = new VerificationRequest(harness(), harness(), Map.of(),
+                Map.of("src/de/test/Level.java", "package de.test; public enum Level { LOW, HIGH }"), Set.of(), structuralTests(Set.of(structuralName)), Set.of());
+        VerificationRequest diverging = new VerificationRequest(harness(), harness(), Map.of(), Map.of("src/de/test/Level.java", "package de.test; public enum Level { LOW }"),
+                Set.of(), structuralTests(Set.of(structuralName)), Set.of());
+
+        for (VerificationRequest request : List.of(conforming, diverging)) {
+            ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, behaviorNames, List.of()), resultWithFails(1, behaviorNames, behaviorNames),
+                    PROBLEM_STATEMENT_WITH_TASK + "\n[task][Create Level](" + structuralName + ")\nCreate the Level type.")
+                    .withStructuralReports(BuildReportSpec.of(List.of(structuralName), List.of(structuralName), 1), BuildReportSpec.of(List.of(structuralName), List.of(), 0));
+            VerificationResult result = newVerifier(spec).verify(sandbox, "s", input(), request, NO_RESTORE);
+
+            assertThat(result.mechanicallyVerified()).isFalse();
+            // The template lacks the stubbed Level, an ordinary authoring error, so the structural failure is information and the run keeps repairing.
+            assertThat(result.serverDefect()).isFalse();
+            assertThat(result.reasons()).anyMatch(reason -> reason.contains("the template does not declare them"));
+            if (request == conforming) {
+                assertThat(result.reasons()).filteredOn(reason -> reason.startsWith("Possible server defect")).singleElement().asString().contains(structuralName,
+                        "matches the structural oracle derived from the approved Public API", "repair those");
+            }
+            else {
+                assertThat(result.reasons()).noneMatch(reason -> reason.contains("server defect") || reason.startsWith("Server defect"));
+            }
+        }
     }
 
     /** The post-loop reason had the same defect as the in-loop observation: "0 failing of 2" reads as a contradiction and names nothing to repair. */
@@ -1420,6 +1715,33 @@ class DifferentialVerifierTest {
         }
 
         @Test
+        void theTestsStageRejectsATestThatReadsAStudentSourceFileBeforeAnyRepair() {
+            String names = "sortsUnsortedArray";
+            String readsSource = """
+                    package de.test;
+                    import org.junit.jupiter.api.Test;
+                    import de.tum.cit.ase.ares.api.Policy;
+                    import de.tum.cit.ase.ares.api.StrictTimeout;
+                    import de.tum.cit.ase.ares.api.jupiter.Public;
+                    @Public @Policy(value = "SecurityPolicy.yaml")
+                    class SortTest {
+                        @Test @StrictTimeout(1) void sortsUnsortedArray() throws Exception {
+                            String source = java.nio.file.Files.readString(java.nio.file.Path.of("assignment/src/de/test/Sorter.java"));
+                        }
+                    }
+                    """;
+            ScriptedSandbox sandbox = new ScriptedSandbox(resultWithFails(0, List.of(names), List.of()), resultWithFails(1, List.of(names), List.of(names)),
+                    PROBLEM_STATEMENT_WITH_TASK).withRepositories(Map.of("src/de/test/Sorter.java", "package de.test; public class Sorter {}"),
+                            Map.of("src/de/test/Sorter.java", "package de.test; public class Sorter {}"), withHarness(Map.of("test/de/test/SortTest.java", readsSource)));
+            GenerationInput javaExercise = new GenerationInput(input().id(), "de.test", null, false, Set.of(), Set.of(), GenerationBuildTool.GRADLE);
+
+            AgentVerifyReport report = newVerifier().selfCheckTestsStage(sandbox, "s", javaExercise, Map.of(), SeededStructuralTests.EMPTY);
+
+            assertThat(report.wouldBeAccepted()).isFalse();
+            assertThat(report.blockingReasons()).anyMatch(reason -> reason.contains("read source files") && reason.contains("SortTest.java"));
+        }
+
+        @Test
         void ownerAwareTodoVerdictMatchesTheFinalGateBeforeSubmission() {
             String spec = """
                     ## Design
@@ -1460,7 +1782,7 @@ class DifferentialVerifierTest {
 
             ScriptedSandbox misleading = new ScriptedSandbox(resultWithFails(0, names, List.of()), resultWithFails(1, names, names), PROBLEM_STATEMENT_WITH_TASK).withSpec(spec)
                     .withTestPlan(plan)
-                    .withRepositories(solutionFiles, Map.of("src/de/test/Mage.java", "package de.test; public class Mage { // TODO S1: create FireSpell\n}"), testsFiles);
+                    .withRepositories(solutionFiles, Map.of("src/de/test/Mage.java", "package de.test; public class Mage { // TODO: create FireSpell\n}"), testsFiles);
             AgentVerifyReport rejected = verifier.selfCheck(misleading, "s", javaExercise, Map.of(), false, SeededStructuralTests.EMPTY);
             assertThat(rejected.wouldBeAccepted()).isFalse();
             assertThat(rejected.blockingReasons()).anyMatch(reason -> reason.contains("student-created") && reason.contains("Mage.java"));
@@ -1520,7 +1842,7 @@ class DifferentialVerifierTest {
         }
 
         @Test
-        void includesParsedFailureMessagesForSolutionAndTemplate() {
+        void preservesBothParsedFailureLanesButFocusesFeedbackOnTheFailedPolicy() {
             BuildReportSpec solution = BuildReportSpec.withJunitXml("""
                     <testsuite name="GeneratedSuite">
                       <testcase name="sortsUnsortedArray"><failure message="expected sorted first element but was 9"/></testcase>
@@ -1539,8 +1861,9 @@ class DifferentialVerifierTest {
             assertThat(report.solutionFailureEvidence()).containsExactly(new TestFailureEvidence("sortsUnsortedArray", "expected sorted first element but was 9"));
             assertThat(report.templateFailureEvidence()).containsExactly(new TestFailureEvidence("sortsUnsortedArray", "Sorter constructor threw NullPointerException"),
                     new TestFailureEvidence("sortsArrayWithDuplicates", "expected duplicate values to remain"));
-            assertThat(report.toObservation()).contains("Solution failure evidence", "sortsUnsortedArray: expected sorted first element but was 9", "Template failure evidence",
-                    "sortsUnsortedArray: Sorter constructor threw NullPointerException");
+            assertThat(report.templateFailed()).isTrue();
+            assertThat(report.toObservation()).contains("Solution failure evidence").containsOnlyOnce("sortsUnsortedArray: expected sorted first element but was 9")
+                    .doesNotContain("Template failure evidence", "sortsUnsortedArray: Sorter constructor threw NullPointerException");
         }
 
         @Test
@@ -1649,8 +1972,10 @@ class DifferentialVerifierTest {
                             Set.<String>of(), PROBLEM_STATEMENT_WITH_TASK + "hide empty fields\n@startuml\nclass Sorter\n@enduml\n", null, "render as stray text"),
                     Arguments.of("a heading repeated verbatim duplicates a section", Map.<String, String>of(), Map.<String, String>of(), Set.<String>of(),
                             PROBLEM_STATEMENT_WITH_TASK + "# Sort\nMore about sorting.\n", null, "repeats these headings verbatim"),
-                    Arguments.of("a diagram promised by the approved specification cannot be dropped from the statement", Map.<String, String>of(), Map.<String, String>of(),
-                            Set.<String>of(), PROBLEM_STATEMENT_WITH_TASK, "## Diagram\nyes — several collaborating types\n", "'## Diagram' section says yes"));
+                    Arguments.of("a diagram the approved design requires cannot be dropped from the statement", Map.<String, String>of(),
+                            Map.of("src/de/test/Sorter.java", "package de.test; public class Sorter {}", "src/de/test/Order.java", "package de.test; public class Order {}"),
+                            Set.<String>of(), PROBLEM_STATEMENT_WITH_TASK,
+                            "## Design\n| Type | Role | Template status |\n|---|---|---|\n| Sorter | sorts | stubbed |\n| Order | orders | stubbed |\n", "requires one"));
         }
 
         @ParameterizedTest(name = "{0}")

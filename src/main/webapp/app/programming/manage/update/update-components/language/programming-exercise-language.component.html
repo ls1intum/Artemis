@@ -5,8 +5,8 @@
     ></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepMessage"></p>
     @if (isEditFieldDisplayedRecord().programmingLanguage) {
-        <div class="mb-4!">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage"></label>
+        <div class="mb-4">
+            <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage"></label>
             <tumaet-ui-select
                 #select="ngModel"
                 required
@@ -22,15 +22,15 @@
                     programmingExerciseCreationConfig().isImportFromExistingExercise ||
                     !!programmingExercise().id ||
                     programmingExerciseCreationConfig().isImportFromFile ||
-                    programmingExerciseCreationConfig().isImportFromSharing
+                    programmingExerciseCreationConfig().isExternalImport
                 "
             />
         </div>
     }
     @if (programmingExercise().programmingLanguage && programmingExerciseCreationConfig().projectTypes?.length && programmingExerciseCreationConfig().modePickerOptions) {
-        <div class="mb-4! mt-2">
+        <div class="mb-4 mt-2">
             @if (isEditFieldDisplayedRecord().projectType) {
-                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType"> </label>
+                <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType"> </label>
                 <jhi-mode-picker
                     required
                     [options]="programmingExerciseCreationConfig().modePickerOptions ?? []"
@@ -39,7 +39,7 @@
                     [disabled]="
                         programmingExerciseCreationConfig().isImportFromExistingExercise ||
                         programmingExerciseCreationConfig().isImportFromFile ||
-                        programmingExerciseCreationConfig().isImportFromSharing ||
+                        programmingExerciseCreationConfig().isExternalImport ||
                         !!programmingExercise().id
                     "
                     name="projectType"
@@ -50,7 +50,7 @@
                 isEditFieldDisplayedRecord().withExemplaryDependency &&
                 !programmingExerciseCreationConfig().isImportFromExistingExercise &&
                 !programmingExerciseCreationConfig().isImportFromFile &&
-                !programmingExerciseCreationConfig().isImportFromSharing &&
+                !programmingExerciseCreationConfig().isExternalImport &&
                 !programmingExercise().id &&
                 programmingExercise().programmingLanguage === ProgrammingLanguage.JAVA &&
                 programmingExercise().projectType !== ProjectType.MAVEN_BLACKBOX
@@ -95,8 +95,8 @@
             </div>
         }
         @if (programmingExercise().programmingLanguage && programmingExerciseCreationConfig().packageNameRequired && programmingExercise().projectType !== ProjectType.XCODE) {
-            <div class="mb-4!">
-                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName"></label
+            <div class="mb-4">
+                <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName"></label
                 ><span class="text-state-danger" aria-hidden="true">*</span>
                 <input
                     required
@@ -118,7 +118,7 @@
                 />
                 @for (e of packageName.errors! | keyvalue | removekeys: ['required', 'maxlength']; track e) {
                     @if (packageName.invalid && (packageName.dirty || packageName.touched)) {
-                        <tumaet-ui-message severity="error" class="mt-1 block">
+                        <tumaet-ui-message severity="error" class="mt-1">
                             @if (programmingExercise().projectType === ProjectType.MAVEN_BLACKBOX) {
                                 <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise().programmingLanguage + '_BLACKBOX'"></div>
                             }
@@ -129,15 +129,15 @@
                     }
                 }
                 @if (packageName.errors?.['maxlength'] && (packageName.dirty || packageName.touched)) {
-                    <tumaet-ui-message severity="error" class="mt-1 block">
+                    <tumaet-ui-message severity="error" class="mt-1">
                         <div jhiTranslate="artemisApp.exercise.form.packageName.maxlength" [translateValues]="{ max: MAX_PACKAGE_NAME_LENGTH }"></div>
                     </tumaet-ui-message>
                 }
             </div>
         }
         @if (programmingExercise().programmingLanguage === ProgrammingLanguage.SWIFT && programmingExercise().projectType === ProjectType.XCODE) {
-            <div class="mb-4!">
-                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.appName" for="field_packageName"></label>
+            <div class="mb-4">
+                <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.programmingExercise.appName" for="field_packageName"></label>
                 <input
                     [attr.aria-label]="'artemisApp.programmingExercise.appName' | artemisTranslate"
                     required
@@ -159,13 +159,13 @@
                 />
                 @for (e of packageName.errors! | keyvalue | removekeys: ['required', 'maxlength']; track e) {
                     @if (packageName.invalid && (packageName.dirty || packageName.touched)) {
-                        <tumaet-ui-message severity="error" class="mt-1 block">
+                        <tumaet-ui-message severity="error" class="mt-1">
                             <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise().programmingLanguage"></div>
                         </tumaet-ui-message>
                     }
                 }
                 @if (packageName.errors?.['maxlength'] && (packageName.dirty || packageName.touched)) {
-                    <tumaet-ui-message severity="error" class="mt-1 block">
+                    <tumaet-ui-message severity="error" class="mt-1">
                         <div jhiTranslate="artemisApp.exercise.form.packageName.maxlength" [translateValues]="{ max: MAX_PACKAGE_NAME_LENGTH }"></div>
                     </tumaet-ui-message>
                 }
@@ -175,7 +175,7 @@
 
     <!-- Theia Image Selection -->
     @if (allowOnlineIde() && programmingExercise().programmingLanguage) {
-        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.theiaImage.title"></label>
+        <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.programmingExercise.theiaImage.title"></label>
         <jhi-programming-exercise-theia [programmingExercise]="programmingExercise()" [programmingExerciseCreationConfig]="programmingExerciseCreationConfig()" />
     }
 
@@ -211,7 +211,7 @@
                     [disabled]="
                         !!programmingExercise().id ||
                         programmingExerciseCreationConfig().isImportFromFile ||
-                        programmingExerciseCreationConfig().isImportFromSharing ||
+                        programmingExerciseCreationConfig().isExternalImport ||
                         !!programmingExercise().staticCodeAnalysisEnabled
                     "
                     [(ngModel)]="programmingExercise().buildConfig!.sequentialTestRuns"

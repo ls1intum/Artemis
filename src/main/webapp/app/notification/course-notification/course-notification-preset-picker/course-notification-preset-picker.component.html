@@ -20,14 +20,14 @@
 <ng-template #presetMenu>
     <tumaet-ui-menu
         data-notification-preset-menu
-        class="max-h-88 w-72 max-w-[calc(100vw-2rem)] overflow-y-auto"
+        class="w-72 max-w-[calc(100vw-2rem)] overflow-y-auto"
         [attr.aria-label]="'artemisApp.courseNotification.preset.dropdown' | artemisTranslate"
     >
         @for (preset of availableCourseSettingPresets(); track preset) {
             <button
                 type="button"
                 tumAetUiMenuItem
-                class="course-notification-preset-picker-item items-start! px-4! py-3! text-wrap"
+                class="course-notification-preset-picker-item items-start! px-4! py-3! whitespace-normal"
                 data-testid="course-notification-preset-picker-item"
                 [attr.aria-current]="selectedCourseSettingPreset()?.identifier === preset.identifier ? 'true' : null"
                 (triggered)="presetSelected(preset.typeId)"
@@ -53,7 +53,7 @@
         <button
             type="button"
             tumAetUiMenuItem
-            class="course-notification-preset-picker-item items-start! px-4! py-3! text-wrap"
+            class="course-notification-preset-picker-item items-start! px-4! py-3! whitespace-normal"
             data-testid="course-notification-preset-picker-item"
             [attr.aria-current]="selectedCourseSettingPreset() === undefined ? 'true' : null"
             (triggered)="presetSelected(0)"

@@ -21,14 +21,14 @@
 
         <div version-history-right class="snapshot-pane">
             @if (snapshotError(); as snapshotErrorKey) {
-                <tumaet-ui-message severity="error" class="mb-4!">
+                <tumaet-ui-message severity="error" class="mb-4">
                     <span [jhiTranslate]="snapshotErrorKey"></span>
                 </tumaet-ui-message>
             }
 
             @if (isLoadingSnapshot()) {
                 <div class="snapshot-skeleton">
-                    <tumaet-ui-skeleton class="mb-4! h-40 w-full" />
+                    <tumaet-ui-skeleton class="mb-4 h-40 w-full" />
                     <tumaet-ui-skeleton class="h-48 w-full" />
                 </div>
             } @else if (selectedSnapshot(); as snapshot) {

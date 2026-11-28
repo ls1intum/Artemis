@@ -1,0 +1,88 @@
+/*
+ * Shared styles for build job tables (queued, running, finished)
+ * Used by build-overview.component.css and build-job-statistics.component.css
+ */
+
+/* Section container with scrollable table */
+.build-jobs-section {
+    min-height: 300px;
+    max-height: 800px;
+    overflow-y: auto;
+}
+
+/* Tiny columns (48px width) - used for icons, checkboxes, small actions */
+.build-jobs-column-tiny,
+.finish-jobs-column-tiny {
+    width: 48px;
+    min-width: 48px;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+/* Standard columns with consistent padding */
+.build-jobs-column,
+.finish-jobs-column {
+    white-space: nowrap;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+}
+
+/* Status column with specific width constraints */
+.finish-jobs-column-status {
+    min-width: 180px;
+    max-width: 240px;
+}
+
+/* String columns with ellipsis for overflow text */
+.build-jobs-column-strings,
+.finish-jobs-column-strings {
+    min-width: 180px;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/*
+ * Clickable table rows with pointer cursor
+ * Uses a "stretched link" pattern to enable Cmd+Click for opening in new tab
+ */
+.clickable-row {
+    cursor: pointer;
+    position: relative;
+}
+
+.clickable-row td {
+    font-size: 0.75rem;
+    vertical-align: middle;
+}
+
+/*
+ * The stretched link covers the entire row, enabling native browser link behavior
+ * This allows Cmd+Click (Mac) or Ctrl+Click (Windows) to open in a new tab
+ */
+.clickable-row .stretched-row-link {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 1;
+}
+
+/* Make the link invisible but still clickable */
+.clickable-row .stretched-row-link::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}
+
+/* Ensure interactive elements (buttons, links, result badges) appear above the stretched link */
+.clickable-row a:not(.stretched-row-link),
+.clickable-row button,
+.clickable-row jhi-result {
+    position: relative;
+    z-index: 2;
+}

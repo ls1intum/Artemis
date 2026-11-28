@@ -3,9 +3,7 @@ package de.tum.cit.aet.artemis.course.service.home;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -13,6 +11,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -21,22 +20,28 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.openai.OpenAiChatModel;
-import org.springframework.ai.openai.setup.OpenAiSetup;
+import org.springframework.ai.openai.OpenAiChatOptions;
 
-import com.openai.client.OpenAIClient;
-import com.openai.client.OpenAIClientAsync;
 import com.sun.net.httpserver.HttpServer;
 
+import tools.jackson.databind.json.JsonMapper;
+
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
+import de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog;
+import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 import de.tum.cit.aet.artemis.course.config.CourseHomeAiProperties;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.observation.ObservationRegistry;
 
 class SpringAiCourseHomeClientTest {
+
+    private static final LlmProperties.Preset PRESET = LlmTestCatalog.preset("local", "test-model", LlmProperties.Api.CHAT_COMPLETIONS);
 
     private final CourseHomeAiClient.Input input = new CourseHomeAiClient.Input("Encourage learning.", "Published context.");
 
@@ -44,15 +49,13 @@ class SpringAiCourseHomeClientTest {
     void fourBusyWorkersRejectFurtherWorkInsteadOfQueuing() throws Exception {
         var entered = new CountDownLatch(4);
         var release = new CountDownLatch(1);
-        var model = mock(ChatModel.class);
+        var model = model();
         when(model.call(any(Prompt.class))).thenAnswer(invocation -> {
             entered.countDown();
             release.await();
             return response();
         });
-        try (var client = new SpringAiCourseHomeClient(model, () -> {
-        }, () -> {
-        }, new SimpleMeterRegistry())) {
+        try (var client = new SpringAiCourseHomeClient(model, PRESET, new SimpleMeterRegistry())) {
             for (int i = 0; i < 4; i++)
                 client.generate(input);
             assertThat(entered.await(10, TimeUnit.SECONDS)).isTrue();
@@ -67,14 +70,12 @@ class SpringAiCourseHomeClientTest {
     @Test
     void slowModelWorkReturnsFallbackAtTheBoundedDeadline() throws Exception {
         var release = new CountDownLatch(1);
-        var model = mock(ChatModel.class);
+        var model = model();
         when(model.call(any(Prompt.class))).thenAnswer(i -> {
             release.await();
             return response();
         });
-        try (var client = new SpringAiCourseHomeClient(model, () -> {
-        }, () -> {
-        }, new SimpleMeterRegistry())) {
+        try (var client = new SpringAiCourseHomeClient(model, PRESET, new SimpleMeterRegistry())) {
             assertThat(SpringAiCourseHomeClient.TIMEOUT).isEqualTo(Duration.ofSeconds(3));
             assertThat(client.generate(input)).succeedsWithin(Duration.ofSeconds(8)).isEqualTo(Optional.empty());
         }
@@ -102,8 +103,12 @@ class SpringAiCourseHomeClientTest {
             exchange.close();
         });
         server.start();
-        try (var client = new SpringAiCourseHomeClient(
-                new CourseHomeAiProperties(true, "LOCAL", "http://127.0.0.1:" + server.getAddress().getPort() + "/v1", "test-key", "test-model"), new SimpleMeterRegistry())) {
+        // the endpoint keeps its default of three SDK retries; Home's own transport must not use them
+        var endpoint = new LlmProperties.Endpoint(LlmProperties.EndpointType.OPENAI, "http://127.0.0.1:" + server.getAddress().getPort() + "/v1", "test-key",
+                Duration.ofSeconds(300), 3, null, null, null, List.of());
+        var llmClientService = new LlmClientService(new LlmProperties(Map.of("local", endpoint), Map.of("welcome", PRESET), null), new JsonMapper(), ObservationRegistry.NOOP,
+                new SimpleMeterRegistry(), List.of());
+        try (var client = new SpringAiCourseHomeClient(new CourseHomeAiProperties(true, "LOCAL", "welcome"), llmClientService, new SimpleMeterRegistry())) {
             var result = client.generate(input);
             assertThat(received.await(10, TimeUnit.SECONDS)).isTrue();
             assertThat(result).succeedsWithin(Duration.ofSeconds(8)).isEqualTo(Optional.empty());
@@ -117,36 +122,42 @@ class SpringAiCourseHomeClientTest {
     }
 
     @Test
-    void successfulOutputIsReturnedAndBothFailingTransportsAreClosed() {
-        var model = mock(ChatModel.class);
+    void successfulOutputIsReturned() {
+        var model = model();
         when(model.call(any(Prompt.class))).thenReturn(response());
-        var closes = new AtomicInteger();
-        AutoCloseable failing = () -> {
-            closes.incrementAndGet();
-            throw new IllegalStateException("transport close failed");
-        };
-        var meters = new SimpleMeterRegistry();
-        try (var client = new SpringAiCourseHomeClient(model, failing, failing, meters)) {
+        try (var client = new SpringAiCourseHomeClient(model, PRESET, new SimpleMeterRegistry())) {
             assertThat(client.generate(input)).succeedsWithin(Duration.ofSeconds(8)).isEqualTo(Optional.of("Keep exploring one manageable step."));
         }
-        assertThat(closes).hasValue(2);
-        assertThat(meters.counter("artemis.course.home.ai.request", "outcome", "close_failure").count()).isEqualTo(2);
+    }
+
+    @Test
+    void aLowerPresetLimitAndItsTokenFieldAreKept() {
+        var model = model();
+        when(model.call(any(Prompt.class))).thenReturn(response());
+        var preset = new LlmProperties.Preset("local", "m", LlmProperties.Api.CHAT_COMPLETIONS, null, null, null, null, 100, null, null, null);
+        try (var client = new SpringAiCourseHomeClient(model, preset, new SimpleMeterRegistry())) {
+            assertThat(client.generate(input)).succeedsWithin(Duration.ofSeconds(8));
+        }
+        var prompt = ArgumentCaptor.forClass(Prompt.class);
+        verify(model).call(prompt.capture());
+        assertThat(prompt.getValue().getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+            assertThat(options.getMaxTokens()).isEqualTo(100);
+            assertThat(options.getMaxCompletionTokens()).isNull();
+        });
     }
 
     @Test
     void emptyModelChoicesProduceFallbackInsteadOfThrowing() {
-        var model = mock(ChatModel.class);
+        var model = model();
         when(model.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of()));
-        try (var client = new SpringAiCourseHomeClient(model, () -> {
-        }, () -> {
-        }, new SimpleMeterRegistry())) {
+        try (var client = new SpringAiCourseHomeClient(model, PRESET, new SimpleMeterRegistry())) {
             assertThat(client.generate(input)).succeedsWithin(Duration.ofSeconds(8)).isEqualTo(Optional.empty());
         }
     }
 
     @Test
     void incompleteConfigurationCannotConstructATransport() {
-        assertThatThrownBy(() -> new SpringAiCourseHomeClient(new CourseHomeAiProperties(false, null, null, null, null), new SimpleMeterRegistry()))
+        assertThatThrownBy(() -> new SpringAiCourseHomeClient(new CourseHomeAiProperties(false, null, null), mock(LlmClientService.class), new SimpleMeterRegistry()))
                 .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("configuration is incomplete");
     }
 
@@ -156,43 +167,11 @@ class SpringAiCourseHomeClientTest {
         assertThatThrownBy(() -> new CourseHomeAiClient.Input("x".repeat(8192), "x")).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("exceeds its bound");
     }
 
-    @Test
-    void asynchronousTransportConstructionFailureClosesTheSynchronousTransport() {
-        var sync = mock(OpenAIClient.class);
-        try (var setup = mockStatic(OpenAiSetup.class, invocation -> {
-            if (invocation.getMethod().getName().equals("setupSyncClient"))
-                return sync;
-            if (invocation.getMethod().getName().equals("setupAsyncClient"))
-                throw new IllegalStateException("async construction failed");
-            return CALLS_REAL_METHODS.answer(invocation);
-        })) {
-            assertThatThrownBy(() -> new SpringAiCourseHomeClient(configured(), new SimpleMeterRegistry())).isInstanceOf(IllegalStateException.class)
-                    .hasMessage("async construction failed");
-            verify(sync).close();
-        }
-    }
-
-    @Test
-    void modelConstructionFailureClosesBothAllocatedTransports() {
-        var sync = mock(OpenAIClient.class);
-        var async = mock(OpenAIClientAsync.class);
-        try (var setup = mockStatic(OpenAiSetup.class, invocation -> {
-            if (invocation.getMethod().getName().equals("setupSyncClient"))
-                return sync;
-            if (invocation.getMethod().getName().equals("setupAsyncClient"))
-                return async;
-            return CALLS_REAL_METHODS.answer(invocation);
-        }); var models = mockStatic(OpenAiChatModel.class)) {
-            models.when(OpenAiChatModel::builder).thenThrow(new IllegalStateException("model construction failed"));
-            assertThatThrownBy(() -> new SpringAiCourseHomeClient(configured(), new SimpleMeterRegistry())).isInstanceOf(IllegalStateException.class)
-                    .hasMessage("model construction failed");
-            verify(sync).close();
-            verify(async).close();
-        }
-    }
-
-    private CourseHomeAiProperties configured() {
-        return new CourseHomeAiProperties(true, "LOCAL", "http://127.0.0.1:1/v1", "test-key", "test-model");
+    private static ChatModel model() {
+        // a preset's model carries OpenAI options, into which the chat client merges the request options
+        ChatModel model = mock(ChatModel.class);
+        when(model.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
+        return model;
     }
 
     private ChatResponse response() {

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, model } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiButtonComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 /**

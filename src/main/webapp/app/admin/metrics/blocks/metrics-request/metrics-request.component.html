@@ -5,8 +5,8 @@
             <tr>
                 <th scope="col" jhiTranslate="metrics.jvm.http.table.code"></th>
                 <th scope="col" jhiTranslate="metrics.jvm.http.table.count"></th>
-                <th scope="col" class="text-end" jhiTranslate="metrics.jvm.http.table.mean"></th>
-                <th scope="col" class="text-end" jhiTranslate="metrics.jvm.http.table.max"></th>
+                <th scope="col" class="text-right" jhiTranslate="metrics.jvm.http.table.mean"></th>
+                <th scope="col" class="text-right" jhiTranslate="metrics.jvm.http.table.max"></th>
             </tr>
         </thead>
         <tbody>
@@ -18,10 +18,10 @@
                             {{ entry.value.count }}
                         </tumaet-ui-progress-bar>
                     </td>
-                    <td class="text-end">
+                    <td class="text-right">
                         {{ filterNaN(entry.value.mean) | number: '1.0-2' }}
                     </td>
-                    <td class="text-end">{{ entry.value.max | number: '1.0-2' }}</td>
+                    <td class="text-right">{{ entry.value.max | number: '1.0-2' }}</td>
                 </tr>
             }
         </tbody>

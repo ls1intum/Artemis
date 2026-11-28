@@ -1,6 +1,6 @@
 @if (exercise()) {
     <ng-template titleBarTitle>
-        <h5 class="mb-0!">
+        <h5 class="mb-0">
             <span jhiTranslate="artemisApp.participation.home.title"></span>
         </h5>
     </ng-template>
@@ -41,7 +41,7 @@
                             (click)="exportNames()"
                         >
                             <fa-icon [icon]="faDownload" />
-                            <span class="flex-1 text-start" jhiTranslate="artemisApp.exercise.export.names"></span>
+                            <span class="flex-1 text-left" jhiTranslate="artemisApp.exercise.export.names"></span>
                         </button>
                         <jhi-exercise-scores-export-button [inDropdown]="true" [exercise]="exercise()!" />
                         @if (exercise()!.type === ExerciseType.PROGRAMMING) {
@@ -66,9 +66,10 @@
         </div>
     </ng-template>
 
-    <div class="flex h-full min-h-0 flex-col">
+    <!-- The panel of the course management pages has 16px of padding, which the table keeps only half of (like the admin pages, which have 8px). -->
+    <div class="-m-2 flex h-[calc(100%+1rem)] min-h-0 flex-col">
         @if (rangeFilter()) {
-            <h4 class="flex flex-wrap items-center gap-4!">
+            <h4 class="flex flex-wrap items-center gap-4">
                 <span>
                     <strong class="text-primary"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }}: </strong>
                     <span class="ms-1" jhiTranslate="artemisApp.exercise.showingOnlyInRange" [translateValues]="{ range: rangeFilter()!.toString() }"></span>
@@ -92,19 +93,18 @@
     </div>
 }
 
-<!-- Filter dropdown in the table caption bar -->
+<!-- Search and filter button in the 40px toolbar of the table. The filter groups are in the popover of the button. -->
 
 <ng-template #filterActionsTemplate>
-    <jhi-filter-dropdown [groupedFilters]="filterGroups()" [activeFilters]="activeFilters()" (filterChange)="updateParticipationFilter($event)">
-        @if (!hideParticipantInformation()) {
-            <jhi-search-filter
-                class="me-2 w-64 max-w-full shrink-0"
-                size="small"
-                [placeholderKey]="tableOptions().searchPlaceholder ?? 'artemisApp.participation.searchStudents'"
-                (newSearchEvent)="onSearchChange($event)"
-            />
-        }
-    </jhi-filter-dropdown>
+    @if (!hideParticipantInformation()) {
+        <jhi-search-filter
+            class="max-w-lg min-w-24 flex-1"
+            size="small"
+            [placeholderKey]="tableOptions().searchPlaceholder ?? 'artemisApp.participation.searchStudents'"
+            (newSearchEvent)="onSearchChange($event)"
+        />
+    }
+    <jhi-filter-dropdown [groupedFilters]="filterGroups()" [activeFilters]="activeFilters()" (filterChange)="updateParticipationFilter($event)" />
 </ng-template>
 
 <!-- Row actions -->

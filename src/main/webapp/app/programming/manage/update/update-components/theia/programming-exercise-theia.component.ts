@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -14,7 +14,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 @Component({
     selector: 'jhi-programming-exercise-theia',
     templateUrl: './programming-exercise-theia.component.html',
-    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.css'],
     imports: [FormsModule, TranslateDirective, ArtemisTranslatePipe, HelpIconComponent, TumAetUiSelectComponent],
 })
 export class ProgrammingExerciseTheiaComponent {

@@ -1,9 +1,9 @@
-<div class="grid grid-cols-12 gap-6! mb-4! justify-center">
+<div class="grid grid-cols-12 gap-6 mb-4 justify-center">
     <div class="col-span-12 xl:col-span-2 flex flex-col" data-testid="average-score-heading">
         <h3 jhiTranslate="artemisApp.course.averageScore"></h3>
         <h4 data-testid="course-average">{{ 'artemisApp.courseStatistics.courseAverage' | artemisTranslate }}: {{ courseAverage() }}%</h4>
     </div>
-    <div class="col-span-12 grid grid-cols-12 gap-6! xl:col-span-10 chart-row">
+    <div class="col-span-12 grid grid-cols-12 gap-6 xl:col-span-10 chart-row">
         <fa-icon
             [icon]="faArrowLeft"
             size="2x"
@@ -12,7 +12,7 @@
             (click)="switchTimeSpan(LEFT)"
             [class.arrow-hidden]="!(currentSize() > MAX_SPAN_SIZE && currentPeriod() > 0)"
         />
-        <div class="col-span-12 lg:col-span-8 ps-0 chart-container" style="height: 300px">
+        <div class="col-span-12 lg:col-span-8 ps-0! chart-container" style="height: 300px">
             <tumaet-ui-bar-chart
                 [labels]="chartData().labels"
                 [series]="chartData().series"
@@ -35,7 +35,7 @@
         </ng-template>
         <div class="col-span-12 lg:col-span-2 flex flex-col items-center justify-center">
             @if (exerciseTypeFilter.typeSet.size > 0) {
-                <div class="filter my-4!" aria-label="Filter Dropdown">
+                <div class="filter my-4" aria-label="Filter Dropdown">
                     <button
                         tumAetUiButton
                         type="button"
@@ -55,7 +55,7 @@
                             'artemisApp.courseOverview.exerciseList.filter'
                                 | artemisTranslate: { num: exerciseTypeFilter.numberOfActiveFilters + chartCategoryFilter.numberOfActiveFilters }
                         "
-                        ><ul class="m-0 list-none p-0 whitespace-nowrap space-y-2" data-testid="average-score-filter-options">
+                        ><ul class="m-0 list-none p-0! whitespace-nowrap space-y-2" data-testid="average-score-filter-options">
                             @if (exerciseTypeFilter.typeSet.size) {
                                 <li>
                                     <b class="ms-2" jhiTranslate="artemisApp.exercise-scores-chart.includeType"></b>

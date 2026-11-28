@@ -59,7 +59,7 @@ buildscript {
             mavenCentral()
         }
         dependencies {
-            classpath "de.tum.cit.aet:openapi-generator-angular22:4.0.0"
+            classpath "de.tum.cit.aet:openapi-generator-angular22:4.1.0"
         }
     }
     dependencies {
@@ -123,7 +123,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "10.8"
+version = "10.9"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -143,7 +143,7 @@ node {
 }
 
 ext.tumAetUiRuntimeSources = fileTree("packages/tum-aet-ui/src") {
-    include "**/*.html", "**/*.scss", "**/*.ts"
+    include "**/*.html", "**/*.css", "**/*.ts"
     exclude "**/*.spec.ts", "**/*.stories.ts"
 }
 
@@ -151,6 +151,7 @@ apply from: "gradle/liquibase.gradle"
 apply from: "gradle/spotless.gradle"
 apply from: "gradle/sbom.gradle"
 apply from: "gradle/dependency-families.gradle"
+apply from: "gradle/dependency-hygiene.gradle"
 apply from: "gradle/sonar.gradle"
 
 // The rest of the SBOM configuration lives in gradle/sbom.gradle. Only this one property has to be set here:
@@ -254,6 +255,9 @@ ext["testcontainers-redis-module.version"] = testcontainers_redis_version
 // with the BOM on every Spring Boot bump and delete an override that the BOM has caught up with.
 ext["logback.version"] = logback_version
 ext["tomcat.version"] = tomcat_version
+// Hibernate: the Spring Boot 4.2.0 BOM manages 7.4.15.Final, this is a newer patch release. The override applies to hibernate-core, hibernate-envers and the
+// annotation processors, which all read hibernate.version. Compare with the BOM on every Spring Boot bump.
+ext["hibernate.version"] = hibernate_version
 
 // Pin the entire Jackson 2.x and 3.x families to releases outside every known jackson-databind vulnerable
 // range. Spring Boot / Spring AI manage older jackson BOMs as dependency-management constraints, which beat
@@ -399,8 +403,6 @@ dependencies {
         }
     }
 
-    // Required by Sharing Platform
-    implementation "org.codeability:SharingPluginPlatformAPI:1.2.1"
     // Required by Spring cloud.
     // The client5 and core5 trains must be bumped together: httpclient5 5.6.x declares httpcore5 5.4.x. PR #12652 moved
     // httpclient5 to 5.6.1 while leaving httpcore5 on 5.3.6 and had to be reverted because Hazelcast cluster formation
@@ -436,14 +438,30 @@ dependencies {
     implementation "de.jplag:rlang:${jplag_version}"
     implementation "de.jplag:rust:${jplag_version}"
     implementation "de.jplag:swift:${jplag_version}"
-    implementation "de.jplag:text:${jplag_version}"
+    // Stanford CoreNLP, which JPlag Text uses for tokenization, declares libraries for features JPlag does not call (SUTime date
+    // parsing with jollyday and joda-time, XML/JSON annotator output, the macOS Java extensions), and jaxb-impl/jaxb-core duplicate the classes of
+    // org.glassfish.jaxb:jaxb-runtime/jaxb-core that Hibernate brings. Scoped to this dependency, not the global exclude block
+    // above, so other libraries that bring the same jars are not affected.
+    implementation("de.jplag:text:${jplag_version}") {
+        exclude group: "com.sun.xml.bind", module: "jaxb-impl"
+        exclude group: "com.sun.xml.bind", module: "jaxb-core"
+        exclude group: "org.glassfish", module: "jakarta.json"
+        exclude group: "com.apple", module: "AppleJavaExtensions"
+        exclude group: "javax.activation", module: "javax.activation-api"
+        exclude group: "de.jollyday", module: "jollyday"
+        exclude group: "joda-time", module: "joda-time"
+        exclude group: "jakarta.servlet", module: "jakarta.servlet-api"
+    }
     implementation "de.jplag:typescript:${jplag_version}"
 
     // Align all Spring AI modules to the same version, pinned to a release addressing
     // GHSA-q62f-h9x2-gcqc (ChatMemory DEFAULT_CONVERSATION_ID cross-user leakage).
     // Artemis was not exposed (explicit per-(course,user) conversation ids), but the scanner flags the range.
     implementation platform("org.springframework.ai:spring-ai-bom:2.1.0")
-    implementation "org.springframework.ai:spring-ai-starter-model-chat-memory-repository-jdbc"
+    // Session memory of the Atlas chat agent, which replaces the chat memory that Spring AI 2.1 deprecated for removal in 3.0. Artemis declares
+    // the beans itself (SpringAIConfiguration), so the modules are used without the starter and its auto-configuration.
+    implementation "org.springframework.ai:spring-ai-session"
+    implementation "org.springframework.ai:spring-ai-session-jdbc"
     // OpenAI module (official com.openai SDK). Since 2.0.0-M5/M6 this single module serves both
     // Azure OpenAI / Microsoft Foundry (prod) and OpenAI-compatible local servers (dev) —
     // the former spring-ai-starter-model-azure-openai module was removed upstream.
@@ -496,14 +514,19 @@ dependencies {
 
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
-    implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
+    // jgit.ssh.apache requests sshd-osgi, which repackages every class of sshd-core and sshd-common (1075 classes, 506 + 569 of
+    // them identical to the two jars), and sshd-sftp / sshd-git request sshd-core. Two copies of the same classes on the
+    // classpath is how a later version bump of only one of them becomes a hard-to-trace LinkageError, so sshd-osgi is excluded
+    // and the regular sshd-core / sshd-common jars below are the only copy.
+    implementation("org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}") {
+        exclude group: "org.apache.sshd", module: "sshd-osgi"
+    }
     implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.archive:${jgit_version}"
 
     // apache ssh enabled the ssh git operations in LocalVC together with JGit
     implementation "org.apache.sshd:sshd-core:${sshd_version}"
     implementation "org.apache.sshd:sshd-git:${sshd_version}"
-    implementation "org.apache.sshd:sshd-osgi:${sshd_version}"
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // Allows generating UML diagrams from text descriptions in problem statement markdown files for programming exercises
@@ -538,10 +561,13 @@ dependencies {
     // Note: we explicitly use docker-java-transport-zerodep, because docker-java-transport-httpclient5 uses an outdated http5 version which is not compatible with Spring Boot >= 3.4.0
     implementation "com.github.docker-java:docker-java-transport-zerodep:${docker_java_version}"
 
-    // LocalCI Kubernetes build runner. Artemis already uses Vert.x in other modules, so use the
-    // dedicated OkHttp transport to keep the Kubernetes client's transport isolated.
+    // LocalCI Kubernetes build runner. Nothing else in Artemis uses Vert.x, so use the dedicated OkHttp transport and keep
+    // Vert.x (vertx-core, vertx-web-client, ...) off the classpath. Since fabric8 7.x the Vert.x transport is published as
+    // kubernetes-httpclient-vertx-5 (the old name kubernetes-httpclient-vertx no longer exists), so both are excluded: with
+    // both transports on the classpath it is not obvious which one the client picks.
     implementation("io.fabric8:kubernetes-client:${kubernetes_client_version}") {
         exclude group: "io.fabric8", module: "kubernetes-httpclient-vertx"
+        exclude group: "io.fabric8", module: "kubernetes-httpclient-vertx-5"
     }
     implementation "io.fabric8:kubernetes-httpclient-okhttp:${kubernetes_client_version}"
 
@@ -651,7 +677,11 @@ dependencies {
 
     // passkey functionality to simplify login — Spring Security versions managed by the Spring Boot BOM.
     implementation "org.springframework.security:spring-security-webauthn"
-    implementation "com.webauthn4j:webauthn4j-spring-security-core:0.12.0.RELEASE"
+    // webauthn4j declares jakarta.servlet-api, but tomcat-embed-core (spring-boot-starter-tomcat) already contains the same Servlet 6.1
+    // classes (82 of them were on the classpath twice).
+    implementation("com.webauthn4j:webauthn4j-spring-security-core:0.12.0.RELEASE") {
+        exclude group: "jakarta.servlet", module: "jakarta.servlet-api"
+    }
     implementation "com.webauthn4j:webauthn4j-core:0.32.0.RELEASE"
 
     implementation "org.springframework.security:spring-security-messaging"
@@ -671,7 +701,10 @@ dependencies {
     implementation "com.bucket4j:bucket4j_jdk17-redisson:${bucket4j_version}"
 
     // Weaviate vector database client for semantic search
-    implementation "io.weaviate:client6:${weaviate_client_version}"
+    // client6 declares Lombok as a runtime dependency, but Lombok only does work at compile time (Artemis itself does not use it).
+    implementation("io.weaviate:client6:${weaviate_client_version}") {
+        exclude group: "org.projectlombok", module: "lombok"
+    }
     // Token counting that bounds each global search embedding input (also used by Spring AI)
     implementation "com.knuddels:jtokkit:${jtokkit_version}"
     constraints {
@@ -692,6 +725,10 @@ dependencies {
         implementation("org.apache.santuario:xmlsec") {
             version { strictly("4.0.4") }
             because("Pulled transitively by OpenSAML (SAML2); force the newest version to avoid CVEs")
+        }
+        implementation("org.apache.httpcomponents:httpclient") {
+            version { strictly("4.5.14") }
+            because("Only the Eureka client still needs the HttpClient 4 line (it asks for 4.5.3); keep it on the last 4.x release instead of a version with known CVEs")
         }
     }
 
@@ -805,8 +842,14 @@ dependencies {
     testImplementation "com.icegreen:greenmail-junit5:2.1.15"
     testImplementation "com.tngtech.archunit:archunit:1.5.1"
 
-    // we only need the database present at runtime
-    runtimeOnly "com.h2database:h2:2.5.252"
+    // H2 is only needed where Artemis runs without an external database: local development (bootRun), the tests, the OpenAPI
+    // generation and the bean instantiation check, which starts a plain bootJar against an in-memory H2. The production
+    // artifact (-Pprod, the WAR and the Docker image) always uses MySQL or PostgreSQL and no longer ships the 2.7 MB driver.
+    if (project.hasProperty("prod")) {
+        testRuntimeOnly "com.h2database:h2:2.5.252"
+    } else {
+        runtimeOnly "com.h2database:h2:2.5.252"
+    }
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20260814"

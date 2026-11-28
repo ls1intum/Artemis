@@ -1,8 +1,14 @@
 package de.tum.cit.aet.artemis.core.connector;
 
+import java.io.IOException;
+import java.net.ConnectException;
+import java.time.Duration;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -10,12 +16,19 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.ListableBeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.http.client.ClientHttpRequest;
+import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.test.web.client.RequestExpectationManager;
+import org.springframework.test.web.client.RequestMatcher;
+import org.springframework.test.web.client.ResponseActions;
+import org.springframework.test.web.client.UnorderedRequestExpectationManager;
 import org.springframework.web.client.RestClient;
 
 /**
- * Lets a test mock the remote server of a {@link RestClient} bean, with the {@link MockRestServiceServer} that the request mock providers
- * already use for a {@code RestTemplate}.
+ * Lets a test mock the remote server of a {@link RestClient} bean, with a {@link MockRestServiceServer}, which the request mock providers
+ * use to describe the expected requests and the responses.
  * <p>
  * A {@code MockRestServiceServer} can only be bound to a {@link RestClient.Builder}, while the application context only holds the
  * finished client, and the services keep a reference to that client. This post-processor therefore rebuilds every {@link RestClient} bean
@@ -46,10 +59,64 @@ public class MockRestClientServers implements BeanPostProcessor, BeanFactoryAwar
     public Object postProcessAfterInitialization(Object bean, String beanName) {
         if (bean instanceof RestClient restClient) {
             RestClient.Builder builder = restClient.mutate();
-            serversByBeanName.put(beanName, MockRestServiceServer.bindTo(builder).ignoreExpectOrder(true).build());
+            var serverBuilder = MockRestServiceServer.bindTo(builder);
+            if (isJenkinsClient(beanName)) {
+                // The authorization interceptor of Jenkins fetches a crumb with a client that no test mocks, so it is removed. The Jenkins tests also read the
+                // body of a request more than once, which needs the content to be buffered.
+                builder.requestInterceptors(List::clear);
+                serverBuilder.bufferContent();
+            }
+            serversByBeanName.put(beanName, serverBuilder.build(new FailWithoutExpectations()));
             return builder.build();
         }
         return bean;
+    }
+
+    /**
+     * Unordered expectations, like the request mock providers set up. A client that no test has set an expectation for, which is the state
+     * of every client until a test asks for its server, fails like a client without a reachable remote server: with an I/O error, which the
+     * services handle. Without this, the first unexpected call of such a client would end in an {@link AssertionError} of the mock server, which
+     * no service catches. As soon as a test has set an expectation, an unexpected request fails the test, as with any mock server.
+     */
+    private static final class FailWithoutExpectations implements RequestExpectationManager {
+
+        private final RequestExpectationManager delegate = new UnorderedRequestExpectationManager();
+
+        private final AtomicInteger expectations = new AtomicInteger();
+
+        @Override
+        public ResponseActions expectRequest(ExpectedCount count, RequestMatcher matcher) {
+            expectations.incrementAndGet();
+            return delegate.expectRequest(count, matcher);
+        }
+
+        @Override
+        public ClientHttpResponse validateRequest(ClientHttpRequest request) throws IOException {
+            if (expectations.get() == 0) {
+                throw new ConnectException("No remote server in the test, as no expectation was set for " + request.getMethod() + " " + request.getURI());
+            }
+            return delegate.validateRequest(request);
+        }
+
+        @Override
+        public void verify() {
+            delegate.verify();
+        }
+
+        @Override
+        public void verify(Duration timeout) {
+            delegate.verify(timeout);
+        }
+
+        @Override
+        public void reset() {
+            expectations.set(0);
+            delegate.reset();
+        }
+    }
+
+    private static boolean isJenkinsClient(String beanName) {
+        return beanName.toLowerCase(Locale.ROOT).contains("jenkins");
     }
 
     /**

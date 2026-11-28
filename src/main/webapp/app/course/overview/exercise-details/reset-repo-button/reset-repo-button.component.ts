@@ -10,7 +10,8 @@ import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';
 import dayjs from 'dayjs/esm';
-import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
@@ -21,7 +22,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-reset-repo-button',
     templateUrl: './reset-repo-button.component.html',
-    styleUrls: ['./reset-repo-button.component.scss'],
+    styleUrls: ['./reset-repo-button.component.css'],
     imports: [
         ExerciseActionButtonComponent,
         FeatureToggleDirective,

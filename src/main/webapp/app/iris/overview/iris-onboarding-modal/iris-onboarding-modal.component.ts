@@ -6,7 +6,9 @@ import { captureException } from 'app/core/error-reporting/capture-exception';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { StepperComponent } from './stepper/stepper.component';
 import { IrisOnboardingService, OnboardingResult } from './iris-onboarding.service';
@@ -67,7 +69,7 @@ type TooltipConfig = {
     selector: 'jhi-iris-onboarding-modal',
     standalone: true,
     templateUrl: './iris-onboarding-modal.component.html',
-    styleUrls: ['./iris-onboarding-modal.component.scss'],
+    styleUrls: ['./iris-onboarding-modal.component.css'],
     imports: [
         TranslateDirective,
         ArtemisTranslatePipe,

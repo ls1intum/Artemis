@@ -10,7 +10,7 @@
     <!-- in preview mode (showing similar posts during creation): content can be expanded and collapsed shown -->
     @if (previewMode()) {
         <div class="pb-1">
-            <span class="clickable p-0">
+            <span class="cursor-pointer p-0">
                 <fa-icon [icon]="showContent ? faAngleUp : faAngleDown" [size]="'xs'" class="text-muted-color" (click)="showContent = !showContent" />
             </span>
             <span class="toggle-content" jhiTranslate="{{ showContent ? 'artemisApp.communication.post.collapseContent' : 'artemisApp.communication.post.showContent' }}"></span>

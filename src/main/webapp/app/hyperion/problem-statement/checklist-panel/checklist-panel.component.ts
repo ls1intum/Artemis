@@ -4,7 +4,10 @@ import { DecimalPipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { TumAetUiButtonDirective, TumAetUiCheckboxComponent, TumAetUiPanelComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import {
     faArrowDown,
     faArrowUp,
@@ -307,7 +310,7 @@ export class ChecklistPanelComponent {
     private static readonly SEVERITY_TAG_MAP: Record<string, 'danger' | 'warn' | 'info'> = { HIGH: 'danger', MEDIUM: 'warn', LOW: 'info' };
     /** The category chips use the colours of the matching radar axis. */
     private static readonly CATEGORY_COLOR_MAP: Record<string, string> = {
-        CLARITY: 'bg-primary text-white',
+        CLARITY: 'bg-(--primary) text-white',
         COHERENCE: 'bg-state-info text-white',
         COMPLETENESS: 'bg-state-success text-white',
     };

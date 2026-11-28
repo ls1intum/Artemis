@@ -6,9 +6,9 @@
  * Only classes that are UNAMBIGUOUSLY Bootstrap-only are banned, that is they do not collide with a valid
  * Tailwind v4 utility of the same name. In particular the spacing scale (`mb-3`, `me-1`, `p-3`, `gap-2`)
  * and logical-margin utilities (`ms-*`, `me-*`) are NOT banned: they are legitimate Tailwind utilities.
- * Bootstrap gave the steps 3 to 5 other values, though, so `no-ambiguous-spacing-utility` handles those.
+ * Bootstrap gave the steps 3 to 5 other values (16, 24 and 48px against Tailwind's 12, 16 and 20px).
  * Color application is governed separately by `no-raw-tailwind-color-palette` (templates) and the stylelint
- * hex/`--bs-` ban (SCSS).
+ * hex/`--bs-` ban (CSS).
  *
  * Scope: static `class="..."`, `[class.<bootstrap-class>]`, and the bound source of `[class]` / `[ngClass]`.
  * See documentation/docs/developer/guidelines/client-development.mdx (### Styling).
@@ -82,7 +82,7 @@ const BANNED = [
     /^dropdown(-.+)?$/,
     /^navbar(-.+)?$/,
     // `nav` is matched by EXACT Bootstrap class only, not the `nav-*` prefix — custom names like the admin
-    // sidebar's `nav-group-header` / `nav-link-sidebar` (styled by its own SCSS) must not be flagged.
+    // sidebar's `nav-group-header` / `nav-link-sidebar` (styled by its own CSS) must not be flagged.
     /^nav$/,
     /^nav-(link|item|tabs|pills|fill|justified|underline)$/,
     /^list-group(-.+)?$/,

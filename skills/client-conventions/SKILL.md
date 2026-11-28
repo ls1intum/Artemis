@@ -216,7 +216,11 @@ Details: the _Exercise update forms_ subsection of
 
 ## Styling
 
-Use TUM AET UI components (`@tumaet/ui-angular`) and Tailwind v4 utilities. Bootstrap, ng-bootstrap
+Use TUM AET UI components and Tailwind v4 utilities. Import each component from its own entry point,
+`@tumaet/ui-angular/<component>` (named after the directory in `packages/tum-aet-ui/src/lib`), never from the
+package root `@tumaet/ui-angular`: the build splits code per file, so the root puts every component that any
+route uses into the first download. ESLint rejects the root. After a merge that brought in a root import, run
+`node supporting_scripts/client/migrate-tum-aet-ui-imports.mjs` to rewrite it. Bootstrap, ng-bootstrap
 and PrimeNG are removed from the client; do not add them again.
 
 Choose button severity by the established action family and its context, following
@@ -267,27 +271,37 @@ primitives, never `text-red-500`, never `text-danger`, never the superseded arbi
 `migratedModules` of `eslint.config.mjs`, and lint keeps the removed libraries out of them: it rejects
 Bootstrap classes in external and inline templates (`localRules/no-bootstrap-classes`), Bootstrap class
 names built in TypeScript (`localRules/no-bootstrap-classes-in-code`), PrimeNG root classes such as
-`class="p-button"` (`localRules/no-primeng-component-classes`), bare spacing utilities,
+`class="p-button"` (`localRules/no-primeng-component-classes`),
 imports of PrimeNG, ng-bootstrap and Bootstrap (specs included), and, in Stylelint, `--bs-*` and `--p-*`
 values, hex and `rgb()` colours, PrimeNG selectors and Bootstrap component selectors.
 Add a new module to `migratedModules`, to the Stylelint override and to the `@source` list of
 `tailwind.css`; `pnpm run test:rules` checks that the three agree.
 
-Tailwind utilities are in a cascade layer and lose to unlayered CSS: the element defaults in
-`src/main/webapp/content/scss/_base.scss` (`p`, `h1` to `h6`, `ul`, `a`) and component SCSS. The spacing steps 0, 1, 2
-and `auto` and a few helpers (`text-center`, `overflow-hidden`, `border`, `text-primary`) are defined
-unlayered and important in `src/main/webapp/content/scss/_utilities.scss`, so they are written bare; do not add classes
-there. Write every other step with the important modifier where it has to win (`mb-6!`). For the
-steps 3 to 5 this is mandatory: Bootstrap used the same names with another scale (16, 24 and 48px
-against Tailwind's 12, 16 and 20px), so `localRules/no-ambiguous-spacing-utility` rejects a bare
-`*-3`, `*-4` or `*-5` and suggests the Tailwind value (`mb-3!`, `mb-4!`, `mb-5!`) or the step with
-the former Bootstrap size (`mb-3` to `mb-4!`, `mb-4` to `mb-6!`, `mb-5` to `mb-12!`). See
-_Spacing utilities_ in `documentation/docs/developer/guidelines/client-development.mdx`.
+Tailwind utilities are in the cascade layer `utilities`. The element defaults in
+`src/main/webapp/content/css/base.css` (`p`, `h1` to `h6`, `ul`, `a`) are in the layer `base`, so a utility
+overrides them without a modifier. The styles of TUM AET UI are in the layer `tumaet-ui`, between the two, so a
+utility on a TUM AET UI component overrides the component, too. The stylesheets of the application components are not in a
+layer and win over every utility, as does a style that a component sets inline: write the important modifier where a
+utility has to override one of them (`mb-6!`). Bootstrap used the
+spacing names with another scale for the steps 3 to 5 (16, 24 and 48px against Tailwind's 12, 16 and 20px); markup
+from an old branch needs `mb-3` to `mb-4`, `mb-4` to `mb-6` and `mb-5` to `mb-12`. See _Spacing utilities_ in
+`documentation/docs/developer/guidelines/client-development.mdx`.
+
+Stylesheets are plain CSS; the client has no Sass. Write the full selector of every rule and do not nest
+rules: the view encapsulation of Angular scopes a nested selector differently (`:host { &.open { … } }`
+matches nothing), and Stylelint rejects it. Use the tokens of `content/css/themes/light.css` through
+`var(--token)`; a token gets a value in `themes/dark.css` only if it differs in the dark theme. Share rules
+between components with `styleUrls`, not with `@import`, and do not write vendor prefixes. After a change
+to a global stylesheet, the tokens or many component stylesheets, compare the client before and after with
+`supporting_scripts/client/style-comparison`
+(`documentation/docs/developer/client-style-comparison.mdx`).
 
 If TUM AET UI lacks a reusable capability, add or evolve a package component around native HTML,
 Angular Aria (`@angular/aria`, for composite widgets such as menus and tabs), or stable Angular CDK
-primitives, and keep Artemis-specific composition in the application. See
-`documentation/docs/developer/guidelines/tum-aet-ui-kit.mdx`.
+primitives, and keep Artemis-specific composition in the application. A new component directory needs an
+`index.ts` with explicit `export { ... }` statements, an `exports` entry `./<directory>` in
+`packages/tum-aet-ui/package.json` and a line in `packages/tum-aet-ui/src/public-api.ts`; the package contract test checks all three.
+See `documentation/docs/developer/guidelines/tum-aet-ui-kit.mdx`.
 
 ## Data tables
 
@@ -296,6 +310,14 @@ A table that is the main content of a page or a large dialog sits in `tumaet-ui-
 most 40px with `tumaet-ui-paginator`. Slot nodes (`tumAetUiTableToolbar`, `tumAetUiTableFooter`) must not sit directly
 in an `@if` (NG8011): use `[hidden]`. Use `tumAetUiInputSize="small"`, not `size`, on toolbar inputs. See
 [Data tables](../../documentation/docs/developer/guidelines/client-development.mdx#data-tables).
+
+## Duplicate dependencies
+
+The production client resolves each package to one version. `pnpm run check:duplicate-dependencies` (Client Code Style
+job) fails on a second version. Align with `pnpm why <package>`, a bump or a scoped override in `pnpm-workspace.yaml`;
+use `supporting_scripts/client/duplicate-dependencies-allowlist.json` only with a reason, and remove the entry as soon
+as the duplicate is gone. Do not add a direct dependency that overlaps one we already ship. Details:
+[Duplicate dependencies](../../documentation/docs/developer/guidelines/client-development.mdx#duplicate-dependencies).
 
 ## Other rules worth knowing
 

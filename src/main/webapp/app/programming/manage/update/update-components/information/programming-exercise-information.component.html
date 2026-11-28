@@ -4,7 +4,7 @@
         id="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle"
     ></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepMessage"></p>
-    <div class="mb-4!">
+    <div class="mb-4">
         <jhi-exercise-title-channel-name
             [exercise]="programmingExercise()"
             [course]="programmingExercise().course"
@@ -22,9 +22,9 @@
     @if (isEditFieldDisplayedRecord().shortName || (!programmingExerciseCreationConfig().isExamMode && isEditFieldDisplayedRecord().categories)) {
         <div class="flex flex-wrap -mx-2">
             @if (isEditFieldDisplayedRecord().shortName) {
-                <div class="mb-4! w-full px-2 min-[992px]:w-1/2">
+                <div class="mb-4 w-full px-2 min-[992px]:w-1/2">
                     <div>
-                        <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName"></label
+                        <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName"></label
                         ><span class="text-state-danger" aria-hidden="true">*</span>
                         <jhi-help-icon text="artemisApp.programmingExercise.shortNameTooltip" />
                     </div>
@@ -49,7 +49,7 @@
                     />
                     @for (error of shortName.errors! | keyvalue | removekeys: ['required']; track error.key) {
                         @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
-                            <tumaet-ui-message severity="error" class="mt-1 block">
+                            <tumaet-ui-message severity="error" class="mt-1">
                                 <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>
                             </tumaet-ui-message>
                         }
@@ -59,7 +59,7 @@
             @if (!programmingExerciseCreationConfig().isExamMode && isEditFieldDisplayedRecord().categories) {
                 <div class="w-full px-2" [class]="isEditFieldDisplayedRecord().shortName ? 'min-[992px]:w-1/2' : ''" id="creation-config-selector">
                     <div>
-                        <label class="label-narrow" jhiTranslate="artemisApp.exercise.categories"></label>
+                        <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.exercise.categories"></label>
                         <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
                     </div>
                     <jhi-category-selector
@@ -72,9 +72,9 @@
         </div>
     }
     @if (programmingExercise().shortName && isShortNameFieldValid()) {
-        <div class="mb-4!">
+        <div class="mb-4">
             <div>
-                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
+                <label class="inline-block mb-[0.1rem]" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
                 <jhi-help-icon [text]="'artemisApp.programmingExercise.preview.tooltipLocalVC'" />
             </div>
             <jhi-programming-exercise-repository-and-build-plan-details
@@ -103,7 +103,7 @@
                 />
             }
             @if (!programmingExerciseCreationConfig().isImportFromExistingExercise && programmingExerciseCreationConfig().auxiliaryRepositoriesSupported) {
-                <div class="mb-4!">
+                <div class="mb-4">
                     @if (
                         programmingExercise().auxiliaryRepositories &&
                         programmingExercise().auxiliaryRepositories!.length > 0 &&
@@ -118,7 +118,7 @@
                         />
                     }
                     @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateNames || programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateDirectories) {
-                        <tumaet-ui-message severity="error" class="mt-1 block">
+                        <tumaet-ui-message severity="error" class="mt-1">
                             @if (programmingExerciseCreationConfig().auxiliaryRepositoryDuplicateNames) {
                                 <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.duplicateRepositoryNames"></span>
                             }
@@ -128,7 +128,7 @@
                         </tumaet-ui-message>
                     }
                     @if (programmingExerciseCreationConfig() && !isLocalCIEnabled()) {
-                        <tumaet-ui-message severity="info" class="mt-1 block">
+                        <tumaet-ui-message severity="info" class="mt-1">
                             <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"></span>
                         </tumaet-ui-message>
                     }
@@ -153,7 +153,7 @@
             }
         </div>
     }
-    <div class="mb-4!">
+    <div class="mb-4">
         @if (programmingExerciseCreationConfig().isImportFromExistingExercise) {
             <div class="flex items-center gap-2 mb-1">
                 <tumaet-ui-checkbox

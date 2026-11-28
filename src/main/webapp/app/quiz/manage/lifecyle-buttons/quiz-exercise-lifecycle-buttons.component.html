@@ -34,7 +34,7 @@
                     <span class="font-semibold" jhiTranslate="artemisApp.exerciseManagement.batch.label" [translateValues]="{ id: batch.id }"></span>
                     @if (!batch.ended && batch.password) {
                         <tumaet-ui-tag
-                            class="min-w-0 font-mono wrap-anywhere"
+                            class="min-w-0 wrap-anywhere"
                             severity="secondary"
                             [value]="'artemisApp.exerciseManagement.batch.password' | artemisTranslate: { password: batch.password }"
                         />

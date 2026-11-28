@@ -1,0 +1,15 @@
+@layer tumaet-ui {
+    :host {
+        display: inline-flex;
+        max-width: 100%;
+    }
+
+    .tumaet-ui-chip-remove {
+        border-radius: 50%;
+    }
+
+    .tumaet-ui-chip-remove:focus-visible {
+        outline: 2px solid var(--tumaet-ui-focus-color);
+        outline-offset: 1px;
+    }
+}

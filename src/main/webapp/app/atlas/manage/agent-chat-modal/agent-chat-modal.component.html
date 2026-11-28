@@ -1,6 +1,6 @@
-<div class="flex min-h-0 flex-col gap-4!">
+<div class="flex min-h-0 flex-col gap-4">
     <!-- Header -->
-    <div class="flex items-center justify-between gap-2 pt-4!">
+    <div class="flex items-center justify-between gap-2 pt-4">
         <div class="flex items-center">
             <fa-icon [icon]="robotIcon" class="me-2 text-xl text-primary" />
             <span class="text-xl font-semibold" jhiTranslate="artemisApp.agent.chat.title"></span>
@@ -11,7 +11,7 @@
             severity="secondary"
             variant="text"
             rounded
-            class="size-8 shrink-0 p-0"
+            class="size-8 shrink-0 p-0!"
             [attr.aria-label]="'entity.action.close' | artemisTranslate"
             data-testid="agent-chat-close-button"
             (click)="closeModal()"
@@ -22,7 +22,7 @@
 
     <!-- Messages Container -->
     <div
-        class="max-h-[calc(min(80dvh,45rem)_-_12.5rem)] min-h-0 overflow-y-auto bg-(--body-bg) p-4! [scrollbar-width:thin] max-md:max-h-[calc(90dvh_-_11.25rem)]"
+        class="max-h-[calc(min(80dvh,45rem)_-_12.5rem)] min-h-0 overflow-y-auto bg-(--body-bg) p-4 [scrollbar-width:thin] max-md:max-h-[calc(90dvh_-_11.25rem)]"
         data-testid="agent-chat-messages"
         #messagesContainer
     >
@@ -35,7 +35,7 @@
                 [class.text-start]="!message.isUser"
             >
                 <div
-                    class="relative inline-block max-w-[80%] rounded-t-2xl px-4! py-3! text-start break-words text-color max-md:me-[5%] max-md:ms-[5%] max-md:max-w-[90%]"
+                    class="relative inline-block max-w-[80%] rounded-t-2xl px-4 py-3 text-left break-words text-color max-md:me-[5%] max-md:ms-[5%] max-md:max-w-[90%]"
                     [class]="message.isUser ? 'agent-chat-user-bubble ms-[20%] rounded-bl-2xl rounded-br-sm' : 'agent-chat-agent-bubble me-[20%] rounded-br-2xl rounded-bl-sm'"
                 >
                     <div class="mb-1 flex items-center text-[0.85rem] opacity-80">
@@ -55,7 +55,7 @@
                         </div>
                     }
                     @if (message.competencyPreviews && message.competencyPreviews.length > 0) {
-                        <div class="mt-2 rounded-md border border-border p-2">
+                        <div class="mt-2 rounded-md border border-(--border-color) p-2">
                             @if (message.competencyPreviews.length > 1) {
                                 <div class="mb-2">
                                     <small class="text-muted-color">{{ 'artemisApp.agent.chat.preview' | artemisTranslate: { count: message.competencyPreviews.length } }}</small>
@@ -106,7 +106,7 @@
                         </div>
                     }
                     @if (message.relationGraphPreview) {
-                        <div class="mt-2 rounded-md border border-border">
+                        <div class="mt-2 rounded-md border border-(--border-color)">
                             <div class="h-[25rem]">
                                 @if (message.graphCompetencies && message.graphRelations) {
                                     <jhi-course-competencies-relation-graph
@@ -117,7 +117,7 @@
                                 }
                             </div>
                             @if (!message.relationGraphPreview.viewOnly) {
-                                <div class="border-t border-border p-4!">
+                                <div class="border-t border-border p-4">
                                     <button
                                         tumAetUiButton
                                         type="button"
@@ -145,7 +145,7 @@
                         </div>
                     }
                     @if (message.exerciseMappingPreview) {
-                        <div class="mt-2 flex flex-col gap-4! rounded-md border border-border p-4!">
+                        <div class="mt-2 flex flex-col gap-4 rounded-md border border-(--border-color) p-4">
                             <div>
                                 <strong>{{ message.exerciseMappingPreview.exerciseTitle }}</strong>
                                 @if (!message.exerciseMappingPreview.viewOnly) {
@@ -157,7 +157,7 @@
 
                             <div>
                                 @for (competency of message.exerciseMappingPreview.competencies; track competency.competencyId) {
-                                    <div class="mb-2 flex grow items-center gap-2 rounded-md border border-border p-2">
+                                    <div class="mb-2 flex grow items-center gap-2 rounded-md border border-(--border-color) p-2">
                                         @if (!message.exerciseMappingPreview.viewOnly) {
                                             <tumaet-ui-checkbox
                                                 [inputId]="'competency-' + message.id + '-' + competency.competencyId"
@@ -179,7 +179,7 @@
                                             }
                                         </label>
                                         <tumaet-ui-select
-                                            class="inline-flex max-w-36 min-w-32"
+                                            class="inline-flex min-w-32"
                                             [(ngModel)]="competency.weight"
                                             [options]="weightOptions()"
                                             optionLabel="label"
@@ -217,8 +217,8 @@
 
         <!-- Typing Indicator -->
         @if (isAgentTyping()) {
-            <div class="mb-6 text-start" data-testid="agent-chat-typing-indicator">
-                <div class="agent-chat-agent-bubble relative me-[20%] inline-block rounded-t-2xl rounded-br-2xl rounded-bl-sm px-4! py-3! text-color">
+            <div class="mb-6 text-left" data-testid="agent-chat-typing-indicator">
+                <div class="agent-chat-agent-bubble relative me-[20%] inline-block rounded-t-2xl rounded-br-2xl rounded-bl-sm px-4 py-3 text-color">
                     <div class="mb-1 flex items-center text-[0.85rem] opacity-80">
                         <fa-icon [icon]="robotIcon" class="me-2 text-state-success" />
                         <span class="me-auto font-semibold" jhiTranslate="artemisApp.agent.chat.aiAssistant"></span>
@@ -237,14 +237,14 @@
     </div>
 
     <!-- Input Area -->
-    <div class="w-full border-t border-border pt-4!">
+    <div class="w-full border-t border-border pt-4">
         <div class="flex">
             <textarea
                 tumAetUiInput
                 cdkFocusInitial
                 [attr.aria-label]="'accessibility.message' | artemisTranslate"
                 #messageInput
-                class="max-h-[7.5rem] min-h-[2.375rem] flex-1 resize-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                class="max-h-[7.5rem] min-h-[2.375rem] flex-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 [ngModel]="currentMessage()"
                 (ngModelChange)="currentMessage.set($event)"
                 (keydown)="onKeyPress($event)"
@@ -269,7 +269,7 @@
         </div>
         <div class="mt-1 flex justify-between">
             <small class="text-muted-color" jhiTranslate="artemisApp.agent.chat.inputHint"></small>
-            <small class="text-end" data-testid="agent-chat-char-count" [class.text-state-danger]="isMessageTooLong()" [class.text-muted-color]="!isMessageTooLong()">
+            <small class="text-right" data-testid="agent-chat-char-count" [class.text-state-danger]="isMessageTooLong()" [class.text-muted-color]="!isMessageTooLong()">
                 {{ currentMessageLength() }} / {{ MAX_MESSAGE_LENGTH }}
             </small>
         </div>

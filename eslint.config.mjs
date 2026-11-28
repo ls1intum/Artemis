@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import angularPlugin from '@angular-eslint/eslint-plugin';
 import prettierPlugin from 'eslint-plugin-prettier';
@@ -54,15 +56,25 @@ const noDirectCloneDeepImports = [
         message: "Import deepClone / cloneWith / hydrate from 'app/foundation/util/deep-clone.util' instead of lodash cloneDeep.",
     },
 ];
+// The entry points of TUM AET UI: one per component, listed in the `exports` of the package. A bundler that splits code per file loads everything that a
+// lazy route takes from the package root, so the client imports from the entry point of each component. Both rules follow the `exports`.
+const tumAetUiEntryPoints = Object.keys(JSON.parse(readFileSync(resolve(import.meta.dirname, 'packages/tum-aet-ui/package.json'), 'utf8')).exports)
+    .filter((subpath) => subpath !== '.')
+    .map((subpath) => `@tumaet/ui-angular/${subpath.slice(2)}`);
 const tumAetUiConsumerImportPatterns = [
     {
-        group: ['@tumaet/ui-angular/**'],
-        message: 'Import TUM AET UI symbols from the @tumaet/ui-angular public entry point, not a package-internal path.',
+        regex: '^@tumaet/ui-angular$',
+        message:
+            'Import from the entry point of the component, for example @tumaet/ui-angular/button, not from the package root: the root pulls the code of every component into the bundle.',
+    },
+    {
+        group: ['@tumaet/ui-angular/**', ...tumAetUiEntryPoints.map((entryPoint) => `!${entryPoint}`)],
+        message: 'Import from an entry point of TUM AET UI (@tumaet/ui-angular/<component>), not from a package-internal path.',
     },
 ];
 // The client modules, all of which use TUM AET UI and Tailwind. Bootstrap, ng-bootstrap and PrimeNG are removed from the
 // client; every lock below is generated from this list and keeps them out:
-// the Bootstrap class and spacing rules for external and inline templates, the Bootstrap classes built in code, and the
+// the Bootstrap class rules for external and inline templates, the Bootstrap classes built in code, and the
 // ban on importing PrimeNG or ng-bootstrap. config/stylelint/stylelint.config.json names the same modules for SCSS, and
 // the `migration-source-coverage` test keeps both lists and the `@source` entries of tailwind.css consistent.
 const migratedModules = [
@@ -456,6 +468,13 @@ export default tseslint.config(
             'localRules/prefer-signal-template-state': 'error',
         },
     },
+    {
+        files: ['src/main/webapp/**/*.ts', 'packages/tum-aet-ui/src/**/*.ts'],
+        ignores: ['**/*.spec.ts'],
+        rules: {
+            'localRules/sharing-module-boundary': 'error',
+        },
+    },
     // Copy objects with deepClone, never with object spread, Object.assign or structuredClone. All three
     // alternatives are wrong in ways the type checker cannot see: structuredClone drops prototypes, so a cloned
     // dayjs date loses its methods while isDayjs() still returns true (the bug behind PR #11910); spread and
@@ -641,6 +660,10 @@ export default tseslint.config(
                             group: ['app', 'app/**', 'test', 'test/**', '!storybook/test', 'primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
                             message: 'TUM AET UI must not depend on Artemis or its application UI frameworks. Move host-specific code to app/shared-ui/tum-aet-ui-integration.',
                         },
+                        {
+                            group: ['@tumaet/ui-angular/**'],
+                            message: 'Inside TUM AET UI, import from a relative path, not the entry point of a component.',
+                        },
                     ],
                 },
             ],
@@ -808,23 +831,6 @@ export default tseslint.config(
         },
     },
     {
-        // The removed Bootstrap and Tailwind define the same spacing class names (`mb-3`, `px-4`, `gap-5`) with different
-        // values for 3 to 5, and a bare Tailwind utility loses to the unlayered element defaults of `_base.scss`.
-        // These templates must say which value they mean, with the important modifier. A folder must be scanned by
-        // tailwind.css (`migration-source-coverage` checks this).
-        // See client-development.mdx (### Styling).
-        files: ['src/main/webapp/app/app.component.html', ...migratedFolders('html')],
-        languageOptions: {
-            parser: angularTemplateParser,
-        },
-        plugins: {
-            localRules: localRulesPlugin,
-        },
-        rules: {
-            'localRules/no-ambiguous-spacing-utility': 'error',
-        },
-    },
-    {
         // The same locks for `template:` strings: button-inline-templates.mjs hands every inline template to ESLint a second
         // time as `.lock-template`. Only the migrated modules are listed, so no other module is affected.
         files: migratedFolders('lock-template'),
@@ -836,7 +842,6 @@ export default tseslint.config(
         },
         rules: {
             'localRules/no-bootstrap-classes': 'error',
-            'localRules/no-ambiguous-spacing-utility': 'error',
             'localRules/no-primeng-component-classes': 'error',
             'localRules/no-raw-tailwind-color-palette': 'error',
         },

@@ -26,7 +26,7 @@ import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/c
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CommentThread } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { EditorRange } from 'app/editor/monaco-editor/model/actions/monaco-editor.util';
-import { TumAetUiPopoverComponent } from '@tumaet/ui-angular';
+import { TumAetUiPopoverComponent } from '@tumaet/ui-angular/popover';
 
 // Capture the global ResizeObserver provided by the test setup so it can be restored after each test.
 const originalResizeObserver = globalThis.ResizeObserver;

@@ -10,12 +10,11 @@ import de.tum.cit.aet.artemis.course.domain.Course;
  * Slim course projection embedded in the exam response DTOs ({@link ExamDTO} and {@link ExamWithExerciseGroupsDTO}).
  * <p>
  * Carries exactly the {@code exam.course} fields the exam management screens read: the id (routing / API links) and
- * title (exam detail), the {@code testCourse} flag (exam deletion summary), and the three group names. The group names
- * are load-bearing: the client computes {@code isAtLeast{Tutor,Editor,Instructor}} from them in
+ * title (exam detail) and the {@code testCourse} flag (exam deletion summary). The id is load-bearing: the client
+ * computes {@code isAtLeast{Tutor,Editor,Instructor}} from it and the user's course roles in
  * {@code AccountService.setAccessRightsForCourse} (invoked by the exam service's response converter), which gates the
- * edit / add-exercise / reset actions across all exam screens. Dropping them would silently disable those controls for
- * non-admin editors and instructors. All other columns of the previously serialized full {@link Course} entity are
- * intentionally omitted for data economy (no exam-response consumer reads them).
+ * edit / add-exercise / reset actions across all exam screens. All other columns of the previously serialized full
+ * {@link Course} entity are intentionally omitted for data economy (no exam-response consumer reads them).
  *
  * @param id         the id of the course
  * @param title      the title of the course

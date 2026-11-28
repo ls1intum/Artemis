@@ -8,12 +8,12 @@ import { PostingSummaryComponent } from 'app/communication/course-conversations-
 import { Subscription, take } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 
 @Component({
     selector: 'jhi-saved-posts',
     templateUrl: './saved-posts.component.html',
-    styleUrls: ['./saved-posts.component.scss'],
+    styleUrls: ['./saved-posts.component.css'],
     host: { class: 'flex min-h-0 flex-1 flex-col' },
     imports: [TranslateDirective, FaIconComponent, PostingSummaryComponent, TumAetUiButtonDirective],
 })

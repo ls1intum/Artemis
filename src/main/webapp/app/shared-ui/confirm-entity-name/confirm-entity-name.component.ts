@@ -15,12 +15,12 @@ import { Subscription } from 'rxjs';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
-import { TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 
 @Component({
     selector: 'jhi-confirm-entity-name',
     templateUrl: './confirm-entity-name.component.html',
-    styleUrls: ['./confirm-entity-name.component.scss'],
+    styleUrls: ['./confirm-entity-name.component.css'],
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,

@@ -1,5 +1,5 @@
 <ng-container [formGroup]="form()">
-    <div class="flex flex-col gap-2 mb-4!">
+    <div class="flex flex-col gap-2 mb-4">
         <label class="font-semibold" [for]="idPrefix() + 'title'" jhiTranslate="artemisApp.courseRequest.form.title"></label>
         <input
             [id]="idPrefix() + 'title'"
@@ -16,7 +16,7 @@
         }
     </div>
 
-    <div class="flex flex-col gap-2 mb-4!">
+    <div class="flex flex-col gap-2 mb-4">
         <label class="font-semibold" [for]="idPrefix() + 'shortName'" jhiTranslate="artemisApp.courseRequest.form.shortName"></label>
         <input
             [id]="idPrefix() + 'shortName'"
@@ -52,7 +52,7 @@
         }
     </div>
 
-    <div class="grid grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-4! mb-4!">
+    <div class="grid grid-cols-[repeat(auto-fit,minmax(15rem,1fr))] gap-4 mb-4">
         <tumaet-ui-form-field [controlId]="idPrefix() + 'semester'" [invalid]="(form().get('semester')?.invalid && form().get('semester')?.touched) ?? false">
             <span tumAetUiFormFieldLabel class="text-[0.9rem] font-semibold" jhiTranslate="artemisApp.courseRequest.form.semester"></span>
             <tumaet-ui-select class="w-full" [options]="semesters()" formControlName="semester" />
@@ -98,15 +98,15 @@
         </div>
     </div>
     @if (dateRangeInvalid()) {
-        <div class="text-state-danger mb-4!" jhiTranslate="artemisApp.courseRequest.form.dateError"></div>
+        <div class="text-state-danger mb-4" jhiTranslate="artemisApp.courseRequest.form.dateError"></div>
     }
 
-    <div class="flex items-center gap-2 mb-4!">
+    <div class="flex items-center gap-2 mb-4">
         <tumaet-ui-checkbox [inputId]="idPrefix() + 'testCourse'" name="testCourse" formControlName="testCourse" />
         <label [for]="idPrefix() + 'testCourse'" jhiTranslate="artemisApp.courseRequest.form.testCourse"></label>
     </div>
 
-    <div class="flex flex-col gap-1 mb-4!">
+    <div class="flex flex-col gap-1 mb-4">
         <div class="flex items-center gap-2">
             <tumaet-ui-checkbox
                 [inputId]="idPrefix() + 'gradeRelevant'"
@@ -125,7 +125,7 @@
         ></small>
     </div>
 
-    <div class="flex flex-col gap-2 mb-4!">
+    <div class="flex flex-col gap-2 mb-4">
         <label class="font-semibold" [for]="idPrefix() + 'reason'" jhiTranslate="artemisApp.courseRequest.form.reason"></label>
         <textarea
             [id]="idPrefix() + 'reason'"

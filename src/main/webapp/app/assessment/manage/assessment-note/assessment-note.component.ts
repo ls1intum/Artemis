@@ -1,4 +1,4 @@
-import { TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { Component, DestroyRef, ElementRef, afterNextRender, afterRenderEffect, inject, input, output, viewChild } from '@angular/core';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -7,7 +7,7 @@ import { autogrowTextarea } from 'app/foundation/util/textarea-autogrow.util';
 @Component({
     selector: 'jhi-assessment-note',
     templateUrl: './assessment-note.component.html',
-    styleUrls: ['./assessment-note.component.scss'],
+    styleUrls: ['./assessment-note.component.css'],
     imports: [TranslateDirective, TumAetUiInputDirective],
 })
 export class AssessmentNoteComponent {

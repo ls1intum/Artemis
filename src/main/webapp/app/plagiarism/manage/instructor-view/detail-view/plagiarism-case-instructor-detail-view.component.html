@@ -2,7 +2,7 @@
     <div class="plagiarism-case">
         <div class="case-header">
             <div jhi-plagiarism-case-header [plagiarismCase]="plagiarismCase">
-                <div class="flex w-full! items-center px-3! min-[992px]:w-1/2! min-[1200px]:w-1/4! min-[1200px]:justify-end">
+                <div class="flex w-full items-center px-3 min-[992px]:w-1/2 min-[1200px]:w-1/4 min-[1200px]:justify-end">
                     <button
                         type="button"
                         tumAetUiButton
@@ -66,7 +66,7 @@
                 }
             </section>
             <section class="print:hidden">
-                <h2 class="mt-12!" jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.verdict"></h2>
+                <h2 class="mt-12" jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.verdict"></h2>
                 <p jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.text"></p>
                 <div class="verdict-container">
                     <tumaet-ui-tabs [(value)]="activeTab">
@@ -81,7 +81,7 @@
                                 <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.warning"></span>
                             </tumaet-ui-tab>
                         </tumaet-ui-tab-list>
-                        <tumaet-ui-tab-panels class="p-0!">
+                        <tumaet-ui-tab-panels class="p-0">
                             <tumaet-ui-tab-panel [value]="1" class="block pt-6" preserveContent>
                                 <p jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.plagiarismDescription"></p>
                                 <div class="flex flex-wrap items-center">
@@ -135,7 +135,7 @@
                             </tumaet-ui-tab-panel>
                             <tumaet-ui-tab-panel [value]="3" class="block pt-6" preserveContent>
                                 <p jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.warningDescription"></p>
-                                <div class="flex flex-col gap-4!">
+                                <div class="flex flex-col gap-4">
                                     <textarea
                                         tumAetUiInput
                                         [attr.aria-label]="'accessibility.verdictMessage' | artemisTranslate"
@@ -177,8 +177,8 @@
                 </div>
             </section>
             <section>
-                <h3 class="mt-12!" jhiTranslate="artemisApp.plagiarism.plagiarismCases.comparisons"></h3>
-                <div class="w-full px-3!">
+                <h3 class="mt-12" jhiTranslate="artemisApp.plagiarism.plagiarismCases.comparisons"></h3>
+                <div class="w-full px-3">
                     <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase" [forStudent]="false" />
                 </div>
             </section>

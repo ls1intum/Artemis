@@ -3,7 +3,7 @@
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepMessage"></p>
     <!-- User Prompt Input -->
     @if (hyperionEnabled) {
-        <div class="mb-4!">
+        <div class="mb-4">
             <div class="flex items-center mb-2">
                 <label for="userPrompt" class="mb-0" jhiTranslate="artemisApp.programmingExercise.problemStatement.yourRequirements"></label>
                 <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.problemStatement.generateDraftDescription" />
@@ -24,7 +24,7 @@
                 <span class="textarea-char-count" [class.textarea-char-count--near-limit]="isPromptNearLimit()">{{ userPrompt()?.length || 0 }}/{{ MAX_USER_PROMPT_LENGTH }}</span>
             </div>
         </div>
-        <div class="flex items-center gap-2 mb-4!">
+        <div class="flex items-center gap-2 mb-4">
             <button
                 tumAetUiButton
                 type="button"
@@ -59,10 +59,10 @@
         </div>
     }
     @if (isEditFieldDisplayedRecord()?.problemStatement) {
-        <div class="mb-4!" id="field_problemStatement" name="problemStatement">
+        <div class="mb-4" id="field_problemStatement" name="problemStatement">
             <label for="field_problemStatement" jhiTranslate="artemisApp.programmingExercise.problemStatement.title"></label>
             @if (programmingExerciseCreationConfig().isImportFromExistingExercise || programmingExerciseCreationConfig().isImportFromFile) {
-                <tumaet-ui-message severity="warn" class="block">
+                <tumaet-ui-message severity="warn">
                     <span class="font-bold">
                         {{ 'artemisApp.exercise.import.attention' | artemisTranslate }}
                     </span>
@@ -122,7 +122,7 @@
                 </div>
 
                 @if (isProblemStatementTooLong()) {
-                    <tumaet-ui-message severity="error" class="block w-full mt-2">
+                    <tumaet-ui-message severity="error" class="w-full mt-2">
                         <span [jhiTranslate]="'artemisApp.programmingExercise.problemStatement.tooLong'" [translateValues]="{ max: maxProblemStatementLength }"></span>
                     </tumaet-ui-message>
                 }
@@ -143,7 +143,7 @@
         }
     }
     @if (isEditFieldDisplayedRecord()?.linkedCompetencies && !programmingExerciseCreationConfig().isExamMode) {
-        <div class="mb-4!">
+        <div class="mb-4">
             <jhi-competency-selection
                 id="competencies"
                 [labelName]="'artemisApp.competency.link.title' | artemisTranslate"

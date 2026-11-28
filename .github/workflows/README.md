@@ -277,7 +277,7 @@ relative to the merge base with the actual PR target; missing history falls back
   unknown inputs and broad selections retain the seven-shard suite. `get_changed_modules.sh` retains
   its conservative CSV interface for other callers.
 - **Client:** `pnpm run test:ci:affected --base-ref <fetched-pr-target-ref>` expands changed Angular templates
-  and styles to their TypeScript owners, including Sass imports, then uses Vitest's transitive dependency
+  and styles to their TypeScript owners, including stylesheet imports, then uses Vitest's transitive dependency
   graph for both ordinary and Monaco specs. Specs importing Node's filesystem APIs always run because
   source reads do not create graph edges. These guards do not suppress the full-suite fallback when the
   changed source has no related specs: every changed source or resource owner must have a graph
@@ -350,6 +350,26 @@ if the dedicated workflow is removed without a replacement.
   which the Ubuntu runners provide. Run it locally with
   `python3 supporting_scripts/check_action_pinning.py`; its unit test is
   `supporting_scripts/test_check_action_pinning.py`.
+
+## Gradle build cache
+
+`gradle.properties` sets `org.gradle.caching=true`. Gradle then stores task outputs, compiled classes above all,
+in the local build cache, and `setup-gradle` saves that cache with the rest of the Gradle home. As with the
+dependency cache, only `develop` runs write it; pull request and merge queue runs restore the entry of the same job
+and only read it.
+
+A pull request that changes no test source and no public signature in `src/main/java` gets `compileTestJava` from the
+cache, provided its job's `develop` run saved an entry for the same inputs: Gradle keys test compilation on the test
+sources and on the ABI of the main classes, not on their method bodies. `compileJava` itself recompiles whenever any main source
+changes, since the server is a single Gradle project. Jobs on the same run do not share the cache with each other; they
+start in parallel and each one reads what its own `develop` run saved.
+
+Two exceptions keep the cache from changing what CI checks:
+
+- `Test` tasks never use the cache (`gradle/test.gradle`). Their results depend on Docker, Testcontainers and images
+  that Gradle does not track, and CI reads each run's console log for failed tests and server starts.
+- `ci-codeql.yml` builds with `--no-build-cache`. CodeQL extracts Java by tracing javac, so classes taken from the cache
+  would be missing from its database.
 
 ## Reusable workflows — `ci-*.yml`
 
@@ -439,6 +459,56 @@ permission to the jobs that create report check runs.
 
 Regression tests for delayed readiness, unavailable nodes and image revision mismatches run
 with `pnpm run test:rules` (or select `supporting_scripts/ci/E2E-tests/setup.spec.mjs`).
+
+## Docker Hub images on the self-hosted runners
+
+The jobs on the self-hosted runners never pull from Docker Hub. Docker Hub limits anonymous pulls per IP address,
+and the runners share few addresses, so when the allowance is used up a pull stalls without an error: Testcontainers
+reports `Docker image pull has not made progress` and the E2E setup cannot provision the exercise images. The AET
+Harbor instance runs a proxy cache for Docker Hub, `harbor.aet.cit.tum.de/dockerhub-ghr-proxy`, and every Docker Hub
+image comes through it:
+
+- `supporting_scripts/ci/pull-through-registry-proxy.sh` pulls a Docker Hub image from the cache and tags it with
+  its original name, so compose files and the Artemis build agent find it under the name they ask for. Images of other
+  registries (`ghcr.io`, `quay.io`, ...) are pulled directly. The E2E jobs use it for the exercise images and for all
+  images of the compose stack (with `--refresh`, in place of `docker compose pull`); the Android job uses it for the
+  MySQL image.
+- `.github/actions/testcontainers-registry-proxy` pulls the Ryuk image and sets `TESTCONTAINERS_HUB_IMAGE_NAME_PREFIX`
+  for the server test jobs, so Testcontainers sends all its Docker Hub pulls to the cache. It also provisions the two
+  exercise images that `LocalCIDockerImageIntegrationTest` preloads, under their original names: with the prefix set,
+  Testcontainers would cache them under the proxy name, and the build agent, which asks for the original name, would
+  pull them from Docker Hub on a cold runner.
+- The small Alpine container that returns the ownership of leftover files before a checkout is pulled through the
+  cache as well.
+
+There is deliberately no fallback to Docker Hub: it would hide a broken cache until Docker Hub throttles the runners
+again. When the cache cannot be reached, the helper fails after a ten second probe with `Registry proxy unreachable`.
+The runners must therefore be able to connect to `harbor.aet.cit.tum.de:443`. Check it from a runner with
+`curl -sS -o /dev/null -w '%{http_code}\n' https://harbor.aet.cit.tum.de/v2/`, which prints `401` when the cache
+answers.
+
+The runners also have a Docker registry mirror in `/etc/docker/daemon.json`, `docker-mirror.aet.cit.tum.de:8765`, which
+serves Docker Hub images at the registry root. It is a transparent path for every project that shares the runners,
+but it only applies to images with a Docker Hub name, and the Docker daemon falls back to Docker Hub when the
+mirror does not answer, after a connect timeout on every pull. That is why the Artemis jobs name Harbor explicitly
+instead of relying on it: the helper pulls from `harbor.aet.cit.tum.de/dockerhub-ghr-proxy`, which the mirror does not
+touch, and fails visibly.
+
+The Harbor check above says nothing about the mirror, because they are separate endpoints. Check the mirror on its own
+from a runner when pulls stall. `docker info --format '{{json .RegistryConfig.Mirrors}}'` prints the mirrors the Docker
+daemon actually uses; a change to `/etc/docker/daemon.json` only counts after `systemctl reload docker`. Then
+`curl -sS -o /dev/null -w '%{http_code}\n' https://docker-mirror.aet.cit.tum.de:8765/v2/` prints `200` when each
+mirror answers. A mirror entry that points at a host the runners cannot reach makes every pull slow.
+
+Images that Docker pulls by itself during a job are not covered by the helper or the action. Adding such an image to
+the helper does not help when a command pulls it again: `docker pull`, `docker run --pull=always` and
+`docker compose pull` contact Docker Hub for a Docker Hub name whatever the helper provisioned, and the Testcontainers
+prefix does not affect Docker CLI commands. Replace those pulls with the helper (`--refresh` forces a fresh pull) or
+name the Harbor image directly (`harbor.aet.cit.tum.de/dockerhub-ghr-proxy/library/postgres:18` instead of
+`postgres:18`). The images of a job `container:` or of `services:` are pulled by the runner before the first step runs,
+so neither the helper nor the action can route them; name the Harbor image in the declaration. No workflow declares
+either today. A Docker Hub image in a workflow of a GitHub-hosted runner needs no change, because those runners have
+their own allowance.
 
 ## Concurrency model
 

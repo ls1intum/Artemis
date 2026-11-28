@@ -1,5 +1,5 @@
 <div>
-    <div class="flex flex-col gap-4! p-3!">
+    <div class="flex flex-col gap-4 p-3">
         <h5 class="m-0" jhiTranslate="artemisApp.exerciseActions.accessRepository"></h5>
 
         @let selectedMethod = selectedLabeledAuthenticationMethodData();
@@ -42,7 +42,7 @@
             <div class="flex min-w-0 flex-1">
                 <button
                     type="button"
-                    class="flex items-center gap-2 rounded-s-sm! rounded-e-none! border border-primary bg-primary px-2.5 text-(--tumaet-ui-primary-contrast-color)"
+                    class="flex items-center gap-2 rounded-s-sm rounded-e-none border border-(--border-color)! border-(--primary)! bg-(--primary) px-2.5 text-(--tumaet-ui-primary-contrast-color)"
                     [tumAetUiMenuTrigger]="authenticationMenu"
                     data-testid="authentication-method-menu-trigger"
                 >
@@ -50,13 +50,13 @@
                     <fa-icon [icon]="faCaretDown" size="xs" aria-hidden="true" />
                 </button>
 
-                <div class="min-w-0 flex-1 rounded-e-sm border-y border-e px-4! py-2">
+                <div class="min-w-0 flex-1 rounded-e-sm border-y border-e px-4 py-2">
                     <code class="block truncate" data-testid="clone-url">{{ repositoryDisplayUrl() }}</code>
                 </div>
             </div>
 
             <a
-                class="flex items-center justify-center rounded-sm text-color!"
+                class="flex items-center justify-center rounded-sm text-color"
                 [routerLink]="repositoryViewLink()"
                 data-testid="open-repository-button"
                 target="_blank"
@@ -73,7 +73,7 @@
 
     <button
         type="button"
-        class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3! py-2 enabled:hover:bg-(--tumaet-ui-hover-background)! enabled:hover:text-(--tumaet-ui-accent-color)! disabled:text-state-success!"
+        class="flex w-full cursor-pointer items-center gap-2 border-0 bg-transparent px-3 py-2 enabled:hover:bg-(--tumaet-ui-hover-background) enabled:hover:text-(--tumaet-ui-accent-color) disabled:text-state-success"
         [cdkCopyToClipboard]="repositoryCopyUrl()"
         (cdkCopyToClipboardCopied)="onRepositoryUrlCopied($event)"
         [disabled]="copiedRepositoryUrl()"
@@ -91,7 +91,7 @@
         @if (showAlternatives()) {
             @if (currentIdeLinkData) {
                 <a
-                    class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3! py-2 text-color! no-underline! hover:bg-(--tumaet-ui-hover-background)! hover:text-(--tumaet-ui-accent-color)!"
+                    class="flex w-full items-center gap-2 rounded-sm border-0 bg-transparent px-3 py-2 text-color no-underline! hover:bg-(--tumaet-ui-hover-background) hover:text-(--tumaet-ui-accent-color)"
                     target="hidden-iframe"
                     [href]="currentIdeLinkData.url"
                 >
@@ -107,7 +107,7 @@
             }
             @if (currentTheiaLinkData) {
                 <a
-                    class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3! py-2 text-color! no-underline! hover:bg-(--tumaet-ui-hover-background)! hover:text-(--tumaet-ui-accent-color)!"
+                    class="flex w-full items-center gap-2 rounded-sm border-0 bg-transparent px-3 py-2 text-color no-underline! hover:bg-(--tumaet-ui-hover-background) hover:text-(--tumaet-ui-accent-color)"
                     (click)="startOnlineIDE(currentTheiaLinkData)"
                     #onlineIdeLink
                     role="button"
@@ -122,7 +122,7 @@
             }
             @if (currentSourceTreeUrl) {
                 <a
-                    class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3! py-2 text-color! no-underline! hover:bg-(--tumaet-ui-hover-background)! hover:text-(--tumaet-ui-accent-color)!"
+                    class="flex w-full items-center gap-2 rounded-sm border-0 bg-transparent px-3 py-2 text-color no-underline! hover:bg-(--tumaet-ui-hover-background) hover:text-(--tumaet-ui-accent-color)"
                     target="hidden-iframe"
                     [href]="currentSourceTreeUrl"
                 >

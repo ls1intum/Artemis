@@ -11,7 +11,7 @@
             "updated": "Updated Course with title {{ param }}",
             "deleted": "Deleted Course with title {{ param }}",
             "delete": {
-                "question": "Are you sure you want to permanently delete the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong>? All associated elements will be deleted, including exams, exercises, repositories and build plans. <strong class=\"text-danger\">This action can NOT be undone!</strong>",
+                "question": "Are you sure you want to permanently delete the <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong>? All associated elements will be deleted, including exams, exercises, repositories and build plans. <strong class=\"text-state-danger\">This action can NOT be undone!</strong>",
                 "testCourse": "test course",
                 "realCourse": "real course",
                 "typeNameToConfirm": "Please type in the name of the course to confirm.",
@@ -58,7 +58,7 @@
                 }
             },
             "reset": {
-                "question": "Are you sure you want to reset the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong>? This will remove all student data including participations, submissions, posts, and enrollments. Students, tutors, and editors will be removed from the course - only instructors will remain. The course structure (exercises, lectures, exams, competencies, tutorial group configuration) will be preserved for later reuse. <strong class=\"text-danger\">This action can NOT be undone!</strong>",
+                "question": "Are you sure you want to reset the <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong>? This will remove all student data including participations, submissions, posts, and enrollments. Students, tutors, and editors will be removed from the course - only instructors will remain. The course structure (exercises, lectures, exams, competencies, tutorial group configuration) will be preserved for later reuse. <strong class=\"text-state-danger\">This action can NOT be undone!</strong>",
                 "testCourse": "test course",
                 "realCourse": "real course",
                 "typeNameToConfirm": "Please type in the name of the course to confirm.",
@@ -466,7 +466,7 @@
             "assessmentDueDate": "Assessment Due",
             "cleanup": {
                 "title": "Cleanup",
-                "question": "Are you sure you want to clean up the course <strong>{{ title }}</strong>? This will delete all student programming exercise repositories for course <strong>exercises</strong> and <strong>exams</strong>. This action can <strong class='text-danger'>NOT</strong> be undone!"
+                "question": "Are you sure you want to clean up the course <strong>{{ title }}</strong>? This will delete all student programming exercise repositories for course <strong>exercises</strong> and <strong>exams</strong>. This action can <strong class='text-state-danger'>NOT</strong> be undone!"
             },
             "detail": {
                 "title": "Course Details:",
@@ -593,6 +593,34 @@
                     }
                 },
                 "replayWizard": "Replay Setup Wizard"
+            },
+            "initialCommitAuthor": {
+                "label": "Author of the first commit",
+                "hint": "Choose who is shown as the author of the first commit that Artemis creates: in the template, solution and test repository of programming exercises that you create or import from a file, and in the repository of each student that Artemis creates from now on. Existing repositories keep their history. With the first option nothing is rewritten: a student repository keeps the author of the first commit of the template repository, which can differ from the exercise creator.",
+                "creator": {
+                    "label": "The user who creates the exercise",
+                    "description": "Nothing is rewritten. Repositories keep the author they were created with."
+                },
+                "placeholder": {
+                    "label": "The Artemis placeholder",
+                    "description": "The name and email address that the Artemis server configures for commits it makes itself."
+                },
+                "custom": {
+                    "label": "A name and email address of your choice",
+                    "description": "For example a course team. Use an address that you are happy to show to students."
+                },
+                "name": {
+                    "label": "Author name",
+                    "required": "Enter a name.",
+                    "tooLong": "Use at most {{ max }} characters.",
+                    "invalid": "The name must not contain < or > or line breaks."
+                },
+                "email": {
+                    "label": "Author email address",
+                    "required": "Enter an email address.",
+                    "tooLong": "Use at most {{ max }} characters.",
+                    "invalid": "Enter a valid email address."
+                }
             },
             "studentWelcomeContext": {
                 "label": "Student Home: learning approach",

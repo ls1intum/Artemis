@@ -153,7 +153,7 @@ describe('ChecklistPanelComponent', () => {
 
     describe('Category chips', () => {
         it('colors a known category in any case and falls back to the neutral color', () => {
-            expect(component.getCategoryColorClass('CLARITY')).toBe('bg-primary text-white');
+            expect(component.getCategoryColorClass('CLARITY')).toBe('bg-(--primary) text-white');
             expect(component.getCategoryColorClass('coherence')).toBe('bg-state-info text-white');
             expect(component.getCategoryColorClass('Completeness')).toBe('bg-state-success text-white');
             expect(component.getCategoryColorClass('SOMETHING_ELSE')).toBe('bg-(--tumaet-ui-muted-color) text-white');

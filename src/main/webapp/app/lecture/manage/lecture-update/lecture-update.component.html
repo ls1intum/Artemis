@@ -65,12 +65,7 @@
                     [attr.inert]="recordingSaving() || savedRecording() ? '' : null"
                 >
                     <div class="flex flex-col gap-1">
-                        <h3
-                            id="artemisApp.lecture.sections.title"
-                            tabindex="-1"
-                            class="m-0 scroll-mt-4 text-lg font-semibold"
-                            jhiTranslate="artemisApp.lecture.sections.title"
-                        ></h3>
+                        <h3 id="artemisApp.lecture.sections.title" tabindex="-1" class="m-0 scroll-mt-4" jhiTranslate="artemisApp.lecture.sections.title"></h3>
                         <p class="lecture-update-hint m-0 text-sm" jhiTranslate="artemisApp.lecture.sections.titleDescription"></p>
                     </div>
                     <jhi-lecture-title-channel-name [lecture]="lecture()" (lectureChange)="onLectureChange($event)" />
@@ -98,7 +93,7 @@
                             variant="text"
                             size="small"
                             type="button"
-                            class="inline-flex cursor-help border-0 p-0"
+                            class="inline-flex border-0 p-0!"
                             [attr.aria-label]="tutorialLectureTooltip"
                             [tumAetUiTooltip]="tutorialLectureTooltip"
                             tumAetUiTooltipDescribesHost="false"
@@ -117,7 +112,7 @@
                 </section>
                 @if (!isEditMode() && (recordingAvailable() || recording() || savedRecording())) {
                     <section class="lecture-update-section flex flex-col gap-2 rounded-lg p-3.5 sm:p-6" aria-labelledby="lecture-recording-title">
-                        <h3 id="lecture-recording-title" class="m-0 text-lg font-semibold" jhiTranslate="artemisApp.tumLiveUpload.optionalRecording"></h3>
+                        <h3 id="lecture-recording-title" class="m-0" jhiTranslate="artemisApp.tumLiveUpload.optionalRecording"></h3>
                         <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.tumLiveUpload.recordingHint"></p>
                         <jhi-tum-live-file-picker
                             [(file)]="recording"

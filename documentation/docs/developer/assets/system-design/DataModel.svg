@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" xmlns:xl="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="86 223 592 891" width="592" height="891">
+<svg version="1.1" xmlns:xl="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" xmlns:dc="http://purl.org/dc/elements/1.1/" viewBox="60 195 618 919" width="618" height="919">
   <defs>
     <font-face font-family="Helvetica" font-size="12" units-per-em="1000" underline-position="-75.68359" underline-thickness="49.316406" slope="0" x-height="522.9492" cap-height="717.28516" ascent="770.0195" descent="-229.98047" font-weight="400">
       <font-face-src>
@@ -68,7 +68,7 @@
         <title>Class with Attributes</title>
         <g id="Graphic_24">
           <title>Attributes</title>
-          <rect x="354.5566" y="251.81426" width="129.875" height="134.0712" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <rect x="354.5566" y="251.81426" width="129.875" height="92.0712" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
           <text transform="translate(360.5566 257.81426)" fill="black">
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">title</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="25">shortName</tspan>
@@ -76,9 +76,6 @@
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="53">endDate</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="67">semester</tspan>
             <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="81">onlineCourse</tspan>
-            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="95">studentGroupName</tspan>
-            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="109">taGroupName</tspan>
-            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="123">instructorGroupName</tspan>
           </text>
         </g>
         <g id="Graphic_23">
@@ -189,7 +186,7 @@
         </g>
       </g>
       <g id="Line_59">
-        <path d="M 419.4941 386.38546 L 419.4941 393.38546 L 419.44094 428.7822 L 419.44094 435.7822" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+        <path d="M 419.4941 344.38546 L 419.4941 351.38546 L 419.44094 428.7822 L 419.44094 435.7822" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
       </g>
       <g id="Graphic_58">
         <text transform="translate(405.37435 422.67926)" fill="black">
@@ -197,7 +194,7 @@
         </text>
       </g>
       <g id="Graphic_57">
-        <text transform="translate(426.12835 391.20465)" fill="black">
+        <text transform="translate(426.12835 349.20465)" fill="black">
           <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
         </text>
       </g>
@@ -445,7 +442,7 @@
         </text>
       </g>
       <g id="Graphic_149">
-        <text transform="translate(378.28913 390.88546)" fill="black">
+        <text transform="translate(378.28913 348.88546)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="6.179779" y="10">course</tspan>
         </text>
       </g>
@@ -764,6 +761,59 @@
       <g id="Graphic_219">
         <text transform="translate(478.362 675.79925)" fill="black">
           <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="41.180473" y="10">submissions</tspan>
+        </text>
+      </g>
+      <g>
+        <title>Class with Attributes</title>
+        <g>
+          <title>Attributes</title>
+          <rect x="546.5" y="251.81426" width="126" height="22" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(552.5 255.81426)" fill="black">
+            <tspan font-family="Helvetica" font-size="12" font-weight="400" fill="black" x="0" y="11">role: CourseRole</tspan>
+          </text>
+        </g>
+        <g>
+          <title>Class Name</title>
+          <rect x="546.5" y="224.38546" width="126" height="27.4288" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+          <text transform="translate(552.5 230.09986)" fill="black">
+            <tspan font-family="Helvetica" font-size="13" font-weight="700" fill="black" x="6.5" y="13">UserCourseRole</tspan>
+          </text>
+        </g>
+      </g>
+      <g>
+        <path d="M 484.4316 261 L 546.5 261" fill="none" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g>
+        <text transform="translate(490 248)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g>
+        <text transform="translate(490 264)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">course</tspan>
+        </text>
+      </g>
+      <g>
+        <text transform="translate(536 264)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g>
+        <path d="M 609.5 224.38546 L 609.5 207 L 68 207 L 68 801.7 L 158 801.7" fill="none" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"/>
+      </g>
+      <g>
+        <text transform="translate(615 212)" fill="black">
+          <tspan font-family="Zapf Dingbats" font-size="9" font-weight="400" fill="black" x="0" y="7">✱</tspan>
+        </text>
+      </g>
+      <g>
+        <text transform="translate(147 789)" fill="black">
+          <tspan font-family="Helvetica" font-size="9" font-weight="400" fill="black" x="0" y="9">1</tspan>
+        </text>
+      </g>
+      <g>
+        <text transform="translate(133 805)" fill="black">
+          <tspan font-family="Helvetica" font-size="10" font-weight="400" fill="black" x="0" y="10">user</tspan>
         </text>
       </g>
     </g>

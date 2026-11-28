@@ -9,7 +9,8 @@ import { ExerciseButtonStatus } from 'app/exam/overview/exam-navigation-sidebar/
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-exercise-header/exam-exercise-header.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { facSaveSuccess, facSaveWarning } from 'app/foundation/icons/icons';
@@ -17,7 +18,7 @@ import { facSaveSuccess, facSaveWarning } from 'app/foundation/icons/icons';
 @Component({
     selector: 'jhi-exam-exercise-overview-page',
     templateUrl: './exam-exercise-overview-page.component.html',
-    styleUrls: ['./exam-exercise-overview-page.scss'],
+    styleUrls: ['./exam-exercise-overview-page.css'],
     imports: [ExamExerciseHeaderComponent, TranslateDirective, FaIconComponent, TumAetUiTableDirective, TumAetUiTooltipDirective, UpdatingResultComponent, ArtemisTranslatePipe],
 })
 export class ExamExerciseOverviewPageComponent extends ExamPageComponent implements OnInit {

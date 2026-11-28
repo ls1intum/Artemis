@@ -3,15 +3,15 @@
     [ngClass]="{ 'mx-0': !isThreadSidebar(), 'pinned-message': isPinned(), 'is-saved': !isConsecutive() && posting()?.isSaved, 'non-consecutive': !isConsecutive() }"
 >
     @if (posting()?.isSaved) {
-        <div jhi-saved-posting-banner class="post-is-saved-message post-content-padding fs-xx-small py-1" [consecutive]="isConsecutive()"></div>
+        <div jhi-saved-posting-banner class="post-is-saved-message post-content-padding text-[0.625rem] py-1" [consecutive]="isConsecutive()"></div>
     }
     @if (isConsecutive()) {
-        <span class="post-time fs-small" [tumAetUiTooltip]="posting()?.creationDate | artemisDate: 'time'" tumAetUiTooltipDescribesHost="false">
+        <span class="post-time text-[0.875rem]" [tumAetUiTooltip]="posting()?.creationDate | artemisDate: 'time'" tumAetUiTooltipDescribesHost="false">
             {{ posting()?.creationDate | artemisDate: 'time' }}
         </span>
     }
     @if (!isConsecutive()) {
-        <div class="ps-4!">
+        <div class="ps-4">
             <jhi-posting-header
                 [previewMode]="previewMode()"
                 [readOnlyMode]="readOnlyMode()"
@@ -180,14 +180,14 @@
 <!-- Right-Click Dropdown -->
 @if (showDropdown()) {
     <div
-        class="fixed z-1000 flex min-w-40 flex-col rounded-md border border-border bg-surface-raised py-2 text-color shadow-md"
+        class="fixed z-1000 flex min-w-40 flex-col rounded-md border border-(--border-color) bg-surface-raised py-2 text-color shadow-md"
         [style.top.px]="dropdownPosition().y"
         [style.left.px]="dropdownPosition().x"
         data-testid="posting-context-menu"
     >
         <button
             type="button"
-            class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-color hover:bg-surface-hover"
+            class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color"
             (click)="addReaction($event)"
             data-testid="posting-menu-react"
         >
@@ -197,7 +197,7 @@
         @if (canPin()) {
             <button
                 type="button"
-                class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-color hover:bg-surface-hover"
+                class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color"
                 (click)="togglePin()"
                 data-testid="posting-menu-pin"
             >
@@ -210,7 +210,7 @@
         @if (mayEdit()) {
             <button
                 type="button"
-                class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-color hover:bg-surface-hover"
+                class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color"
                 (click)="editPosting()"
                 data-testid="posting-menu-edit"
             >
@@ -221,7 +221,7 @@
         @if (mayDelete()) {
             <button
                 type="button"
-                class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-color hover:bg-surface-hover"
+                class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color"
                 (click)="deletePost()"
                 data-testid="posting-menu-delete"
             >
@@ -231,7 +231,7 @@
         }
         <button
             type="button"
-            class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-color hover:bg-surface-hover"
+            class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color"
             (click)="isCommunicationPage() ? openThread.emit() : reactionsBarComponent()?.openAnswerView()"
             data-testid="posting-menu-reply"
         >
@@ -240,7 +240,7 @@
         </button>
         <button
             type="button"
-            class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-color hover:bg-surface-hover"
+            class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color"
             (click)="toggleSavePost()"
             data-testid="posting-menu-bookmark"
         >
@@ -249,7 +249,7 @@
         </button>
         <button
             type="button"
-            class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-color hover:bg-surface-hover"
+            class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color"
             (click)="forwardMessage()"
             data-testid="posting-menu-forward"
         >
@@ -259,7 +259,7 @@
         @if (canMarkAsUnread()) {
             <button
                 type="button"
-                class="flex cursor-pointer items-center border-0 bg-transparent px-4! py-1 text-start whitespace-nowrap text-color hover:bg-surface-hover"
+                class="flex cursor-pointer items-center border-0 bg-transparent px-4 py-1 text-left whitespace-nowrap text-color"
                 (click)="markMessageAsUnread()"
                 data-testid="posting-menu-mark-unread"
             >

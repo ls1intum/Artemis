@@ -7,6 +7,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.concurrent.CancellationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,6 +131,11 @@ public class DockerBuildJobRunner implements BuildJobRunner {
             return result;
         }
         catch (LocalCIException e) {
+            throw e;
+        }
+        catch (CancellationException e) {
+            // The build was cancelled, for example because it timed out, and its container is being stopped. That is the expected end of the execution, not a failure of Docker.
+            log.info("Docker execution {} was cancelled: {}", containerName, e.getMessage());
             throw e;
         }
         catch (Exception e) {

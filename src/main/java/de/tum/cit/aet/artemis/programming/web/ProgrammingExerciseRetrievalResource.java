@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AgentScope;
 import de.tum.cit.aet.artemis.core.security.allowedScopes.AllowedScopes;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -52,6 +53,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.dto.AuxiliaryRepositoryDTO;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseListItemDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseRepositoriesDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
@@ -59,6 +61,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryLocationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
@@ -109,6 +112,8 @@ public class ProgrammingExerciseRetrievalResource {
 
     private final RepositoryParticipationService repositoryParticipationService;
 
+    private final ProgrammingExerciseRepositoryLocationService programmingExerciseRepositoryLocationService;
+
     public ProgrammingExerciseRetrievalResource(ProgrammingExerciseService programmingExerciseService, ProgrammingExerciseRepository programmingExerciseRepository,
             CourseRepository courseRepository, UserRepository userRepository, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
             ExerciseService exerciseService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
@@ -116,7 +121,8 @@ public class ProgrammingExerciseRetrievalResource {
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, RepositoryCheckoutService repositoryCheckoutService,
             RepositoryParticipationService repositoryParticipationService, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
-            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository, ProgrammingExerciseRepositoryLocationService programmingExerciseRepositoryLocationService) {
+        this.programmingExerciseRepositoryLocationService = programmingExerciseRepositoryLocationService;
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.programmingExerciseService = programmingExerciseService;
@@ -158,6 +164,27 @@ public class ProgrammingExerciseRetrievalResource {
             exerciseDTOs.add(ProgrammingExerciseListItemDTO.of(exercise));
         }
         return ResponseEntity.ok().body(exerciseDTOs);
+    }
+
+    /**
+     * GET /programming-exercises/:exerciseId/repositories : where the git repositories of the exercise are, for a coding agent.
+     *
+     * @param exerciseId the id of the programming exercise
+     * @return the ResponseEntity with status 200 (OK) and the clone addresses, the branch, and whether a push is allowed now
+     */
+    @GetMapping("programming-exercises/{exerciseId}/repositories")
+    @EnforceAtLeastEditorInExercise
+    @AllowedScopes(AgentScope.PROGRAMMING_REPOSITORIES)
+    @Operation(summary = "Locate the git repositories of a programming exercise", description = """
+            Returns the HTTPS addresses of the template, solution, tests and auxiliary repositories, the branch to use and the user name. \
+            Clone with git over HTTPS, using the user name from the response and the personal access token as the password, which \
+            needs the scope programming:repositories. A token opens only these repositories, never those of students or of exams. \
+            A push is accepted only while writable is true: the exercise must not be visible to students and must have no participations. \
+            Pushing the tests repository starts a build, which refreshes the test cases.""")
+    public ResponseEntity<ProgrammingExerciseRepositoriesDTO> getRepositories(@PathVariable long exerciseId) {
+        log.debug("REST request to locate the repositories of programming exercise {}", exerciseId);
+        String login = SecurityUtils.getCurrentUserLogin().orElseThrow();
+        return ResponseEntity.ok(programmingExerciseRepositoryLocationService.locate(exerciseId, login));
     }
 
     /**

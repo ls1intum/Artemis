@@ -2,7 +2,7 @@
 id: integrated-code-lifecycle
 title: Integrated Code Lifecycle
 sidebar_label: Integrated Code Lifecycle
-last_reviewed: 2026-11-06
+last_reviewed: 2026-11-25
 ---
 
 import Callout from "../../../src/components/Callout/Callout";
@@ -138,6 +138,15 @@ after you signed in; see [Signing in again](/student/getting-started/account#sig
 Revoking a token stops it working immediately, which is what to do if one has ended up somewhere it should not be —
 a chat message, a screenshot, a committed file. You are not locked out: the next time you open that exercise's clone
 dialog, Artemis issues a fresh one.
+
+<Callout variant={CalloutVariant.info}>
+
+  Earlier versions of Artemis let you create one personal access token that worked for every repository you can reach.
+  That token is deprecated and cannot be created any more, because a single leak exposed all of your repositories.
+  If you still hold one, **User Settings → Credentials** shows it for as long as it exists and lets you delete it, which you
+  should do if it leaked or you do not need it. Use the token of a single repository instead.
+
+</Callout>
 
 <Callout variant={CalloutVariant.warning}>
 

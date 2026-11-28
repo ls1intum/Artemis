@@ -32,6 +32,10 @@ on:
         description: 'Tag name of the release. Empty when is_release is false.'
         required: true
         type: string
+      pr_number:
+        description: 'PR number for chunk-eager-quality''s comment posting; 0 when not a PR (matches ci-e2e.yml''s convention).'
+        required: true
+        type: number
 
 # Default-deny at workflow level; each job grants only what it needs.
 permissions: {}
@@ -78,7 +82,12 @@ jobs:
       - name: Build Angular Client
         # Build the Angular client separately so that Node.js/esbuild get full system
         # memory without competing with the Gradle JVM (which reserves up to 4g).
-        # --optimization=false works around an esbuild crash during script optimization.
+        #
+        # The client that goes into the WAR is built by `pnpm run webapp:prod`, the command that the
+        # Dockerfile (through the `webapp` Gradle task) runs for a release image. This WAR is what
+        # the test servers, staging and production run: staging and production are VMs that Ansible
+        # gives a WAR, so the users get exactly the client built here. Do not build it with
+        # `--optimization=false`: the client would be unminified and split into about 150 chunks.
         #
         # The result is moved to build/webapp-dist rather than left at the Angular config's
         # default build/resources/main/static: Gradle deletes any declared task-output directory
@@ -88,7 +97,50 @@ jobs:
         # output directory, anything written there before Gradle even starts would be wiped again
         # before the first task runs. build/webapp-dist is not declared as any task's output, so
         # it survives; the `webapp` Gradle task picks it up from there.
-        run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false && mv build/resources/main/static build/webapp-dist
+        #
+        # browser-stats.json (the esbuild metafile for the eager-chunk report below) is moved out first:
+        # the `webapp` task copies everything in build/webapp-dist into the WAR, where it would
+        # otherwise be served publicly.
+        run: |
+          pnpm run clean-www && pnpm run prebuild
+          # First an unoptimized build, only for its esbuild metafile: the eager-chunk guard reads
+          # the module graph of that build, and only the metafile is kept. The `stats` configuration
+          # of angular.json turns the optimization off and has no limit for the size of the initial
+          # bundle: that limit (`budgets` of `production`) applies to the client that ships, below.
+          pnpm exec ng build --configuration production,stats
+          mv build/resources/main/static/browser-stats.json build/client-stats.json || echo "::warning::browser-stats.json is missing; the eager-chunk report is skipped"
+          # Then the client that ships, which replaces the output of the first build.
+          pnpm run webapp:prod
+          mv build/resources/main/static build/webapp-dist
+      - name: Generate eager-chunk loading report
+        # Feeds the chunk-eager-quality job below (PR runs) and, on develop pushes, becomes the
+        # next baseline that PR runs compare against. See supporting_scripts/chunk-eager-loading/README.md.
+        #
+        # Advisory: this step runs before `Build .war`, so a failure here (e.g. malformed stats) must
+        # not stop WAR packaging. A missing report only skips the comparison.
+        continue-on-error: true
+        #
+        # CHUNK_REPORT_SHA/_BRANCH override GITHUB_SHA/GITHUB_REF_NAME, which for pull_request
+        # runs describe a synthetic merge commit (ref literally becomes "<pr-number>/merge"), not
+        # the PR's real head -- confirmed by inspecting a real run's uploaded artifact. `inputs.commit_sha`
+        # and `github.head_ref` resolve correctly in both the PR and push (develop) cases;
+        # `github.head_ref` is empty on push events, so the script's own GITHUB_REF_NAME fallback
+        # (correctly "develop" there, no synthetic ref involved) takes over.
+        env:
+          CHUNK_REPORT_SHA: ${{ inputs.commit_sha }}
+          CHUNK_REPORT_BRANCH: ${{ github.head_ref }}
+        run: node supporting_scripts/chunk-eager-loading/analyze_eager_chunks.mjs build/client-stats.json --out chunk-eager-report.json
+      - name: Upload eager-chunk report artifact
+        # Advisory, like the generation step above: an upload failure must not stop `Build .war`.
+        continue-on-error: true
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: chunk-eager-report
+          path: chunk-eager-report.json
+          if-no-files-found: error
+          # A PR's report is only read by its own comparison job. A develop report is the baseline
+          # for any PR whose merge-base it is, so it is kept for the default 90 days.
+          retention-days: ${{ inputs.is_pr && 14 || 90 }}
       - name: Build .war
         # SBOM generation (cdxgen + cyclonedxBom) adds ~60s to a cold WAR build and is only
         # needed for release-eligible artifacts, so `-Psbom` is gated behind `is_release_build`
@@ -128,21 +180,190 @@ jobs:
             exit 1
           fi
 
-          war_entries="$(jar tf "${wars[0]}")"
-          if ! grep -qx 'WEB-INF/classes/static/index.html' <<< "$war_entries"; then
-            echo "::error::${wars[0]} does not contain WEB-INF/classes/static/index.html. The Angular client is missing from the deployable WAR."
-            exit 1
-          fi
-          if ! grep -Eq '^WEB-INF/classes/static/main-.*\.js$' <<< "$war_entries"; then
-            echo "::error::${wars[0]} does not contain a WEB-INF/classes/static/main-*.js bundle. The Angular client build is incomplete."
-            exit 1
-          fi
+          node .github/scripts/verify-war-client.mjs "${wars[0]}"
       - name: Upload Artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Artemis.war
           path: build/libs/Artemis-*.war
           if-no-files-found: error
+
+  # Compares this PR's eager-chunk report (uploaded by build-war above) against the report of the
+  # develop commit the PR branched from (the merge-base), and posts/updates a PR comment with the
+  # result. No dedicated build: reuses build-war's own build, and the baseline is whatever the
+  # develop push of that commit already computed (see the "Generate eager-chunk loading report"
+  # step above), not rebuilt here.
+  # Advisory only (never fails the build) -- this is a brand-new, unproven check; see
+  # supporting_scripts/chunk-eager-loading/README.md before making it build-blocking.
+  chunk-eager-quality:
+    name: Client Eager-Chunk Loading Report
+    needs: build-war
+    if: ${{ inputs.is_pr }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Advisory report: no failure in this job (an API error, a missing artifact) may fail the
+    # required Build check.
+    continue-on-error: true
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '${{ env.node }}'
+      - name: Download this PR's report
+        # Missing when report generation or upload failed in build-war. Job-level continue-on-error
+        # would not continue the later steps, so without this the old comment would stay up.
+        # The diff step then fails on the missing file and the comment step replaces the comment.
+        continue-on-error: true
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: chunk-eager-report
+          path: pr-report
+      - name: Resolve the commit this branch forked from develop
+        id: develop-sha
+        # The merge-base, not develop's tip: a PR that is behind develop would otherwise be
+        # charged with every client change merged to develop since it branched. If the lookup
+        # fails the output stays empty and the comparison is skipped.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ inputs.commit_sha }}
+        run: |
+          set -Eeuo pipefail
+          sha=$(gh api "repos/${{ github.repository }}/compare/develop...${HEAD_SHA}" --jq .merge_base_commit.sha || true)
+          echo "sha=${sha}" >> "$GITHUB_OUTPUT"
+      - name: Resolve develop's report run
+        id: resolve-develop-run
+        if: steps.develop-sha.outputs.sha != ''
+        # Bootstraps false on the very first run of this check (before this PR has ever merged,
+        # no develop push has published a chunk-eager-report yet) -- don't fail the job over it,
+        # just skip the comparison. Self-resolves once this PR merges and develop rebuilds once.
+        continue-on-error: true
+        uses: ./.github/actions/resolve-artifact-run
+        with:
+          workflow: ci.yml
+          sha: ${{ steps.develop-sha.outputs.sha }}
+          artifact-name: chunk-eager-report
+          branch: develop
+          token: ${{ github.token }}
+      - name: Download develop's report
+        if: steps.resolve-develop-run.outcome == 'success'
+        # Same as the PR report download: a failure must reach the comparison-failure handler.
+        continue-on-error: true
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: chunk-eager-report
+          path: develop-report
+          run-id: ${{ steps.resolve-develop-run.outputs.run-id }}
+          github-token: ${{ github.token }}
+      - name: Diff against develop
+        if: steps.resolve-develop-run.outcome == 'success'
+        id: diff
+        # diff_eager_chunks.mjs exits 1 when it finds a regression -- that's an expected,
+        # meaningful outcome (advisory reporting, not a merge gate), not a step failure. Without
+        # this, a *detected* regression would fail this step and skip every step after it
+        # (their `if:` conditions are implicitly ANDed with success()) -- silencing the comment
+        # exactly when there's something to report.
+        continue-on-error: true
+        run: |
+          node supporting_scripts/chunk-eager-loading/diff_eager_chunks.mjs \
+            pr-report/chunk-eager-report.json \
+            --baseline develop-report/chunk-eager-report.json \
+            --out chunk-diff-report.md \
+            --full-out full-report.html
+      - name: Upload the full eager-chunk report
+        # The PR comment shows only the largest parts; the complete report (every import, module and
+        # chunk) is this downloadable page, which the comment links to.
+        if: steps.resolve-develop-run.outcome == 'success'
+        id: upload-full-diff
+        continue-on-error: true
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: chunk-eager-diff-report
+          path: full-report.html
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Find existing PR comment
+        id: find-comment
+        continue-on-error: true  # cosmetic lookup; a transient API blip must not fail the job
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
+        with:
+          result-encoding: string
+          script: |
+            const prNumber = Number(process.env.PR_NUMBER);
+            const marker = '<!-- Chunk Eager-Loading Report -->';
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              per_page: 100,
+            });
+            // Only the workflow's own comment counts; anyone else quoting the marker is ignored.
+            const found = comments.find((c) => c.user?.login === 'github-actions[bot]' && c.body?.includes(marker));
+            return found ? String(found.id) : '';
+      - name: Post eager-chunk report comment
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        continue-on-error: true  # cosmetic PR comment; must not fail the job over an API blip
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
+          EXISTING_COMMENT_ID: ${{ steps.find-comment.outputs.result }}
+          FULL_REPORT_URL: ${{ steps.upload-full-diff.outputs.artifact-url }}
+          BASELINE_RESOLVED: ${{ steps.resolve-develop-run.outcome == 'success' }}
+          HEAD_SHA: ${{ inputs.commit_sha }}
+          BASE_SHA: ${{ steps.develop-sha.outputs.sha }}
+        with:
+          script: |
+            const fs = require('fs');
+            const prNumber = Number(process.env.PR_NUMBER);
+            const existingCommentId = Number(process.env.EXISTING_COMMENT_ID) || null;
+
+            let body;
+            if (process.env.BASELINE_RESOLVED === 'true') {
+              try {
+                body = fs.readFileSync('chunk-diff-report.md', 'utf8');
+              } catch {
+                // The comparison crashed before writing a report. An earlier comment would stay up as
+                // if it still applied, so replace it; never create a comment just to say it failed.
+                if (!existingCommentId) return;
+                body = `### Client Eager-Chunk Loading Report\n➖ Comparison failed for \`${process.env.HEAD_SHA.slice(0, 10)}\`: the report could not be generated. The previous report no longer applies to this commit.`;
+              }
+            } else {
+              // Without a baseline, an earlier report would stay up as if it still applied to this
+              // commit. Replace it with a note; never create a comment just to say nothing was compared.
+              if (!existingCommentId) return;
+              const base = process.env.BASE_SHA ? `the merge-base with develop (\`${process.env.BASE_SHA.slice(0, 10)}\`)` : 'the merge-base with develop';
+              body = `### Client Eager-Chunk Loading Report\n➖ Comparison skipped for \`${process.env.HEAD_SHA.slice(0, 10)}\`: no eager-chunk report is available for ${base}. The previous report no longer applies to this commit.`;
+            }
+            // The full report is a downloadable artifact of this run; without it the link goes to the run.
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            if (process.env.BASELINE_RESOLVED !== 'true') {
+              body += `\n\n🔗 [Workflow Run](${runUrl})`;
+            } else if (process.env.FULL_REPORT_URL) {
+              body += `\n\n---\n📦 [Full report (download)](${process.env.FULL_REPORT_URL}): every route, import, module and chunk, as a page`;
+            } else {
+              body += `\n\n---\n🔗 [Workflow Run](${runUrl}): the full report could not be attached`;
+            }
+            body += `\n<!-- Chunk Eager-Loading Report -->`;
+
+            if (existingCommentId) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                comment_id: existingCommentId, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: prNumber, body,
+              });
+            }
 
   # Release-asset upload, split out so it is the ONLY job holding write scopes (mirrors the
   # save-docker-tag split). Downloads the WAR `build-war` produced, derives its verifiable

@@ -33,7 +33,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-programming-submission-exam',
     templateUrl: './programming-exam-submission.component.html',
-    styleUrl: './programming-exam-submission.component.scss',
+    styleUrl: './programming-exam-submission.component.css',
     providers: [
         { provide: ExamSubmissionComponent, useExisting: ProgrammingExamSubmissionComponent },
         CodeEditorConflictStateService,

@@ -12,7 +12,7 @@
         </div>
     </div>
     <div class="step-body">
-        <div class="grid grid-cols-1 gap-4! mb-4! md:grid-cols-2">
+        <div class="grid grid-cols-1 gap-4 mb-4 md:grid-cols-2">
             <tumaet-ui-form-field class="min-w-0" [label]="'artemisApp.course.maxPoints.title' | artemisTranslate" controlId="onboarding-maxPoints">
                 <jhi-points-input
                     fluid
@@ -56,7 +56,7 @@
             </tumaet-ui-form-field>
         </div>
 
-        <div class="flex items-center gap-4! mb-1">
+        <div class="flex items-center gap-4 mb-1">
             <strong jhiTranslate="artemisApp.course.complaintsEnabled.title"></strong>
             <div class="feature-toggle">
                 <button
@@ -89,8 +89,8 @@
         }
 
         @if (complaintsToggled()) {
-            <div class="ms-6! mb-4!">
-                <div class="grid grid-cols-1 items-end gap-4! mb-2 md:grid-cols-3">
+            <div class="ms-6 mb-4">
+                <div class="grid grid-cols-1 items-end gap-4 mb-2 md:grid-cols-3">
                     <tumaet-ui-form-field class="min-w-0" [label]="'artemisApp.course.maxComplaints.title' | artemisTranslate" controlId="onboarding-maxComplaints">
                         <input
                             [attr.aria-label]="'artemisApp.course.maxComplaints.title' | artemisTranslate"
@@ -131,7 +131,7 @@
             </div>
         }
 
-        <div class="flex items-center gap-4! mb-1">
+        <div class="flex items-center gap-4 mb-1">
             <strong jhiTranslate="artemisApp.course.requestMoreFeedbackEnabled.title"></strong>
             <div class="feature-toggle">
                 <button
@@ -164,7 +164,7 @@
 
         @if (requestMoreFeedbackToggled()) {
             <tumaet-ui-form-field
-                class="ms-6! mb-4!"
+                class="ms-6 mb-4"
                 [label]="'artemisApp.course.maxRequestMoreFeedbackTimeDays.title' | artemisTranslate"
                 controlId="onboarding-maxRequestMoreFeedbackTimeDays"
             >

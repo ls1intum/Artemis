@@ -1,6 +1,6 @@
-<div class="w-full mt-6!">
+<div class="w-full mt-6">
     @if (course() && !course().isAtLeastInstructor) {
-        <div class="flex flex-wrap items-center gap-4! mb-4!">
+        <div class="flex flex-wrap items-center gap-4 mb-4">
             <div role="group" [attr.aria-label]="scopeTranslationKeyRoot() + '.scopeGroup' | artemisTranslate">
                 <button
                     type="button"
@@ -24,7 +24,7 @@
                     severity="primary"
                 >
                     @if (isLoadingAllComplaints()) {
-                        <tumaet-ui-progress-spinner class="h-4 w-4" [ariaLabel]="'loading' | artemisTranslate" />
+                        <tumaet-ui-progress-spinner [ariaLabel]="'loading' | artemisTranslate" />
                     }
                     <span jhiTranslate="artemisApp.complaint.listOfComplaints.scopeAll"></span>
                 </button>
@@ -71,7 +71,7 @@
                     [ngModel]="showAddressedComplaints()"
                     (ngModelChange)="triggerAddressedComplaints()"
                 />
-                <label class="inline-block text-sm" for="field_showAddressedComplaint">
+                <label class="text-sm" for="field_showAddressedComplaint">
                     @if (complaintType() === ComplaintType.COMPLAINT) {
                         <span
                             jhiTranslate="artemisApp.complaint.listOfComplaints.show{{ filterOption() === FILTER_OPTION_ADDRESSED_COMPLAINTS ? 'Only' : '' }}AddressedComplaints"
