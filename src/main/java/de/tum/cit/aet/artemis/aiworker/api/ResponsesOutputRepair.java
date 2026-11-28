@@ -5,20 +5,30 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.messages.AssistantMessage;
 
-import com.openai.models.responses.ResponseOutputItem;
-import com.openai.models.responses.ResponseOutputMessage;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import tools.jackson.core.JsonPointer;
+import tools.jackson.core.JsonToken;
+import tools.jackson.databind.json.JsonMapper;
+
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 
 /** Keeps provider output used for stateless replay in sync with repairs to a Spring AI assistant message. */
 public final class ResponsesOutputRepair {
 
     /** Ordered provider output retained on the assistant message for the next Responses request. */
     public static final String OUTPUT_ITEMS_METADATA_KEY = "openai.responses.output-items";
+
+    private static final JsonPointer NAME = JsonPointer.compile("/name");
+
+    private static final JsonPointer TEXT = JsonPointer.compile("/text");
 
     private ResponsesOutputRepair() {
     }
@@ -80,25 +90,47 @@ public final class ResponsesOutputRepair {
         return repaired;
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private record ItemType(String type) {
+    }
+
     private static Object repairItem(Object original, @Nullable UnaryOperator<String> textRepair, @Nullable UnaryOperator<String> nameRepair) {
-        if (!(original instanceof ResponseOutputItem item)) {
+        if (!(original instanceof String json)) {
             return original;
         }
-        if (item.isFunctionCall() && nameRepair != null) {
-            var call = item.asFunctionCall();
-            String name = nameRepair.apply(call.name());
-            return name.equals(call.name()) ? item : ResponseOutputItem.ofFunctionCall(call.toBuilder().name(name).build());
+        JsonMapper mapper = JsonObjectMapper.get();
+        String type = mapper.readValue(json, ItemType.class).type();
+        if ("message".equals(type) && textRepair != null) {
+            return replaceStrings(json, mapper, ResponsesOutputRepair::isContentText, textRepair);
         }
-        if (item.isMessage() && textRepair != null) {
-            var message = item.asMessage();
-            var parts = new ArrayList<ResponseOutputMessage.Content>(message.content().size());
-            for (var part : message.content()) {
-                var outputText = part.asOutputText();
-                String text = textRepair.apply(outputText.text());
-                parts.add(text.equals(outputText.text()) ? part : ResponseOutputMessage.Content.ofOutputText(outputText.toBuilder().text(text).build()));
+        if ("function_call".equals(type) && nameRepair != null) {
+            return replaceStrings(json, mapper, NAME::equals, nameRepair);
+        }
+        return json;
+    }
+
+    private static String replaceStrings(String json, JsonMapper mapper, Predicate<JsonPointer> field, UnaryOperator<String> repair) {
+        // Splice only the repaired JSON string values. Unknown provider fields, including numeric precision, stay verbatim.
+        StringBuilder result = new StringBuilder();
+        int copied = 0;
+        try (var parser = mapper.createParser(json)) {
+            while (parser.nextToken() != null) {
+                if (!parser.hasToken(JsonToken.VALUE_STRING) || !field.test(parser.streamReadContext().pathAsPointer())) {
+                    continue;
+                }
+                String value = parser.getString();
+                String replacement = repair.apply(value);
+                if (!value.equals(replacement)) {
+                    result.append(json, copied, Math.toIntExact(parser.currentTokenLocation().getCharOffset())).append(mapper.writeValueAsString(replacement));
+                    copied = Math.toIntExact(parser.currentLocation().getCharOffset());
+                }
             }
-            return parts.equals(message.content()) ? item : ResponseOutputItem.ofMessage(message.toBuilder().content(parts).build());
         }
-        return item;
+        return copied == 0 ? json : result.append(json, copied, json.length()).toString();
+    }
+
+    private static boolean isContentText(JsonPointer path) {
+        JsonPointer content = path.matchProperty("content");
+        return content != null && content.getMatchingIndex() >= 0 && TEXT.equals(content.tail());
     }
 }

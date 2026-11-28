@@ -124,9 +124,7 @@ class WorkerContextTest {
     }
 
     @Import(HyperionModel.class)
-    @TestPropertySource(properties = { "artemis.aiworker.workload=hyperion-generation", "artemis.aiworker.profile=java-gradle", "artemis.aiworker.max-concurrent-executions=4",
-            "spring.ai.model.chat=none", "spring.ai.model.audio.transcription=none", "spring.ai.model.audio.speech=none", "spring.ai.model.embedding=none",
-            "spring.ai.model.image=none", "spring.ai.model.moderation=none", "spring.ai.model.decision=none" })
+    @TestPropertySource(properties = { "artemis.aiworker.workload=hyperion-generation", "artemis.aiworker.profile=java-gradle", "artemis.aiworker.max-concurrent-executions=4" })
     abstract static class HyperionChecksTest extends WorkerChecks {
 
         @Test
@@ -136,8 +134,6 @@ class WorkerContextTest {
                     .hasSingleBean(HyperionWorkloadService.class);
             assertThat(context.getEnvironment().getProperty("spring.main.web-application-type")).isEqualTo("none");
             assertThat(context.getEnvironment().getProperty("spring.hazelcast.localInstances")).isEqualTo("false");
-            assertThat(context).doesNotHaveBean("openAiEmbeddingModel").doesNotHaveBean("openAiImageModel").doesNotHaveBean("openAiSdkAudioSpeechModel")
-                    .doesNotHaveBean("openAiSdkAudioTranscriptionModel").doesNotHaveBean("openAiSdkModerationModel").doesNotHaveBean("openAiDecisionModel");
             assertThat(context.getBean(WorkerSettings.class).maxConcurrentExecutions()).isEqualTo(4);
             assertThat(context.getBeanNamesForAnnotation(Controller.class)).isEmpty();
             assertThat(context.getBeanNamesForAnnotation(RestController.class)).isEmpty();
@@ -155,7 +151,7 @@ class WorkerContextTest {
             "artemis.text.enabled=true", "artemis.modeling.enabled=true", "artemis.fileupload.enabled=true", "artemis.lecture.enabled=true", "artemis.tutorialgroup.enabled=true",
             "artemis.user-management.passkey.enabled=true", "artemis.sharing.enabled=true", "artemis.lti.enabled=true", "artemis.athena.enabled=true",
             "artemis.apollon.enabled=true", "artemis.user-management.ldap.enabled=true", "artemis.user-management.saml2.enabled=true", "artemis.theia.enabled=true",
-            "artemis.atlas.atlasllm.enabled=true", "spring.ai.model.chat=openai", "spring.ai.openai.api-key=worker-isolation-test-key" })
+            "artemis.atlas.atlasllm.enabled=true", "artemis.llm.endpoints.test.base-url=http://example.invalid/v1" })
     abstract static class GenericChecksTest extends WorkerChecks {
 
         @Test
@@ -163,13 +159,11 @@ class WorkerContextTest {
             var context = AssertableApplicationContext.get(() -> applicationContext);
             assertWorkerBoundary();
             assertThat(context).hasNotFailed().hasSingleBean(WorkerSupervisorService.class).hasSingleBean(WorkloadApi.class);
-            assertThat(context.getEnvironment().getProperty("spring.ai.model.chat")).isEqualTo("openai");
+            assertThat(context.getEnvironment().getProperty("artemis.llm.endpoints.test.base-url")).isEqualTo("http://example.invalid/v1");
             assertThat(context.getBean(WorkloadApi.class).capability()).isEqualTo(new WorkloadCapabilityDTO("document-check", 1, "plain-text"));
             assertThat(context).doesNotHaveBean(HyperionWorkloadService.class).doesNotHaveBean(ChatModel.class).doesNotHaveBean(AiWorkerApi.class)
                     .doesNotHaveBean(WorkerClientService.class).doesNotHaveBean(WorkerRegistryService.class).doesNotHaveBean(javax.sql.DataSource.class)
                     .doesNotHaveBean(EntityManagerFactory.class).doesNotHaveBean(ServletWebServerFactory.class);
-            assertThat(context).doesNotHaveBean("openAiEmbeddingModel").doesNotHaveBean("openAiImageModel").doesNotHaveBean("openAiSdkAudioSpeechModel")
-                    .doesNotHaveBean("openAiSdkAudioTranscriptionModel").doesNotHaveBean("openAiSdkModerationModel").doesNotHaveBean("openAiDecisionModel");
             assertThat(context.getBeanNamesForAnnotation(Controller.class)).isEmpty();
             assertThat(context.getBeanNamesForAnnotation(RestController.class)).isEmpty();
         }

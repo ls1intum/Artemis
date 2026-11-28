@@ -3,7 +3,8 @@ package de.tum.cit.aet.artemis.hyperion.runtime.agent;
 import java.time.Duration;
 
 import org.jspecify.annotations.Nullable;
-import org.springframework.ai.openai.OpenAiChatOptions;
+
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 
 /**
  * Fully resolved immutable settings for one generation run. Request bounds can only narrow these values through {@link #tightenedBy}.
@@ -24,11 +25,11 @@ import org.springframework.ai.openai.OpenAiChatOptions;
  * @param repairLlmPreset         optional LLM preset for one bounded repair handoff, resolved by name like {@code llmPreset}; {@code null} disables the handoff
  */
 public record HyperionGenerationSettings(String name, @Nullable String label, int maxTurns, Duration maxJobDuration, long maxTokensPerJob, boolean stagedGeneration,
-        String stagedContext, int contextWindowTokens, String llmPreset, @Nullable OpenAiChatOptions chatOptions, boolean engineDefaults, boolean providerOptionsOverride,
+        String stagedContext, int contextWindowTokens, String llmPreset, @Nullable LlmChatOptions chatOptions, boolean engineDefaults, boolean providerOptionsOverride,
         @Nullable String repairLlmPreset) {
 
     public HyperionGenerationSettings(String name, @Nullable String label, int maxTurns, Duration maxJobDuration, long maxTokensPerJob, boolean stagedGeneration,
-            String stagedContext, int contextWindowTokens, String llmPreset, @Nullable OpenAiChatOptions chatOptions, boolean engineDefaults, boolean providerOptionsOverride) {
+            String stagedContext, int contextWindowTokens, String llmPreset, @Nullable LlmChatOptions chatOptions, boolean engineDefaults, boolean providerOptionsOverride) {
         this(name, label, maxTurns, maxJobDuration, maxTokensPerJob, stagedGeneration, stagedContext, contextWindowTokens, llmPreset, chatOptions, engineDefaults,
                 providerOptionsOverride, null);
     }

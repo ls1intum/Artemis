@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+
 import java.util.List;
 
 import jakarta.validation.Valid;
@@ -8,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -40,6 +44,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
  * Provides AI-powered code generation capabilities for programming exercises
  * supporting SOLUTION, TEMPLATE, and TESTS repository types.
  */
+@Profile({ PROFILE_LOCALCI, PROFILE_JENKINS })
 @Conditional(HyperionEnabled.class)
 @Lazy
 @FeatureUsage(UserFeature.HYPERION_CODE_GENERATION)

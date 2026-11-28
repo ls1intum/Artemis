@@ -1,10 +1,9 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
+import java.util.Map;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
@@ -17,13 +16,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 
-import com.openai.client.OpenAIClient;
-import com.openai.core.ObjectMappers;
-import com.openai.models.responses.Response;
-import com.openai.models.responses.ResponseCreateParams;
-import com.openai.models.responses.ResponseUsage;
-import com.openai.services.blocking.ResponseService;
-
+import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
@@ -31,9 +24,9 @@ import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
 import de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog;
-import de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesChatModel;
+import de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesTestFixtures;
 
-/** Verifies the SDK decoder, Responses adapter and configured USD accounting together. */
+/** Verifies JSON decoding, Responses adapter and configured USD accounting together. */
 class AtlasResponsesUsageAccountingTest {
 
     @ParameterizedTest
@@ -47,7 +40,7 @@ class AtlasResponsesUsageAccountingTest {
         assertThat(response.getMetadata().getUsage().getPromptTokens()).isEqualTo(2000);
         assertThat(response.getMetadata().getUsage().getCacheReadInputTokens()).isEqualTo(cached);
         assertThat(response.getMetadata().getUsage().getCacheWriteInputTokens()).isEqualTo(written);
-        assertThat(response.getMetadata().getUsage().getNativeUsage()).isInstanceOf(ResponseUsage.class);
+        assertThat(response.getMetadata().getUsage().getNativeUsage()).isInstanceOf(Map.class);
         assertThat(request).isNotNull();
         assertThat(request.numInputTokens()).isEqualTo(2000);
         assertThat(request.numCachedInputTokens()).isEqualTo((int) cached);
@@ -117,12 +110,10 @@ class AtlasResponsesUsageAccountingTest {
                 {"id":"resp-cache","model":"cache-model","status":"completed","output":[],
                  "usage":{"input_tokens":2000,"output_tokens":0,"total_tokens":2000%s%s}}
                 """.formatted(detailsField, costField);
-        Response nativeResponse = ObjectMappers.jsonMapper().readValue(json, Response.class);
-        var client = mock(OpenAIClient.class);
-        var provider = mock(ResponseService.class);
-        when(client.responses()).thenReturn(provider);
-        when(provider.create(any(ResponseCreateParams.class))).thenReturn(nativeResponse);
-        return LlmTestCatalog.tagged(new OpenAiResponsesChatModel(client, new JsonMapper(), "cache-model").call(new Prompt("accounting")), LlmTestCatalog.PRESET);
+        Map<String, Object> reply = new JsonMapper().readValue(json, new TypeReference<>() {
+        });
+        var model = OpenAiResponsesTestFixtures.model("cache-model", request -> reply);
+        return LlmTestCatalog.tagged(model.call(new Prompt("accounting")), LlmTestCatalog.PRESET);
     }
 
     private static LlmProperties.Price rates() {

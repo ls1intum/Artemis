@@ -24,8 +24,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-
-import com.openai.errors.OpenAIInvalidDataException;
+import org.springframework.web.client.RestClientException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
@@ -193,7 +192,7 @@ class HyperionTemplateRepositoryServiceTest {
     void generateSolutionPlan_withNonTransientOpenAiException_throwsNetworkingException() throws Exception {
         when(contextRenderer.getExistingSolutionCode(any(ProgrammingExercise.class), any(GitService.class))).thenReturn("public class Solution {}");
         when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");
-        when(chatModel.call(any(Prompt.class))).thenThrow(new OpenAIInvalidDataException("AI service error"));
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RestClientException("AI service error"));
 
         assertThatThrownBy(() -> templateRepository.generateSolutionPlan(user, exercise, 1L, "logs", "structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues"))
                 .isInstanceOf(NetworkingException.class).hasMessageContaining("AI request failed");

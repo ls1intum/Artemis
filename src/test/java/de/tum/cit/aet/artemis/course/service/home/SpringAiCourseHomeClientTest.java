@@ -26,12 +26,12 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.openai.OpenAiChatOptions;
 
 import com.sun.net.httpserver.HttpServer;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
 import de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog;
 import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
@@ -103,11 +103,10 @@ class SpringAiCourseHomeClientTest {
             exchange.close();
         });
         server.start();
-        // the endpoint keeps its default of three SDK retries; Home's own transport must not use them
+        // the endpoint keeps its default of three transport retries; Home's own transport must not use them
         var endpoint = new LlmProperties.Endpoint(LlmProperties.EndpointType.OPENAI, "http://127.0.0.1:" + server.getAddress().getPort() + "/v1", "test-key",
                 Duration.ofSeconds(300), 3, null, null, null, List.of());
-        var llmClientService = new LlmClientService(new LlmProperties(Map.of("local", endpoint), Map.of("welcome", PRESET), null), new JsonMapper(), ObservationRegistry.NOOP,
-                new SimpleMeterRegistry(), List.of());
+        var llmClientService = new LlmClientService(new LlmProperties(Map.of("local", endpoint), Map.of("welcome", PRESET), null), new JsonMapper(), ObservationRegistry.NOOP);
         try (var client = new SpringAiCourseHomeClient(new CourseHomeAiProperties(true, "LOCAL", "welcome", null, null), llmClientService, new SimpleMeterRegistry())) {
             var result = client.generate("welcome", input);
             assertThat(received.await(10, TimeUnit.SECONDS)).isTrue();
@@ -148,7 +147,7 @@ class SpringAiCourseHomeClientTest {
         }
         var prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(model).call(prompt.capture());
-        assertThat(prompt.getValue().getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+        assertThat(prompt.getValue().getOptions()).isInstanceOfSatisfying(LlmChatOptions.class, options -> {
             assertThat(options.getMaxTokens()).isEqualTo(100);
             assertThat(options.getMaxCompletionTokens()).isNull();
         });
@@ -178,7 +177,7 @@ class SpringAiCourseHomeClientTest {
     private static ChatModel model() {
         // a preset's model carries OpenAI options, into which the chat client merges the request options
         ChatModel model = mock(ChatModel.class);
-        when(model.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
+        when(model.getOptions()).thenReturn(LlmChatOptions.builder().build());
         return model;
     }
 

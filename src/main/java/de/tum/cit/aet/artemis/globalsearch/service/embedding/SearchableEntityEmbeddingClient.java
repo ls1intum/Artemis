@@ -1,34 +1,28 @@
 package de.tum.cit.aet.artemis.globalsearch.service.embedding;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-
-import com.openai.errors.OpenAIException;
-import com.openai.models.embeddings.CreateEmbeddingResponse;
-import com.openai.models.embeddings.Embedding;
-import com.openai.models.embeddings.EmbeddingValue;
+import org.springframework.web.client.RestClientException;
 
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
 import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
+import de.tum.cit.aet.artemis.core.service.llm.LlmEmbeddingResponse;
 import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEmbeddingProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
-import de.tum.cit.aet.artemis.globalsearch.dto.embedding.EmbeddingResponseDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.EmbeddingFailedException;
 
 /**
  * Computes global search embeddings with the preset assigned in {@code embedding-llm-preset}, through {@link LlmClientService}.
  * <p>
  * Two time limits: a short one for user searches, which fall back to keyword search when it is exceeded, and a longer one for index writes,
- * which the outbox retries. SDK retries are disabled for both. Every response is validated before use: one finite, non-zero vector of one
+ * which the outbox retries. The transport sends each embedding request once. Every response is validated before use: one finite, non-zero vector of one
  * dimension per input, in input order. Anything else is an {@link EmbeddingFailedException}, so a write never stores a partial or invalid result.
  */
 @Lazy
@@ -122,70 +116,29 @@ public class SearchableEntityEmbeddingClient {
         if (presetName == null) {
             throw new EmbeddingFailedException("No embedding-llm-preset is assigned");
         }
-        CreateEmbeddingResponse rawResponse;
+        LlmEmbeddingResponse response;
         try {
-            rawResponse = llmClientService.embed(presetName, texts, timeout);
+            response = llmClientService.embed(presetName, texts, timeout);
         }
-        catch (OpenAIException e) {
+        catch (RestClientException e) {
             throw new EmbeddingFailedException("Embedding request failed: " + e.getMessage(), e);
-        }
-        EmbeddingResponseDTO response;
-        try {
-            response = toResponse(rawResponse);
-        }
-        catch (OpenAIException | IllegalStateException | IllegalArgumentException e) {
-            throw new EmbeddingFailedException("Malformed embedding response: " + e.getMessage(), e);
         }
         return validate(response, texts.size());
     }
 
-    /**
-     * Copies the vectors and their positions out of the provider's response; a missing field fails here, before the validation.
-     */
-    private static EmbeddingResponseDTO toResponse(CreateEmbeddingResponse response) {
-        List<EmbeddingResponseDTO.EmbeddingDataDTO> data = new ArrayList<>(response.data().size());
-        for (Embedding embedding : response.data()) {
-            if (embedding == null) {
-                // the validation rejects the empty entry
-                data.add(null);
-                continue;
-            }
-            EmbeddingValue embeddingValue = embedding.embeddingValue();
-            if (embeddingValue.isBase64()) {
-                byte[] decoded = Base64.getDecoder().decode(embeddingValue.asBase64());
-                if (decoded.length % Float.BYTES != 0) {
-                    throw new EmbeddingFailedException("Base64 embedding byte length " + decoded.length + " is not a multiple of " + Float.BYTES);
-                }
-            }
-            List<Float> values = embeddingValue.asFloats();
-            float[] vector = new float[values.size()];
-            for (int i = 0; i < vector.length; i++) {
-                Float value = values.get(i);
-                if (value == null) {
-                    throw new EmbeddingFailedException("Embedding contains an empty value");
-                }
-                vector[i] = value;
-            }
-            // an index beyond int becomes -1, which the validation rejects like any other index outside the inputs
-            long index = embedding.index();
-            data.add(new EmbeddingResponseDTO.EmbeddingDataDTO(index < 0 || index > Integer.MAX_VALUE ? -1 : (int) index, vector));
-        }
-        return new EmbeddingResponseDTO(data);
-    }
-
-    static List<float[]> validate(@Nullable EmbeddingResponseDTO response, int expectedCount) {
+    static List<float[]> validate(@Nullable LlmEmbeddingResponse response, int expectedCount) {
         if (response == null || response.data() == null || response.data().size() != expectedCount) {
             throw new EmbeddingFailedException("Expected " + expectedCount + " embeddings, got " + (response == null || response.data() == null ? 0 : response.data().size()));
         }
         float[][] vectors = new float[expectedCount][];
-        for (EmbeddingResponseDTO.EmbeddingDataDTO item : response.data()) {
+        for (LlmEmbeddingResponse.Entry item : response.data()) {
             if (item == null) {
                 throw new EmbeddingFailedException("Empty entry in the embedding response");
             }
-            if (item.index() < 0 || item.index() >= expectedCount || vectors[item.index()] != null) {
+            if (item.index() == null || item.index() < 0 || item.index() >= expectedCount || vectors[item.index().intValue()] != null) {
                 throw new EmbeddingFailedException("Invalid or duplicate embedding index " + item.index());
             }
-            vectors[item.index()] = requireValid(item.embedding());
+            vectors[item.index().intValue()] = requireValid(item.embedding());
         }
         int dimension = vectors[0].length;
         for (float[] vector : vectors) {

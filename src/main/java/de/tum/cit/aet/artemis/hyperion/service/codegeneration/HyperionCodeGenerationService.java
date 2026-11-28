@@ -19,15 +19,13 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.openai.errors.InternalServerException;
-import com.openai.errors.OpenAIException;
-import com.openai.errors.OpenAIIoException;
-import com.openai.errors.OpenAIRetryableException;
-import com.openai.errors.RateLimitException;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.exc.MismatchedInputException;
@@ -37,6 +35,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.exception.LlmResponseException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
@@ -474,10 +473,17 @@ public abstract class HyperionCodeGenerationService {
             storeTokenUsage(user, exercise, courseId, prompt, chatResponse);
             return response;
         }
-        catch (OpenAIIoException | OpenAIRetryableException | RateLimitException | InternalServerException e) {
+        catch (ResourceAccessException e) {
             throw new NetworkingException("Temporary AI service issue. Please retry.", e);
         }
-        catch (OpenAIException e) {
+        catch (LlmResponseException e) {
+            throw new NetworkingException("AI response processing failed. Please retry.", e);
+        }
+        catch (RestClientException e) {
+            if (e instanceof RestClientResponseException response && (response.getStatusCode().is5xxServerError() || response.getStatusCode().value() == 429
+                    || response.getStatusCode().value() == 408 || response.getStatusCode().value() == 409)) {
+                throw new NetworkingException("Temporary AI service issue. Please retry.", e);
+            }
             throw new NetworkingException("AI request failed due to configuration or input. Check model and request.", e);
         }
         catch (IllegalArgumentException e) {

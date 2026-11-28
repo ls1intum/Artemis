@@ -2,7 +2,7 @@
 id: hyperion
 title: Hyperion Service
 sidebar_label: Hyperion Setup
-last_reviewed: 2026-11-20
+last_reviewed: 2026-11-28
 ---
 
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
@@ -23,6 +23,8 @@ Hyperion extends Artemis with AI-assisted authoring features. For programming ex
 ## Enable the Hyperion module
 
 Hyperion is disabled by default. Set `artemis.hyperion.enabled=true` on a core node to enable AI help for problem statements, quizzes, FAQs, and quiz variants. This does not enable programming exercise generation. That workflow also needs `artemis.hyperion.exercise-generation.enabled=true`, LocalCI, LocalVC, and an AI Worker. When generation is enabled anywhere in a deployment, all writer nodes must enable cluster fencing through the selected distributed provider. Default-off deployments do not claim generation slots.
+
+Generating template, solution, or test code for an existing programming exercise requires an active LocalCI or Jenkins profile to build the generated code. Other authoring features, such as FAQ rewriting and quiz-question generation, also run on a core node without a CI provider.
 
 ```yaml
 artemis:
@@ -769,8 +771,8 @@ retried with a bounded backoff of up to five retries over about five minutes.
 Presets of exercise generation (`artemis.hyperion.agent.llm-preset`,
 `artemis.hyperion.agent.repair-llm-preset` and their `profiles.<name>` overrides) must have `max-retries: 0`, on
 the preset or on its endpoint. The server refuses another value at startup, and the
-worker refuses it when a run starts, because an SDK retry sends a request that
-Hyperion cannot count. This setting changes SDK retries, not Hyperion's bounded
+worker refuses it when a run starts, because an HTTP client retry sends a request that
+Hyperion cannot count. This setting changes HTTP client retries, not Hyperion's bounded
 retries for requests that provably produced no completion. Core does not send these
 model requests, so retries of other core AI features stay unaffected.
 

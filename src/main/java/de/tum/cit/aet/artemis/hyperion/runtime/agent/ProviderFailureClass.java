@@ -7,7 +7,7 @@ import java.net.http.HttpConnectTimeoutException;
 
 import javax.net.ssl.SSLHandshakeException;
 
-import com.openai.errors.OpenAIServiceException;
+import org.springframework.web.client.RestClientResponseException;
 
 /**
  * What a failed provider request proves about its usage, and whether sending it again can help.
@@ -57,8 +57,8 @@ public enum ProviderFailureClass {
             if (cause instanceof ProviderFailureCooldown.ProviderInCooldownException) {
                 return REJECTED;
             }
-            if (cause instanceof OpenAIServiceException serviceException) {
-                int status = serviceException.statusCode();
+            if (cause instanceof RestClientResponseException serviceException) {
+                int status = serviceException.getStatusCode().value();
                 return switch (status) {
                     case 429 -> REJECTED_TRANSIENT;
                     case 400, 401, 403, 404, 405, 413, 415, 422 -> REJECTED;
@@ -87,8 +87,8 @@ public enum ProviderFailureClass {
                 chain.append(" <- ");
             }
             chain.append(cause.getClass().getSimpleName());
-            if (cause instanceof OpenAIServiceException serviceException) {
-                chain.append(" HTTP ").append(serviceException.statusCode());
+            if (cause instanceof RestClientResponseException serviceException) {
+                chain.append(" HTTP ").append(serviceException.getStatusCode().value());
             }
         }
         return chain.toString();

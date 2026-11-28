@@ -1,43 +1,38 @@
 package de.tum.cit.aet.artemis.core.service.llm;
 
+import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import jakarta.annotation.PreDestroy;
+
 import org.jspecify.annotations.Nullable;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.openai.OpenAiChatOptions;
-import org.springframework.ai.openai.http.okhttp.OpenAiHttpClientBuilderCustomizer;
-import org.springframework.ai.openai.setup.OpenAiSetup;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 
-import com.openai.azure.AzureOpenAIServiceVersion;
-import com.openai.client.OpenAIClient;
-import com.openai.core.Timeout;
-import com.openai.errors.OpenAIInvalidDataException;
-import com.openai.models.embeddings.CreateEmbeddingResponse;
-import com.openai.models.embeddings.EmbeddingCreateParams;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.core.config.llm.LlmEnabled;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Api;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Endpoint;
-import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.EndpointType;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties.Preset;
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 
 /**
  * Builds the clients and chat models of the configured LLM presets. This is the only place in Artemis that connects to an LLM provider, and
  * {@code LlmClientArchitectureTest} keeps it so. Responses presets use {@link OpenAiResponsesChatModel}, and embeddings presets use
- * {@link #embed}. Both use the configured options and share one provider client per endpoint.
+ * {@link #embed}. Both use the configured endpoint and preset options.
  */
 @Conditional(LlmEnabled.class)
 @Lazy
@@ -55,21 +50,17 @@ public class LlmClientService {
 
     private final ObservationRegistry observationRegistry;
 
-    private final MeterRegistry meterRegistry;
+    private final Map<Api, HttpClient> connectionsByApi = new ConcurrentHashMap<>();
 
-    private final List<OpenAiHttpClientBuilderCustomizer> customizers;
-
-    private final Map<String, OpenAIClient> clientsByEndpoint = new ConcurrentHashMap<>();
+    private record EmbeddingRequest(String model, List<String> input, @JsonProperty("encoding_format") String encodingFormat) {
+    }
 
     private final Map<String, ChatModel> chatModelsByPreset = new ConcurrentHashMap<>();
 
-    public LlmClientService(LlmProperties properties, JsonMapper jsonMapper, ObservationRegistry observationRegistry, MeterRegistry meterRegistry,
-            List<OpenAiHttpClientBuilderCustomizer> customizers) {
+    public LlmClientService(LlmProperties properties, JsonMapper jsonMapper, ObservationRegistry observationRegistry) {
         this.properties = properties;
-        this.jsonMapper = jsonMapper;
+        this.jsonMapper = LlmHttpClient.wireMapper(jsonMapper);
         this.observationRegistry = observationRegistry;
-        this.meterRegistry = meterRegistry;
-        this.customizers = List.copyOf(customizers);
     }
 
     /**
@@ -89,33 +80,32 @@ public class LlmClientService {
     }
 
     /**
-     * An isolated chat model of a preset, for a task with its own limits and data rules: its calls use the given time limit and SDK retries instead of the
+     * An isolated chat model of a preset, for a task with its own limits and data rules: its calls use the given time limit and HTTP retries instead of the
      * preset's, and the model records no observations, so prompts and completions never reach tracing. It shares the endpoint's connections and is not
      * cached.
      *
      * @param presetName a configured preset with {@code api: responses}
      * @param timeout    the time limit of one call
-     * @param maxRetries the SDK retries of one call
+     * @param maxRetries the HTTP retries of one call
      * @return the chat model; every response carries the preset name under {@link #PRESET_METADATA_KEY}
      */
     public ChatModel isolatedChatModel(String presetName, Duration timeout, int maxRetries) {
         Preset preset = preset(presetName);
-        OpenAIClient client = endpointClient(preset).withOptions(options -> options.timeout(timeout).maxRetries(maxRetries));
-        return chatModel(presetName, preset, client, ObservationRegistry.NOOP);
+        return chatModel(presetName, preset, timeout, maxRetries, ObservationRegistry.NOOP);
     }
 
     /**
-     * Embeds texts with an embeddings preset. The call may take at most five seconds, and never more than the timeout, to connect, then the timeout
-     * for the answer. It makes no SDK retries, so the caller decides whether and when to try again. It asks for float vectors, the default of the embeddings API; without that, the
-     * SDK would ask for base64.
+     * Embeds texts with an embeddings preset. The timeout bounds the entire request, including connection setup and reading the response body.
+     * Connection setup is also limited to five seconds. It makes no HTTP retries, so the caller decides whether and when to try again. It asks for float vectors and accepts
+     * providers that return base64.
      *
      * @param presetName a configured preset with {@code api: embeddings}
      * @param inputs     the texts to embed, in order
-     * @param timeout    the positive time limit for the answer
-     * @return the provider's response; it is not validated, so reading a field the provider left out throws an {@code OpenAIInvalidDataException}
+     * @param timeout    the positive time limit for one request
+     * @return the vectors and input indices reported by the provider
      * @throws IllegalArgumentException when the preset is not configured, is not an embeddings preset, or the timeout is not positive
      */
-    public CreateEmbeddingResponse embed(String presetName, List<String> inputs, Duration timeout) {
+    public LlmEmbeddingResponse embed(String presetName, List<String> inputs, Duration timeout) {
         if (timeout == null || !timeout.isPositive()) {
             throw new IllegalArgumentException("The embedding timeout must be positive");
         }
@@ -123,18 +113,8 @@ public class LlmClientService {
         if (preset.api() != Api.EMBEDDINGS) {
             throw new IllegalArgumentException("The LLM preset " + presetName + " is not an embeddings preset");
         }
-        // as a plain HTTP client would: at most five seconds (and never more than the timeout) to connect, then the timeout for the answer
-        Duration connectTimeout = timeout.compareTo(MAX_EMBEDDING_CONNECT_TIMEOUT) < 0 ? timeout : MAX_EMBEDDING_CONNECT_TIMEOUT;
-        Timeout limits = Timeout.builder().connect(connectTimeout).read(timeout).write(timeout).request(connectTimeout.plus(timeout)).build();
-        OpenAIClient client = endpointClient(preset).withOptions(options -> options.timeout(limits).maxRetries(0));
-        EmbeddingCreateParams params = EmbeddingCreateParams.builder().model(preset.model()).inputOfArrayOfStrings(inputs)
-                .encodingFormat(EmbeddingCreateParams.EncodingFormat.FLOAT).build();
-        CreateEmbeddingResponse response = client.embeddings().create(params);
-        // without response validation the SDK passes a JSON null body through
-        if (response == null) {
-            throw new OpenAIInvalidDataException("The embeddings response of preset " + presetName + " is empty");
-        }
-        return response;
+        var client = client(preset, timeout, 0);
+        return client.post("embeddings", new EmbeddingRequest(preset.model(), inputs, "float"), LlmEmbeddingResponse.class);
     }
 
     /**
@@ -152,18 +132,10 @@ public class LlmClientService {
 
     /**
      * @param presetName a configured preset
-     * @return the effective SDK retries of the preset's calls
+     * @return the effective HTTP retries of the preset's calls
      */
     public int effectiveMaxRetries(String presetName) {
         return properties.effectiveMaxRetries(preset(presetName));
-    }
-
-    /**
-     * @param presetName a configured preset
-     * @return the effective timeout of the preset's calls
-     */
-    public Duration effectiveTimeout(String presetName) {
-        return properties.effectiveTimeout(preset(presetName));
     }
 
     /**
@@ -182,19 +154,29 @@ public class LlmClientService {
 
     private ChatModel createChatModel(String presetName) {
         Preset preset = preset(presetName);
-        return chatModel(presetName, preset, client(preset), observationRegistry);
+        return chatModel(presetName, preset, properties.effectiveTimeout(preset), properties.effectiveMaxRetries(preset), observationRegistry);
     }
 
-    private ChatModel chatModel(String presetName, Preset preset, OpenAIClient client, ObservationRegistry observations) {
-        ChatModel model = switch (preset.api()) {
-            case RESPONSES -> new OpenAiResponsesChatModel(client, jsonMapper, options(preset), observations);
-            case EMBEDDINGS -> throw new IllegalArgumentException("The LLM preset " + presetName + " is an embeddings preset and has no chat model");
-        };
-        return new PresetTaggingChatModel(model, presetName);
+    private ChatModel chatModel(String presetName, Preset preset, Duration timeout, int maxRetries, ObservationRegistry observations) {
+        if (preset.api() != Api.RESPONSES) {
+            throw new IllegalArgumentException("The LLM preset " + presetName + " is an embeddings preset and has no chat model");
+        }
+        var client = client(preset, timeout, maxRetries);
+        return new PresetTaggingChatModel(new OpenAiResponsesChatModel(client, jsonMapper, options(preset), observations), presetName);
     }
 
-    private static OpenAiChatOptions options(Preset preset) {
-        OpenAiChatOptions.Builder options = OpenAiChatOptions.builder();
+    private LlmHttpClient client(Preset preset, Duration timeout, int maxRetries) {
+        Endpoint endpoint = properties.requiredEndpointOf(preset);
+        // The JDK pools connections by origin. Chat and embeddings have different connection limits.
+        HttpClient connections = connectionsByApi.computeIfAbsent(preset.api(), api -> HttpClient.newBuilder()
+                .connectTimeout(api == Api.EMBEDDINGS ? MAX_EMBEDDING_CONNECT_TIMEOUT : Duration.ofMinutes(1)).followRedirects(HttpClient.Redirect.NEVER).build());
+        var factory = new JdkClientHttpRequestFactory(connections);
+        factory.setReadTimeout(timeout);
+        return new LlmHttpClient(endpoint, factory, jsonMapper, observationRegistry, maxRetries);
+    }
+
+    private static LlmChatOptions options(Preset preset) {
+        var options = LlmChatOptions.builder();
         options.model(preset.model());
         options.reasoningEffort(preset.reasoningEffort());
         options.temperature(preset.temperature());
@@ -205,25 +187,8 @@ public class LlmClientService {
         return options.build();
     }
 
-    private OpenAIClient endpointClient(Preset preset) {
-        Endpoint endpoint = properties.requiredEndpointOf(preset);
-        return clientsByEndpoint.computeIfAbsent(preset.endpoint(), name -> createClient(endpoint));
-    }
-
-    private OpenAIClient client(Preset preset) {
-        OpenAIClient client = endpointClient(preset);
-        if (preset.timeout() == null && preset.maxRetries() == null) {
-            return client;
-        }
-        return client.withOptions(options -> options.timeout(properties.effectiveTimeout(preset)).maxRetries(properties.effectiveMaxRetries(preset)));
-    }
-
-    private OpenAIClient createClient(Endpoint endpoint) {
-        // An empty key (never null) keeps the SDK from falling back to credentials from the environment and sends no Authorization header.
-        String apiKey = endpoint.hasApiKey() ? endpoint.apiKey() : "";
-        AzureOpenAIServiceVersion serviceVersion = endpoint.microsoftFoundryServiceVersion() == null || endpoint.microsoftFoundryServiceVersion().isBlank() ? null
-                : AzureOpenAIServiceVersion.fromString(endpoint.microsoftFoundryServiceVersion());
-        return OpenAiSetup.setupSyncClient(endpoint.baseUrl(), apiKey, null, null, serviceVersion, endpoint.organizationId(), endpoint.type() == EndpointType.MICROSOFT_FOUNDRY,
-                false, null, endpoint.timeout(), endpoint.maxRetries(), null, endpoint.customHeaders(), observationRegistry, meterRegistry, customizers);
+    @PreDestroy
+    void closeConnections() {
+        connectionsByApi.values().forEach(HttpClient::shutdownNow);
     }
 }

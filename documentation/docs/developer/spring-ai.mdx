@@ -84,7 +84,7 @@ artemis:
   llm:
     endpoints:
       lmstudio:
-        # The OpenAI SDK appends /responses itself, so the base URL includes the /v1 prefix.
+        # Artemis appends /responses itself, so the base URL includes the /v1 prefix.
         # Without api-key Artemis sends no Authorization header, which LM Studio does not need.
         base-url: http://localhost:1234/v1
     presets:
@@ -123,6 +123,9 @@ artemis:
     1. include the prompt sent from Artemis
     2. show progress status
     3. show the generated prediction
+
+When a feature expects JSON, ask Qwen to return only the JSON object and parse the result with the feature’s output converter.
+In local testing, LM Studio 0.4.29 accepted a Responses request with a JSON schema in `text.format`, but Qwen sometimes wrapped its answer in Markdown code fences.
 
 ## Performance Considerations
 

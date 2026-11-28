@@ -25,11 +25,11 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.atlas.config.AtlasAgentToolConfig;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
@@ -61,7 +61,7 @@ class AtlasExerciseMapperContentTest {
         var reads = new OrchestratorReadToolsService(jsonMapper, mock(CourseCompetencyRepository.class), exerciseRepository, extraction, Optional.empty(), Optional.empty());
         var surface = new AtlasAgentToolConfig().exerciseMapperToolCallbackProvider(mock(ExerciseMappingToolsService.class), reads);
         var delegation = new AtlasAgentDelegationService(ChatClient.create(chatModel), ChatClient.create(chatModel), ChatClient.create(chatModel), templates, null);
-        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
+        when(chatModel.getOptions()).thenReturn(LlmChatOptions.builder().build());
         var prompt = ArgumentCaptor.forClass(Prompt.class);
         when(chatModel.call(prompt.capture())).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("ready")))));
 

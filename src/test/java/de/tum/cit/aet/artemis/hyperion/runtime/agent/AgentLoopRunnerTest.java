@@ -29,7 +29,10 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.aiworker.api.SandboxUnavailableException;
 
 class AgentLoopRunnerTest {
@@ -106,7 +109,7 @@ class AgentLoopRunnerTest {
         when(model.call(any(Prompt.class))).thenAnswer(answer);
         when(repairModel.call(any(Prompt.class))).thenAnswer(answer);
         var settings = new HyperionGenerationSettings("pilot", "Pilot", 180, Duration.ofHours(2), 6_000_000, true, "CONTINUOUS", 200_000, "testpreset",
-                org.springframework.ai.openai.OpenAiChatOptions.builder().model("primary").temperature(0.3).build(), false, true, "repairpreset");
+                LlmChatOptions.builder().model("primary").temperature(0.3).build(), false, true, "repairpreset");
         ProgressTools tools = new ProgressTools();
         // The order the worker adapter uses: the handoff is attached to the deployment runner and survives the derivation for the run's settings.
         var configured = runner(model).withRepairModel(repair(repairModel)).forSettings(settings);
@@ -146,7 +149,7 @@ class AgentLoopRunnerTest {
                     : response;
         });
         var settings = new HyperionGenerationSettings("pilot", null, 180, Duration.ofHours(2), 6_000_000, true, "CONTINUOUS", 200_000, "testpreset",
-                org.springframework.ai.openai.OpenAiChatOptions.builder().model("primary").build(), false, true, "repairpreset");
+                LlmChatOptions.builder().model("primary").build(), false, true, "repairpreset");
 
         var result = runner(model).forSettings(settings).withRepairModel(repair(model)).run("system", "brief", new ProgressTools(), 180, () -> false, null, null);
 
@@ -163,13 +166,13 @@ class AgentLoopRunnerTest {
             Prompt prompt = invocation.getArgument(0);
             if ("repair".equals(prompt.getOptions().getModel())) {
                 repairFailed.set(true);
-                throw new IllegalStateException("model_not_found", com.openai.errors.NotFoundException.builder().headers(com.openai.core.http.Headers.builder().build()).build());
+                throw new IllegalStateException("model_not_found", new HttpClientErrorException(HttpStatus.NOT_FOUND));
             }
             return repairFailed.get() ? text("finished") : calls("edit-" + turn.incrementAndGet(), "write");
         });
         var cooldown = new TestProviderFailureCooldown();
         var settings = new HyperionGenerationSettings("pilot", null, 180, Duration.ofHours(2), 6_000_000, true, "FRESH", 200_000, "testpreset",
-                org.springframework.ai.openai.OpenAiChatOptions.builder().model("primary").build(), false, true, "repairpreset");
+                LlmChatOptions.builder().model("primary").build(), false, true, "repairpreset");
         var configured = new AgentLoopRunner(List.of(model), 200_000, Duration.ofMinutes(5), cooldown).forSettings(settings).withRepairModel(repair(model));
 
         var failedRepair = configured.run("system", "brief", new ProgressTools(), 180, () -> false, null, null);
@@ -187,7 +190,7 @@ class AgentLoopRunnerTest {
         AtomicInteger turn = new AtomicInteger();
         when(model.call(any(Prompt.class))).thenAnswer(invocation -> calls("edit-" + turn.incrementAndGet(), "write"));
         var settings = new HyperionGenerationSettings("pilot", null, 180, Duration.ofHours(2), 6_000_000, true, "FRESH", 200_000, "testpreset",
-                org.springframework.ai.openai.OpenAiChatOptions.builder().model("primary").build(), false, true, "repairpreset");
+                LlmChatOptions.builder().model("primary").build(), false, true, "repairpreset");
         var result = runner(model).forSettings(settings).withRepairModel(repair(model)).run("system", "brief", new ProgressTools(), 45, () -> false, null, null);
         assertThat(result.turns()).isEqualTo(45);
         assertThat(result.status()).isEqualTo(AgentLoopResult.Status.BUDGET_EXHAUSTED);
@@ -199,7 +202,7 @@ class AgentLoopRunnerTest {
         AtomicInteger turn = new AtomicInteger();
         when(model.call(any(Prompt.class))).thenAnswer(invocation -> calls("edit-" + turn.incrementAndGet(), "write"));
         var settings = new HyperionGenerationSettings("pilot", null, 180, Duration.ofHours(2), 6_000_000, true, "FRESH", 200_000, "testpreset",
-                org.springframework.ai.openai.OpenAiChatOptions.builder().model("primary").build(), false, true, "repairpreset");
+                LlmChatOptions.builder().model("primary").build(), false, true, "repairpreset");
         ProgressTools tools = new ProgressTools();
 
         var result = runner(model).forSettings(settings).run("system", "brief", tools, 180, () -> false, null, null);
@@ -210,7 +213,7 @@ class AgentLoopRunnerTest {
     }
 
     private static RepairModel repair(ChatModel model) {
-        return new RepairModel("repairpreset", model, org.springframework.ai.openai.OpenAiChatOptions.builder().model("repair").build());
+        return new RepairModel("repairpreset", model, LlmChatOptions.builder().model("repair").build());
     }
 
     static class ProgressTools extends RecordingTools implements AuthoringProgress {

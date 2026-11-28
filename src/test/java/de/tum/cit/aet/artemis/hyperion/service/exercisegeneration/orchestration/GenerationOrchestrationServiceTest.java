@@ -32,6 +32,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
@@ -404,7 +405,7 @@ class GenerationOrchestrationServiceTest {
 
     @Test
     void profilePresetIsCarriedIntoAuthorizedWorkerAssignment() {
-        var options = org.springframework.ai.openai.OpenAiChatOptions.builder().build();
+        var options = LlmChatOptions.builder().build();
         var explicit = new HyperionGenerationSettings("draft", "Draft", 15, Duration.ofMinutes(4), 4000, false, "FRESH", 64000, "draftpreset", options, false, true);
         deliveries.add(event(1, WorkerEvent.Type.FINISHED, output(true, "draft")));
         var result = service.generate(exercise, user, "Generate", "job", GenerationMode.ADAPT, () -> false, progress, fileUpdates::add, usage, null, Instant.now().plusSeconds(600),

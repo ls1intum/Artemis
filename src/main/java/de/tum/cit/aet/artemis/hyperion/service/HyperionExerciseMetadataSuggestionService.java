@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -22,6 +21,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -205,8 +205,8 @@ public class HyperionExerciseMetadataSuggestionService {
     }
 
     /** A fresh builder per call: the chat client consumes a mutable options builder. */
-    private OpenAiChatOptions.Builder metadataOptions() {
-        OpenAiChatOptions.Builder options = OpenAiChatOptions.builder();
+    private LlmChatOptions.Builder metadataOptions() {
+        LlmChatOptions.Builder options = LlmChatOptions.builder();
         if (usesLegacyMaxTokens) {
             options.maxTokens(outputTokens);
         }

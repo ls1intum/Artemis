@@ -6,12 +6,11 @@ import java.util.Locale;
 import java.util.function.Supplier;
 
 import org.jspecify.annotations.Nullable;
-
-import com.openai.errors.OpenAIServiceException;
+import org.springframework.web.client.RestClientResponseException;
 
 /**
  * Shared guard that lets Hyperion fail fast while a provider failure that no retry can fix is cooling down: exhausted quota or billing, a missing model or deployment, and
- * rejected credentials (401/403). Rate limits (429) and provider-side 5xx do NOT open a cooldown — they are transient, the SDK client already retries them, and pausing every
+ * rejected credentials (401/403). Rate limits (429) and provider-side 5xx do NOT open a cooldown — they are transient, pausing every
  * node on one of them would take the feature down for a blip.
  */
 public interface ProviderFailureCooldown {
@@ -56,7 +55,7 @@ public interface ProviderFailureCooldown {
     }
 
     private static boolean opensCooldown(Throwable error) {
-        Integer status = firstOpenAiStatus(error);
+        Integer status = firstProviderStatus(error);
         if (status == null) {
             return false;
         }
@@ -65,11 +64,11 @@ public interface ProviderFailureCooldown {
     }
 
     @Nullable
-    private static Integer firstOpenAiStatus(Throwable error) {
+    private static Integer firstProviderStatus(Throwable error) {
         Throwable cause = error;
         for (int depth = 0; cause != null && depth < 16; depth++, cause = cause.getCause()) {
-            if (cause instanceof OpenAIServiceException serviceException) {
-                return serviceException.statusCode();
+            if (cause instanceof RestClientResponseException serviceException) {
+                return serviceException.getStatusCode().value();
             }
         }
         return null;
@@ -91,6 +90,9 @@ public interface ProviderFailureCooldown {
         StringBuilder messages = new StringBuilder();
         Throwable cause = error;
         for (int depth = 0; cause != null && depth < 16; depth++, cause = cause.getCause()) {
+            if (cause instanceof RestClientResponseException response) {
+                messages.append(response.getResponseBodyAsString()).append('\n');
+            }
             if (cause.getMessage() != null) {
                 messages.append(cause.getMessage()).append('\n');
             }

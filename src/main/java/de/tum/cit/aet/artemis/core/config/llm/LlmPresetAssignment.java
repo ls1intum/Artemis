@@ -14,7 +14,7 @@ import org.jspecify.annotations.Nullable;
  * @param preset          the resolved preset name, or null when neither key is set
  * @param usesDefault     whether the preset comes from the {@code default} key
  * @param usage           what the preset is used for
- * @param requiresNoRetry whether calls must not be retried by the SDK (exercise generation retries and accounts on its own)
+ * @param requiresNoRetry whether calls must not be retried by the HTTP client (exercise generation retries and accounts on its own)
  */
 public record LlmPresetAssignment(String propertyKey, @Nullable String fallbackKey, @Nullable String preset, boolean usesDefault, Usage usage, boolean requiresNoRetry) {
 
@@ -74,7 +74,7 @@ public record LlmPresetAssignment(String propertyKey, @Nullable String fallbackK
     }
 
     /**
-     * @return a copy that requires calls without SDK retries
+     * @return a copy that requires calls without transport retries
      */
     public LlmPresetAssignment withoutRetries() {
         return new LlmPresetAssignment(propertyKey, fallbackKey, preset, usesDefault, usage, true);

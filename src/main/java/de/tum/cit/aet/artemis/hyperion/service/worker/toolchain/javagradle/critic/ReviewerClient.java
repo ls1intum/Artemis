@@ -12,11 +12,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.ChatOptions;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tokenizer.JTokkitTokenCountEstimator;
 
 import com.knuddels.jtokkit.api.EncodingType;
 
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureClass;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureCooldown;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderRetryPolicy;
@@ -78,7 +78,7 @@ final class ReviewerClient {
         this.providerHardFailureCooldown = providerHardFailureCooldown;
         this.providerFailureCooldown = providerFailureCooldown;
         this.contextWindowTokens = contextWindowTokens;
-        Integer maxCompletionTokens = configuredOptions instanceof OpenAiChatOptions openAiOptions ? openAiOptions.getMaxCompletionTokens() : null;
+        Integer maxCompletionTokens = configuredOptions instanceof LlmChatOptions llmOptions ? llmOptions.getMaxCompletionTokens() : null;
         this.usesLegacyMaxTokens = maxCompletionTokens == null && configuredOptions != null && configuredOptions.getMaxTokens() != null;
         this.configuredMaxOutputTokens = maxCompletionTokens != null ? maxCompletionTokens : configuredOptions == null ? null : configuredOptions.getMaxTokens();
     }
@@ -115,8 +115,8 @@ final class ReviewerClient {
         }
         String systemPrompt = templateService.render(systemPromptTemplate, Map.of());
         int outputTokens = reviewerOutputTokens(systemPrompt, userPrompt, maxOutputTokens);
-        OpenAiChatOptions.Builder options = configuredOptions instanceof OpenAiChatOptions openAiOptions ? openAiOptions.mutate() : OpenAiChatOptions.builder();
-        if (configuredOptions != null && !(configuredOptions instanceof OpenAiChatOptions)) {
+        LlmChatOptions.Builder options = configuredOptions instanceof LlmChatOptions llmOptions ? llmOptions.mutate() : LlmChatOptions.builder();
+        if (configuredOptions != null && !(configuredOptions instanceof LlmChatOptions)) {
             options.temperature(configuredOptions.getTemperature()).topP(configuredOptions.getTopP()).frequencyPenalty(configuredOptions.getFrequencyPenalty())
                     .presencePenalty(configuredOptions.getPresencePenalty()).stopSequences(configuredOptions.getStopSequences());
         }

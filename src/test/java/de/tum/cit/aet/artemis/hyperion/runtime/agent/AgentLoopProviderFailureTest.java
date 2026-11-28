@@ -26,12 +26,10 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
-
-import com.openai.core.http.Headers;
-import com.openai.errors.BadRequestException;
-import com.openai.errors.InternalServerException;
-import com.openai.errors.OpenAIIoException;
-import com.openai.errors.RateLimitException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput;
 import de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate;
@@ -147,7 +145,7 @@ class AgentLoopProviderFailureTest {
     }
 
     @Test
-    void providerFailureDoesNotMultiplySdkRetriesOrClaimCompleteUsage() {
+    void providerFailureDoesNotMultiplyTransportRetriesOrClaimCompleteUsage() {
         ChatModel model = mock(ChatModel.class);
         when(model.call(any(Prompt.class))).thenThrow(new IllegalStateException("provider unavailable"));
         ProviderUsageSink usage = mock(ProviderUsageSink.class);
@@ -164,8 +162,8 @@ class AgentLoopProviderFailureTest {
     void rateLimitRejectionIsRetriedWithoutMarkingUsageUncertain() {
         ChatModel model = mock(ChatModel.class);
         ChatResponse completed = response("done");
-        when(model.call(any(Prompt.class))).thenThrow(RateLimitException.builder().headers(Headers.builder().build()).build())
-                .thenThrow(RateLimitException.builder().headers(Headers.builder().build()).build()).thenReturn(completed);
+        when(model.call(any(Prompt.class))).thenThrow(new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS))
+                .thenThrow(new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS)).thenReturn(completed);
         ProviderUsageSink usage = mock(ProviderUsageSink.class);
         List<String> steps = new ArrayList<>();
 
@@ -196,7 +194,7 @@ class AgentLoopProviderFailureTest {
     @Test
     void permanentProviderStatusFailsWithoutRetryAndWithoutMarkingUsageUncertain() {
         ChatModel model = mock(ChatModel.class);
-        when(model.call(any(Prompt.class))).thenThrow(BadRequestException.builder().headers(Headers.builder().build()).build());
+        when(model.call(any(Prompt.class))).thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
         ProviderUsageSink usage = mock(ProviderUsageSink.class);
         List<String> steps = new ArrayList<>();
 
@@ -211,7 +209,7 @@ class AgentLoopProviderFailureTest {
     @Test
     void persistentTransientFailureStopsAfterTheRetryBudget() {
         ChatModel model = mock(ChatModel.class);
-        when(model.call(any(Prompt.class))).thenThrow(RateLimitException.builder().headers(Headers.builder().build()).build());
+        when(model.call(any(Prompt.class))).thenThrow(new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS));
         ProviderUsageSink usage = mock(ProviderUsageSink.class);
 
         var result = runner(model).run("system", "brief", new AgentLoopRunnerTest.RecordingTools(), 4, () -> false, usage, null);
@@ -225,7 +223,7 @@ class AgentLoopProviderFailureTest {
     @Test
     void cancellationDuringProviderRetryBackoffStopsWithoutAnotherRequest() {
         ChatModel model = mock(ChatModel.class);
-        when(model.call(any(Prompt.class))).thenThrow(RateLimitException.builder().headers(Headers.builder().build()).build());
+        when(model.call(any(Prompt.class))).thenThrow(new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS));
         AtomicBoolean cancelled = new AtomicBoolean();
 
         var result = runner(model).run("system", "brief", new AgentLoopRunnerTest.RecordingTools(), 4, cancelled::get, null, step -> {
@@ -242,7 +240,7 @@ class AgentLoopProviderFailureTest {
     void unsentRequestIsRetriedButAReadTimeoutIsNot() {
         ChatModel unreachable = mock(ChatModel.class);
         ChatResponse completed = response("done");
-        when(unreachable.call(any(Prompt.class))).thenThrow(new OpenAIIoException("io", new java.net.ConnectException("refused"))).thenReturn(completed);
+        when(unreachable.call(any(Prompt.class))).thenThrow(new ResourceAccessException("io", new java.net.ConnectException("refused"))).thenReturn(completed);
         ProviderUsageSink usage = mock(ProviderUsageSink.class);
 
         var result = runner(unreachable).run("system", "brief", new AgentLoopRunnerTest.RecordingTools(), 4, () -> false, usage, null);
@@ -252,7 +250,7 @@ class AgentLoopProviderFailureTest {
         verify(usage, never()).markUncertain();
 
         ChatModel stalled = mock(ChatModel.class);
-        when(stalled.call(any(Prompt.class))).thenThrow(new OpenAIIoException("io", new java.net.http.HttpTimeoutException("read")));
+        when(stalled.call(any(Prompt.class))).thenThrow(new ResourceAccessException("io", new java.net.http.HttpTimeoutException("read")));
         ProviderUsageSink stalledUsage = mock(ProviderUsageSink.class);
 
         var stalledResult = runner(stalled).run("system", "brief", new AgentLoopRunnerTest.RecordingTools(), 4, () -> false, stalledUsage, null);
@@ -287,7 +285,7 @@ class AgentLoopProviderFailureTest {
         ChatModel model = mock(ChatModel.class);
         when(model.call(any(Prompt.class))).thenReturn(response("done"));
         ProviderUsageSink usage = mock(ProviderUsageSink.class);
-        doThrow(new OpenAIIoException("sink offline", new java.net.ConnectException("refused"))).when(usage).accept(any(ChatResponse.class));
+        doThrow(new ResourceAccessException("sink offline", new java.net.ConnectException("refused"))).when(usage).accept(any(ChatResponse.class));
 
         var result = runner(model).run("system", "brief", new AgentLoopRunnerTest.RecordingTools(), 4, () -> false, usage, null);
 
@@ -298,9 +296,9 @@ class AgentLoopProviderFailureTest {
     @Test
     void uncertainAccountingFailureCannotReplaceAnIndeterminateProviderOutcomeWithARetry() {
         ChatModel model = mock(ChatModel.class);
-        when(model.call(any(Prompt.class))).thenThrow(new OpenAIIoException("read", new java.net.http.HttpTimeoutException("read")));
+        when(model.call(any(Prompt.class))).thenThrow(new ResourceAccessException("read", new java.net.http.HttpTimeoutException("read")));
         ProviderUsageSink usage = mock(ProviderUsageSink.class);
-        doThrow(new OpenAIIoException("sink offline", new java.net.ConnectException("refused"))).when(usage).markUncertain();
+        doThrow(new ResourceAccessException("sink offline", new java.net.ConnectException("refused"))).when(usage).markUncertain();
 
         var result = runner(model).run("system", "brief", new AgentLoopRunnerTest.RecordingTools(), 4, () -> false, usage, null);
 
@@ -315,8 +313,8 @@ class AgentLoopProviderFailureTest {
         return runner;
     }
 
-    private static InternalServerException serverError(int status) {
-        return InternalServerException.builder().statusCode(status).headers(Headers.builder().build()).build();
+    private static HttpServerErrorException serverError(int status) {
+        return new HttpServerErrorException(HttpStatus.valueOf(status));
     }
 
     private static ChatResponse response(String text) {

@@ -40,17 +40,16 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.openai.OpenAiChatOptions;
-
-import com.openai.core.http.Headers;
-import com.openai.errors.InternalServerException;
-import com.openai.errors.RateLimitException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 import tools.jackson.databind.json.JsonMapper;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport.Kind;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
@@ -92,7 +91,7 @@ class SpecFidelityCriticTest {
     void providerFailureDoesNotExposePrivateMessagesInCriticCallerLogsOrSpecificationAudit() {
         ChatModel model = mock(ChatModel.class);
         when(model.getOptions()).thenReturn(ChatOptions.builder().build());
-        var serverFailure = InternalServerException.builder().statusCode(500).headers(Headers.builder().build()).build();
+        var serverFailure = new HttpServerErrorException(HttpStatus.valueOf(500));
         String privateMarker = "private-review-provider-body-marker";
         when(model.call(any(Prompt.class))).thenThrow(new IllegalStateException(privateMarker, serverFailure));
         var critic = criticWithModel(ChatClient.create(model), "review-model");
@@ -2033,23 +2032,21 @@ class SpecFidelityCriticTest {
     }
 
     @Test
-    void criticUsesOpenAiChatOptions_soOpenAiModelsAcceptTheRequestOptions() {
+    void criticUsesLlmChatOptions_soOpenAiModelsAcceptTheRequestOptions() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{\"uncovered\":[]}"));
-        when(chatModel.getOptions()).thenReturn(
-                OpenAiChatOptions.builder().model("configured-model").reasoningEffort("medium").serviceTier("priority").customHeaders(Map.of("X-Test", "value")).build());
+        when(chatModel.getOptions()).thenReturn(LlmChatOptions.builder().model("configured-model").reasoningEffort("medium").topP(0.9).build());
         SpecFidelityCritic critic = criticWithModel(ChatClient.create(chatModel), "configured-model");
         critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "A clean problem statement.", List.of("test_x"));
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(2)).call(prompt.capture());
-        assertThat(prompt.getAllValues()).allSatisfy((value) -> assertThat(value.getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, (options) -> {
+        assertThat(prompt.getAllValues()).allSatisfy((value) -> assertThat(value.getOptions()).isInstanceOfSatisfying(LlmChatOptions.class, (options) -> {
             assertThat(options.getMaxCompletionTokens()).isEqualTo(32768);
             assertThat(options.getMaxTokens()).isNull();
             assertThat(options.getReasoningEffort()).isEqualTo("medium");
-            assertThat(options.getServiceTier()).isEqualTo("priority");
-            assertThat(options.getCustomHeaders()).containsEntry("X-Test", "value");
+            assertThat(options.getTopP()).isEqualTo(0.9);
         }));
     }
 
@@ -2057,7 +2054,7 @@ class SpecFidelityCriticTest {
     void critic_preservesTheLegacyConfiguredTokenParameter() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{\"uncovered\":[]}"));
-        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().maxTokens(1_234).build());
+        when(chatModel.getOptions()).thenReturn(LlmChatOptions.builder().maxTokens(1_234).build());
         SpecFidelityCritic critic = new SpecFidelityCritic(ChatClient.create(chatModel), objectMapper, new PromptTemplates(), "configured-model", Duration.ZERO,
                 ProviderFailureCooldown.disabled(), 128000, chatModel.getOptions());
         critique(critic,
@@ -2065,7 +2062,7 @@ class SpecFidelityCriticTest {
                 "A clean problem statement.", List.of("test_x"));
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(2)).call(prompt.capture());
-        assertThat(prompt.getAllValues()).allSatisfy((value) -> assertThat(value.getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, (options) -> {
+        assertThat(prompt.getAllValues()).allSatisfy((value) -> assertThat(value.getOptions()).isInstanceOfSatisfying(LlmChatOptions.class, (options) -> {
             assertThat(options.getMaxTokens()).isEqualTo(1234);
             assertThat(options.getMaxCompletionTokens()).isNull();
         }));
@@ -2075,7 +2072,7 @@ class SpecFidelityCriticTest {
     void critic_clampsOutputToTheConfiguredContextWindow() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{\"uncovered\":[]}"));
-        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
+        when(chatModel.getOptions()).thenReturn(LlmChatOptions.builder().build());
         SpecFidelityCritic critic = new SpecFidelityCritic(ChatClient.create(chatModel), objectMapper, new PromptTemplates(), "configured-model", Duration.ZERO,
                 ProviderFailureCooldown.disabled(), 16000, chatModel.getOptions());
         critique(critic,
@@ -2083,7 +2080,7 @@ class SpecFidelityCriticTest {
                 "A clean problem statement.", List.of("test_x"));
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(2)).call(prompt.capture());
-        assertThat(prompt.getAllValues()).allSatisfy((value) -> assertThat(value.getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, (options) -> {
+        assertThat(prompt.getAllValues()).allSatisfy((value) -> assertThat(value.getOptions()).isInstanceOfSatisfying(LlmChatOptions.class, (options) -> {
             assertThat(options.getMaxCompletionTokens()).isGreaterThanOrEqualTo(4096).isLessThan(32768);
             assertThat(options.getMaxTokens()).isNull();
         }));
@@ -2093,14 +2090,14 @@ class SpecFidelityCriticTest {
     void criticPinsTheConfiguredProviderModelOnBothReviewPasses() {
         ChatModel chatModel = mock(ChatModel.class);
         when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{}"));
-        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
+        when(chatModel.getOptions()).thenReturn(LlmChatOptions.builder().build());
         SpecFidelityCritic critic = criticWithModel(ChatClient.create(chatModel), "provider/reviewer-model");
         critique(critic,
                 "Implement count_graphemes(s) counting user-perceived characters. It MUST be tested on accented Latin (café), a combining-mark sequence, CJK characters, and at least one emoji.",
                 "A clean problem statement.", List.of("test_x"));
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(chatModel, times(2)).call(prompt.capture());
-        assertThat(prompt.getAllValues()).allSatisfy((value) -> assertThat(value.getOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class,
+        assertThat(prompt.getAllValues()).allSatisfy((value) -> assertThat(value.getOptions()).isInstanceOfSatisfying(LlmChatOptions.class,
                 (options) -> assertThat(options.getModel()).isEqualTo("provider/reviewer-model")));
     }
 
@@ -2293,7 +2290,7 @@ class SpecFidelityCriticTest {
     @Test
     void oracleServerFailureIsNotRetriedAsAMalformedVerdict() {
         ChatModel chatModel = mock(ChatModel.class);
-        var serverError = InternalServerException.builder().statusCode(504).headers(Headers.builder().build()).build();
+        var serverError = new HttpServerErrorException(HttpStatus.valueOf(504));
         when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{}")).thenThrow(serverError).thenReturn(jsonResponse("{}"));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCritic critic = new SpecFidelityCritic(ChatClient.create(chatModel), objectMapper);
@@ -2336,7 +2333,7 @@ class SpecFidelityCriticTest {
     @Test
     void hardProviderFailureStopsTheSecondReviewPassAndLaterJobsAtSharedAdmission() {
         ChatModel failingModel = mock(ChatModel.class);
-        when(failingModel.call(any(Prompt.class))).thenThrow(com.openai.errors.UnauthorizedException.builder().headers(com.openai.core.http.Headers.builder().build()).build());
+        when(failingModel.call(any(Prompt.class))).thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED));
         when(failingModel.getOptions()).thenReturn(ChatOptions.builder().build());
         ProviderFailureCooldown cooldown = inMemoryCooldown();
         SpecFidelityCritic failingCritic = criticWithCooldown(ChatClient.create(failingModel), "configured-model", Duration.ofMinutes(5L), cooldown);
@@ -2381,7 +2378,7 @@ class SpecFidelityCriticTest {
     void reviewerCancellationDuringRateLimitBackoffStopsFurtherProviderCalls(boolean specificationPass) {
         ChatModel chatModel = mock(ChatModel.class);
         AtomicBoolean cancelled = new AtomicBoolean();
-        var rateLimit = RateLimitException.builder().headers(Headers.builder().build()).build();
+        var rateLimit = new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS);
         when(chatModel.call(any(Prompt.class))).thenAnswer(invocation -> {
             cancelled.set(true);
             throw rateLimit;
@@ -2406,7 +2403,7 @@ class SpecFidelityCriticTest {
     @Test
     void rateLimitRejectionIsRetriedWithinThePassWithoutMarkingUsageUncertain() {
         ChatModel chatModel = mock(ChatModel.class);
-        var serverError = RateLimitException.builder().headers(Headers.builder().build()).build();
+        var serverError = new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS);
         when(chatModel.call(any(Prompt.class))).thenThrow(serverError).thenReturn(jsonResponse("{}"));
         when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
         SpecFidelityCritic critic = criticWithCooldown(ChatClient.create(chatModel), "configured-model", Duration.ofMinutes(5L), inMemoryCooldown());
@@ -3078,14 +3075,14 @@ class SpecFidelityCriticTest {
     @Test
     void forSettings_preservesTheProfilesModelReasoningAndSamplingOptions() {
         ChatModel model = mock(ChatModel.class);
-        OpenAiChatOptions defaults = OpenAiChatOptions.builder().model("deployment-model").reasoningEffort("high").temperature(0.9).topP(0.95).verbosity("high").build();
+        LlmChatOptions defaults = LlmChatOptions.builder().model("deployment-model").reasoningEffort("high").temperature(0.9).topP(0.95).verbosity("high").build();
         when(model.getOptions()).thenReturn(defaults);
         when(model.call(any(Prompt.class))).thenReturn(jsonResponse("{\"complete\": true, \"findings\": []}"));
         SpecFidelityCritic critic = new SpecFidelityCritic(ChatClient.create(model), objectMapper, new PromptTemplates(), "deployment-model", Duration.ZERO,
                 ProviderFailureCooldown.disabled(), 128_000, defaults);
         HyperionGenerationSettings settings = new HyperionGenerationSettings("thorough", "Thorough", 90, Duration.ofMinutes(60), 6_000_000L, true, "CONTINUOUS", 96_000,
                 "testpreset",
-                OpenAiChatOptions.builder().model("thorough-model").reasoningEffort("low").temperature(0.2).topP(0.7).verbosity("low").maxCompletionTokens(20_000).build(), false,
+                LlmChatOptions.builder().model("thorough-model").reasoningEffort("low").temperature(0.2).topP(0.7).verbosity("low").maxCompletionTokens(20_000).build(), false,
                 true);
 
         critic.forSettings(settings).reviewSpecification("brief", "specification", null, () -> false);
@@ -3093,7 +3090,7 @@ class SpecFidelityCriticTest {
         ArgumentCaptor<Prompt> prompts = ArgumentCaptor.forClass(Prompt.class);
         verify(model, atLeastOnce()).call(prompts.capture());
         assertThat(prompts.getAllValues()).isNotEmpty().allSatisfy(prompt -> {
-            OpenAiChatOptions options = (OpenAiChatOptions) prompt.getOptions();
+            LlmChatOptions options = (LlmChatOptions) prompt.getOptions();
             assertThat(options.getModel()).isEqualTo("thorough-model");
             assertThat(options.getReasoningEffort()).isEqualTo("low");
             assertThat(options.getTemperature()).isEqualTo(0.2);
@@ -3116,9 +3113,9 @@ class SpecFidelityCriticTest {
 
     @Test
     void criticModelId_comesFromTheChatModelBeanRatherThanTheRawProperty() {
-        // Reading spring.ai.openai.chat.model separately let a deployment that configured its model anywhere else review with a different model than it authored with.
+        // Reading a model property separately let a deployment that configured its model anywhere else review with a different model than it authored with.
         ChatModel chatModel = mock(ChatModel.class);
-        when(chatModel.getOptions()).thenReturn(OpenAiChatOptions.builder().model("bean-model").build());
+        when(chatModel.getOptions()).thenReturn(LlmChatOptions.builder().model("bean-model").build());
         when(chatModel.call(any(Prompt.class))).thenReturn(jsonResponse("{\"complete\": true, \"findings\": []}"));
 
         SpecFidelityCritic critic = new SpecFidelityCritic(ChatClient.create(chatModel), objectMapper, new PromptTemplates(), "bean-model", Duration.ZERO,

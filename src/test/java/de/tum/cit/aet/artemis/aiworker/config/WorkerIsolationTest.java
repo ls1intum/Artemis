@@ -82,7 +82,7 @@ class WorkerIsolationTest {
                         return "checked";
                     }
                 }).withPropertyValues("artemis.aiworker.id=document-worker", "artemis.aiworker.image=" + image, "artemis.aiworker.workload=document-check",
-                        "artemis.aiworker.profile=plain-text", "spring.ai.model.chat=none")
+                        "artemis.aiworker.profile=plain-text")
                 .run(context -> {
                     assertThat(context).hasNotFailed().hasSingleBean(WorkerSupervisorService.class);
                     assertThat(context).doesNotHaveBean("openAiChatModel").doesNotHaveBean("hyperionWorkloadService");

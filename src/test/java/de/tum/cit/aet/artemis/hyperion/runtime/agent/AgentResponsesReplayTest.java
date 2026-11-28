@@ -22,7 +22,6 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
 import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.observation.ObservationRegistry;
 
 class AgentResponsesReplayTest {
@@ -56,7 +55,7 @@ class AgentResponsesReplayTest {
         try {
             var properties = new LlmProperties(Map.of("main", endpoint("http://127.0.0.1:" + server.getAddress().getPort() + "/v1")),
                     Map.of("agent", preset("main", "test", LlmProperties.Api.RESPONSES)), null);
-            var clients = new LlmClientService(properties, mapper, ObservationRegistry.NOOP, new SimpleMeterRegistry(), List.of());
+            var clients = new LlmClientService(properties, mapper, ObservationRegistry.NOOP);
             var model = new HarmonyScrubbingChatModel(clients.chatModel("agent"));
             var user = new UserMessage("Work");
             var assistant = AgentToolBatch.normalizeToolNames(model.call(new Prompt(user))).getResult().getOutput();

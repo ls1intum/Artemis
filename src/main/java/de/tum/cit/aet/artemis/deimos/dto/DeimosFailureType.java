@@ -23,12 +23,12 @@ public enum DeimosFailureType {
     SNAPSHOT_HISTORY_ERROR,
 
     /**
-     * The LLM did not answer within the configured timeout, after the SDK's transport retries.
+     * The LLM did not answer within the configured timeout, after the HTTP client's transport retries.
      */
     LLM_TIMEOUT,
 
     /**
-     * The LLM endpoint rejected the request with a rate limit, after the SDK's transport retries.
+     * The LLM endpoint rejected the request with a rate limit, after the HTTP client's transport retries.
      */
     LLM_RATE_LIMITED,
 

@@ -21,9 +21,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.openai.OpenAiChatOptions;
 
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.aiworker.api.SandboxApi;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
 import de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog;
@@ -60,10 +60,9 @@ class JavaGradleGenerationAdapterTest {
     }
 
     private void presetWithRetries(int retries) {
-        when(model.getOptions()).thenReturn(OpenAiChatOptions.builder().model("test-model").build());
+        when(model.getOptions()).thenReturn(LlmChatOptions.builder().model("test-model").build());
         when(llmClientService.preset("testpreset")).thenReturn(LlmTestCatalog.preset("test", "test-model", LlmProperties.Api.RESPONSES));
         when(llmClientService.effectiveMaxRetries("testpreset")).thenReturn(retries);
-        when(llmClientService.effectiveTimeout("testpreset")).thenReturn(Duration.ofMinutes(10));
         when(llmClientService.chatModel("testpreset")).thenReturn(model);
     }
 
@@ -146,9 +145,8 @@ class JavaGradleGenerationAdapterTest {
         var settings = engine.settings(assignment(Instant.now()).parameters(), model);
 
         assertThat(settings.llmPreset()).isEqualTo("testpreset");
-        assertThat(settings.chatOptions()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+        assertThat(settings.chatOptions()).isInstanceOfSatisfying(LlmChatOptions.class, options -> {
             assertThat(options.getModel()).isEqualTo("test-model");
-            assertThat(options.getTimeout()).isEqualTo(Duration.ofMinutes(10));
         });
     }
 
@@ -160,19 +158,17 @@ class JavaGradleGenerationAdapterTest {
         assertThat(engine.repairModel(withRepairPreset(primary, "testpreset"))).isNull();
 
         ChatModel repair = mock(ChatModel.class);
-        when(repair.getOptions()).thenReturn(OpenAiChatOptions.builder().model("repair-model").build());
+        when(repair.getOptions()).thenReturn(LlmChatOptions.builder().model("repair-model").build());
         when(llmClientService.preset("repairpreset")).thenReturn(LlmTestCatalog.preset("repair", "repair-model", LlmProperties.Api.RESPONSES));
         when(llmClientService.effectiveMaxRetries("repairpreset")).thenReturn(0);
-        when(llmClientService.effectiveTimeout("repairpreset")).thenReturn(Duration.ofMinutes(3));
         when(llmClientService.chatModel("repairpreset")).thenReturn(repair);
 
         var resolved = engine.repairModel(withRepairPreset(primary, "repairpreset"));
         assertThat(resolved).isNotNull();
         assertThat(resolved.preset()).isEqualTo("repairpreset");
         assertThat(resolved.chatModel()).isSameAs(repair);
-        assertThat(resolved.options()).isInstanceOfSatisfying(OpenAiChatOptions.class, options -> {
+        assertThat(resolved.options()).isInstanceOfSatisfying(LlmChatOptions.class, options -> {
             assertThat(options.getModel()).isEqualTo("repair-model");
-            assertThat(options.getTimeout()).isEqualTo(Duration.ofMinutes(3));
         });
         assertThat(engine.settings(withRepairPreset(primary, "repairpreset"), model).repairLlmPreset()).isEqualTo("repairpreset");
     }

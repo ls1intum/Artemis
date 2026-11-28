@@ -25,13 +25,12 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.openai.OpenAiChatOptions;
-
-import com.openai.core.http.Headers;
-import com.openai.errors.BadRequestException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput.AccountingState;
 import de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate;
 import de.tum.cit.aet.artemis.hyperion.protocol.ProviderUsageUpdate.Kind;
@@ -98,14 +97,14 @@ class WorkerAdvisoryAccountingStopTest {
     @Test
     void knownRejectedMutantRequestPropagatesWithoutAccountingStop() {
         ChatModel model = model();
-        when(model.call(any(Prompt.class))).thenThrow(BadRequestException.builder().headers(Headers.builder().build()).build()).thenReturn(accounted(WITNESS_RESPONSE));
+        when(model.call(any(Prompt.class))).thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST)).thenReturn(accounted(WITNESS_RESPONSE));
         var recorder = new WorkerUsageRecorder(1_000, 1, ignored -> {
         });
         var stop = JavaGradleGenerationAdapterService.stopAuthoring(() -> false, recorder, Instant.MAX);
         var critic = critic(model);
 
         assertThatThrownBy(() -> critic.authorSemanticMutants(SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(), recorder, stop))
-                .isInstanceOf(BadRequestException.class);
+                .isInstanceOf(HttpClientErrorException.class);
         assertThat(stop.getAsBoolean()).isFalse();
         assertThat(critic.authorContractWitnesses(SPEC, "class SchedulerTest {}", SOURCE, recorder, stop)).hasSize(1);
 
@@ -142,7 +141,7 @@ class WorkerAdvisoryAccountingStopTest {
 
     private static ChatModel model() {
         ChatModel model = mock(ChatModel.class);
-        when(model.getOptions()).thenReturn(OpenAiChatOptions.builder().model("reviewer").build());
+        when(model.getOptions()).thenReturn(LlmChatOptions.builder().model("reviewer").build());
         return model;
     }
 

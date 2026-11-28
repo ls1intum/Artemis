@@ -11,7 +11,7 @@ import org.springframework.validation.annotation.Validated;
 
 /**
  * Limits for the embeddings Artemis computes for global search through the OpenAI-compatible endpoint
- * ({@code artemis.weaviate.open-ai-base-url}).
+ * assigned by {@code artemis.weaviate.embedding-llm-preset}.
  * <p>
  * Background work (the outbox writes of reconcile passes and of a rebuild) is paced so it can never overload the
  * embedding endpoint, the database or Weaviate; user searches and the writes caused by user actions are not limited by
@@ -20,10 +20,8 @@ import org.springframework.validation.annotation.Validated;
  * @param backgroundMaxRowsPerMinute     background index writes per minute, whether or not they need an embedding call
  * @param backgroundMaxRequestsPerMinute background embedding requests per minute
  * @param maxInputsPerRequest            chunks sent in one embedding request
- * @param queryTimeout                   time limit for the connection and for the response of the embedding request for a user
- *                                           search; when it is exceeded the search falls back to keyword search. Must be positive
- * @param writeTimeout                   time limit for the connection and for the response of an embedding request made while
- *                                           writing the index. Must be positive
+ * @param queryTimeout                   total time limit for embedding a user query before the search falls back to keywords. Must be positive
+ * @param writeTimeout                   total time limit for an embedding request while writing the index. Must be positive
  */
 @Validated
 @ConfigurationProperties(prefix = "artemis.weaviate.embedding", ignoreUnknownFields = false)

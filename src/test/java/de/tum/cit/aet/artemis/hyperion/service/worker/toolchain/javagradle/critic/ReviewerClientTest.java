@@ -31,9 +31,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-
-import com.openai.core.http.Headers;
-import com.openai.errors.InternalServerException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpServerErrorException;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -71,7 +70,7 @@ class ReviewerClientTest {
     void finalServerFailureLogsOnlySafeClassAndStatusAndRethrowsTheSameException() {
         ChatModel model = mock(ChatModel.class);
         when(model.getOptions()).thenReturn(ChatOptions.builder().build());
-        var serverFailure = InternalServerException.builder().statusCode(500).headers(Headers.builder().build()).build();
+        var serverFailure = new HttpServerErrorException(HttpStatus.valueOf(500));
         var failure = new IllegalStateException("private-provider-marker prompt/body/header/key content", serverFailure);
         when(model.call(any(Prompt.class))).thenThrow(failure);
         ProviderUsageSink usage = mock(ProviderUsageSink.class);
@@ -84,7 +83,7 @@ class ReviewerClientTest {
         verify(usage, never()).accept(any());
         assertThat(appender.list).filteredOn(event -> event.getThreadName().equals(Thread.currentThread().getName())).singleElement().satisfies(event -> {
             assertThat(event.getLevel()).isEqualTo(Level.WARN);
-            assertThat(event.getFormattedMessage()).contains("Reviewer provider call failed", "INDETERMINATE", "IllegalStateException", "InternalServerException HTTP 500")
+            assertThat(event.getFormattedMessage()).contains("Reviewer provider call failed", "INDETERMINATE", "IllegalStateException", "HttpServerErrorException HTTP 500")
                     .doesNotContain("private-provider-marker", "private-user-prompt", "private-system-prompt", "prompt/body/header/key content");
             assertThat(event.getThrowableProxy()).isNull();
             assertThat(event.getArgumentArray()).doesNotContain(failure, serverFailure).allSatisfy(argument -> assertThat(argument).isNotInstanceOf(Throwable.class));
@@ -95,7 +94,7 @@ class ReviewerClientTest {
     void uncertainAccountingDeliveryFailureCannotReplayAnIndeterminateProviderRequest() {
         ChatModel model = mock(ChatModel.class);
         when(model.getOptions()).thenReturn(ChatOptions.builder().build());
-        var serverFailure = InternalServerException.builder().statusCode(500).headers(Headers.builder().build()).build();
+        var serverFailure = new HttpServerErrorException(HttpStatus.valueOf(500));
         var providerFailure = new IllegalStateException("private-provider-message", serverFailure);
         var deliveryFailure = new IllegalStateException("private-accounting-message", new ConnectException("private-delivery-message"));
         var response = new ChatResponse(List.of(new Generation(new AssistantMessage("private-model-response"))));
@@ -119,7 +118,7 @@ class ReviewerClientTest {
         assertThat(retainedFailures).contains(deliveryFailure, providerFailure);
         assertThat(appender.list).filteredOn(event -> event.getThreadName().equals(Thread.currentThread().getName())).singleElement().satisfies(event -> {
             assertThat(event.getLevel()).isEqualTo(Level.WARN);
-            assertThat(event.getFormattedMessage()).contains("InternalServerException HTTP 500").doesNotContain("private-provider-message", "private-accounting-message",
+            assertThat(event.getFormattedMessage()).contains("HttpServerErrorException HTTP 500").doesNotContain("private-provider-message", "private-accounting-message",
                     "private-delivery-message", "private-model-response", "private-user-prompt", "private-system-prompt", "configured-model");
             assertThat(event.getThrowableProxy()).isNull();
             assertThat(event.getArgumentArray()).allSatisfy(argument -> assertThat(argument).isNotInstanceOf(Throwable.class));

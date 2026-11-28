@@ -8,8 +8,6 @@ import java.util.concurrent.Executor;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.model.openai.autoconfigure.OpenAiChatProperties;
-import org.springframework.ai.model.openai.autoconfigure.OpenAiCommonProperties;
 import org.springframework.boot.convert.ApplicationConversionService;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
@@ -28,20 +26,19 @@ class GenerationRetryConfigurationTest {
 
     @ParameterizedTest
     @CsvSource({ "0, 2", "1, 0", "0, ", "0, 3", "1, ", "3, 3" })
-    void coreRetrySettingsDoNotChangeWorkerAccountingLifecycle(int common, Integer chat) {
+    void coreRetrySettingsDoNotChangeWorkerAccountingLifecycle(int endpoint, Integer preset) {
         var runner = new ApplicationContextRunner().withInitializer(context -> {
             context.getEnvironment().setActiveProfiles("core", "localci", "localvc");
             context.getBeanFactory().setConversionService(ApplicationConversionService.getSharedInstance());
         }).withUserConfiguration(GenerationJobService.class, Dependencies.class)
-                .withPropertyValues("artemis.hyperion.enabled=true", "artemis.hyperion.exercise-generation.enabled=true", "spring.ai.model.chat=none",
-                        "spring.ai.openai.max-retries=" + common)
+                .withPropertyValues("artemis.hyperion.enabled=true", "artemis.hyperion.exercise-generation.enabled=true", "artemis.llm.endpoints.test.max-retries=" + endpoint)
                 .withBean(DistributedDataProvider.class, LocalDataProviderService::new).withBean("taskExecutor", Executor.class, () -> Runnable::run);
-        if (chat != null) {
-            runner = runner.withPropertyValues("spring.ai.openai.chat.max-retries=" + chat);
+        if (preset != null) {
+            runner = runner.withPropertyValues("artemis.llm.presets.testpreset.max-retries=" + preset);
         }
         runner.run(context -> {
             assertThat(context).hasNotFailed();
-            assertThat(context).doesNotHaveBean(ChatModel.class).doesNotHaveBean(OpenAiChatProperties.class).doesNotHaveBean(OpenAiCommonProperties.class);
+            assertThat(context).doesNotHaveBean(ChatModel.class);
             var jobs = context.getBean(GenerationJobService.class);
             var owner = new User();
             owner.setLogin("owner");

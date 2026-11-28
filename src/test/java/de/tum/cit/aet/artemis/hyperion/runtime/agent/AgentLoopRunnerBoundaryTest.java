@@ -25,7 +25,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.openai.OpenAiChatOptions;
+
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 
 class AgentLoopRunnerBoundaryTest {
 
@@ -48,18 +49,18 @@ class AgentLoopRunnerBoundaryTest {
     @Test
     void effectiveProfileOptionsReplaceModelDefaultsAndPreserveConfiguredResponseLimit() {
         ChatModel model = mock(ChatModel.class);
-        when(model.getOptions()).thenReturn(OpenAiChatOptions.builder().model("deployment").maxCompletionTokens(4096).build());
+        when(model.getOptions()).thenReturn(LlmChatOptions.builder().model("deployment").maxCompletionTokens(4096).build());
         when(model.call(any(Prompt.class))).thenReturn(text("Completed"));
         AgentLoopRunner deployment = runner(List.of(model), 128000);
         assertThat(deployment.forSettings(null)).isSameAs(deployment);
         var profile = new HyperionGenerationSettings("small", "Small", 2, Duration.ofMinutes(5), 1000, false, "FRESH", 64000, "testpreset",
-                OpenAiChatOptions.builder().model("profile").maxCompletionTokens(2048).build(), false, true);
+                LlmChatOptions.builder().model("profile").maxCompletionTokens(2048).build(), false, true);
         var result = deployment.forSettings(profile).runTextSession("System", List.of(new UserMessage("Earlier")), "Continue", 2, () -> false, null, null);
         assertThat(result.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         assertThat(result.conversation()).extracting(Message::getText).containsExactly("Earlier", "Continue", "Completed");
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(model).call(prompt.capture());
-        OpenAiChatOptions options = (OpenAiChatOptions) prompt.getValue().getOptions();
+        LlmChatOptions options = (LlmChatOptions) prompt.getValue().getOptions();
         assertThat(options.getModel()).isEqualTo("profile");
         assertThat(options.getMaxCompletionTokens()).isEqualTo(2048);
         assertThat(options.getMaxTokens()).isNull();
@@ -76,7 +77,7 @@ class AgentLoopRunnerBoundaryTest {
         assertThat(result.result().status()).isEqualTo(AgentLoopResult.Status.COMPLETED);
         ArgumentCaptor<Prompt> prompt = ArgumentCaptor.forClass(Prompt.class);
         verify(model).call(prompt.capture());
-        OpenAiChatOptions options = (OpenAiChatOptions) prompt.getValue().getOptions();
+        LlmChatOptions options = (LlmChatOptions) prompt.getValue().getOptions();
         assertThat(options.getModel()).isEqualTo("legacy");
         assertThat(options.getMaxTokens()).isEqualTo(3000);
         assertThat(options.getMaxCompletionTokens()).isNull();

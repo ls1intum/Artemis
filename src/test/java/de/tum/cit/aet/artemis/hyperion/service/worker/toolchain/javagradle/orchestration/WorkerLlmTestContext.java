@@ -1,7 +1,15 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+
 import org.springframework.boot.convert.ApplicationConversionService;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
 
 import de.tum.cit.aet.artemis.core.config.llm.LlmConfiguration;
 import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
@@ -13,13 +21,32 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
  */
 final class WorkerLlmTestContext {
 
+    private WorkerLlmTestContext() {
+    }
+
     static final String SUCCESS = """
-            {"id":"resp-test","object":"response","model":"test-model","status":"completed",
-             "output":[{"type":"message","id":"msg-1","role":"assistant","status":"completed",
-             "content":[{"type":"output_text","text":"OK","annotations":[]}]}],"usage":{"input_tokens":1,"output_tokens":1,"total_tokens":2}}
+            {"id":"resp-test","model":"test-model","status":"completed","output":[{"type":"message","role":"assistant",
+             "content":[{"type":"output_text","text":"OK"}]}],"usage":{"input_tokens":1,"output_tokens":1,"total_tokens":2}}
             """;
 
-    private WorkerLlmTestContext() {
+    static HttpServer startProvider(HttpHandler handler) throws IOException {
+        var server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/v1/responses", handler);
+        server.start();
+        return server;
+    }
+
+    static String baseUrlProperty(HttpServer server) {
+        return "artemis.llm.endpoints.test.base-url=http://127.0.0.1:" + server.getAddress().getPort() + "/v1";
+    }
+
+    static void reply(HttpExchange exchange, int status, String body) throws IOException {
+        try (exchange) {
+            var bytes = body.getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(status, bytes.length);
+            exchange.getResponseBody().write(bytes);
+        }
     }
 
     static ApplicationContextRunner runner() {

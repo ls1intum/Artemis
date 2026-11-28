@@ -11,9 +11,12 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -24,11 +27,13 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
-
-import com.openai.errors.OpenAIInvalidDataException;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.exception.LlmResponseException;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.hyperion.dto.CodeGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
@@ -184,11 +189,38 @@ class HyperionTestRepositoryServiceTest {
         assertThat(result).isEqualTo(RepositoryType.TESTS);
     }
 
+    @ParameterizedTest
+    @MethodSource("temporaryProviderFailures")
+    void generateSolutionPlanReportsTransientProviderFailures(RestClientException failure) throws Exception {
+        when(contextRenderer.getExistingSolutionCode(any(ProgrammingExercise.class), any(GitService.class))).thenReturn("public class Solution {}");
+        when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");
+        when(chatModel.call(any(Prompt.class))).thenThrow(failure);
+
+        assertThatThrownBy(() -> testRepository.generateSolutionPlan(user, exercise, 1L, "logs", "structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues"))
+                .isInstanceOf(NetworkingException.class).hasMessageContaining("Temporary AI service issue").hasCause(failure);
+    }
+
+    private static Stream<RestClientException> temporaryProviderFailures() {
+        return Stream.concat(Stream.of(new ResourceAccessException("unreachable")),
+                Stream.of(408, 409, 429, 503).map(status -> new RestClientResponseException("provider failure", status, "error", null, null, null)));
+    }
+
+    @Test
+    void malformedProviderResponseReportsAResponseProcessingFailure() throws Exception {
+        when(contextRenderer.getExistingSolutionCode(any(ProgrammingExercise.class), any(GitService.class))).thenReturn("public class Solution {}");
+        when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");
+        var failure = new LlmResponseException("Invalid provider response", null);
+        when(chatModel.call(any(Prompt.class))).thenThrow(failure);
+
+        assertThatThrownBy(() -> testRepository.generateSolutionPlan(user, exercise, 1L, "logs", "structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues"))
+                .isInstanceOf(NetworkingException.class).hasMessageContaining("AI response processing failed").hasCause(failure);
+    }
+
     @Test
     void generateSolutionPlan_withNonTransientOpenAiException_throwsNetworkingException() throws Exception {
         when(contextRenderer.getExistingSolutionCode(any(ProgrammingExercise.class), any(GitService.class))).thenReturn("public class Solution {}");
         when(templates.renderObject(any(String.class), anyMap())).thenReturn("rendered");
-        when(chatModel.call(any(Prompt.class))).thenThrow(new OpenAIInvalidDataException("AI service error"));
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RestClientException("AI service error"));
 
         assertThatThrownBy(() -> testRepository.generateSolutionPlan(user, exercise, 1L, "logs", "structure", BUILD_ENVIRONMENT_CONTEXT, "consistency issues"))
                 .isInstanceOf(NetworkingException.class).hasMessageContaining("AI request failed");

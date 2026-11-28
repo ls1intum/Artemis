@@ -33,13 +33,13 @@ import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallLimitExceededException;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.ai.tool.metadata.DefaultToolMetadata;
 import org.springframework.ai.tool.metadata.ToolMetadata;
 
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.atlas.dto.ExtractedContentDTO;
 
 class AtlasToolCallBudgetTest {
@@ -328,7 +328,7 @@ class AtlasToolCallBudgetTest {
 
     private static ChatModel modelReturning(AtomicInteger calls, java.util.function.IntFunction<ChatResponse> responseFactory) {
         ChatModel model = mock(ChatModel.class);
-        when(model.getOptions()).thenReturn(OpenAiChatOptions.builder().build());
+        when(model.getOptions()).thenReturn(LlmChatOptions.builder().build());
         when(model.call(any(Prompt.class))).thenAnswer(invocation -> responseFactory.apply(calls.incrementAndGet()));
         return model;
     }

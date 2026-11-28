@@ -27,12 +27,12 @@ import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.tool.ToolCallingManager;
 import org.springframework.ai.model.tool.ToolExecutionResult;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.execution.DefaultToolExecutionExceptionProcessor;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.aiworker.api.SandboxUnavailableException;
 import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
 
@@ -199,20 +199,20 @@ public class AgentLoopRunner {
         return effectiveOptions == null ? null : effectiveOptions.getModel();
     }
 
-    private OpenAiChatOptions.Builder configuredOptionsBuilder() {
-        return effectiveOptions instanceof OpenAiChatOptions openAiDefaults ? openAiDefaults.mutate() : OpenAiChatOptions.builder();
+    private LlmChatOptions.Builder configuredOptionsBuilder() {
+        return effectiveOptions instanceof LlmChatOptions defaults ? defaults.mutate() : LlmChatOptions.builder();
     }
 
     private boolean hasConfiguredReasoningEffort() {
-        return effectiveOptions instanceof OpenAiChatOptions openAiDefaults && openAiDefaults.getReasoningEffort() != null;
+        return effectiveOptions instanceof LlmChatOptions defaults && defaults.getReasoningEffort() != null;
     }
 
     private record TurnTokenLimit(boolean legacy, int tokens) {
     }
 
     private TurnTokenLimit configuredTurnTokenLimit() {
-        if (effectiveOptions instanceof OpenAiChatOptions openAiDefaults && openAiDefaults.getMaxCompletionTokens() != null) {
-            return new TurnTokenLimit(false, openAiDefaults.getMaxCompletionTokens());
+        if (effectiveOptions instanceof LlmChatOptions defaults && defaults.getMaxCompletionTokens() != null) {
+            return new TurnTokenLimit(false, defaults.getMaxCompletionTokens());
         }
         if (effectiveOptions != null && effectiveOptions.getMaxTokens() != null) {
             return new TurnTokenLimit(true, effectiveOptions.getMaxTokens());
@@ -224,7 +224,7 @@ public class AgentLoopRunner {
         return configuredTurnTokenLimit().legacy();
     }
 
-    private OpenAiChatOptions agentOptions(ToolCallback[] toolCallbacks, List<Message> conversation, long lastPromptTokens, int messagesAtLastCall, long toolDefinitionTokens) {
+    private LlmChatOptions agentOptions(ToolCallback[] toolCallbacks, List<Message> conversation, long lastPromptTokens, int messagesAtLastCall, long toolDefinitionTokens) {
         TurnTokenLimit configuredLimit = configuredTurnTokenLimit();
         long available = (long) contextWindowTokens - AgentConversationContext.estimateContextTokens(conversation, lastPromptTokens, messagesAtLastCall, toolDefinitionTokens)
                 - CONTEXT_ESTIMATION_SAFETY_TOKENS;
@@ -232,7 +232,7 @@ public class AgentLoopRunner {
             throw new IllegalStateException("The agent prompt leaves insufficient context for a model response.");
         }
         int outputTokens = (int) Math.min(configuredLimit.tokens(), available);
-        OpenAiChatOptions.Builder builder = configuredOptionsBuilder().toolCallbacks(toolCallbacks).maxTokens(null).maxCompletionTokens(null);
+        LlmChatOptions.Builder builder = configuredOptionsBuilder().toolCallbacks(toolCallbacks).maxTokens(null).maxCompletionTokens(null);
         if (configuredLimit.legacy()) {
             builder.maxTokens(outputTokens);
         }
@@ -867,8 +867,8 @@ public class AgentLoopRunner {
         List<Message> summaryPrompt = List.of(new SystemMessage(SUMMARIZATION_SYSTEM_PROMPT),
                 new UserMessage("Summarize the following earlier session messages into the structured summary described above:\n\n" + transcript));
         // Preserve provider-specific options. Pin reasoning effort low where supported so it cannot consume the summary allowance.
-        OpenAiChatOptions.Builder summaryOptions = configuredOptionsBuilder().toolCallbacks(List.of()).reasoningEffort(hasConfiguredReasoningEffort() ? "low" : null)
-                .maxTokens(null).maxCompletionTokens(null);
+        LlmChatOptions.Builder summaryOptions = configuredOptionsBuilder().toolCallbacks(List.of()).reasoningEffort(hasConfiguredReasoningEffort() ? "low" : null).maxTokens(null)
+                .maxCompletionTokens(null);
         int summaryOutputTokens = Math.min(SUMMARY_MAX_OUTPUT_TOKENS, configuredTurnTokenLimit().tokens());
         if (usesLegacyMaxTokens()) {
             summaryOptions.maxTokens(summaryOutputTokens);

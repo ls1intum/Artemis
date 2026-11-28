@@ -57,7 +57,7 @@ public record LlmProperties(@Nullable Map<String, Endpoint> endpoints, @Nullable
      * @param baseUrl                        the base URL including the version prefix, for example {@code https://api.openai.com/v1}
      * @param apiKey                         the API key; empty sends no {@code Authorization} header
      * @param timeout                        the HTTP timeout of one call
-     * @param maxRetries                     the SDK retries of one call
+     * @param maxRetries                     the transport retries of one call
      * @param organizationId                 the OpenAI organization, if any
      * @param microsoftFoundryServiceVersion the Azure OpenAI service version, if any
      * @param customHeaders                  additional HTTP headers
@@ -180,7 +180,7 @@ public record LlmProperties(@Nullable Map<String, Endpoint> endpoints, @Nullable
 
     /**
      * @param preset a configured preset
-     * @return the effective SDK retries of a call made with this preset
+     * @return the effective transport retries of a call made with this preset
      */
     public int effectiveMaxRetries(Preset preset) {
         return preset.maxRetries() != null ? preset.maxRetries() : requiredEndpointOf(preset).maxRetries();

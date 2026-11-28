@@ -6,7 +6,6 @@ import static org.mockito.Mockito.mock;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.observation.ChatModelObservationContext;
 import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.model.tool.autoconfigure.ToolCallingAutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.boot.micrometer.observation.autoconfigure.ObservationAutoConfiguration;
@@ -25,8 +24,7 @@ class WorkerModelConfigurationTest {
 
     @Test
     void createsTheActualProviderModelAndEngineWithoutAWebApplicationStack() {
-        WorkerLlmTestContext.runner()
-                .withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class, ObservationAutoConfiguration.class, ToolCallingAutoConfiguration.class))
+        WorkerLlmTestContext.runner().withConfiguration(AutoConfigurations.of(JacksonAutoConfiguration.class, ObservationAutoConfiguration.class))
                 .withUserConfiguration(WorkerTelemetryConfiguration.class, DefaultGenerationEngineService.class)
                 .withBean(ObservationHandler.class, () -> new ObservationHandler<Observation.Context>() {
 

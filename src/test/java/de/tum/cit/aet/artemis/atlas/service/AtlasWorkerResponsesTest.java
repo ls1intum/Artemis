@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
+import static de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesTestFixtures.message;
+import static de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesTestFixtures.model;
+import static de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesTestFixtures.reasoning;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -16,42 +19,28 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 
-import com.openai.client.OpenAIClient;
-import com.openai.core.JsonField;
-import com.openai.core.JsonValue;
-import com.openai.models.ResponsesModel;
-import com.openai.models.responses.Response;
-import com.openai.models.responses.ResponseCreateParams;
-import com.openai.models.responses.ResponseFunctionToolCall;
-import com.openai.models.responses.ResponseOutputItem;
-import com.openai.models.responses.ResponseOutputMessage;
-import com.openai.models.responses.ResponseOutputText;
-import com.openai.models.responses.ResponseReasoningItem;
-import com.openai.models.responses.ResponseStatus;
-import com.openai.models.responses.ResponseUsage;
-import com.openai.services.blocking.ResponseService;
-
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.atlas.config.AtlasToolSurface;
 import de.tum.cit.aet.artemis.atlas.dto.AppliedActionDTO;
-import de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesChatModel;
+import de.tum.cit.aet.artemis.core.service.llm.OpenAiResponsesTestFixtures;
 
 /** Exercises real nested delegation and the native tool advisor against a scripted Responses provider. */
 class AtlasWorkerResponsesTest {
@@ -59,28 +48,26 @@ class AtlasWorkerResponsesTest {
     @ParameterizedTest
     @CsvSource({ "Creator,createCompetency,true", "Assigner,assignExerciseToCompetency,false", "Editor,editCompetency,true" })
     void workersShareBudgetButIsolateConversationAndUsage(String role, String mutation, boolean completeUsage) {
-        OpenAIClient client = mock(OpenAIClient.class);
-        ResponseService provider = mock(ResponseService.class);
-        when(client.responses()).thenReturn(provider);
-        ResponseReasoningItem parentReasoning = reasoning("parent");
-        ResponseReasoningItem workerReasoning = reasoning("worker");
-        var scriptedResponses = List.of(
-                response("delegate", List.of(ResponseOutputItem.ofReasoning(parentReasoning), call("delegateTo" + role, "{\"task\":\"Apply the requested batch\"}")), true),
-                response("worker-read", List.of(ResponseOutputItem.ofReasoning(workerReasoning), call("getExerciseContent", "{}")), completeUsage),
-                response("worker-write", List.of(call(mutation, "{}")), true),
+        var mapper = new JsonMapper();
+        var parentReasoning = reasoning("parent");
+        var workerReasoning = reasoning("worker");
+        var scriptedResponses = List.of(response("delegate", List.of(parentReasoning, call("delegateTo" + role, "{\"task\":\"Apply the requested batch\"}")), true),
+                response("worker-read", List.of(workerReasoning, call("getExerciseContent", "{}")), completeUsage), response("worker-write", List.of(call(mutation, "{}")), true),
                 response("worker-complete", List.of(call("completeWorkerTask", "{\"success\":true,\"message\":\"Batch applied\"}")), true),
                 response("worker-text", List.of(message("Worker done")), true), response("index", List.of(call("listCompetencyIndex", "{}")), true),
                 response("complete", List.of(call("completeOrchestration", "{\"verified\":true,\"message\":\"Verified final mappings\"}")), true));
         var responses = scriptedResponses.iterator();
-        when(provider.create(any(ResponseCreateParams.class))).thenAnswer(invocation -> responses.next());
+        List<JsonNode> requests = new ArrayList<>();
+        Function<Map<String, Object>, Map<String, Object>> provider = request -> {
+            requests.add(mapper.valueToTree(request));
+            return responses.next();
+        };
         var templates = mock(AtlasPromptTemplateService.class);
         when(templates.render(anyString(), anyMap())).thenReturn("Worker instructions");
         var usage = mock(LLMTokenUsageService.class);
         // the orchestrator and worker presets differ only in their reasoning effort, which each role's model carries as its default
-        var orchestratorClient = ChatClient
-                .create(new OpenAiResponsesChatModel(client, new JsonMapper(), OpenAiChatOptions.builder().model("gpt-5.6-luna").reasoningEffort("xhigh").build()));
-        var workerClient = ChatClient
-                .create(new OpenAiResponsesChatModel(client, new JsonMapper(), OpenAiChatOptions.builder().model("gpt-5.6-luna").reasoningEffort("high").build()));
+        var orchestratorClient = ChatClient.create(model(LlmChatOptions.builder().model("gpt-5.6-luna").reasoningEffort("xhigh").build(), provider));
+        var workerClient = ChatClient.create(model(LlmChatOptions.builder().model("gpt-5.6-luna").reasoningEffort("high").build(), provider));
         var harness = new AtlasAgentDelegationService(orchestratorClient, orchestratorClient, workerClient, templates, null);
         Map<String, Object> context = new HashMap<>();
         context.put(OrchestratorToolContextKeys.COURSE_ID_KEY, 42L);
@@ -134,16 +121,15 @@ class AtlasWorkerResponsesTest {
             assertThat(response.getMetadata().getUsage().getCompletionTokens()).isEqualTo(2);
         }
         verifyNoMoreInteractions(usage);
-        var requests = ArgumentCaptor.forClass(ResponseCreateParams.class);
-        verify(provider, times(7)).create(requests.capture());
-        for (int i = 0; i < requests.getAllValues().size(); i++) {
-            var request = requests.getAllValues().get(i);
+        assertThat(requests).hasSize(7);
+        for (int i = 0; i < requests.size(); i++) {
+            var request = requests.get(i);
             boolean worker = i >= 1 && i <= 4;
-            assertThat(request.model().orElseThrow().asString()).isEqualTo("gpt-5.6-luna");
-            assertThat(request.reasoning().orElseThrow().effort().orElseThrow().asString()).isEqualTo(worker ? "high" : "xhigh");
-            assertThat(request.store()).hasValue(false);
-            assertThat(request.temperature()).isEmpty();
-            var toolNames = request.tools().orElseThrow().stream().map(tool -> tool.asFunction().name()).toList();
+            assertThat(request.get("model").asString()).isEqualTo("gpt-5.6-luna");
+            assertThat(request.at("/reasoning/effort").asString()).isEqualTo(worker ? "high" : "xhigh");
+            assertThat(request.get("store").asBoolean()).isFalse();
+            assertThat(request.has("temperature")).isFalse();
+            var toolNames = request.get("tools").valueStream().map(tool -> tool.get("name").asString()).toList();
             if (worker) {
                 assertThat(toolNames).containsExactlyInAnyOrder("getExerciseContent", mutation, "completeWorkerTask");
             }
@@ -151,43 +137,24 @@ class AtlasWorkerResponsesTest {
                 assertThat(toolNames).containsExactlyInAnyOrder("listCompetencyIndex", "delegateToCreator", "delegateToAssigner", "delegateToEditor", "completeOrchestration");
             }
         }
-        var workerInput = requests.getAllValues().get(2).input().orElseThrow().asResponse();
-        assertThat(workerInput.stream().flatMap(item -> item.reasoning().stream())).containsExactly(workerReasoning);
-        var parentInput = requests.getAllValues().get(5).input().orElseThrow().asResponse();
-        assertThat(parentInput.stream().flatMap(item -> item.reasoning().stream())).containsExactly(parentReasoning);
-        assertThat(parentInput.stream().flatMap(item -> item.functionCallOutput().stream()).findFirst().orElseThrow().output().asString()).contains("Batch applied",
-                "appliedActions");
+        var workerInput = requests.get(2).get("input");
+        assertThat(workerInput.valueStream().filter(item -> "reasoning".equals(item.path("type").asString()))).containsExactly(mapper.valueToTree(workerReasoning));
+        var parentInput = requests.get(5).get("input");
+        assertThat(parentInput.valueStream().filter(item -> "reasoning".equals(item.path("type").asString()))).containsExactly(mapper.valueToTree(parentReasoning));
+        assertThat(parentInput.valueStream().filter(item -> "function_call_output".equals(item.path("type").asString())).findFirst().orElseThrow().get("output").asString())
+                .contains("Batch applied", "appliedActions");
     }
 
-    private static ResponseOutputItem call(String name, String arguments) {
-        return ResponseOutputItem.ofFunctionCall(ResponseFunctionToolCall.builder().id("fc-" + name).callId("call-" + name).name(name).arguments(arguments)
-                .status(ResponseFunctionToolCall.Status.COMPLETED).build());
+    private static Map<String, Object> call(String name, String arguments) {
+        return Map.of("type", "function_call", "id", "fc-" + name, "call_id", "call-" + name, "name", name, "arguments", arguments, "status", "completed");
     }
 
-    private static ResponseReasoningItem reasoning(String id) {
-        return ResponseReasoningItem.builder().id("rs-" + id).summary(List.of()).encryptedContent("sealed-" + id).status(ResponseReasoningItem.Status.COMPLETED).build();
-    }
-
-    private static ResponseOutputItem message(String text) {
-        var output = ResponseOutputText.builder().text(text).annotations(List.of()).build();
-        return ResponseOutputItem.ofMessage(ResponseOutputMessage.builder().id("msg").role(JsonValue.from("assistant")).status(ResponseOutputMessage.Status.COMPLETED)
-                .content(List.of(ResponseOutputMessage.Content.ofOutputText(output))).build());
-    }
-
-    private static Response response(String id, List<ResponseOutputItem> output, boolean knownUsage) {
-        var response = mock(Response.class);
-        when(response.id()).thenReturn(id);
-        when(response.model()).thenReturn(ResponsesModel.ofString("gpt-5.6-luna"));
-        when(response.output()).thenReturn(output);
-        when(response.status()).thenReturn(Optional.of(ResponseStatus.COMPLETED));
+    private static Map<String, Object> response(String id, List<Map<String, Object>> output, boolean knownUsage) {
+        var reply = OpenAiResponsesTestFixtures.response(output, id);
+        reply.put("model", "gpt-5.6-luna");
         if (knownUsage) {
-            var usage = mock(ResponseUsage.class);
-            when(usage._inputTokensDetails()).thenReturn(JsonField.ofNullable(null));
-            when(usage.inputTokens()).thenReturn(10L);
-            when(usage.outputTokens()).thenReturn(2L);
-            when(usage.totalTokens()).thenReturn(12L);
-            when(response.usage()).thenReturn(Optional.of(usage));
+            OpenAiResponsesTestFixtures.withUsage(reply, 10, 2);
         }
-        return response;
+        return reply;
     }
 }

@@ -23,12 +23,8 @@ import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.metadata.ChatGenerationMetadata;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
-
-import com.openai.core.http.Headers;
-import com.openai.errors.OpenAIServiceException;
-import com.openai.errors.PermissionDeniedException;
-import com.openai.errors.RateLimitException;
-import com.openai.errors.UnauthorizedException;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 
 import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
 import de.tum.cit.aet.artemis.deimos.dto.DeimosFailureType;
@@ -296,8 +292,7 @@ class DefaultDeimosLlmClientTest {
     @ParameterizedTest
     @ValueSource(ints = { 401, 403 })
     void shouldReportRejectedCredentialsWithoutTheProviderResponse(int status) {
-        OpenAIServiceException rejection = status == 401 ? UnauthorizedException.builder().headers(Headers.builder().build()).build()
-                : PermissionDeniedException.builder().headers(Headers.builder().build()).build();
+        var rejection = new HttpClientErrorException(HttpStatus.valueOf(status));
         // The provider's answer, and with it possibly the rejected request, travels in the exception chain.
         var wrapped = new IllegalStateException("SECRET-REQUEST-BODY", rejection);
 
@@ -310,7 +305,7 @@ class DefaultDeimosLlmClientTest {
 
     @Test
     void shouldNotLetAMisleadingWrapperHideRejectedCredentials() {
-        var rejection = UnauthorizedException.builder().headers(Headers.builder().build()).build();
+        var rejection = new HttpClientErrorException(HttpStatus.UNAUTHORIZED);
         // Both the message and the type of the wrapper match the heuristics for a timeout and a rate limit.
         var wrapper = new RuntimeException("Read timed out after 429 too many requests", new IOException("timeout", rejection));
 
@@ -319,9 +314,9 @@ class DefaultDeimosLlmClientTest {
 
     @Test
     void shouldStillClassifyOtherFailuresByTheirHeuristics() {
-        var rateLimited = RateLimitException.builder().headers(Headers.builder().build()).build();
+        var rateLimited = new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS);
 
-        var exception = callFailingWith(new RuntimeException("429 Too Many Requests", rateLimited));
+        var exception = callFailingWith(new RuntimeException("Provider failed", rateLimited));
 
         assertThat(exception.getFailureType()).isEqualTo(DeimosFailureType.LLM_RATE_LIMITED);
         assertThat(exception.getCause()).isNotNull();

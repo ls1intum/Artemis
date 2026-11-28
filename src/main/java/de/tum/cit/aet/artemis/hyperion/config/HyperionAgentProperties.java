@@ -99,7 +99,7 @@ public class HyperionAgentProperties implements LlmPresetAssignments {
     }
 
     /**
-     * Exercise generation retries and accounts for every provider call on its own, so its presets must not retry in the SDK.
+     * Exercise generation retries and accounts for every provider call on its own, so its presets must not retry in the HTTP client.
      */
     @Override
     public List<LlmPresetAssignment> llmPresetAssignments() {

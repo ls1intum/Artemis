@@ -15,8 +15,8 @@ import java.util.stream.Stream;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.openai.OpenAiChatOptions;
 
+import de.tum.cit.aet.artemis.aiworker.api.LlmChatOptions;
 import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.service.llm.LlmClientService;
@@ -86,9 +86,15 @@ public final class SpringAiCourseHomeClient implements CourseHomeAiClient {
         }
 
         /** A fresh builder per call: the chat client consumes a mutable options builder. */
-        OpenAiChatOptions.Builder outputOptions() {
-            OpenAiChatOptions.Builder options = OpenAiChatOptions.builder();
-            return usesLegacyMaxTokens ? options.maxTokens(outputTokens) : options.maxCompletionTokens(outputTokens);
+        LlmChatOptions.Builder outputOptions() {
+            LlmChatOptions.Builder options = LlmChatOptions.builder();
+            if (usesLegacyMaxTokens) {
+                options.maxTokens(outputTokens);
+            }
+            else {
+                options.maxCompletionTokens(outputTokens);
+            }
+            return options;
         }
     }
 
