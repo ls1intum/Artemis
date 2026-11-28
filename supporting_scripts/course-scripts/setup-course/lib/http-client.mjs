@@ -64,16 +64,14 @@ export class HttpClient {
         }
 
         // Parse response body
-        let data = null;
+        let data = await response.text();
         const contentType = response.headers.get('content-type');
         if (contentType?.includes('application/json')) {
             try {
-                data = await response.json();
+                data = JSON.parse(data);
             } catch {
                 data = null;
             }
-        } else {
-            data = await response.text();
         }
 
         if (!response.ok && response.status !== 201) {
