@@ -274,19 +274,23 @@ public class SharingConnectorService {
      */
     public SharingPluginConfig getPluginConfig(URL apiBaseUrl, @SuppressWarnings("OptionalUsedAsFieldOrParameterType") Optional<String> installationName) {
         this.sharingApiBaseUrl = apiBaseUrl;
-        try {
-            this.installationName = installationName.or(() -> Optional.ofNullable(System.getenv("HOSTNAME"))).orElse(InetAddress.getLocalHost().getCanonicalHostName());
-        }
-        catch (UnknownHostException e) {
-            log.warn("Failed to determine hostname", e);
-            this.installationName = UNKNOWN_INSTALLATION_NAME;
-        }
+        this.installationName = installationName.or(() -> Optional.ofNullable(System.getenv("HOSTNAME"))).orElseGet(SharingConnectorService::localHostName);
         // this defines the export action in the sharing platform, by defining a filter to select all exercises in Artemis format.
         SharingPluginConfig.Action action = new SharingPluginConfig.Action("Import", "/sharing/import", actionName,
                 "metadata.format.stream().anyMatch(entry->entry=='artemis' || entry=='Artemis').get()");
         lastHealthStati.add(new HealthStatus("Delivered Sharing Config Status to " + apiBaseUrl));
         lastHealthStati.setLastConnect();
         return new SharingPluginConfig("Artemis Sharing Connector", List.of(action));
+    }
+
+    private static String localHostName() {
+        try {
+            return InetAddress.getLocalHost().getCanonicalHostName();
+        }
+        catch (UnknownHostException e) {
+            log.warn("Failed to determine hostname", e);
+            return UNKNOWN_INSTALLATION_NAME;
+        }
     }
 
     /**

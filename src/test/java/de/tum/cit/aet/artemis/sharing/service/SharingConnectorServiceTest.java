@@ -2,8 +2,12 @@ package de.tum.cit.aet.artemis.sharing.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Mockito.mockStatic;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+
+import java.net.InetAddress;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,6 +57,15 @@ class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTe
         assertThat(sharingConnectorService.getInstallationName()).isEqualTo(SharingPlatformMockProvider.TEST_INSTALLATION_NAME);
         assertThat(sharingConnectorService.getSharingApiBaseUrlOrNull()).isNotNull();
         assertThat(sharingConnectorService.isSharingApiBaseUrlPresent()).isTrue();
+    }
+
+    @Test
+    void namedInstallationConnectsWithoutHostnameLookup() {
+        try (var addresses = mockStatic(InetAddress.class)) {
+            sharingConnectorService.getPluginConfig(sharingConnectorService.getSharingApiBaseUrlOrNull(), Optional.of("Named installation"));
+            assertThat(sharingConnectorService.getInstallationName()).isEqualTo("Named installation");
+            addresses.verifyNoInteractions();
+        }
     }
 
     @Test
