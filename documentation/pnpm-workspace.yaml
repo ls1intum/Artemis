@@ -62,7 +62,7 @@ overrides:
   postcss: '8.5.32'
   # CVE-2026-9358 (DoS through uncontrolled AST recursion). Two majors are reachable
   # in the docs tree, so both lines are pinned to their patched release.
-  'postcss-selector-parser@6': '6.1.5'
+  'postcss-selector-parser@6': '6.1.6'
   'postcss-selector-parser@7': '7.1.7'
   # Must stay >= 6.16.0, which fixed CVE-2026-82417 (DoS via attacker-controlled isBuffer)
   # and CVE-2026-82562 (array-limit bypass via bracket-key comma parsing).
