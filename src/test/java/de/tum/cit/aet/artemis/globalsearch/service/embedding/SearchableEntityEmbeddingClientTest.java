@@ -13,6 +13,8 @@ import java.util.function.Function;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.sun.net.httpserver.HttpServer;
 
@@ -178,6 +180,15 @@ class SearchableEntityEmbeddingClientTest {
         var client = clientFor(_ -> "{\"object\":\"list\",\"data\":[{\"object\":\"embedding\",\"index\":0,\"embedding\":{\"bad\":1}}]}", Duration.ofSeconds(3), 32);
 
         assertThatThrownBy(() -> client.embedQuery("anything")).isInstanceOf(EmbeddingFailedException.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "[1,\"2\"]", "[1,null]", "[1,true]" })
+    void embedQueryRejectsNonNumericCoordinates(String vector) throws IOException {
+        var client = clientFor(_ -> "{\"data\":[{\"index\":0,\"embedding\":" + vector + "}]}", Duration.ofSeconds(3), 32);
+
+        assertThatThrownBy(() -> client.embedQuery("query")).isInstanceOf(EmbeddingFailedException.class).hasMessageContaining("Expected a number in the embedding array");
+        assertThat(requests).hasSize(1);
     }
 
     @Test

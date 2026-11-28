@@ -5,7 +5,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -87,14 +86,7 @@ final class LlmHttpClient {
                 return exchange(uri, path, body, responseType);
             }
             catch (RestClientResponseException ex) {
-                if (attempt >= maxRetries || !isRetryable(ex)) {
-                    throw ex;
-                }
-                delay = retryDelay(attempt, ex.getResponseHeaders());
-                if (delay.toMillis() > MAX_BACKOFF_MILLIS) {
-                    // Leave a longer cooldown to the caller, with the original status and Retry-After header.
-                    throw ex;
-                }
+                delay = httpRetryDelay(attempt, ex);
             }
             catch (ResourceAccessException ex) {
                 if (attempt >= maxRetries || Thread.currentThread().isInterrupted()) {
@@ -104,6 +96,18 @@ final class LlmHttpClient {
             }
             sleepBeforeRetry(delay);
         }
+    }
+
+    private Duration httpRetryDelay(int attempt, RestClientResponseException failure) {
+        if (attempt >= maxRetries || !isRetryable(failure)) {
+            throw failure;
+        }
+        var delay = retryDelay(attempt, failure.getResponseHeaders());
+        if (delay.toMillis() > MAX_BACKOFF_MILLIS) {
+            // Leave a longer cooldown to the caller, with the original status and Retry-After header.
+            throw failure;
+        }
+        return delay;
     }
 
     private <T> T exchange(URI uri, String path, byte[] body, Class<T> responseType) {
@@ -116,7 +120,7 @@ final class LlmHttpClient {
             return response.getBody().readAllBytes();
         });
         try {
-            T response = bytes == null || bytes.length == 0 ? null : mapper.readValue(bytes, responseType);
+            T response = bytes.length == 0 ? null : mapper.readValue(bytes, responseType);
             if (response == null) {
                 throw new LlmResponseException("Empty " + path + " response", null);
             }
@@ -152,8 +156,8 @@ final class LlmHttpClient {
         var url = UriComponentsBuilder.fromUri(base);
         if (endpoint.type() == EndpointType.MICROSOFT_FOUNDRY) {
             String version = endpoint.microsoftFoundryServiceVersion();
-            boolean legacy = !StringUtils.trimTrailingCharacter(Objects.toString(base.getPath(), ""), '/').endsWith("/openai/v1");
-            if (legacy) {
+            String basePath = StringUtils.trimTrailingCharacter(base.getPath(), '/');
+            if (basePath == null || !basePath.endsWith("/openai/v1")) {
                 url.pathSegment("openai");
                 if (!StringUtils.hasText(version)) {
                     version = LEGACY_FOUNDRY_RESPONSES_VERSION;
