@@ -65,6 +65,18 @@ class BuildAgentAddressRegistryServiceTest {
         assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).isFalse();
     }
 
+    @Test
+    void interruptedAddressRefreshRefusesTheRequestAndPreservesInterruptStatus() {
+        Thread.currentThread().interrupt();
+        try {
+            assertThat(service.isRegisteredAddressOfAgent("agent-1", "10.0.0.5")).isFalse();
+            assertThat(Thread.currentThread().isInterrupted()).isTrue();
+        }
+        finally {
+            Thread.interrupted();
+        }
+    }
+
     /**
      * The race the coordinated refresh exists for. An agent that has just published itself is briefly absent from the
      * snapshot, and absence is what grants the not-observable exemption, so a request arriving in that window must not

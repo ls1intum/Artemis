@@ -1,18 +1,38 @@
 package de.tum.cit.aet.artemis.aiworker.config;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.test.context.TestConfiguration;
 
 import de.tum.cit.aet.artemis.ArtemisApp;
 import de.tum.cit.aet.artemis.core.ApplicationWebXml;
+import de.tum.cit.aet.artemis.core.config.DistributedDataProviderResolver;
 
 @Isolated("SpringApplication resets JVM-wide logging")
 class ArtemisAppWorkerTest {
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class RoleTestConfiguration {
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "'core,buildagent',Local", "buildagent,Redis", "aiworker,Redis" })
+    void validNodeRolesCompleteStartupValidation(String profiles, String provider) {
+        var app = new SpringApplicationBuilder(RoleTestConfiguration.class).web(WebApplicationType.NONE).build();
+        ArtemisApp.configureApplication(app);
+        try (var context = app.run("--spring.profiles.active=" + profiles, "--artemis.distributed-data.provider=" + provider, "--spring.main.banner-mode=off")) {
+            assertThat(context.isActive()).isTrue();
+            assertThat(DistributedDataProviderResolver.resolveProvider(context.getEnvironment())).isEqualTo(provider);
+        }
+    }
 
     @Test
     void standaloneBuildAgentRejectsProcessLocalProvider() {

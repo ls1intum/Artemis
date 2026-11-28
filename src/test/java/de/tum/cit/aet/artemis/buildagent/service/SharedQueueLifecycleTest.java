@@ -285,6 +285,11 @@ class SharedQueueLifecycleTest {
         when(distributed.isConnectedToCluster()).thenReturn(false);
         submit(buildJob(0));
         when(distributed.isConnectedToCluster()).thenReturn(true);
+        when(distributed.getDistributedBuildJobQueue()).thenReturn(null);
+        scheduledTasks.getFirst().run();
+        assertThat(jobs.size()).isEqualTo(1);
+        verify(management, never()).executeBuildJob(any());
+        when(distributed.getDistributedBuildJobQueue()).thenReturn(jobs);
         when(configuration.getBuildExecutor()).thenReturn(null);
         scheduledTasks.getFirst().run();
         when(configuration.getBuildExecutor()).thenReturn(executor);
