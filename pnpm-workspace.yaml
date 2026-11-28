@@ -7,8 +7,8 @@ packages:
   - 'packages/*'
 
 catalog:
-  '@analogjs/vite-plugin-angular': 2.9.7
-  '@analogjs/vitest-angular': 2.9.7
+  '@analogjs/vite-plugin-angular': 2.9.8
+  '@analogjs/vitest-angular': 2.9.8
   '@angular-devkit/architect': 0.2203.0
   '@angular-devkit/core': 22.3.0
   # Released from angular/components with @angular/cdk, and peers on exactly that cdk version:
