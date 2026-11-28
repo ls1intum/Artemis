@@ -36,7 +36,7 @@ catalog:
   # Node 26 is the supported runtime (.nvmrc, `engines`, the Dockerfiles and CI). Stay on the 26.x line: a newer major describes the
   # APIs of a Node version we do not support yet. Move to the next major together with the Node major, not on its own.
   '@types/node': 26.6.6
-  '@types/react': 19.3.0
+  '@types/react': 19.3.3
   '@vitest/browser': 5.1.0
   '@vitest/browser-playwright': 5.1.0
   '@vitest/coverage-istanbul': 5.1.0
