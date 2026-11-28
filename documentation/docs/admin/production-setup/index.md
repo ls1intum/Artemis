@@ -2,14 +2,13 @@
 id: index
 title: Production Setup
 sidebar_label: Production Setup
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-28
 ---
 
-The general setup steps are described in the [development setup steps](/developer/setup).
-This section describes some additional steps that are of interest for production or special setups.
-For information on how to set up extension services to activate additional functionality in your Artemis instance, see
-[their respective documentation](/admin/extensions-setup).
+For a local evaluation, follow [Try Artemis](/about/try). For a first production installation, start with the
+[university example in the Artemis Ansible Collection](https://github.com/ls1intum/artemis-ansible-collection/tree/main/examples/university).
+It shows the required inventory settings for a core server and a separate worker for student builds. The example pins
+the deployment versions and describes the TLS ingress and secrets the university supplies.
 
-We recommend using the [Artemis Ansible Collection](https://github.com/ls1intum/artemis-ansible-collection) for
-setting up Artemis in production. The collection provides a set of Ansible roles that automate the setup of Artemis,
-including the required external system with sane configuration defaults.
+Before opening a course, complete the [hardening checklist](/admin/production-setup/hardening-checklist) and rehearse
+recovering a graded exercise from backup. You can enable [extension services](/admin/extensions-setup) later.
