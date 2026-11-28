@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.globalsearch.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -13,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
@@ -32,7 +36,7 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCIL
  * Integration tests for {@link IngestionCoverageResource}: the admin-only ingestion-coverage endpoints. Verifies that
  * non-admins are forbidden, the overview reports reachability and per-collection counts, the stored-coverage endpoint
  * reads and maps the projection, the live-per-page endpoint computes coverage for a page of courses, and the refresh
- * endpoint is accepted.
+ * endpoint returns only after recomputation finishes.
  */
 @EnabledIf("isWeaviateEnabled")
 class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
@@ -85,10 +89,18 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void nonAdminIsForbiddenOnEveryEndpoint() throws Exception {
+        var stored = ingestionCoverageRepository.save(storedEntry(IngestionCoverageStatus.INCOMPLETE));
         request.get(BASE + "index/overview", HttpStatus.FORBIDDEN, IndexOverviewDTO.class);
         request.getList(BASE + "coverage", HttpStatus.FORBIDDEN, IngestionCoverageDTO.class);
         request.getList(BASE + "coverage/page", HttpStatus.FORBIDDEN, IngestionCoverageDTO.class);
-        request.postWithoutResponseBody(BASE + "coverage/refresh", null, HttpStatus.FORBIDDEN);
+        request.performMvcRequest(post(BASE + "coverage/refresh")).andExpect(status().isForbidden());
+        assertThat(ingestionCoverageRepository.findByCourseId(course.getId()).orElseThrow().getTypeCounts()).isEqualTo(stored.getTypeCounts());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void anonymousCannotReadTheOverview() throws Exception {
+        request.get(BASE + "index/overview", HttpStatus.UNAUTHORIZED, String.class);
     }
 
     @Test
@@ -100,6 +112,37 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
         assertThat(overview.weaviateAddress()).isNotBlank();
         // The container is running, so the SearchableEntities collection is present and counted.
         assertThat(overview.collections()).anySatisfy(collection -> assertThat(collection.collection()).isEqualTo("SearchableEntities"));
+
+        var json = objectMapper.readTree(request.get(BASE + "index/overview", HttpStatus.OK, String.class));
+        assertThat(json.propertyNames()).containsExactlyInAnyOrder("weaviateReachable", "weaviateAddress", "irisEnabled", "irisReachable", "collections");
+        assertThat(json.get("weaviateReachable").isBoolean()).isTrue();
+        assertThat(json.get("weaviateAddress").isString()).isTrue();
+        assertThat(json.get("weaviateAddress").stringValue()).isNotBlank();
+        // The shared LocalCI/LocalVC context enables Iris, even though no reachable Pyris instance is configured.
+        assertThat(json.get("irisEnabled").isBoolean()).isTrue();
+        assertThat(json.get("irisEnabled").booleanValue()).isTrue();
+        assertThat(json.get("irisReachable").isBoolean()).isTrue();
+        assertThat(json.get("irisReachable").booleanValue()).isFalse();
+        var collections = json.get("collections");
+        assertThat(collections.isArray()).isTrue();
+        assertThat(collections).hasSize(5);
+        assertThat(collections.get(0).get("collection").stringValue()).isEqualTo("SearchableEntities");
+        assertThat(collections.get(1).get("collection").stringValue()).isEqualTo("Lectures");
+        assertThat(collections.get(2).get("collection").stringValue()).isEqualTo("LectureTranscriptions");
+        assertThat(collections.get(3).get("collection").stringValue()).isEqualTo("LectureUnitSegments");
+        assertThat(collections.get(4).get("collection").stringValue()).isEqualTo("LectureUnits");
+        for (var collection : collections) {
+            assertThat(collection.get("collection").isString()).isTrue();
+            assertThat(collection.get("readable").isBoolean()).isTrue();
+            if (collection.get("readable").booleanValue()) {
+                assertThat(collection.propertyNames()).containsExactlyInAnyOrder("collection", "count", "readable");
+                assertThat(collection.get("count").isIntegralNumber()).isTrue();
+                assertThat(collection.get("count").longValue()).isNotNegative();
+            }
+            else {
+                assertThat(collection.propertyNames()).containsExactlyInAnyOrder("collection", "readable");
+            }
+        }
     }
 
     @Test
@@ -213,11 +256,96 @@ class IngestionCoverageResourceIntegrationTest extends AbstractProgrammingIntegr
     void refreshAnswersOnceTheRecomputeHasFinished() throws Exception {
         ingestionCoverageRepository.save(storedEntry(IngestionCoverageStatus.INCOMPLETE));
 
-        request.postWithoutResponseBody(BASE + "coverage/refresh", null, HttpStatus.OK);
+        var response = request.performMvcRequest(post(BASE + "coverage/refresh")).andExpect(status().isOk()).andReturn().getResponse();
+
+        assertThat(response.getContentAsByteArray()).isEmpty();
 
         // The seeded row claims one missing exercise the course does not have, so a finished recompute has replaced it.
         assertThat(ingestionCoverageRepository.findByCourseId(course.getId()).orElseThrow().getTypeCounts())
                 .noneMatch(count -> count.type().equals("exercise") && count.missing() > 0);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void anonymousCannotRefreshOrChangeTheProjection() throws Exception {
+        var stored = ingestionCoverageRepository.save(storedEntry(IngestionCoverageStatus.INCOMPLETE));
+
+        request.performMvcRequest(post(BASE + "coverage/refresh")).andExpect(status().isUnauthorized());
+
+        assertThat(ingestionCoverageRepository.findByCourseId(course.getId()).orElseThrow().getTypeCounts()).isEqualTo(stored.getTypeCounts());
+    }
+
+    @Test
+    @WithAnonymousUser
+    void anonymousCannotReadEitherCoverageEndpoint() throws Exception {
+        request.get(BASE + "coverage", HttpStatus.UNAUTHORIZED, String.class);
+        request.get(BASE + "coverage/page", HttpStatus.UNAUTHORIZED, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void storedCoverageBindsFalseAndLiteralSearchAndRetainsNullMetadataAndEmptyCounts() throws Exception {
+        var entry = storedEntry(IngestionCoverageStatus.EMPTY);
+        entry.setCourseTitle("C++ & 50%_\\ Überprüfung 東京");
+        entry.setActive(false);
+        entry.setCoverageGapScore(0);
+        entry.setTypeCounts(List.of());
+        ingestionCoverageRepository.save(entry);
+        var decoy = storedEntry(IngestionCoverageStatus.EMPTY);
+        decoy.setCourseId(course.getId() + 1_000_000L);
+        decoy.setCourseTitle("C++ & 50XX\\ Überprüfung 東京");
+        decoy.setActive(false);
+        ingestionCoverageRepository.save(decoy);
+
+        var response = request.performMvcRequest(get(BASE + "coverage").param("search", "  " + entry.getCourseTitle() + "  ").param("active", "false").param("status", "EMPTY")
+                .param("page", "0").param("size", "1").param("sort", "courseTitle,asc")).andExpect(status().isOk()).andReturn().getResponse();
+        assertThat(response.getHeader("X-Total-Count")).isEqualTo("1");
+        var rows = objectMapper.readTree(response.getContentAsString());
+        assertThat(rows.isArray()).isTrue();
+        assertThat(rows).hasSize(1);
+        var row = rows.get(0);
+        assertThat(row.get("courseId").longValue()).isEqualTo(course.getId());
+        assertThat(row.get("courseTitle").stringValue()).isEqualTo(entry.getCourseTitle());
+        assertThat(row.get("active").booleanValue()).isFalse();
+        assertThat(row.get("coverageGapScore").intValue()).isZero();
+        assertThat(row.get("status").stringValue()).isEqualTo("EMPTY");
+        assertThat(row.get("computedAt").isString()).isTrue();
+        assertThat(row.get("typeCounts").isArray()).isTrue();
+        assertThat(row.get("typeCounts")).isEmpty();
+        assertThat(row.get("releaseDate").isNull()).isTrue();
+        assertThat(row.get("semester").isNull()).isTrue();
+        assertThat(row.get("lastIngestedAt").isNull()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void bothCoverageEndpointsExposeFullTotalsAndRespectOmittedPaginationDefaults() throws Exception {
+        for (int i = 0; i < 2; i++) {
+            var matching = courseUtilService.createCourse();
+            matching.setTitle(TEST_PREFIX + "-headers-" + matching.getId());
+            matching = courseRepository.save(matching);
+            var entry = storedEntry(IngestionCoverageStatus.COMPLETE);
+            entry.setCourseId(matching.getId());
+            entry.setCourseTitle(matching.getTitle());
+            ingestionCoverageRepository.save(entry);
+        }
+        for (String endpoint : List.of("coverage", "coverage/page")) {
+            var response = request.performMvcRequest(get(BASE + endpoint).param("search", TEST_PREFIX + "-headers-").param("page", "0").param("size", "1"))
+                    .andExpect(status().isOk()).andReturn().getResponse();
+            assertThat(response.getHeader("X-Total-Count")).isEqualTo("2");
+            assertThat(response.getHeader("Link")).contains("page=1", "rel=\"next\"");
+            var page = objectMapper.readTree(response.getContentAsString());
+            assertThat(page.isArray()).isTrue();
+            assertThat(page).hasSize(1);
+            assertThat(page.get(0).get("computedAt").isString()).isTrue();
+            assertThat(page.get(0).get("status").isString()).isTrue();
+            var defaults = request.performMvcRequest(get(BASE + endpoint).param("search", TEST_PREFIX + "-headers-")).andExpect(status().isOk()).andReturn().getResponse();
+            assertThat(defaults.getHeader("X-Total-Count")).isEqualTo("2");
+            assertThat(objectMapper.readTree(defaults.getContentAsString())).hasSize(2);
+            var empty = request.performMvcRequest(get(BASE + endpoint).param("search", TEST_PREFIX + "-missing-")).andExpect(status().isOk()).andReturn().getResponse();
+            assertThat(empty.getHeader("X-Total-Count")).isEqualTo("0");
+            assertThat(objectMapper.readTree(empty.getContentAsString())).isEmpty();
+        }
     }
 
     /**

@@ -75,6 +75,7 @@ api/exercise-unit-resources.ts
 api/admin-ai-worker-resources.ts
 api/bonus-resources.ts
 api/quiz-exercise-retrieval-resources.ts
+api/ingestion-coverage-resources.ts
 api/grading-scale-resources.ts
 api/participant-score-resources.ts
 api/global-search-resources.ts
