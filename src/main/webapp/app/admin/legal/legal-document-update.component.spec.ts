@@ -3,7 +3,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Observable, of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
@@ -62,6 +62,7 @@ describe('LegalDocumentUpdateComponent', () => {
     });
 
     afterEach(() => {
+        vi.clearAllMocks();
         vi.restoreAllMocks();
     });
 
@@ -134,18 +135,36 @@ describe('LegalDocumentUpdateComponent', () => {
         expect(component.unsavedChanges()).toBe(true);
     });
 
-    it('should call update legal document service method on update', () => {
+    it.each([
+        { route: 'privacy-statement', type: LegalDocumentType.PRIVACY_STATEMENT, read: 'getPrivacyStatementForUpdate', save: 'updatePrivacyStatement' },
+        { route: 'imprint', type: LegalDocumentType.IMPRINT, read: 'getImprintForUpdate', save: 'updateImprint' },
+    ] as const)('should save trimmed content and apply the response on the $route route', ({ route, type, read, save }) => {
+        mockActivatedRoute.url = of([new UrlSegment(route, {})]);
+        const fetched = new LegalDocument(type, LegalDocumentLanguage.ENGLISH);
+        const saved = new LegalDocument(type, LegalDocumentLanguage.ENGLISH);
+        saved.text = 'updated text';
+        const response = new Subject<LegalDocument>();
+        vi.spyOn(legalDocumentService, read)
+            .mockReturnValueOnce(of(new LegalDocument(type, LegalDocumentLanguage.GERMAN)))
+            .mockReturnValueOnce(of(fetched));
+        const saveDocument = vi.spyOn(legalDocumentService, save).mockReturnValue(response);
+
         fixture.detectChanges();
+        component.onLanguageChange(LegalDocumentLanguage.ENGLISH);
+        expect(component.legalDocument()).toBe(fetched);
+        expect(component.legalDocument()?.text).toBeUndefined();
 
-        const returnValue = new LegalDocument(LegalDocumentType.PRIVACY_STATEMENT, LegalDocumentLanguage.GERMAN);
-        returnValue.text = 'updated text';
-        vi.spyOn(legalDocumentService, 'updatePrivacyStatement').mockReturnValue(of(returnValue));
-
-        component.onContentChanged('updated text');
-
+        component.onContentChanged('  updated text  ');
         component.updateLegalDocument();
 
-        expect(legalDocumentService.updatePrivacyStatement).toHaveBeenCalledOnce();
+        expect(saveDocument).toHaveBeenCalledExactlyOnceWith(fetched, 'updated text');
+        expect(component.unsavedChanges()).toBe(true);
+        expect(component.isSaving()).toBe(true);
+
+        response.next(saved);
+        response.complete();
+
+        expect(component.legalDocument()).toBe(saved);
         expect(component.unsavedChanges()).toBe(false);
         expect(component.isSaving()).toBe(false);
     });

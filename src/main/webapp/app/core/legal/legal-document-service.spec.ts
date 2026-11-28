@@ -1,13 +1,34 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
-import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/admin/legal/legal-document.model';
+import { LegalDocumentLanguage, LegalDocumentType } from 'app/admin/legal/legal-document.model';
 import { PrivacyStatement } from 'app/admin/legal/privacy-statement.model';
 import { Imprint } from 'app/admin/legal/imprint.model';
 import { provideHttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+
+const legalDocuments = [
+    {
+        slug: 'privacy-statement',
+        wireType: 'PRIVACY_STATEMENT',
+        viewType: LegalDocumentType.PRIVACY_STATEMENT,
+        Model: PrivacyStatement,
+        read: 'getPrivacyStatement',
+        edit: 'getPrivacyStatementForUpdate',
+        save: 'updatePrivacyStatement',
+    },
+    {
+        slug: 'imprint',
+        wireType: 'IMPRINT',
+        viewType: LegalDocumentType.IMPRINT,
+        Model: Imprint,
+        read: 'getImprint',
+        edit: 'getImprintForUpdate',
+        save: 'updateImprint',
+    },
+] as const;
 
 describe('LegalDocumentService', () => {
     let service: LegalDocumentService;
@@ -22,77 +43,45 @@ describe('LegalDocumentService', () => {
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
+        httpMock.verify();
     });
 
-    it.each([LegalDocumentType.PRIVACY_STATEMENT, LegalDocumentType.IMPRINT])('should make PUT request to update legal document', async (documentType: LegalDocumentType) => {
-        let update: LegalDocument;
-        if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
-            update = new PrivacyStatement(LegalDocumentLanguage.ENGLISH);
-        } else {
-            update = new Imprint(LegalDocumentLanguage.ENGLISH);
-        }
-        update.text = 'updated text';
-        let req;
-        let promise;
-        if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
-            promise = firstValueFrom(service.updatePrivacyStatement(update));
-            req = httpMock.expectOne({ method: 'PUT', url: 'api/admin/privacy-statement' });
-        } else {
-            promise = firstValueFrom(service.updateImprint(update));
-            req = httpMock.expectOne({ method: 'PUT', url: 'api/admin/imprint' });
-        }
-        req.flush(update);
-        const resp = await promise;
-        expect(resp).toEqual(update);
+    it.each(legalDocuments)('should hydrate the returned language for a public $slug fallback', async ({ slug, wireType, viewType, Model, read }) => {
+        const response = firstValueFrom(service[read](LegalDocumentLanguage.GERMAN));
+        httpMock.expectOne({ method: 'GET', url: `/api/core/public/${slug}?language=de` }).flush({ type: wireType, language: 'ENGLISH', text: '# English text' });
+
+        const document = await response;
+        expect(document).toBeInstanceOf(Model);
+        expect(document).toMatchObject({ type: viewType, language: LegalDocumentLanguage.ENGLISH, text: '# English text' });
     });
 
-    it.each([LegalDocumentType.PRIVACY_STATEMENT, LegalDocumentType.IMPRINT])(
-        'should make GET request to retrieve legal document for update',
-        async (documentType: LegalDocumentType) => {
-            const lang = LegalDocumentLanguage.ENGLISH;
-            let expected: LegalDocument;
-            if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
-                expected = new PrivacyStatement(lang);
-            } else {
-                expected = new Imprint(lang);
-            }
-            expected.text = 'text';
-            let req;
-            let promise;
-            if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
-                promise = firstValueFrom(service.getPrivacyStatementForUpdate(lang));
-                req = httpMock.expectOne({ method: 'GET', url: `api/admin/privacy-statement-for-update?language=${lang}` });
-            } else {
-                promise = firstValueFrom(service.getImprintForUpdate(lang));
-                req = httpMock.expectOne({ method: 'GET', url: `api/admin/imprint-for-update?language=${lang}` });
-            }
-            req.flush(expected);
-            const resp = await promise;
-            expect(resp).toEqual(expected);
-        },
-    );
+    it.each(legalDocuments)('should round-trip a $slug through the admin edit and save endpoints', async ({ slug, wireType, viewType, Model, edit, save }) => {
+        const editResponse = firstValueFrom(service[edit](LegalDocumentLanguage.ENGLISH));
+        httpMock.expectOne({ method: 'GET', url: `/api/admin/${slug}-for-update?language=en` }).flush({ type: wireType, language: 'ENGLISH' });
 
-    it.each([LegalDocumentType.PRIVACY_STATEMENT, LegalDocumentType.IMPRINT])('should make GET request to retrieve legal document', async (documentType: LegalDocumentType) => {
-        const lang = LegalDocumentLanguage.GERMAN;
-        let expected: LegalDocument;
-        if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
-            expected = new PrivacyStatement(lang);
-        } else {
-            expected = new Imprint(lang);
-        }
-        expected.text = 'text';
-        let req;
-        let promise;
-        if (documentType === LegalDocumentType.PRIVACY_STATEMENT) {
-            promise = firstValueFrom(service.getPrivacyStatement(lang));
-            req = httpMock.expectOne({ method: 'GET', url: `api/core/public/privacy-statement?language=${lang}` });
-        } else {
-            promise = firstValueFrom(service.getImprint(lang));
-            req = httpMock.expectOne({ method: 'GET', url: `api/core/public/imprint?language=${lang}` });
-        }
-        req.flush(expected);
-        const resp = await promise;
-        expect(resp).toEqual(expected);
+        const document = await editResponse;
+        expect(document).toBeInstanceOf(Model);
+        expect(document).toMatchObject({ type: viewType, language: LegalDocumentLanguage.ENGLISH });
+        expect(document.text).toBeUndefined();
+
+        const text = '# Edited text';
+        const saveResponse = firstValueFrom(service[save](document, text));
+        const request = httpMock.expectOne({ method: 'PUT', url: `/api/admin/${slug}` });
+        expect(request.request.body).toStrictEqual({ type: wireType, language: 'ENGLISH', text });
+        request.flush({ type: wireType, language: 'ENGLISH', text });
+
+        const saved = await saveResponse;
+        expect(saved).toBeInstanceOf(Model);
+        expect(saved).toMatchObject({ type: viewType, language: LegalDocumentLanguage.ENGLISH, text });
+    });
+
+    it.each(legalDocuments)('should send German wire values when saving the German $slug', async ({ slug, wireType, Model, save }) => {
+        const text = '# Bearbeiteter Text';
+        const response = firstValueFrom(service[save](new Model(LegalDocumentLanguage.GERMAN), text));
+        const request = httpMock.expectOne({ method: 'PUT', url: `/api/admin/${slug}` });
+        expect(request.request.body).toStrictEqual({ type: wireType, language: 'GERMAN', text });
+        request.flush({ type: wireType, language: 'GERMAN', text });
+
+        expect((await response).language).toBe(LegalDocumentLanguage.GERMAN);
     });
 });

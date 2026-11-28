@@ -18,6 +18,11 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for retrieving the Privacy Statement.
@@ -44,7 +49,12 @@ public class PublicPrivacyStatementResource {
      */
     @EnforceNothing
     @GetMapping("privacy-statement")
-    public ResponseEntity<PrivacyStatementDTO> getPrivacyStatement(@RequestParam("language") String language) {
+    @Operation(summary = "Get the privacy statement", description = "Available without signing in. If the requested file is missing, returns the document in the other language when available.")
+    @ApiResponse(responseCode = "200", description = "The privacy statement", content = @Content(schema = @Schema(implementation = PrivacyStatementDTO.class)))
+    @ApiResponse(responseCode = "400", description = "Missing or unsupported language, or neither language has a file", content = @Content)
+    @ApiResponse(responseCode = "500", description = "Could not read the privacy statement file", content = @Content)
+    public ResponseEntity<PrivacyStatementDTO> getPrivacyStatement(
+            @RequestParam("language") @Parameter(description = "Requested language short name", schema = @Schema(allowableValues = { "en", "de" })) String language) {
         if (!Language.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
         }

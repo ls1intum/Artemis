@@ -1,70 +1,76 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
 import { Service, inject } from '@angular/core';
-import { PrivacyStatement } from 'app/admin/legal/privacy-statement.model';
-import { Observable } from 'rxjs';
-import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/admin/legal/legal-document.model';
+import { Observable, map } from 'rxjs';
 import { Imprint } from 'app/admin/legal/imprint.model';
+import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/admin/legal/legal-document.model';
+import { PrivacyStatement } from 'app/admin/legal/privacy-statement.model';
+import { AdminImprintApi } from 'app/openapi/api/admin-imprint-api';
+import { AdminPrivacyStatementApi } from 'app/openapi/api/admin-privacy-statement-api';
+import { PublicImprintApi } from 'app/openapi/api/public-imprint-api';
+import { PublicPrivacyStatementApi } from 'app/openapi/api/public-privacy-statement-api';
+import type { Imprint as ImprintDto } from 'app/openapi/model/imprint';
+import type { PrivacyStatement as PrivacyStatementDto } from 'app/openapi/model/privacy-statement';
+
+type LegalDocumentDto = ImprintDto | PrivacyStatementDto;
+
+const languageFromWire: Record<LegalDocumentDto['language'], LegalDocumentLanguage> = {
+    ENGLISH: LegalDocumentLanguage.ENGLISH,
+    GERMAN: LegalDocumentLanguage.GERMAN,
+};
+
+const languageToWire: Record<LegalDocumentLanguage, LegalDocumentDto['language']> = {
+    [LegalDocumentLanguage.ENGLISH]: 'ENGLISH',
+    [LegalDocumentLanguage.GERMAN]: 'GERMAN',
+};
+
+const typeFromWire: Record<LegalDocumentDto['type'], LegalDocumentType> = {
+    IMPRINT: LegalDocumentType.IMPRINT,
+    PRIVACY_STATEMENT: LegalDocumentType.PRIVACY_STATEMENT,
+};
+
+const typeToWire: Record<LegalDocumentType, LegalDocumentDto['type']> = {
+    [LegalDocumentType.IMPRINT]: 'IMPRINT',
+    [LegalDocumentType.PRIVACY_STATEMENT]: 'PRIVACY_STATEMENT',
+};
+
+function fromDto<T extends LegalDocument>(dto: LegalDocumentDto, Document: new (language: LegalDocumentLanguage) => T): T {
+    const document = new Document(languageFromWire[dto.language]);
+    document.type = typeFromWire[dto.type];
+    document.text = dto.text;
+    return document;
+}
+
+function toSaveDto(document: LegalDocument, text: string): Required<LegalDocumentDto> {
+    return { type: typeToWire[document.type], language: languageToWire[document.language], text };
+}
 
 @Service()
 export class LegalDocumentService {
-    private http = inject(HttpClient);
-
-    private resourceUrlPublicPrivacyStatement = 'api/core/public/privacy-statement';
-    private resourceUrlPublicImprint = 'api/core/public/imprint';
-    private resourceUrlImprintForUpdate = 'api/admin/imprint-for-update';
-    private resourceUrlPrivacyStatementForUpdate = 'api/admin/privacy-statement-for-update';
-    private resourceUrlImprintUpdate = 'api/admin/imprint';
-    private resourceUrlPrivacyStatementUpdate = 'api/admin/privacy-statement';
+    private readonly publicImprintApi = inject(PublicImprintApi);
+    private readonly publicPrivacyStatementApi = inject(PublicPrivacyStatementApi);
+    private readonly adminImprintApi = inject(AdminImprintApi);
+    private readonly adminPrivacyStatementApi = inject(AdminPrivacyStatementApi);
 
     getPrivacyStatement(language: LegalDocumentLanguage): Observable<PrivacyStatement> {
-        return this.getRequestToResource(language, LegalDocumentType.PRIVACY_STATEMENT);
+        return this.publicPrivacyStatementApi.getPrivacyStatement(language).pipe(map((dto) => fromDto(dto, PrivacyStatement)));
     }
 
     getPrivacyStatementForUpdate(language: LegalDocumentLanguage): Observable<PrivacyStatement> {
-        return this.getRequestForUpdateToResource(language, LegalDocumentType.PRIVACY_STATEMENT);
+        return this.adminPrivacyStatementApi.getPrivacyStatementForUpdate(language).pipe(map((dto) => fromDto(dto, PrivacyStatement)));
     }
 
-    updatePrivacyStatement(privacyStatement: PrivacyStatement): Observable<PrivacyStatement> {
-        return this.putRequestToResource(privacyStatement, LegalDocumentType.PRIVACY_STATEMENT);
+    updatePrivacyStatement(document: LegalDocument, text: string): Observable<PrivacyStatement> {
+        return this.adminPrivacyStatementApi.updatePrivacyStatement(toSaveDto(document, text)).pipe(map((dto) => fromDto(dto, PrivacyStatement)));
     }
 
     getImprint(language: LegalDocumentLanguage): Observable<Imprint> {
-        return this.getRequestToResource(language, LegalDocumentType.IMPRINT);
+        return this.publicImprintApi.getImprint(language).pipe(map((dto) => fromDto(dto, Imprint)));
     }
 
     getImprintForUpdate(language: LegalDocumentLanguage): Observable<Imprint> {
-        return this.getRequestForUpdateToResource(language, LegalDocumentType.IMPRINT);
+        return this.adminImprintApi.getImprintForUpdate(language).pipe(map((dto) => fromDto(dto, Imprint)));
     }
 
-    updateImprint(imprint: Imprint): Observable<Imprint> {
-        return this.putRequestToResource(imprint, LegalDocumentType.IMPRINT);
-    }
-
-    private getRequestToResource(language: LegalDocumentLanguage, type: LegalDocumentType): Observable<LegalDocument> {
-        let resourceUrl = this.resourceUrlPublicPrivacyStatement;
-        if (type === LegalDocumentType.IMPRINT) {
-            resourceUrl = this.resourceUrlPublicImprint;
-        }
-        return this.http.get<LegalDocument>(resourceUrl, {
-            params: new HttpParams().set('language', language),
-        });
-    }
-
-    private getRequestForUpdateToResource(language: LegalDocumentLanguage, type: LegalDocumentType): Observable<LegalDocument> {
-        let resourceUrl = this.resourceUrlPrivacyStatementForUpdate;
-        if (type === LegalDocumentType.IMPRINT) {
-            resourceUrl = this.resourceUrlImprintForUpdate;
-        }
-        return this.http.get<LegalDocument>(resourceUrl, {
-            params: new HttpParams().set('language', language),
-        });
-    }
-
-    private putRequestToResource(legalDocument: LegalDocument, type: LegalDocumentType): Observable<LegalDocument> {
-        let resourceUrl = this.resourceUrlPrivacyStatementUpdate;
-        if (type === LegalDocumentType.IMPRINT) {
-            resourceUrl = this.resourceUrlImprintUpdate;
-        }
-        return this.http.put<LegalDocument>(resourceUrl, legalDocument);
+    updateImprint(document: LegalDocument, text: string): Observable<Imprint> {
+        return this.adminImprintApi.updateImprint(toSaveDto(document, text)).pipe(map((dto) => fromDto(dto, Imprint)));
     }
 }

@@ -5,10 +5,10 @@ import { RouterLink } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
-import { LegalDocumentLanguage } from 'app/admin/legal/legal-document.model';
+import { isLegalDocumentLanguage } from 'app/admin/legal/legal-document.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
-import { switchMap } from 'rxjs';
+import { EMPTY, switchMap } from 'rxjs';
 
 @Component({
     selector: 'jhi-privacy',
@@ -37,7 +37,7 @@ export class PrivacyComponent extends LegalDocumentFragmentDirective implements 
         // Update the view if the language was changed
         this.languageHelper.language
             .pipe(
-                switchMap((lang) => this.legalDocumentService.getPrivacyStatement(lang as LegalDocumentLanguage)),
+                switchMap((language) => (isLegalDocumentLanguage(language) ? this.legalDocumentService.getPrivacyStatement(language) : EMPTY)),
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe((statement) => this.privacyStatement.set(statement.text));
