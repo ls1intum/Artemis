@@ -5,7 +5,7 @@ import { SubmissionExportDialogComponent } from 'app/exercise/submission-export/
 import { SubmissionExportButtonComponent } from 'app/exercise/submission-export/button/submission-export-button.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 
 describe('Submission Export Button Component', () => {
     let fixture: ComponentFixture<SubmissionExportButtonComponent>;
@@ -45,8 +45,11 @@ describe('Submission Export Button Component', () => {
     it('should open export submission dialog', () => {
         const mouseEventSpy = vi.spyOn(mouseEvent, 'stopPropagation');
         const openSpy = vi.spyOn(dialogService, 'open');
+        const buttonPressed = vi.spyOn(component.buttonPressed, 'emit');
 
         component.openSubmissionExportDialog(mouseEvent);
+
+        expect(buttonPressed).toHaveBeenCalledOnce();
 
         expect(mouseEventSpy).toHaveBeenCalledOnce();
         expect(openSpy).toHaveBeenCalledOnce();

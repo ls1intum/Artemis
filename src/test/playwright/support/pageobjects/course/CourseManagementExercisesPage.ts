@@ -2,6 +2,7 @@ import { Download, Page } from '@playwright/test';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MODELING_EXERCISE_BASE, PROGRAMMING_EXERCISE_BASE, QUIZ_EXERCISE_BASE, TEXT_EXERCISE_BASE, UPLOAD_EXERCISE_BASE } from '../../constants';
 import { expect } from '@playwright/test';
+import { finishDeletionProgress } from '../DeletionProgressDialog';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 /**
@@ -76,59 +77,46 @@ export class CourseManagementExercisesPage {
         return this.page.locator('dl', { hasText: 'Title' }).getByText(exerciseTitle);
     }
 
-    async deleteTextExercise(exercise: Exercise) {
+    /**
+     * Confirms the delete dialog of the exercise row and follows the deletion: the server accepts it with 202 and deletes in the
+     * background, which the progress dialog reports. Returns once the deletion finished and the result was dismissed.
+     */
+    private async deleteExerciseViaRowAction(exercise: Exercise, deleteUrlBase: string) {
         await this.clickRowAction(exercise.id!, 'delete');
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
-        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(TEXT_EXERCISE_BASE) && resp.request().method() === 'DELETE');
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(deleteUrlBase) && resp.request().method() === 'DELETE');
         await this.page.getByTestId('delete-dialog-confirm-button').click();
-        await responsePromise;
+        expect((await responsePromise).status(), 'the server accepts the deletion and runs it in the background').toBe(202);
+        await finishDeletionProgress(this.page);
+    }
+
+    async deleteTextExercise(exercise: Exercise) {
+        await this.deleteExerciseViaRowAction(exercise, TEXT_EXERCISE_BASE);
     }
 
     async deleteModelingExercise(exercise: Exercise) {
-        await this.clickRowAction(exercise.id!, 'delete');
-        await this.page.locator('#confirm-entity-name').fill(exercise.title!);
-        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(MODELING_EXERCISE_BASE) && resp.request().method() === 'DELETE');
-        await this.page.getByTestId('delete-dialog-confirm-button').click();
-        await responsePromise;
+        await this.deleteExerciseViaRowAction(exercise, MODELING_EXERCISE_BASE);
     }
 
     async deleteQuizExercise(exercise: Exercise) {
-        await this.clickRowAction(exercise.id!, 'delete');
-        await this.page.locator('#confirm-entity-name').fill(exercise.title!);
-        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(QUIZ_EXERCISE_BASE) && resp.request().method() === 'DELETE');
-        await this.page.getByTestId('delete-dialog-confirm-button').click();
-        await responsePromise;
+        await this.deleteExerciseViaRowAction(exercise, QUIZ_EXERCISE_BASE);
     }
 
     async deleteProgrammingExercise(exercise: Exercise) {
-        await this.clickRowAction(exercise.id!, 'delete');
-        await this.page.locator('#confirm-entity-name').fill(exercise.title!);
-        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(PROGRAMMING_EXERCISE_BASE) && resp.request().method() === 'DELETE');
-        await this.page.getByTestId('delete-dialog-confirm-button').click();
-        await responsePromise;
-        // Wait for the delete confirmation dialog to close and the exercise to be
-        // removed from the DOM. The dialog close is fast, but Angular's change detection
-        // might not remove the card immediately. Poll until both are done.
-        await expect(this.page.getByTestId('delete-dialog-confirm-button')).not.toBeVisible({ timeout: 10000 });
-        // Wait for the exercise card to disappear. If Angular doesn't remove it
-        // after the dialog closes, reload to force a fresh render.
+        await this.deleteExerciseViaRowAction(exercise, PROGRAMMING_EXERCISE_BASE);
+        // The list reloads when the deletion finished. If the card is still rendered, reload once to force a fresh render, and assert
+        // again afterwards so a card that is really still there surfaces as a test failure instead of being swallowed.
         try {
             await expect(this.getExercise(exercise.id!)).not.toBeAttached({ timeout: 5000 });
         } catch {
             await this.page.reload();
             await this.page.waitForLoadState('domcontentloaded');
-            // Re-assert after the reload so a still-present card surfaces as a real test failure
-            // instead of being silently swallowed by the catch.
             await expect(this.getExercise(exercise.id!)).not.toBeAttached({ timeout: 5000 });
         }
     }
 
     async deleteFileUploadExercise(exercise: Exercise) {
-        await this.clickRowAction(exercise.id!, 'delete');
-        await this.page.locator('#confirm-entity-name').fill(exercise.title!);
-        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(UPLOAD_EXERCISE_BASE) && resp.request().method() === 'DELETE');
-        await this.page.getByTestId('delete-dialog-confirm-button').click();
-        await responsePromise;
+        await this.deleteExerciseViaRowAction(exercise, UPLOAD_EXERCISE_BASE);
     }
 
     async createProgrammingExercise() {
@@ -200,17 +188,14 @@ export class CourseManagementExercisesPage {
         await this.page.locator(`.exercise-${exerciseID}`).locator('.import').click();
     }
 
+    /** Starts the quiz through its row action, inline or in the row's overflow menu. */
     async startQuiz(quizID: number) {
-        const startButton = this.page.locator(`#instructor-quiz-start-${quizID}`);
-        await startButton.waitFor({ state: 'visible', timeout: 10000 });
-        await startButton.click();
+        await this.clickRowAction(quizID, 'start-quiz');
     }
 
+    /** Ends the quiz through its row action, inline or in the row's overflow menu, and confirms the end-now dialog. */
     async endQuiz(quizExercise: QuizExercise) {
-        const endButton = this.page.locator(`#quiz-set-end-${quizExercise.id}`);
-        await endButton.waitFor({ state: 'visible', timeout: 10000 });
-        await endButton.scrollIntoViewIfNeeded();
-        await endButton.click();
+        await this.clickRowAction(quizExercise.id!, 'end-quiz');
         await this.page.locator('#confirm-entity-name').fill(quizExercise.title!);
         // Wait for the end-now request to actually complete before returning. Otherwise a follow-up step (e.g. a student
         // loading the exercise to practice) can race the in-flight end-now and observe the quiz as still "Waiting for

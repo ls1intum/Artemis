@@ -7,6 +7,8 @@ import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.notNull;
 import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -21,10 +23,12 @@ import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -284,6 +288,45 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
+    void updateAssessmentAfterComplaint_feedbackMarkedAsServerScored_creditsOutOfBounds() throws Exception {
+        var testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "testCase");
+        ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
+        programmingSubmission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1", AssessmentType.SEMI_AUTOMATIC, true);
+        Result programmingAssessment = participationUtilService.addFeedbackToResult(
+                new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("stored manual feedback"), programmingSubmission.getLatestResult());
+        Complaint complaint = complaintRepo.save(new Complaint().result(programmingAssessment).complaintText("This is not fair"));
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(false);
+        complaintResponse.setResponseText("rejected");
+
+        // the id of a stored feedback is kept and copied with the credits of the request, so a marker of an analysis finding does not exempt it
+        Feedback relabelled = programmingAssessment.getFeedbacks().stream().filter(feedback -> feedback.getId() != null).findFirst().orElseThrow();
+        relabelled.setType(FeedbackType.AUTOMATIC);
+        relabelled.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + "forged");
+        relabelled.setCredits(1000.0);
+        String url = "/api/programming/programming-submissions/" + programmingSubmission.getId() + "/assessment-after-complaint";
+        assertCreditsOutOfBounds(url, assessmentUpdateDTO(List.of(relabelled), complaintResponse));
+
+        // nor does a test case reference on a stored manual feedback
+        Feedback stored = programmingAssessment.getFeedbacks().stream().filter(feedback -> feedback.getId() != null).findFirst().orElseThrow();
+        Feedback withTestCase = new Feedback().credits(1000.0).type(FeedbackType.MANUAL).detailText("stored manual feedback").testCase(testCase);
+        withTestCase.setId(stored.getId());
+        assertCreditsOutOfBounds(url, assessmentUpdateDTO(List.of(withTestCase), complaintResponse));
+
+        // an id of zero is kept and copied as new manual feedback, so it is not exempted either
+        withTestCase.setId(0L);
+        assertCreditsOutOfBounds(url, assessmentUpdateDTO(List.of(withTestCase), complaintResponse));
+    }
+
+    private void assertCreditsOutOfBounds(String url, Object body) throws Exception {
+        var response = request.performMvcRequest(put(url).contentType(MediaType.APPLICATION_JSON).content(request.getObjectMapper().writeValueAsString(body)))
+                .andExpect(status().isBadRequest()).andReturn().getResponse();
+        assertThat(request.getObjectMapper().readValue(response.getContentAsString(), Map.class)).containsEntry("errorKey", "feedbackCreditsOutOfBounds");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "USER")
     void updateAssessmentAfterComplaint_studentHidden() throws Exception {
         ProgrammingSubmission programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true);
         programmingSubmission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, TEST_PREFIX + "student1",
@@ -502,11 +545,14 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(0.0);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        setupStudentSubmissions();
         manualResult.getSubmission().getParticipation().setExercise(programmingExercise);
-
+        setupStudentSubmissions();
     }
 
+    /**
+     * Expects an exercise without bonus points to be attached to the manual result already: the points are capped with its max points
+     * like in the client, so 15 awarded points of a 10-point exercise result in 100%.
+     */
     private void setupStudentSubmissions() throws Exception {
         // setting up student submission
         List<Feedback> feedbacks = new ArrayList<>();
@@ -515,7 +561,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         addAssessmentFeedbackAndCheckScore(feedbacks, 1.0, 0D);
         addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 50D);
         addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100D);
-        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 150D);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100D);
     }
 
     @Test
@@ -526,9 +572,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(0.0);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        manualResult.getSubmission().getParticipation().setExercise(programmingExercise);
         // setting up student submission
         setupStudentSubmissions();
-        manualResult.getSubmission().getParticipation().setExercise(programmingExercise);
     }
 
     @Test
@@ -539,9 +585,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(0.0);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        manualResult.getSubmission().getParticipation().setExercise(programmingExercise);
         // setting up student submission
         setupStudentSubmissions();
-        manualResult.getSubmission().getParticipation().setExercise(programmingExercise);
     }
 
     private void addAssessmentFeedbackAndCheckScore(List<Feedback> feedbacks, Double pointsAwarded, Double expectedScore) throws Exception {
@@ -583,6 +629,53 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
                 Result.class, HttpStatus.OK);
 
         assertThat(response.getScore()).isEqualTo(110, Offset.offset(offsetByTenThousandth));
+    }
+
+    // The exercise has 100 max points and 10 bonus points, so the highest score a client can legitimately send is 110%.
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @CsvSource({ "-50, false", "-50, true", "-0.0001, false", "-0.0001, true", "110.0001, false", "110.0001, true", "150, false", "150, true", "99999, false", "99999, true" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void createManualProgrammingExerciseResult_scoreOutOfRange_isRejected(double score, boolean submit) throws Exception {
+        long participationId = programmingExerciseStudentParticipation.getId();
+        List<Double> scoresBefore = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participationId).stream().map(Result::getScore).toList();
+        manualResult.score(score);
+        manualResult.rated(true);
+
+        request.put("/api/programming/participations/" + participationId + "/manual-results?submit=" + submit, manualResult, HttpStatus.BAD_REQUEST);
+
+        List<Double> scoresAfter = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participationId).stream().map(Result::getScore).toList();
+        assertThat(scoresAfter).isEqualTo(scoresBefore);
+    }
+
+    // JSON has no token for infinity, but Jackson parses a valid number beyond the double range as infinity
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(strings = { "1e400", "-1e400" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void createManualProgrammingExerciseResult_nonFiniteScore_isRejected(String score) throws Exception {
+        long participationId = programmingExerciseStudentParticipation.getId();
+        List<Double> scoresBefore = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participationId).stream().map(Result::getScore).toList();
+        String body = "{\"rated\": true, \"successful\": false, \"feedbacks\": [], \"score\": " + score + "}";
+
+        var response = request
+                .performMvcRequest(put("/api/programming/participations/" + participationId + "/manual-results?submit=true").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest()).andReturn().getResponse();
+
+        assertThat(request.getObjectMapper().readValue(response.getContentAsString(), Map.class)).containsEntry("errorKey", "scoreOutOfRange");
+        List<Double> scoresAfter = resultRepository.findAllBySubmissionParticipationIdOrderByCompletionDateDesc(participationId).stream().map(Result::getScore).toList();
+        assertThat(scoresAfter).isEqualTo(scoresBefore);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(doubles = { 0.0, 110.0 })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void createManualProgrammingExerciseResult_scoreAtBounds_isAccepted(double score) throws Exception {
+        manualResult.score(score);
+        manualResult.rated(true);
+
+        Result response = request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true",
+                manualResult, Result.class, HttpStatus.OK);
+
+        assertThat(response.getScore()).isEqualTo(score, Offset.offset(offsetByTenThousandth));
     }
 
     @Test
@@ -1709,7 +1802,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     private static ProgrammingAssessmentUpdateDTO assessmentUpdateDTO(List<Feedback> feedbacks, ComplaintResponse complaintResponse) {
         List<ProgrammingManualFeedbackDTO> feedbackDTOs = feedbacks.stream()
                 .map(feedback -> new ProgrammingManualFeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(),
-                        feedback.getReference(), feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), null, null))
+                        feedback.getReference(), feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), null,
+                        feedback.getTestCase() == null ? null : new ProgrammingManualResultRequestDTO.TestCaseRefDTO(feedback.getTestCase().getId())))
                 .toList();
         var complaint = complaintResponse.getComplaint();
         var complaintResponseDTO = new ProgrammingAssessmentUpdateDTO.ComplaintResponseDTO(complaintResponse.getId(), complaintResponse.getResponseText(),

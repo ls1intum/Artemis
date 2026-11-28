@@ -4,23 +4,34 @@ import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 
 import { DeimosDateRangeModalComponent } from 'app/shared/deimos/deimos-date-range-modal.component';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('DeimosDateRangeModalComponent', () => {
     let fixture: ComponentFixture<DeimosDateRangeModalComponent>;
     let component: DeimosDateRangeModalComponent;
+    let deimosMaxWindowDays: number | undefined;
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [DeimosDateRangeModalComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
-
+    function createComponent() {
         fixture = TestBed.createComponent(DeimosDateRangeModalComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('titleTranslationKey', 'artemisApp.deimos.modal.title.course');
-        fixture.componentRef.setInput('maxWindowDays', 31);
         fixture.detectChanges();
+    }
+
+    beforeEach(async () => {
+        deimosMaxWindowDays = 31;
+        await TestBed.configureTestingModule({
+            imports: [DeimosDateRangeModalComponent],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                // The limit comes from the server's info endpoint, so client and server cannot disagree about it.
+                { provide: ProfileService, useValue: { getProfileInfo: () => ({ deimosMaxWindowDays }) as ProfileInfo } },
+            ],
+        }).compileComponents();
+
+        createComponent();
     });
 
     afterEach(() => {
@@ -45,6 +56,73 @@ describe('DeimosDateRangeModalComponent', () => {
 
         expect(component.isWindowTooLarge()).toBe(true);
         expect(component.isSubmitDisabled()).toBe(true);
+    });
+
+    it('should allow a window of exactly maxWindowDays', () => {
+        component.fromDate.set(dayjs('2026-01-01T00:00:00Z'));
+        component.toDate.set(dayjs('2026-02-01T00:00:00Z'));
+
+        // The server permits exactly 31 * 24h (Duration.between(from, to) > Duration.ofDays(31)), so the client must too.
+        expect(component.isWindowTooLarge()).toBe(false);
+        expect(component.isSubmitDisabled()).toBe(false);
+    });
+
+    it('should reject a window one hour past maxWindowDays', () => {
+        component.fromDate.set(dayjs('2026-01-01T00:00:00Z'));
+        component.toDate.set(dayjs('2026-02-01T01:00:00Z'));
+
+        expect(component.isWindowTooLarge()).toBe(true);
+    });
+
+    it('should reject a window that only fits within maxWindowDays because of a DST transition', () => {
+        // 1 October to 1 November in Europe/Berlin: the offset moves from +02:00 to +01:00, so 31 calendar days are
+        // 31 days AND one hour of elapsed time. dayjs' .diff(..., 'day', true) compensates for the offset change and
+        // reported exactly 31, which enabled Submit for a window the server then rejected with a 400.
+        // Explicit offsets keep this independent of the machine timezone, so it cannot silently pass under UTC in CI.
+        component.fromDate.set(dayjs('2026-10-01T00:00:00+02:00'));
+        component.toDate.set(dayjs('2026-11-01T00:00:00+01:00'));
+
+        // Asserted on elapsed time, not on dayjs' .diff(..., 'day', true): that expression is itself timezone
+        // dependent (31 under Europe/Berlin, 31.0416... under UTC), so asserting on it would pass locally and fail
+        // in CI. The elapsed span is the same instant arithmetic the server performs, in every timezone.
+        const elapsedMs = component.toDate()!.valueOf() - component.fromDate()!.valueOf();
+        expect(elapsedMs).toBe((31 * 24 + 1) * 60 * 60 * 1000);
+        expect(component.isWindowTooLarge()).toBe(true);
+        expect(component.isSubmitDisabled()).toBe(true);
+    });
+
+    it('should use the maxWindowDays published by the server rather than a hard-coded limit', () => {
+        deimosMaxWindowDays = 7;
+        createComponent();
+        component.fromDate.set(dayjs('2026-01-01T00:00:00Z'));
+        component.toDate.set(dayjs('2026-01-08T00:00:00Z'));
+        expect(component.isWindowTooLarge()).toBe(false);
+
+        component.toDate.set(dayjs('2026-01-08T00:00:01Z'));
+        expect(component.isWindowTooLarge()).toBe(true);
+    });
+
+    it('should name the published maxWindowDays in the window message', () => {
+        deimosMaxWindowDays = 7;
+        const getSpy = vi.spyOn(TestBed.inject(TranslateService), 'get');
+        createComponent();
+        component.open(dayjs('2026-01-01T00:00:00Z'), dayjs('2026-01-09T00:00:00Z'));
+        fixture.detectChanges();
+
+        expect(component.isWindowTooLarge()).toBe(true);
+        expect(getSpy).toHaveBeenCalledWith('artemisApp.deimos.modal.validation.window', { maxWindowDays: 7 });
+        component.cancel();
+        fixture.detectChanges();
+    });
+
+    it('should leave the window check to the server when no limit is published', () => {
+        deimosMaxWindowDays = undefined;
+        createComponent();
+        component.fromDate.set(dayjs('2026-01-01T00:00:00Z'));
+        component.toDate.set(dayjs('2026-12-31T00:00:00Z'));
+
+        expect(component.isWindowTooLarge()).toBe(false);
+        expect(component.isSubmitDisabled()).toBe(false);
     });
 
     it('should disable submit while parent reports submitting', () => {

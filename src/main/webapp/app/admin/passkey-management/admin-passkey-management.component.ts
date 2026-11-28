@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular';
+import { TumAetUiToggleSwitchComponent } from '@tumaet/ui-angular/toggle-switch';
 import { AdminPasskeyManagementService } from './admin-passkey-management.service';
 import { AdminPasskeyDTO } from './admin-passkey.dto';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';

@@ -2,15 +2,32 @@ import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, Subject, finalize, take } from 'rxjs';
-import { faChartBar, faClipboardList, faEye, faLightbulb, faListAlt, faPencilAlt, faRedo, faRobot, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import {
+    faChartBar,
+    faClipboardList,
+    faCode,
+    faEye,
+    faLightbulb,
+    faListAlt,
+    faPencilAlt,
+    faPlayCircle,
+    faRedo,
+    faRobot,
+    faStopCircle,
+    faTrash,
+    faUsers,
+} from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseMode, ExerciseType, getExerciseUrlSegment } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseLifecycleButtonsComponent } from 'app/quiz/manage/lifecyle-buttons/quiz-exercise-lifecycle-buttons.component';
+import { QuizExerciseLifecycleService, canEndQuiz, canManageQuizBatches, canSetQuizVisible, canStartQuiz } from 'app/quiz/manage/lifecyle-buttons/quiz-exercise-lifecycle.service';
 import { isQuizEditable } from 'app/quiz/shared/service/quiz-manage-util.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { exerciseDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -52,10 +69,12 @@ export class ExerciseActionsComponent {
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
     private readonly modelingExerciseService = inject(ModelingExerciseService);
     private readonly exerciseService = inject(ExerciseService);
+    private readonly entityDeletionService = inject(EntityDeletionService);
     private readonly eventManager = inject(EventManager);
     private readonly translateService = inject(TranslateService);
     private readonly profileService = inject(ProfileService);
     private readonly featureToggleService = inject(FeatureToggleService);
+    private readonly quizExerciseLifecycleService = inject(QuizExerciseLifecycleService);
 
     readonly exercise = input.required<Exercise>();
     readonly courseId = input.required<number>();
@@ -63,11 +82,15 @@ export class ExerciseActionsComponent {
 
     readonly exerciseUpdated = output<Exercise>();
     readonly exerciseDeleted = output<Exercise>();
+    /** Emitted when it is not known how a deletion ended; the parent reloads its exercises instead of removing the row. */
+    readonly exerciseDeletionOutcomeUnknown = output<void>();
     /**
      * Width (px) the actions column must reserve for this row's quiz buttons plus the ellipsis trigger; 0 for
      * non-quiz rows. The table floors the shared column at the max across its rows (see exercise-table).
      */
     readonly quizActionsMinWidth = output<number>();
+    /** Width (px) this row needs to show all its actions inline; the table sizes the shared column to the widest row. */
+    readonly actionsNaturalWidth = output<number>();
 
     private readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     /** Variant generation runs in Hyperion; without the module its endpoints are not registered. */
@@ -83,6 +106,8 @@ export class ExerciseActionsComponent {
         );
     });
     private readonly variantPreflightPending = signal(false);
+    /** Set while a start, show now or end request runs: its response is built from the quiz at click time, so a second one would race it. */
+    private readonly lifecyclePending = signal(false);
     /**
      * Whether programming exercises are enabled server-side; defaults to active until the toggle resolves. Actions
      * are data, not markup, so this folds into `ActionItem.disabled` instead of a `jhiFeatureToggle` directive.
@@ -101,20 +126,16 @@ export class ExerciseActionsComponent {
         return ex.type === ExerciseType.QUIZ ? ex : undefined;
     });
 
-    /** True when the lifecycle buttons component will render at least one button. Used to show/hide the separator. */
+    /**
+     * True when the quiz shows its batch menu, the only lifecycle control that is not a row action (it opens its own
+     * popover). Used to show/hide the reserved content and its separator.
+     */
     readonly hasQuizButtons = computed<boolean>(() => {
         const quiz = this.quizExercise();
-        if (!quiz) return false;
-        const showVisible = quiz.status === QuizStatus.INVISIBLE && !!quiz.isAtLeastEditor && !quiz.visibleToStudents;
-        const showStart =
-            (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.INVISIBLE) && quiz.quizMode === QuizMode.SYNCHRONIZED && !!quiz.isAtLeastEditor && !quiz.quizStarted;
-        const showBatches = quiz.quizMode === QuizMode.BATCHED && (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE);
-        const showEnd =
-            (quiz.status === QuizStatus.VISIBLE || quiz.status === QuizStatus.ACTIVE) && quiz.quizMode !== QuizMode.SYNCHRONIZED && !!quiz.isAtLeastInstructor && !quiz.quizEnded;
-        return showVisible || showStart || showBatches || showEnd;
+        return !!quiz && canManageQuizBatches(quiz);
     });
 
-    readonly deletionSummary = computed<Observable<EntitySummary>>(() => this.exerciseService.getDeletionSummary(this.exercise()));
+    readonly deletionSummary = computed<Observable<EntitySummaryCategory[]>>(() => this.exerciseService.getDeletionSummary(this.exercise()));
 
     /**
      * Cleanup checkboxes for the delete dialog: on external CI, programming exercises offer an opt-out for deleting
@@ -149,12 +170,16 @@ export class ExerciseActionsComponent {
         const seg = getExerciseUrlSegment(ex.type);
         const items: ActionItem[] = [];
 
+        const quiz = this.quizExercise();
+        if (quiz) {
+            items.push(...this.quizLifecycleActions(quiz));
+        }
         if (ex.mode === ExerciseMode.TEAM) {
             items.push({
                 id: 'teams',
                 labelKey: 'artemisApp.exercise.teams',
                 icon: faUsers,
-                severity: 'primary',
+                severity: 'secondary',
                 kind: 'link',
                 link: ['/course-management', cid, 'exercises', ex.id!, 'teams'],
             });
@@ -173,7 +198,7 @@ export class ExerciseActionsComponent {
                 id: 'statistics',
                 labelKey: 'artemisApp.quizExercise.statistics',
                 icon: faChartBar,
-                severity: 'info',
+                severity: 'secondary',
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'quiz-point-statistic'],
             });
@@ -181,7 +206,7 @@ export class ExerciseActionsComponent {
                 id: 'preview',
                 labelKey: 'artemisApp.quizExercise.preview',
                 icon: faEye,
-                severity: 'success',
+                severity: 'secondary',
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'preview'],
             });
@@ -189,7 +214,7 @@ export class ExerciseActionsComponent {
                 id: 'solution',
                 labelKey: 'artemisApp.quizExercise.solution',
                 icon: faLightbulb,
-                severity: 'success',
+                severity: 'secondary',
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'solution'],
             });
@@ -198,7 +223,7 @@ export class ExerciseActionsComponent {
                     id: 're-evaluate',
                     labelKey: 'entity.action.re-evaluate',
                     icon: faRedo,
-                    severity: 'warn',
+                    severity: 'secondary',
                     kind: 'link',
                     link: ['/course-management', cid, seg, ex.id!, 're-evaluate'],
                 });
@@ -210,7 +235,7 @@ export class ExerciseActionsComponent {
                 id: 'examples',
                 labelKey: 'entity.action.exampleSubmissions',
                 icon: faClipboardList,
-                severity: 'success',
+                severity: 'secondary',
                 kind: 'link',
                 link: ['/course-management', cid, seg, ex.id!, 'example-submissions'],
             });
@@ -221,7 +246,7 @@ export class ExerciseActionsComponent {
                 id: 'create-variant-ai',
                 labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',
                 icon: faRobot,
-                severity: 'warn',
+                severity: 'secondary',
                 kind: 'button',
                 disabled: this.variantPreflightPending() || undefined,
                 onClick: () => this.openAiVariantWizard(),
@@ -234,8 +259,8 @@ export class ExerciseActionsComponent {
             items.push({
                 id: 'edit-in-editor',
                 labelKey: 'entity.action.editInEditor',
-                icon: faPencilAlt,
-                severity: 'warn',
+                icon: faCode,
+                severity: 'secondary',
                 kind: 'link',
                 link: ['/course-management', cid, 'programming-exercises', ex.id!, 'code-editor', RepositoryType.TEMPLATE, -1],
                 disabled: programmingDisabled || undefined,
@@ -247,7 +272,7 @@ export class ExerciseActionsComponent {
                 items.push({
                     id: 'edit',
                     labelKey: 'entity.action.edit',
-                    icon: faWrench,
+                    icon: faPencilAlt,
                     severity: 'warn',
                     kind: 'link',
                     link: ['/course-management', cid, seg, ex.id!, 'edit'],
@@ -260,7 +285,7 @@ export class ExerciseActionsComponent {
                 items.push({
                     id: 'edit',
                     labelKey: 'entity.action.edit',
-                    icon: faWrench,
+                    icon: faPencilAlt,
                     severity: 'warn',
                     kind: 'link',
                     link: ['/course-management', cid, seg, ex.id!, 'edit'],
@@ -287,7 +312,7 @@ export class ExerciseActionsComponent {
                 delete: {
                     entityTitle: ex.title ?? '',
                     entitySummaryTitle: 'artemisApp.exercise.delete.summary.title',
-                    fetchEntitySummary: this.deletionSummary(),
+                    fetchCategorizedEntitySummary: this.deletionSummary(),
                     deleteQuestion: 'artemisApp.exercise.delete.question',
                     deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
                     translateValues: this.deleteTranslateValues(),
@@ -331,6 +356,82 @@ export class ExerciseActionsComponent {
     }
 
     /**
+     * Start, make visible and end the quiz as row actions: labelled like the other actions and folded into the menu when
+     * the row runs out of width. They go inert, with an explanation, for quizzes in a variant group.
+     */
+    private quizLifecycleActions(quiz: QuizExercise): ActionItem[] {
+        const inVariantGroup = !!quiz.exerciseVariantGroup;
+        const disabledTooltip = inVariantGroup ? 'artemisApp.quizExercise.actionDisabledInGroup' : undefined;
+        const pending = this.lifecyclePending();
+        const track = (action: Observable<QuizExercise>) => {
+            this.lifecyclePending.set(true);
+            return action.pipe(
+                finalize(() => this.lifecyclePending.set(false)),
+                takeUntilDestroyed(this.destroyRef),
+            );
+        };
+        const run = (action: Observable<QuizExercise>) =>
+            track(action).subscribe({
+                next: (updated) => this.onQuizLifecycleUpdate(updated),
+                error: (error: HttpErrorResponse) => {
+                    this.alertService.error(error.headers.get('X-artemisApp-error')!);
+                    this.onQuizReload();
+                },
+            });
+        const items: ActionItem[] = [];
+        if (canStartQuiz(quiz)) {
+            items.push({
+                id: 'start-quiz',
+                labelKey: 'artemisApp.quizExercise.startQuiz',
+                icon: faPlayCircle,
+                severity: 'success',
+                kind: 'button',
+                disabled: pending || undefined,
+                onClick: () => run(this.quizExerciseLifecycleService.startQuiz(this.quizExercise()!)),
+            });
+        }
+        if (canSetQuizVisible(quiz)) {
+            items.push({
+                id: 'set-visible',
+                labelKey: 'artemisApp.quizExercise.showNow',
+                icon: faEye,
+                severity: 'warn',
+                kind: 'button',
+                disabled: inVariantGroup || pending || undefined,
+                disabledTooltip,
+                onClick: () => run(this.quizExerciseLifecycleService.setVisible(this.quizExercise()!)),
+            });
+        }
+        if (canEndQuiz(quiz)) {
+            items.push({
+                id: 'end-quiz',
+                labelKey: 'artemisApp.quizExercise.endQuiz',
+                icon: faStopCircle,
+                severity: 'danger',
+                kind: 'delete',
+                disabled: inVariantGroup || pending || undefined,
+                disabledTooltip,
+                delete: {
+                    actionType: ActionType.EndNow,
+                    entityTitle: quiz.title ?? '',
+                    deleteQuestion: 'artemisApp.quizExercise.endNow.question',
+                    deleteConfirmationText: 'artemisApp.exercise.delete.typeNameToConfirm',
+                    dialogError: this.dialogError$,
+                    onDelete: () =>
+                        track(this.quizExerciseLifecycleService.endQuiz(this.quizExercise()!)).subscribe({
+                            next: (updated) => {
+                                this.onQuizLifecycleUpdate(updated);
+                                this.dialogErrorSource.next('');
+                            },
+                            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+                        }),
+                },
+            });
+        }
+        return items;
+    }
+
+    /**
      * Relays an optimistic quiz update to the parent, recomputing the client-derived `status` / `quizStarted` flags first
      * so the action buttons reflect the new state immediately.
      */
@@ -369,12 +470,19 @@ export class ExerciseActionsComponent {
             return;
         }
         const finish = (obs: Observable<unknown>, evtName: string) =>
-            obs.subscribe({
-                next: () => {
-                    this.eventManager.broadcast({ name: evtName, content: 'Deleted an exercise' });
+            this.entityDeletionService.delete(exerciseDeletionTarget(exercise), obs).subscribe({
+                next: (progress) => {
+                    if (isDeletionCompleted(progress)) {
+                        this.eventManager.broadcast({ name: evtName, content: 'Deleted an exercise' });
+                        // Notify the parent so the deleted exercise is removed from the view without a page refresh.
+                        this.exerciseDeleted.emit(exercise);
+                    } else if (isDeletionOutcomeUnknown(progress)) {
+                        // Not known how it ended: only refresh the list, which shows the real state, instead of announcing a deletion.
+                        this.eventManager.broadcast({ name: evtName, content: 'Refresh after an unknown deletion outcome' });
+                        this.exerciseDeletionOutcomeUnknown.emit();
+                    }
+                    // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                     this.dialogErrorSource.next('');
-                    // Notify the parent so the deleted exercise is removed from the view without a page refresh.
-                    this.exerciseDeleted.emit(exercise);
                 },
                 error: (e: HttpErrorResponse) => this.dialogErrorSource.next(e.message),
             });

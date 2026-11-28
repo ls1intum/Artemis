@@ -1,12 +1,13 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { ExerciseVersionMetadata } from 'app/exercise/version-history/shared/exercise-version-history.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
-import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
-import { TumAetUiMessageComponent, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 
 /** View-model for a single entry rendered in the version timeline. */
 interface TimelineEntryViewModel {
@@ -29,7 +30,7 @@ interface TimelineEntryViewModel {
 @Component({
     selector: 'jhi-exercise-version-history-timeline',
     templateUrl: './exercise-version-history-timeline.component.html',
-    styleUrls: ['./exercise-version-history-timeline.component.scss'],
+    styleUrls: ['./exercise-version-history-timeline.component.css'],
     imports: [
         TumAetUiButtonDirective,
         TranslateDirective,

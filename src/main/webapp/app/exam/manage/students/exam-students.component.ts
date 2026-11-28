@@ -8,6 +8,7 @@ import { Observable, Subject, forkJoin, of } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { isActingAsTestExam } from 'app/exam/overview/exam.utils';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { AccountService } from 'app/core/auth/account.service';
 import {
@@ -36,22 +37,15 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { UsersImportDialogComponent } from 'app/shared-ui/user-import/dialog/users-import-dialog.component';
 import { StudentsUploadImagesDialogComponent } from './upload-images/students-upload-images-dialog.component';
-import {
-    CellTemplateRef,
-    ColumnDef,
-    TumAetUiButtonDirective,
-    TumAetUiConfirmDialogComponent,
-    TumAetUiConfirmationService,
-    TumAetUiPopoverComponent,
-    TumAetUiPopoverTriggerDirective,
-    TumAetUiProgressBarComponent,
-    TumAetUiSearchFieldComponent,
-    TumAetUiSelectComponent,
-    TumAetUiTableComponent,
-    TumAetUiTableQueryEvent,
-    TumAetUiTagComponent,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
+import { TumAetUiProgressBarComponent } from '@tumaet/ui-angular/progress-bar';
+import { TumAetUiSearchFieldComponent } from '@tumaet/ui-angular/search-field';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { CellTemplateRef, ColumnDef, TumAetUiTableComponent, TumAetUiTableQueryEvent } from '@tumaet/ui-angular/table';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamDeleteDialogComponent } from 'app/exam/shared/delete-dialog/exam-delete-dialog.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -188,7 +182,7 @@ export class ExamStudentsComponent implements OnDestroy {
     readonly hasExamStarted = signal(false);
     readonly hasExamEnded = signal(false);
     readonly isAdmin = signal(false);
-    readonly isTestExam = computed(() => this.exam()?.testExam ?? false);
+    readonly isTestExam = computed(() => isActingAsTestExam(this.exam()));
     readonly isLoading = signal(true);
 
     readonly searchUsersForExamFn = (term: string, page: number, size: number): Observable<UserSearchResult> => {
@@ -285,7 +279,6 @@ export class ExamStudentsComponent implements OnDestroy {
                 field: 'visibleRegistrationNumber',
                 headerKey: 'artemisApp.examManagement.examStudents.table.matriculationNumber',
                 sort: true,
-                wrapHeader: true,
                 width: '6rem',
                 templateRef: this.plainTemplate(),
             },
@@ -308,7 +301,6 @@ export class ExamStudentsComponent implements OnDestroy {
                 field: 'workingTime',
                 headerKey: this.isTestExam() ? 'artemisApp.studentExams.usedWorkingTime' : 'artemisApp.studentExams.workingTime',
                 sort: true,
-                wrapHeader: true,
                 width: '4rem',
                 templateRef: this.workingTimeTemplate(),
             },

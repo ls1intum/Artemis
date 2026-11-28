@@ -15,14 +15,12 @@ import { MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiDatePickerComponent,
-    TumAetUiInputDirective,
-    TumAetUiMessageComponent,
-    TumAetUiSelectComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
 import { SystemNotification, SystemNotificationType } from 'app/admin/system-notification-management/system-notification.model';
 import { DatePickerControlDirective } from 'app/shared-ui/date-picker-control/date-picker-control.directive';
@@ -171,6 +169,112 @@ describe('SystemNotificationManagementUpdateComponent', () => {
 
         await vi.waitFor(() => {
             expect(saveSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('text field length validation', () => {
+        beforeEach(() => {
+            fixture.detectChanges();
+        });
+
+        it('should have no maxlength error when text is exactly 2000 characters', () => {
+            const control = component.form.get('text');
+            control?.setValue('a'.repeat(2000));
+            control?.markAsDirty();
+            fixture.detectChanges();
+
+            expect(control?.hasError('maxlength')).toBe(false);
+            expect(fixture.nativeElement.querySelector('#text-maxlength-error')).toBeNull();
+        });
+
+        it('should have a maxlength error when text exceeds 2000 characters', () => {
+            const control = component.form.get('text');
+            control?.setValue('a'.repeat(2001));
+            control?.markAsDirty();
+            fixture.detectChanges();
+
+            expect(control?.hasError('maxlength')).toBe(true);
+            expect(fixture.nativeElement.querySelector('#text-maxlength-error')).not.toBeNull();
+        });
+
+        it('should disable the save button when text exceeds 2000 characters', () => {
+            const control = component.form.get('text');
+            control?.setValue('a'.repeat(2001));
+            fixture.detectChanges();
+
+            const saveButton = fixture.nativeElement.querySelector('#saveButton') as HTMLButtonElement;
+            expect(saveButton.disabled).toBe(true);
+        });
+
+        it('should show the maxlength error even on an untouched field', () => {
+            const control = component.form.get('text');
+            control?.setValue('a'.repeat(2001));
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#text-maxlength-error')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('#text')?.getAttribute('aria-describedby')).toBe('text-maxlength-error');
+        });
+
+        it('should set aria-invalid and aria-describedby when text exceeds 2000 characters', () => {
+            const control = component.form.get('text');
+            control?.setValue('a'.repeat(2001));
+            fixture.detectChanges();
+
+            const input = fixture.nativeElement.querySelector('#text') as HTMLInputElement;
+            expect(input.getAttribute('aria-invalid')).toBe('true');
+            expect(input.getAttribute('aria-describedby')).toBe('text-maxlength-error');
+        });
+    });
+
+    describe('title field length validation', () => {
+        beforeEach(() => {
+            fixture.detectChanges();
+        });
+
+        it('should have no maxlength error when title is exactly 255 characters', () => {
+            const control = component.form.get('title');
+            control?.setValue('a'.repeat(255));
+            fixture.detectChanges();
+
+            expect(control?.hasError('maxlength')).toBe(false);
+            expect(fixture.nativeElement.querySelector('#title-maxlength-error')).toBeNull();
+        });
+
+        it('should have a maxlength error when title exceeds 255 characters', () => {
+            const control = component.form.get('title');
+            control?.setValue('a'.repeat(256));
+            fixture.detectChanges();
+
+            expect(control?.hasError('maxlength')).toBe(true);
+            expect(fixture.nativeElement.querySelector('#title-maxlength-error')).not.toBeNull();
+        });
+
+        it('should disable the save button when title exceeds 255 characters', () => {
+            const control = component.form.get('title');
+            control?.setValue('a'.repeat(256));
+            fixture.detectChanges();
+
+            const saveButton = fixture.nativeElement.querySelector('#saveButton') as HTMLButtonElement;
+            expect(saveButton.disabled).toBe(true);
+        });
+
+        it('should show the maxlength error even on an untouched title field', () => {
+            const control = component.form.get('title');
+            control?.setValue('a'.repeat(256));
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#title-maxlength-error')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('#title')?.getAttribute('aria-describedby')).toBe('title-maxlength-error');
+        });
+
+        it('should set aria-invalid and aria-describedby when title exceeds 255 characters', () => {
+            const control = component.form.get('title');
+            control?.setValue('a'.repeat(256));
+            fixture.detectChanges();
+
+            const input = fixture.nativeElement.querySelector('#title') as HTMLInputElement;
+            expect(input.getAttribute('aria-invalid')).toBe('true');
+            expect(input.getAttribute('aria-describedby')).toBe('title-maxlength-error');
         });
     });
 

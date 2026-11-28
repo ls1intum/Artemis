@@ -6,7 +6,7 @@ import { MockDirective, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 
 describe('AssessmentNoteComponent', () => {
     let component: AssessmentNoteComponent;

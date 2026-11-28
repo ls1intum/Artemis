@@ -11,13 +11,14 @@ import { LectureComponent, LectureDateFilter } from 'app/lecture/manage/lecture/
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { LectureApi } from 'app/openapi/api/lecture-api';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
+import { TumLiveUploadService } from 'app/lecture/manage/lecture-units/services/tum-live-upload.service';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { DocumentationButtonComponent } from 'app/shared-ui/components/buttons/documentation-button/documentation-button.component';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -34,6 +35,7 @@ describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
     let lectureComponent: LectureComponent;
     let lectureService: LectureService;
+    let lectureApi: LectureApi;
     let profileService: ProfileService;
 
     let pastLecture: Lecture;
@@ -113,7 +115,6 @@ describe('Lecture', () => {
                 MockComponent(DocumentationButtonComponent),
                 MockDirective(TranslateDirective),
                 MockRouterLinkDirective,
-                MockDirective(SortDirective),
             ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -131,33 +132,16 @@ describe('Lecture', () => {
                 },
                 MockProvider(LectureService, {
                     findAllByCourseId: () => {
-                        return of(
-                            new HttpResponse({
-                                body: [pastLecture, pastLecture2, currentLecture, currentLecture2, currentLecture3, futureLecture, futureLecture2, unspecifiedLecture],
-                                status: 200,
-                            }),
-                        );
+                        return of([pastLecture, pastLecture2, currentLecture, currentLecture2, currentLecture3, futureLecture, futureLecture2, unspecifiedLecture]);
                     },
                     import: (_courseId, lectureId) => {
-                        return of(
-                            new HttpResponse({
-                                body: { id: lectureId, course: { id: _courseId } } as Lecture,
-                                status: 200,
-                            }),
-                        );
-                    },
-                    delete: () => {
-                        return of(new HttpResponse<void>({ status: 200 }));
+                        return of({ id: lectureId, course: { id: _courseId } } as Lecture);
                     },
                     create: () => {
-                        return of(
-                            new HttpResponse({
-                                body: { id: 999, course: { id: 1 } } as Lecture,
-                                status: 201,
-                            }),
-                        );
+                        return of({ id: 999, course: { id: 1 } } as Lecture);
                     },
                 }),
+                MockProvider(LectureApi, { deleteLecture: () => of(undefined) }),
                 MockProvider(IrisSettingsService),
                 MockProvider(AttachmentVideoUnitService),
                 MockProvider(AlertService),
@@ -169,6 +153,7 @@ describe('Lecture', () => {
         lectureComponentFixture = TestBed.createComponent(LectureComponent);
         lectureComponent = lectureComponentFixture.componentInstance;
         lectureService = TestBed.inject(LectureService);
+        lectureApi = TestBed.inject(LectureApi);
         profileService = TestBed.inject(ProfileService);
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
     });
@@ -211,7 +196,7 @@ describe('Lecture', () => {
     });
 
     it('should delete lecture', async () => {
-        const deleteSpy = vi.spyOn(lectureService, 'delete');
+        const deleteSpy = vi.spyOn(lectureApi, 'deleteLecture');
 
         lectureComponentFixture.detectChanges();
         await lectureComponentFixture.whenStable();
@@ -219,10 +204,32 @@ describe('Lecture', () => {
         await lectureComponentFixture.whenStable();
 
         expect(deleteSpy).toHaveBeenCalledOnce();
-        expect(deleteSpy).toHaveBeenCalledWith(pastLecture.id!);
+        expect(deleteSpy).toHaveBeenCalledWith(pastLecture.id!, false);
         expect(lectureComponent.lectures()).toHaveLength(7);
         expect(lectureComponent.lectures()).not.toContain(pastLecture);
         expect(lectureComponent.filteredLectures()).toEqual(lectureComponent.lectures());
+    });
+
+    it('passes the answer about TUM.Live videos on when deleting a lecture', async () => {
+        const deleteSpy = vi.spyOn(lectureApi, 'deleteLecture');
+        lectureComponentFixture.detectChanges();
+        await lectureComponentFixture.whenStable();
+
+        lectureComponent.deleteLecture(pastLecture.id!, { deleteTumLiveRecordings: true });
+
+        expect(deleteSpy).toHaveBeenCalledWith(pastLecture.id!, true);
+    });
+
+    it('reports a failed lookup of the uploaded TUM.Live videos instead of acting as if there were none', async () => {
+        vi.spyOn(TestBed.inject(TumLiveUploadService), 'getUploadedUnits').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        lectureComponent.ngOnInit();
+        await lectureComponentFixture.whenStable();
+
+        expect(errorSpy).toHaveBeenCalledWith('error.http.400');
+        // Deleting a lecture then asks about its videos in TUM.Live, since it is not known which lectures have some.
+        expect(lectureComponent.tumLiveUploadsUnknown()).toBe(true);
     });
 
     it('should import lecture', async () => {
@@ -319,7 +326,7 @@ describe('Lecture', () => {
 
     it('should handle error when deleting lecture fails', async () => {
         const errorMessage = 'Delete failed';
-        vi.spyOn(lectureService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse({ error: errorMessage, status: 400 })));
+        vi.spyOn(lectureApi, 'deleteLecture').mockReturnValue(throwError(() => new HttpErrorResponse({ error: errorMessage, status: 400 })));
 
         lectureComponentFixture.detectChanges();
         await lectureComponentFixture.whenStable();
@@ -398,11 +405,11 @@ describe('Lecture', () => {
             return new File(['content'], name, { type: 'application/pdf' });
         }
 
-        function unitReleasedAt(releaseDate?: string): HttpResponse<AttachmentVideoUnit> {
+        function unitReleasedAt(releaseDate?: string): AttachmentVideoUnit {
             const unit = new AttachmentVideoUnit();
             unit.id = 1;
             unit.releaseDate = releaseDate ? dayjs(releaseDate) : undefined;
-            return new HttpResponse({ body: unit, status: 201 });
+            return unit;
         }
 
         async function dropAndChoose(files: File[], target: PdfUploadTarget): Promise<void> {
@@ -434,7 +441,7 @@ describe('Lecture', () => {
             createdLecture.id = 999;
             createdLecture.title = 'New Lecture';
             createdLecture.course = { id: 1 } as Course;
-            vi.spyOn(lectureService, 'create').mockReturnValue(of(new HttpResponse({ body: createdLecture, status: 201 })));
+            vi.spyOn(lectureService, 'create').mockReturnValue(of(createdLecture));
             vi.spyOn(attachmentVideoUnitService, 'createAttachmentVideoUnitFromFile').mockReturnValue(of(unitReleasedAt('2026-10-01T08:00:00.000Z')));
             const navigateSpy = vi.spyOn(router, 'navigate');
             const successSpy = vi.spyOn(alertService, 'success');

@@ -155,8 +155,8 @@ describe('HyperionMarkdownComponent', () => {
             }
         });
 
-        it('strips the form controls the shared sanitiser would otherwise permit, keeping their text', () => {
-            expect(htmlForMarkdown('<form action="https://evil.example/"><input name="password"><button>Sign in</button></form>')).toContain('<form');
+        it('strips the form controls, keeping their text', () => {
+            expect(htmlForMarkdown('<form action="https://evil.example/"><input name="password"><button>Sign in</button></form>')).not.toContain('<form');
 
             const host = render('<form action="https://evil.example/"><input name="password"><button>Sign in</button></form>');
 

@@ -7,7 +7,6 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { DialogService } from 'primeng/dynamicdialog';
 import { QuizExerciseUpdateComponent } from 'app/quiz/manage/update/quiz-exercise-update.component';
 import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
@@ -86,7 +85,6 @@ describe('QuizExerciseUpdateComponent title and channel validation', () => {
         vi.spyOn(QuizExerciseUpdateComponent.prototype, 'ngOnInit').mockImplementation(() => {});
         await TestBed.configureTestingModule({
             providers: [
-                MockProvider(DialogService),
                 { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: 456 }) }, queryParams: of({}) } },
                 LocalStorageService,
                 SessionStorageService,

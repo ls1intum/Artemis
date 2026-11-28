@@ -2,7 +2,8 @@ import { Component, computed, input, output } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { TumAetUiButtonDirective, TumAetUiButtonSeverity, TumAetUiButtonVariantOptions, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiButtonSeverity, TumAetUiButtonVariantOptions } from '@tumaet/ui-angular/button';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -13,17 +14,17 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
  * @enum {string}
  */
 export enum ButtonType {
-    DEFAULT = 'btn-default',
-    PRIMARY = 'btn-primary',
-    SECONDARY = 'btn-secondary',
-    SUCCESS = 'btn-success',
-    WARNING = 'btn-warning',
-    ERROR = 'btn-danger',
-    INFO = 'btn-info',
+    DEFAULT = 'default',
+    PRIMARY = 'primary',
+    SECONDARY = 'secondary',
+    SUCCESS = 'success',
+    WARNING = 'warning',
+    ERROR = 'danger',
+    INFO = 'info',
 
-    PRIMARY_OUTLINE = 'btn-outline-primary',
-    SUCCESS_OUTLINE = 'btn-outline-success',
-    ERROR_OUTLINE = 'btn-outline-danger',
+    PRIMARY_OUTLINE = 'primary-outline',
+    SUCCESS_OUTLINE = 'success-outline',
+    ERROR_OUTLINE = 'danger-outline',
 }
 
 /**
@@ -31,9 +32,9 @@ export enum ButtonType {
  * @enum {string}
  */
 export enum ButtonSize {
-    SMALL = 'btn-sm',
-    MEDIUM = 'btn-md',
-    LARGE = 'btn-lg',
+    SMALL = 'small',
+    MEDIUM = 'medium',
+    LARGE = 'large',
 }
 
 export enum TooltipPlacement {

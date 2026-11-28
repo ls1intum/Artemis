@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
-import { of, throwError } from 'rxjs';
-import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { Observable, Subject, of, throwError } from 'rxjs';
+import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
@@ -15,11 +15,18 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { EventManager } from 'app/foundation/service/event-manager.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { QuizExerciseDeletionApi } from 'app/openapi/api/quiz-exercise-deletion-api';
 import { QuizExerciseEvaluationApi } from 'app/openapi/api/quiz-exercise-evaluation-api';
+import { EntityDeletionProgress, EntityDeletionStatus, EntityDeletionType } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { MockEntityDeletionService } from 'test/helpers/mocks/service/mock-entity-deletion.service';
+import * as downloadUtil from 'app/foundation/util/download.util';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 
 describe('QuizExercise Management Buttons Component', () => {
     let comp: QuizExerciseManageButtonsComponent;
@@ -40,11 +47,13 @@ describe('QuizExercise Management Buttons Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 { provide: ActivatedRoute, useValue: route },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 provideHttpClient(),
             ],
         })
@@ -87,25 +96,43 @@ describe('QuizExercise Management Buttons Component', () => {
         expect(quizExerciseDeletionApi.deleteQuizExercise).toHaveBeenCalledOnce();
     });
 
-    it('should export quiz', () => {
+    it('should export the questions of the quiz', () => {
         vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quizExercise));
         vi.spyOn(quizExerciseService, 'exportQuiz');
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.ngOnInit();
-        comp.exportQuizExercise(true);
+        comp.exportQuizQuestions();
         expect(quizExerciseService.exportQuiz).toHaveBeenCalledWith([], true, 'Quiz Exercise');
         expect(quizExerciseService.exportQuiz).toHaveBeenCalledOnce();
     });
 
-    it('should export quiz with exportAll false', () => {
-        vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(quizExercise));
-        vi.spyOn(quizExerciseService, 'exportQuiz');
+    it('should export the whole quiz exercise in the format that the import from file reads', () => {
+        const response = new HttpResponse<Blob>({ body: new Blob(['zip']), headers: new HttpHeaders({ filename: 'Quiz Exercise.zip' }) });
+        const exportToFile = vi.spyOn(exerciseService, 'exportToFile').mockReturnValue(of(response));
+        const exportQuestions = vi.spyOn(quizExerciseService, 'exportQuiz');
+        const downloadSpy = vi.spyOn(downloadUtil, 'downloadZipFileFromResponse').mockImplementation(() => {});
 
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.ngOnInit();
-        comp.exportQuizExercise(false);
-        expect(quizExerciseService.exportQuiz).toHaveBeenCalledWith([], false, 'Quiz Exercise');
+        comp.exportQuizExercise();
+
+        expect(exportToFile).toHaveBeenCalledExactlyOnceWith(quizExercise);
+        expect(downloadSpy).toHaveBeenCalledExactlyOnceWith(response);
+        expect(exportQuestions).not.toHaveBeenCalled();
+    });
+
+    it('should show an error if the export of the whole quiz exercise fails', () => {
+        vi.spyOn(exerciseService, 'exportToFile').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 500 })));
+        const downloadSpy = vi.spyOn(downloadUtil, 'downloadZipFileFromResponse').mockImplementation(() => {});
+        const errorSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+
+        fixture.componentRef.setInput('quizExercise', quizExercise);
+        comp.ngOnInit();
+        comp.exportQuizExercise();
+
+        expect(errorSpy).toHaveBeenCalledExactlyOnceWith('error.exportFailed');
+        expect(downloadSpy).not.toHaveBeenCalled();
     });
 
     it('should evaluate quiz exercise successfully', () => {
@@ -206,6 +233,7 @@ describe('QuizExercise Management Buttons Component - Exam Mode', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: examRoute },
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
                 LocalStorageService,
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -235,14 +263,14 @@ describe('QuizExercise Management Buttons Component - Exam Mode', () => {
         expect(comp.baseUrl()).toBe('/course-management/123/exams/789/exercise-groups/111');
     });
 
-    it('exports an exam quiz through the exam details endpoint', () => {
+    it('exports the questions of an exam quiz through the exam details endpoint', () => {
         fixture.componentRef.setInput('quizExercise', quizExercise);
         comp.ngOnInit();
         const service = TestBed.inject(QuizExerciseService);
         const examFind = vi.spyOn(service, 'findForExam').mockReturnValue(of(quizExercise));
         const courseFind = vi.spyOn(service, 'find');
         const exportSpy = vi.spyOn(service, 'exportQuiz').mockImplementation(() => {});
-        comp.exportQuizExercise(true);
+        comp.exportQuizQuestions();
         expect(examFind).toHaveBeenCalledExactlyOnceWith(quizExercise.id);
         expect(courseFind).not.toHaveBeenCalled();
         expect(exportSpy).toHaveBeenCalledExactlyOnceWith([], true, quizExercise.title);
@@ -263,6 +291,237 @@ describe('QuizExercise Management Buttons Component - Exam Mode', () => {
 
         expect(quizExerciseDeletionApi.deleteQuizExercise).toHaveBeenCalledWith(456);
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', 123, 'exercises']);
+    });
+
+    it('should not navigate when the deletion ends while the reused component shows another quiz', () => {
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        const ended$ = new Subject<EntityDeletionProgress>();
+        deletionService.delete.mockReturnValueOnce(ended$);
+        const quizExerciseDeletionApi = TestBed.inject(QuizExerciseDeletionApi);
+        const router = TestBed.inject(Router);
+        vi.spyOn(quizExerciseDeletionApi, 'deleteQuizExercise').mockReturnValue(of(undefined));
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        fixture.componentRef.setInput('quizExercise', quizExercise);
+        fixture.componentRef.setInput('isDetailPage', true);
+        comp.ngOnInit();
+        comp.deleteQuizExercise();
+
+        fixture.componentRef.setInput('quizExercise', { ...quizExercise, id: 999 });
+        ended$.next({
+            entityType: EntityDeletionType.EXERCISE,
+            entityId: quizExercise.id!,
+            status: EntityDeletionStatus.COMPLETED,
+            stepsCompleted: 1,
+            totalSteps: 1,
+            itemsProcessed: 0,
+            totalItems: 0,
+            weightedProgressPercent: 100,
+        });
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should stay on the detail page when the background deletion failed', () => {
+        (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.FAILED;
+        const quizExerciseDeletionApi = TestBed.inject(QuizExerciseDeletionApi);
+        const router = TestBed.inject(Router);
+        vi.spyOn(quizExerciseDeletionApi, 'deleteQuizExercise').mockReturnValue(of(undefined));
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        fixture.componentRef.setInput('quizExercise', quizExercise);
+        fixture.componentRef.setInput('isDetailPage', true);
+        comp.ngOnInit();
+
+        comp.deleteQuizExercise();
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should reload the quiz and stay on the detail page when it is not known how the background deletion ended', () => {
+        (TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService).status = EntityDeletionStatus.UNKNOWN;
+        const quizExerciseDeletionApi = TestBed.inject(QuizExerciseDeletionApi);
+        const router = TestBed.inject(Router);
+        vi.spyOn(quizExerciseDeletionApi, 'deleteQuizExercise').mockReturnValue(of(undefined));
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        const loadSpy = vi.spyOn(comp.loadQuizExercises, 'emit');
+        fixture.componentRef.setInput('quizExercise', quizExercise);
+        fixture.componentRef.setInput('isDetailPage', true);
+        comp.ngOnInit();
+
+        comp.deleteQuizExercise();
+
+        // The quiz may still exist: the page reads it from the server instead of announcing a deletion or leaving.
+        expect(loadSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should hand the quiz to the background deletion', () => {
+        const quizExerciseDeletionApi = TestBed.inject(QuizExerciseDeletionApi);
+        vi.spyOn(quizExerciseDeletionApi, 'deleteQuizExercise').mockReturnValue(of(undefined));
+        fixture.componentRef.setInput('quizExercise', quizExercise);
+        comp.ngOnInit();
+
+        comp.deleteQuizExercise();
+
+        const deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+        expect(deletionService.delete).toHaveBeenCalledWith(
+            expect.objectContaining({ entityType: EntityDeletionType.EXERCISE, entityId: 456, successAlertKey: 'artemisApp.quizExercise.deleted' }),
+            expect.anything(),
+        );
+    });
+});
+
+describe('QuizExercise Management Buttons Component - resuming a running deletion', () => {
+    let comp: QuizExerciseManageButtonsComponent;
+    let fixture: ComponentFixture<QuizExerciseManageButtonsComponent>;
+    let deletionService: MockEntityDeletionService;
+
+    const course = { id: 123 } as Course;
+    const quiz = (id: number, isAtLeastInstructor = true): QuizExercise => {
+        const quizExercise = new QuizExercise(course, undefined);
+        quizExercise.id = id;
+        quizExercise.title = 'Quiz ' + id;
+        quizExercise.quizQuestions = [];
+        quizExercise.isAtLeastInstructor = isAtLeastInstructor;
+        return quizExercise;
+    };
+    const progress = (status: EntityDeletionStatus, entityId: number): EntityDeletionProgress => ({
+        entityType: EntityDeletionType.EXERCISE,
+        entityId,
+        status,
+        stepsCompleted: 1,
+        totalSteps: 1,
+        itemsProcessed: 0,
+        totalItems: 0,
+        weightedProgressPercent: 100,
+    });
+    const showAdministrationSection = (quizExercise: QuizExercise) => {
+        fixture.componentRef.setInput('quizExercise', quizExercise);
+        fixture.componentRef.setInput('isDetailPage', true);
+        fixture.componentRef.setInput('detailPageSection', 'administration');
+    };
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [
+                { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } },
+                { provide: EntityDeletionService, useClass: MockEntityDeletionService },
+                LocalStorageService,
+                SessionStorageService,
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: AccountService, useClass: MockAccountService },
+                MockProvider(Router),
+                provideHttpClient(),
+            ],
+        })
+            .overrideTemplate(QuizExerciseManageButtonsComponent, '')
+            .compileComponents();
+
+        fixture = TestBed.createComponent(QuizExerciseManageButtonsComponent);
+        comp = fixture.componentInstance;
+        deletionService = TestBed.inject(EntityDeletionService) as unknown as MockEntityDeletionService;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    it('should show the progress of a deletion that is already running when an instructor opens the detail page', () => {
+        showAdministrationSection(quiz(456));
+
+        fixture.detectChanges();
+
+        expect(deletionService.resume).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ entityType: EntityDeletionType.EXERCISE, entityId: 456 }), expect.anything());
+    });
+
+    it('should check for a running deletion only in the section that holds the delete button, so it is not handled twice', () => {
+        fixture.componentRef.setInput('quizExercise', quiz(456));
+        fixture.componentRef.setInput('isDetailPage', true);
+
+        fixture.detectChanges();
+
+        expect(deletionService.resume).not.toHaveBeenCalled();
+    });
+
+    it('should not check for a running deletion when the user is no instructor of the quiz', () => {
+        showAdministrationSection(quiz(456, false));
+
+        fixture.detectChanges();
+
+        expect(deletionService.resume).not.toHaveBeenCalled();
+    });
+
+    it('should not check for a running deletion outside the detail page', () => {
+        fixture.componentRef.setInput('quizExercise', quiz(456));
+
+        fixture.detectChanges();
+
+        expect(deletionService.resume).not.toHaveBeenCalled();
+    });
+
+    it('should navigate to the exercises when the resumed deletion completes while the page still shows the quiz', () => {
+        deletionService.resume.mockReturnValueOnce(of(progress(EntityDeletionStatus.COMPLETED, 456)));
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        const broadcastSpy = vi.spyOn(TestBed.inject(EventManager), 'broadcast');
+        showAdministrationSection(quiz(456));
+
+        fixture.detectChanges();
+
+        expect(broadcastSpy).toHaveBeenCalledWith({ name: 'quizExerciseListModification', content: 'Deleted an quizExercise' });
+        expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['course-management', 123, 'exercises']);
+    });
+
+    it('should reload the quiz and stay on the page when the resumed deletion ends with an unknown outcome', () => {
+        deletionService.resume.mockReturnValueOnce(of(progress(EntityDeletionStatus.UNKNOWN, 456)));
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        const loadSpy = vi.spyOn(comp.loadQuizExercises, 'emit');
+        showAdministrationSection(quiz(456));
+
+        fixture.detectChanges();
+
+        expect(loadSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should end the pending check and look at the other quiz when the reused component shows another quiz', () => {
+        showAdministrationSection(quiz(456));
+        fixture.detectChanges();
+        let checkEnded = false;
+        (deletionService.resume.mock.calls[0][1] as Observable<unknown>).subscribe(() => (checkEnded = true));
+        expect(checkEnded).toBe(false);
+
+        // the status response of the first quiz must not open its dialog over the second one, which is checked itself
+        fixture.componentRef.setInput('quizExercise', quiz(457));
+        fixture.detectChanges();
+
+        expect(checkEnded).toBe(true);
+        expect(deletionService.resume).toHaveBeenCalledTimes(2);
+        expect(deletionService.resume.mock.calls[1][0]).toEqual(expect.objectContaining({ entityType: EntityDeletionType.EXERCISE, entityId: 457 }));
+    });
+
+    it('should end the pending check without a new one when the reused component shows a quiz of which the user is no instructor', () => {
+        showAdministrationSection(quiz(456));
+        fixture.detectChanges();
+        let checkEnded = false;
+        (deletionService.resume.mock.calls[0][1] as Observable<unknown>).subscribe(() => (checkEnded = true));
+
+        fixture.componentRef.setInput('quizExercise', quiz(457, false));
+        fixture.detectChanges();
+
+        expect(checkEnded).toBe(true);
+        expect(deletionService.resume).toHaveBeenCalledOnce();
+    });
+
+    it('should end the pending check when the component is destroyed', () => {
+        showAdministrationSection(quiz(456));
+        fixture.detectChanges();
+        let checkEnded = false;
+        (deletionService.resume.mock.calls[0][1] as Observable<unknown>).subscribe(() => (checkEnded = true));
+
+        fixture.destroy();
+
+        expect(checkEnded).toBe(true);
     });
 });
 
@@ -291,8 +550,9 @@ describe('QuizExercise Management Buttons Component evaluate button', () => {
                 SessionStorageService,
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 provideHttpClient(),
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
             ],
         }).overrideComponent(QuizExerciseManageButtonsComponent, {
             remove: { imports: [CreateVariantWithAiButtonComponent] },
@@ -301,22 +561,51 @@ describe('QuizExercise Management Buttons Component evaluate button', () => {
         fixture = TestBed.createComponent(QuizExerciseManageButtonsComponent);
     });
 
-    it('groups the variant with editing and keeps export in a one-entry menu', async () => {
+    async function openMoreActions(isAtLeastInstructor: boolean) {
         const quiz = Object.assign(new QuizExercise({ id: 123 }, undefined), {
             id: 456,
             isAtLeastTutor: true,
             isAtLeastEditor: true,
+            isAtLeastInstructor,
             isEditable: true,
         });
         fixture.componentRef.setInput('quizExercise', quiz);
         fixture.componentRef.setInput('isDetailPage', true);
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[data-testid="exercise-editing-actions"] jhi-create-variant-with-ai-button')).not.toBeNull();
-        expect(fixture.nativeElement.querySelectorAll('jhi-create-variant-with-ai-button')).toHaveLength(1);
         fixture.nativeElement.querySelector('[data-testid="exercise-more-actions"]').click();
         await fixture.whenStable();
+    }
+
+    it('groups the variant with editing in the actions', () => {
+        const quiz = Object.assign(new QuizExercise({ id: 123 }, undefined), { id: 456, isAtLeastTutor: true, isAtLeastEditor: true, isEditable: true });
+        fixture.componentRef.setInput('quizExercise', quiz);
+        fixture.componentRef.setInput('isDetailPage', true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="exercise-editing-actions"] jhi-create-variant-with-ai-button')).not.toBeNull();
+        expect(fixture.nativeElement.querySelectorAll('jhi-create-variant-with-ai-button')).toHaveLength(1);
+    });
+
+    it('offers an instructor the exercise export and the question export', async () => {
+        await openMoreActions(true);
+        expect(document.querySelectorAll('tumaet-ui-menu [tumAetUiMenuItem]')).toHaveLength(2);
+        const exportItem = document.querySelector<HTMLButtonElement>('tumaet-ui-menu [data-testid="quiz-export"]')!;
+        expect(exportItem.textContent).toContain('entity.action.export');
+        expect(exportItem.getAttribute('aria-disabled')).not.toBe('true');
+        expect(document.querySelector('tumaet-ui-menu [data-testid="quiz-export-questions"]')?.textContent).toContain('artemisApp.quizExercise.export.exportQuestions');
+    });
+
+    it('offers an editor only the question export, because the server exports a whole exercise for instructors only', async () => {
+        await openMoreActions(false);
         expect(document.querySelectorAll('tumaet-ui-menu [tumAetUiMenuItem]')).toHaveLength(1);
-        expect(document.querySelector('tumaet-ui-menu')?.textContent).toContain('entity.action.export');
+        expect(document.querySelector('tumaet-ui-menu [data-testid="quiz-export"]')).toBeNull();
+        expect(document.querySelector('tumaet-ui-menu [data-testid="quiz-export-questions"]')).not.toBeNull();
+    });
+
+    it('disables the exercise export while the exports are switched off, and keeps the question export', async () => {
+        await TestBed.inject(FeatureToggleService).setFeatureToggleState(FeatureToggle.Exports, false);
+        await openMoreActions(true);
+        expect(document.querySelector('tumaet-ui-menu [data-testid="quiz-export"]')!.getAttribute('aria-disabled')).toBe('true');
+        expect(document.querySelector('tumaet-ui-menu [data-testid="quiz-export-questions"]')!.getAttribute('aria-disabled')).not.toBe('true');
     });
 
     it('shows reset and delete only in the instructor administration section', () => {

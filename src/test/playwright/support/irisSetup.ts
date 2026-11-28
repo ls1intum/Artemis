@@ -11,12 +11,27 @@ import { UserCredentials } from './users';
  * left the specs relying on the winner's write without ever knowing whether their own call went through.
  */
 export async function enableIrisForCourse(request: APIRequestContext, courseId: number): Promise<void> {
+    await setIrisEnabledForCourse(request, courseId, true);
+}
+
+/**
+ * Disables Iris for a course through the settings API, with the same signed-in user and retry as {@link enableIrisForCourse}.
+ *
+ * A new course is created with Iris enabled, so a spec that needs a course without Iris must say so explicitly on a server that runs the
+ * Iris module (as the nightly Iris run does). The settings endpoint only exists with that module, so callers check `activeModuleFeatures`
+ * of `management/info` first.
+ */
+export async function disableIrisForCourse(request: APIRequestContext, courseId: number): Promise<void> {
+    await setIrisEnabledForCourse(request, courseId, false);
+}
+
+async function setIrisEnabledForCourse(request: APIRequestContext, courseId: number, enabled: boolean): Promise<void> {
     await expect(async () => {
         const response = await request.put(`api/iris/courses/${courseId}/iris-settings`, {
-            data: { enabled: true, variant: 'default' },
+            data: { enabled, variant: 'default' },
             failOnStatusCode: false,
         });
-        expect(response.ok(), `Iris must be enabled for course ${courseId}, but the settings request answered ${response.status()}`).toBeTruthy();
+        expect(response.ok(), `Iris must be ${enabled ? 'enabled' : 'disabled'} for course ${courseId}, but the settings request answered ${response.status()}`).toBeTruthy();
     }).toPass({ timeout: 15_000 });
 }
 

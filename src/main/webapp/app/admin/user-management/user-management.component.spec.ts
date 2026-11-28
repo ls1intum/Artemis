@@ -876,3 +876,97 @@ describe('UserManagementComponent', () => {
         expect(component.filters().adjustOptions(new HttpParams())).toEqual(httpParams);
     });
 });
+
+describe('UserManagementComponent toolbar', () => {
+    let fixture: ComponentFixture<UserManagementComponent>;
+    let component: UserManagementComponent;
+
+    const mockRoute = {
+        params: of({}),
+        children: [],
+        data: of({ defaultSort: 'id,asc' }),
+        queryParamMap: of(new Map([['page', '1']])),
+    } as unknown as ActivatedRoute;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [UserManagementComponent],
+            providers: [
+                { provide: CredentialRevocationConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
+                { provide: ActivatedRoute, useValue: mockRoute },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: CourseManagementService, useClass: MockCourseManagementService },
+                { provide: Router, useClass: MockRouter },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                MockProvider(EventManager),
+            ],
+        }).compileComponents();
+
+        vi.spyOn(TestBed.inject(AdminUserService), 'query').mockReturnValue(
+            of(new HttpResponse<User[]>({ body: [new User(1)], headers: new HttpHeaders({ 'X-Total-Count': '1' }) })),
+        );
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(new ProfileInfo());
+        fixture = TestBed.createComponent(UserManagementComponent);
+        component = fixture.componentInstance;
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
+    const element = () => fixture.nativeElement as HTMLElement;
+    const searchInput = () => element().querySelector<HTMLInputElement>('#field_searchTerm')!;
+
+    it('should mark the search input valid and show no error while the search term is acceptable', () => {
+        expect(element().querySelector('[data-testid="search-error"]')).toBeNull();
+        expect(searchInput().getAttribute('aria-invalid')).not.toBe('true');
+        expect(searchInput().hasAttribute('aria-describedby')).toBe(false);
+        expect(searchInput().getAttribute('aria-label')).toBe('artemisApp.userManagement.searchForUser');
+    });
+
+    it('should show an alert linked to the search input when the search term is too short', () => {
+        component.searchControl.setValue('ab');
+        component.loadAll();
+        fixture.detectChanges();
+
+        const error = element().querySelector<HTMLElement>('[data-testid="search-error"]')!;
+        expect(component.searchInvalid()).toBe(true);
+        expect(error).not.toBeNull();
+        expect(error.getAttribute('role')).toBe('alert');
+        expect(error.id).toBe('user-search-error');
+        expect(searchInput().getAttribute('aria-invalid')).toBe('true');
+        expect(searchInput().getAttribute('aria-describedby')).toBe('user-search-error');
+    });
+
+    it('should remove the search error again once the term is long enough', () => {
+        component.searchControl.setValue('ab');
+        component.loadAll();
+        fixture.detectChanges();
+
+        component.searchControl.setValue('abc');
+        component.loadAll();
+        fixture.detectChanges();
+
+        expect(element().querySelector('[data-testid="search-error"]')).toBeNull();
+        expect(searchInput().getAttribute('aria-invalid')).not.toBe('true');
+        expect(searchInput().hasAttribute('aria-describedby')).toBe(false);
+    });
+
+    it('should label the icon-only toolbar buttons for assistive technology', () => {
+        const label = (testId: string) =>
+            element().querySelector(`[data-testid="${testId}"] button`)?.getAttribute('aria-label') ??
+            element().querySelector(`[data-testid="${testId}"]`)?.getAttribute('aria-label');
+
+        expect(label('search-button')).toBe('artemisApp.userManagement.search');
+        expect(label('open-filter-button')).toBe('artemisApp.userManagement.filter.modal.open');
+    });
+
+    it('should render the toolbar form and the footer paginator inside the table layout', () => {
+        expect(element().querySelector('tumaet-ui-table-layout form[tumAetUiTableToolbar] #field_searchTerm')).not.toBeNull();
+        expect(element().querySelector('tumaet-ui-table-layout tumaet-ui-paginator[tumAetUiTableFooter]')).not.toBeNull();
+    });
+});

@@ -38,6 +38,7 @@ import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +58,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -67,10 +69,10 @@ import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -92,6 +94,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithSolutionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromLiveClientDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submission.QuizSubmissionFromStudentDTO;
 import de.tum.cit.aet.artemis.quiz.dto.submittedanswer.MultipleChoiceSubmittedAnswerFromStudentDTO;
@@ -120,6 +123,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     private static final int NUMBER_OF_STUDENTS = 4;
 
     private static final int NUMBER_OF_TUTORS = 1;
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     @Autowired
     private JsonMapper jsonMapper;
@@ -449,6 +455,19 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 
+    /**
+     * A quiz of an exam is conducted through the exam, so the participation of a course quiz cannot be started for it, whoever asks and at any time.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testQuizStartParticipation_examQuiz_badRequest() throws Exception {
+        QuizExercise examQuiz = quizExerciseUtilService.createAndSaveEnrolledExamQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(30), ZonedDateTime.now().plusHours(1));
+
+        request.postWithResponseBody("/api/quiz/quiz-exercises/" + examQuiz.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(participationRepository.findByExerciseId(examQuiz.getId())).isEmpty();
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @EnumSource
@@ -613,7 +632,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         participationRepository.save(practiceParticipation);
 
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-        var search = new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", null, null);
+        var search = new PagedSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All");
         var scores = request.getList("/api/exercise/exercises/" + quizExercise.getId() + "/participations/page", HttpStatus.OK, ParticipationManagementDTO.class,
                 pageableSearchUtilService.searchMapping(search));
 
@@ -887,7 +906,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         await().until(() -> participantScoreScheduleService.isIdle());
 
         // ...delete the quiz
-        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
+        request.delete("/api/quiz/quiz-exercises/" + quizExercise.getId(), HttpStatus.ACCEPTED);
+        asyncDeletionTestUtilService.awaitExerciseDeletion(quizExercise.getId());
 
         QuizExercise finalQuizExercise = quizExercise;
         await().until(() -> exerciseRepository.findById(finalQuizExercise.getId()).isEmpty());
@@ -1349,6 +1369,89 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
             assertThat(submission.isSubmitted()).isTrue();
             assertThat(submission.getSubmittedAnswers()).hasSameSizeAs(payload.submittedAnswers());
             assertThat(submission.getSubmittedAnswers().stream().map(answer -> answer.getQuizQuestion().getId())).doesNotHaveDuplicates();
+        }
+
+        /**
+         * A student who already has two submissions for a quiz, as left by an earlier start that raced: the requests of the student work on the oldest one instead
+         * of failing with a non-unique result, and the saved answers end up there.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
+        void testQuizWithTwoSubmissions_usesTheOldestOne() throws Throwable {
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+
+            var student = userUtilService.getUserByLogin(TEST_PREFIX + "student4");
+            var participation = participationRepository.findByExerciseId(quizExercise.getId()).iterator().next();
+            QuizSubmission oldest = quizSubmissionTestRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).getFirst();
+            QuizSubmission newer = new QuizSubmission();
+            newer.setParticipation(participation);
+            newer = quizSubmissionTestRepository.save(newer);
+            assertThat(newer.getId()).isGreaterThan(oldest.getId());
+
+            assertThat(quizSubmissionTestRepository.findByExerciseIdAndStudentLogin(quizExercise.getId(), student.getLogin())).get().extracting(QuizSubmission::getId)
+                    .isEqualTo(oldest.getId());
+
+            var payload = jsonMapper.readValue(jsonMapper.writeValueAsString(QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null)),
+                    QuizSubmissionFromLiveClientDTO.class);
+            quizSubmissionService.saveSubmissionForLiveMode(quizExercise.getId(), payload, student, false);
+
+            assertThat(quizSubmissionTestRepository.findWithEagerSubmittedAnswersById(oldest.getId()).getSubmittedAnswers()).hasSameSizeAs(payload.submittedAnswers());
+            assertThat(quizSubmissionTestRepository.findWithEagerSubmittedAnswersById(newer.getId()).getSubmittedAnswers()).isEmpty();
+        }
+
+        /**
+         * The live save and the batch join work on the submission of the graded participation. A practice submission of the same student, even an older one, belongs to
+         * a participation of its own and is not taken for it.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+        void testFindByExerciseIdAndStudentLogin_ignoresAnOlderPracticeSubmission() {
+            QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
+            String login = TEST_PREFIX + "student2";
+            participationUtilService.addSubmission(quizExercise, new QuizSubmission(), login);
+            StudentParticipation practiceParticipation = (StudentParticipation) participationRepository.findByExerciseId(quizExercise.getId()).iterator().next();
+            practiceParticipation.setTestRun(true);
+            participationRepository.saveAndFlush(practiceParticipation);
+            QuizSubmission graded = (QuizSubmission) participationUtilService.addSubmission(quizExercise, new QuizSubmission(), login);
+            assertThat(graded.getParticipation().getId()).isNotEqualTo(practiceParticipation.getId());
+
+            assertThat(quizSubmissionTestRepository.findByExerciseIdAndStudentLogin(quizExercise.getId(), login)).get().extracting(QuizSubmission::getId).isEqualTo(graded.getId());
+        }
+
+        /**
+         * The result calculation after the quiz grades the submission the student saved, the oldest one, and sends the student that one only: the client shows the
+         * first submission of the pushed participation, which must be the one that has the result.
+         */
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
+        void testCalculateAllResults_withTwoSubmissions_gradesAndSendsTheOldestOne() throws Throwable {
+            QuizExercise quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusMinutes(2), null, QuizMode.SYNCHRONIZED);
+            quizExercise.setDuration(600);
+            quizExercise = quizExerciseService.save(quizExercise);
+            request.postWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);
+
+            var student = userUtilService.getUserByLogin(TEST_PREFIX + "student3");
+            var participation = participationRepository.findByExerciseId(quizExercise.getId()).iterator().next();
+            QuizSubmission oldest = quizSubmissionTestRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).getFirst();
+            QuizSubmission newer = new QuizSubmission();
+            newer.setParticipation(participation);
+            quizSubmissionTestRepository.save(newer);
+            var payload = jsonMapper.readValue(jsonMapper.writeValueAsString(QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, false, null)),
+                    QuizSubmissionFromLiveClientDTO.class);
+            quizSubmissionService.saveSubmissionForLiveMode(quizExercise.getId(), payload, student, false);
+
+            quizSubmissionService.calculateAllResults(quizExercise.getId());
+
+            var sent = ArgumentCaptor.forClass(StudentQuizParticipationWithSolutionsDTO.class);
+            verify(websocketMessagingService, timeout(5000)).sendMessageToUser(eq(student.getLogin()), userTopic("/topic/exercise/" + quizExercise.getId() + "/participation"),
+                    sent.capture());
+            assertThat(sent.getValue().submissions()).singleElement().satisfies(submission -> {
+                assertThat(submission.id()).isEqualTo(oldest.getId());
+                assertThat(submission.results()).hasSize(1);
+            });
         }
 
         /**

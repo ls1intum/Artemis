@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { OverlayModule } from '@angular/cdk/overlay';
+import { DomPortal } from '@angular/cdk/portal';
 import { Directionality } from '@angular/cdk/bidi';
 import { vi } from 'vitest';
 import { TumAetUiOverlayPlacement, TumAetUiOverlayService } from './tumaet-ui-overlay.service';
@@ -26,6 +27,16 @@ describe('TumAetUiOverlayService', () => {
         }
     });
 
+    it('lines a panel above or below its origin up with the requested edge, and leaves a panel beside it centred', () => {
+        expect(service.positionStrategy(origin, 'bottom').positions.map((position) => position.overlayX)).toEqual(['center', 'center']);
+        const endAligned = service.positionStrategy(origin, 'bottom', 'end').positions;
+        expect(endAligned.map((position) => [position.originX, position.overlayX])).toEqual([
+            ['end', 'end'],
+            ['end', 'end'],
+        ]);
+        expect(service.positionStrategy(origin, 'right', 'end').positions.every((position) => position.overlayY === 'center')).toBe(true);
+    });
+
     it('creates a connected overlay that can attach and dispose', () => {
         const overlayRef = service.createConnectedOverlay(origin, 'bottom');
         expect(overlayRef).toBeTruthy();
@@ -42,7 +53,7 @@ describe('TumAetUiOverlayService', () => {
         overlayRef.dispose();
     });
 
-    it('tracks origin width and disconnects its resize observer when disposed', () => {
+    it.each(['width', 'minWidth'] as const)('tracks origin %s across attachments and cleans up on detach and disposal', (dimension) => {
         let resize!: () => void;
         const observe = vi.fn();
         const disconnect = vi.fn();
@@ -58,20 +69,37 @@ describe('TumAetUiOverlayService', () => {
         vi.stubGlobal('ResizeObserver', MockResizeObserver);
         let width = 288;
         vi.spyOn(origin, 'getBoundingClientRect').mockImplementation(() => ({ width }) as DOMRect);
-
-        const overlayRef = service.createConnectedOverlay(origin, 'bottom', { matchOriginWidth: true });
+        const content = document.createElement('div');
+        document.body.appendChild(content);
+        const portal = new DomPortal(content);
+        const overlayRef = service.createConnectedOverlay(origin, 'bottom', {
+            matchOriginWidth: dimension === 'width',
+            minWidthFromOrigin: dimension === 'minWidth',
+            minWidth: 192,
+        });
         try {
+            overlayRef.attach(portal);
             expect(observe).toHaveBeenCalledWith(origin);
-            expect(overlayRef.getConfig().width).toBe(288);
+            expect(overlayRef.getConfig()[dimension]).toBe(288);
 
             width = 320;
             resize();
-            expect(overlayRef.getConfig().width).toBe(320);
+            expect(overlayRef.getConfig()[dimension]).toBe(320);
+            width = 120;
+            resize();
+            expect(overlayRef.getConfig()[dimension]).toBe(dimension === 'minWidth' ? 192 : 120);
+
+            overlayRef.detach();
+            expect(disconnect).toHaveBeenCalledOnce();
+            overlayRef.attach(portal);
+            expect(observe).toHaveBeenCalledTimes(2);
+            overlayRef.dispose();
+            expect(disconnect).toHaveBeenCalledTimes(3);
         } finally {
             overlayRef.dispose();
+            content.remove();
             vi.unstubAllGlobals();
         }
-        expect(disconnect).toHaveBeenCalledOnce();
     });
 
     it('propagates right-to-left direction while preserving physical horizontal placements', () => {

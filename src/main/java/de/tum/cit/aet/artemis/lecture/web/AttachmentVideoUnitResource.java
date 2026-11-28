@@ -206,7 +206,7 @@ public class AttachmentVideoUnitResource {
         String previousDescription = existingAttachmentVideoUnit.getDescription();
 
         // Update competency links using the proper mechanism
-        lectureUnitService.updateCompetencyLinks(attachmentVideoUnitDTO, existingAttachmentVideoUnit);
+        lectureUnitService.updateCompetencyLinks(attachmentVideoUnitDTO, existingAttachmentVideoUnit, existingAttachmentVideoUnit.getLecture().getCourse().getId());
 
         // Build a transient attachment carrying only the client-provided fields; the service copies them onto the managed attachment
         Attachment attachmentUpdate = toTransientAttachment(attachment);
@@ -339,9 +339,7 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("A new attachment cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
-        if (attachment == null && attachmentVideoUnitDTO.videoSource() == null) {
-            throw new BadRequestAlertException("A attachment must have a an attachment or a video source", ENTITY_NAME, "videosourceAndAttachment");
-        }
+        // A unit may start without a PDF and a video, so its video can be uploaded to TUM.Live once it exists.
         if (attachment != null && (file == null || file.isEmpty()) && !StringUtils.hasText(attachment.link())) {
             throw new BadRequestAlertException("A fileless attachment must include a link", ENTITY_NAME, "attachmentLinkRequired");
         }
@@ -364,7 +362,7 @@ public class AttachmentVideoUnitResource {
         attachmentVideoUnit.setReleaseDate(attachmentVideoUnitDTO.releaseDate());
         attachmentVideoUnit.setDescription(attachmentVideoUnitDTO.description());
         attachmentVideoUnit.setVideoSource(attachmentVideoUnitDTO.videoSource());
-        lectureUnitService.updateCompetencyLinks(attachmentVideoUnitDTO, attachmentVideoUnit);
+        lectureUnitService.updateCompetencyLinks(attachmentVideoUnitDTO, attachmentVideoUnit, lecture.getCourse().getId());
 
         lecture.addLectureUnit(attachmentVideoUnit);
         Lecture updatedLecture = lectureRepository.saveAndFlush(lecture);
@@ -404,7 +402,7 @@ public class AttachmentVideoUnitResource {
      * @return the ResponseEntity with status 200 (ok) and with body filename of the uploaded file
      */
     @FeatureUsage(UserFeature.LECTURE_SLIDE_PROCESSING)
-    @PostMapping("lectures/{lectureId}/attachment-video-units/upload")
+    @PostMapping(value = "lectures/{lectureId}/attachment-video-units/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInLecture
     public ResponseEntity<String> uploadSlidesForProcessing(@PathVariable Long lectureId, @RequestPart("file") MultipartFile file) {
         // time until the temporary file gets deleted. Must be greater or equal than MINUTES_UNTIL_DELETION in attachment-video-units.component.ts
@@ -532,7 +530,7 @@ public class AttachmentVideoUnitResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
      */
     @FeatureUsage(UserFeature.LECTURE_SLIDE_PROCESSING)
-    @PutMapping("lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}/student-version")
+    @PutMapping(value = "lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}/student-version", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
     public ResponseEntity<AttachmentVideoUnitDTO> updateAttachmentVideoUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
             @RequestParam("studentVersion") MultipartFile studentVersionFile) {

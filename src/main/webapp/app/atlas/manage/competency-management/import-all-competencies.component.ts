@@ -1,23 +1,19 @@
-import { Component, OnInit, inject, model } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Course, CourseForImportDTO } from 'app/course/shared/entities/course.model';
 import { Column, ImportComponent } from 'app/shared-ui/import/import.component';
 
-import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
-
 export interface ImportAllCompetenciesDialogData {
     disabledIds?: number[];
-    competencyType?: CourseCompetencyType | 'courseCompetency';
 }
-import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { PaginatorModule } from 'primeng/paginator';
+import { SearchHighlightComponent } from 'app/admin/shared/search-highlight.component';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
+import { TumAetUiTableDirective, TumAetUiTableSortableColumnComponent } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { ButtonComponent, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
-import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { CourseForImportDTOPagingService } from 'app/course/shared/services/course-for-import-dto-paging-service';
 
 const tableColumns: Column<Course>[] = [
@@ -50,16 +46,16 @@ export type ImportAllFromCourseResult = {
     selector: 'jhi-import-all-competencies',
     templateUrl: './import-all-competencies.component.html',
     imports: [
-        PaginatorModule,
+        TumAetUiPaginatorComponent,
+        TumAetUiTableDirective,
+        TumAetUiTableLayoutComponent,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiInputDirective,
         ButtonComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
-        SortByDirective,
-        SortDirective,
-        FontAwesomeModule,
         FormsModule,
-        CommonModule,
-        NgbTypeaheadModule,
+        SearchHighlightComponent,
     ],
 })
 export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImportDTO> implements OnInit {
@@ -67,8 +63,6 @@ export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImp
 
     //import relations by default
     protected importRelations = true;
-
-    public competencyType = model<CourseCompetencyType | 'courseCompetency'>(CourseCompetencyType.COMPETENCY);
 
     constructor() {
         const pagingService = inject(CourseForImportDTOPagingService);
@@ -81,9 +75,6 @@ export class ImportAllCompetenciesComponent extends ImportComponent<CourseForImp
         if (dialogData) {
             if (dialogData.disabledIds) {
                 this.disabledIds = dialogData.disabledIds;
-            }
-            if (dialogData.competencyType) {
-                this.competencyType.set(dialogData.competencyType);
             }
         }
         super.ngOnInit();

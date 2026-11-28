@@ -1,0 +1,483 @@
+package de.tum.cit.aet.artemis.lecture.service;
+
+import java.io.InputStream;
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.TumLiveRecordingCleanup;
+import de.tum.cit.aet.artemis.lecture.domain.TumLiveUnitUpload;
+import de.tum.cit.aet.artemis.lecture.dto.TumLiveUploadStateDTO;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.TumLiveRecordingCleanupRepository;
+import de.tum.cit.aet.artemis.lecture.repository.TumLiveUnitUploadRepository;
+import de.tum.cit.aet.artemis.videosource.api.GocastBindingApi;
+import de.tum.cit.aet.artemis.videosource.domain.event.GocastGrantRevokingEvent;
+import de.tum.cit.aet.artemis.videosource.dto.GocastRecordingDTO;
+import de.tum.cit.aet.artemis.videosource.dto.GocastUploadConnectionDTO;
+import de.tum.cit.aet.artemis.videosource.dto.GocastUploadTargetDTO;
+import de.tum.cit.aet.artemis.videosource.service.GocastIntegrationException;
+
+/**
+ * Uploads the video of an attachment video unit to the connected TUM.Live course. Artemis streams the file to TUM.Live and attaches the
+ * converted recording in the background (see {@link TumLiveUploadScheduler}), so nothing depends on the page staying open. Each upload goes into a new
+ * TUM.Live lecture; a replaced, failed or discarded one is deleted there through the cleanup queue.
+ */
+@Conditional(LectureEnabled.class)
+@Lazy
+@Service
+public class TumLiveUploadService {
+
+    private static final Logger log = LoggerFactory.getLogger(TumLiveUploadService.class);
+
+    private static final String ENTITY_NAME = "tumLiveUpload";
+
+    private static final String NOT_CONNECTED_ERROR = "tumLiveNotConnected";
+
+    private static final Duration BLOCKED_RETRY = Duration.ofDays(1);
+
+    /** When a deletion is tried again after TUM.Live could not be reached, so a failing entry does not keep the entries after it from being tried. */
+    private static final Duration UNAVAILABLE_RETRY = Duration.ofMinutes(5);
+
+    private static final String STILL_SHOWN = "A lecture unit still shows this video.";
+
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+    private final TumLiveUnitUploadRepository uploadRepository;
+
+    private final TumLiveRecordingCleanupRepository cleanupRepository;
+
+    private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
+
+    private final Optional<GocastBindingApi> gocastBindingApi;
+
+    private final Optional<LectureContentProcessingService> contentProcessingService;
+
+    private final Duration maxAge;
+
+    private final DistributedMap<String, String> activeTransfers;
+
+    /** The rows of deleted units that the previous cleanup run found; see {@link #purgeRowsOfDeletedUnits()}. */
+    private final AtomicReference<Set<Long>> rowsOfDeletedUnitsFoundBefore = new AtomicReference<>(Set.of());
+
+    public TumLiveUploadService(TumLiveUnitUploadRepository uploadRepository, TumLiveRecordingCleanupRepository cleanupRepository,
+            AttachmentVideoUnitRepository attachmentVideoUnitRepository, Optional<GocastBindingApi> gocastBindingApi,
+            Optional<LectureContentProcessingService> contentProcessingService, DistributedDataProvider distributedDataProvider,
+            @Value("${artemis.tum-live.upload-max-age:PT6H}") Duration maxAge) {
+        this.uploadRepository = uploadRepository;
+        this.cleanupRepository = cleanupRepository;
+        this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
+        this.gocastBindingApi = gocastBindingApi;
+        this.contentProcessingService = contentProcessingService;
+        this.maxAge = maxAge;
+        this.activeTransfers = distributedDataProvider.getExpiringMap("tum-live-active-transfers", maxAge);
+    }
+
+    /**
+     * Reserves an upload reference for the unit so the browser can cancel the transfer while it is running.
+     *
+     * @param unit the unit, with its lecture and course
+     * @return the pending upload's reference
+     */
+    public String start(AttachmentVideoUnit unit) {
+        GocastBindingApi api = gocastBindingApi.orElseThrow(() -> notConnected());
+        GocastUploadConnectionDTO connection = api.findUploadConnection(unit.getLecture().getCourse().getId()).orElseThrow(TumLiveUploadService::notConnected);
+        String ref = newReference();
+        TumLiveUnitUpload upload = uploadRepository.startPending(unit.getId(), connection.integrationId(), connection.grantId(), connection.courseSlug(), ref, ZonedDateTime.now());
+        if (!ref.equals(upload.getPendingRef())) {
+            throw uploadInProgress();
+        }
+        return ref;
+    }
+
+    /**
+     * Sends the body directly to TUM.Live for the unit's exact pending reference.
+     *
+     * @param unit the attachment video unit
+     * @param ref  the upload's reference
+     * @param file the incoming file stream
+     */
+    public void transfer(AttachmentVideoUnit unit, String ref, InputStream file) {
+        long unitId = unit.getId();
+        TumLiveUnitUpload upload = uploadRepository.findByLectureUnitId(unitId).filter(pending -> ref.equals(pending.getPendingRef()))
+                .orElseThrow(TumLiveUploadService::uploadNoLongerPending);
+        if (upload.getPendingStreamId() != null) {
+            throw uploadInProgress();
+        }
+        // Creating a new ticket invalidates an unused one in TUM.Live. Only one request may issue and spend a ticket for this reference at a time.
+        String owner = newReference();
+        if (activeTransfers.putIfAbsent(ref, owner) != null) {
+            throw uploadInProgress();
+        }
+        try {
+            GocastBindingApi api = gocastBindingApi.orElseThrow(TumLiveUploadService::notConnected);
+            GocastUploadTargetDTO target = createUploadTarget(api, upload, unit, ref);
+            if (!uploadRepository.recordPendingStream(unitId, ref, target.streamId())) {
+                throw uploadNoLongerPending();
+            }
+            api.transferUpload(target, file);
+            uploadRepository.markTransferAccepted(unitId, ref);
+        }
+        catch (RuntimeException exception) {
+            // An ownership conflict leaves the pending upload with its current owner.
+            if (!(exception instanceof ConflictException conflict) || NOT_CONNECTED_ERROR.equals(conflict.getErrorKey())) {
+                try {
+                    uploadRepository.discardPending(unitId, ref, "The video transfer to TUM.Live failed.", ZonedDateTime.now());
+                }
+                catch (RuntimeException cleanupFailure) {
+                    exception.addSuppressed(cleanupFailure);
+                }
+            }
+            throw exception;
+        }
+        finally {
+            activeTransfers.remove(ref, owner);
+        }
+    }
+
+    private static GocastUploadTargetDTO createUploadTarget(GocastBindingApi api, TumLiveUnitUpload upload, AttachmentVideoUnit unit, String ref) {
+        try {
+            return api.createUpload(upload.getPendingGrantId(), ref, title(unit));
+        }
+        catch (GocastIntegrationException exception) {
+            if (exception.getUpstreamStatus().isSameCodeAs(HttpStatus.CONFLICT)) {
+                throw uploadInProgress();
+            }
+            if (exception.getUpstreamStatus().isSameCodeAs(HttpStatus.NOT_FOUND)) {
+                throw notConnected();
+            }
+            throw exception;
+        }
+    }
+
+    private static ConflictException uploadInProgress() {
+        return new ConflictException("The pending upload is already being transferred or converted.", ENTITY_NAME, "tumLiveUploadInProgress");
+    }
+
+    private static ConflictException uploadNoLongerPending() {
+        return new ConflictException("This upload is no longer pending.", ENTITY_NAME, "tumLiveUploadNoLongerPending");
+    }
+
+    /**
+     * Whether a course has an active connection that can be used for an upload.
+     *
+     * @param courseId the Artemis course
+     * @return whether editors of the course can start an upload
+     */
+    public boolean isUploadAvailable(long courseId) {
+        return gocastBindingApi.flatMap(api -> api.findUploadConnection(courseId)).isPresent();
+    }
+
+    /**
+     * The upload state of a unit for its editors, with the conversion progress of a pending upload read from TUM.Live.
+     *
+     * @param unit the unit, with its lecture and course
+     * @return the state
+     */
+    public TumLiveUploadStateDTO getState(AttachmentVideoUnit unit) {
+        boolean connected = isUploadAvailable(unit.getLecture().getCourse().getId());
+        Optional<TumLiveUnitUpload> upload = uploadRepository.findByLectureUnitId(unit.getId());
+        if (upload.isEmpty()) {
+            return new TumLiveUploadStateDTO(connected, null, null, false, false, 0, null, null);
+        }
+        TumLiveUnitUpload state = upload.get();
+        Optional<GocastRecordingDTO> pending = Optional.empty();
+        if (state.getPendingStreamId() != null && gocastBindingApi.isPresent()) {
+            try {
+                pending = Optional.of(gocastBindingApi.get().getRecording(state.getPendingGrantId(), state.getPendingStreamId()));
+            }
+            catch (GocastIntegrationException exception) {
+                log.info("Could not read the conversion state of unit {}: {}", unit.getId(), exception.getUpstreamStatus());
+            }
+        }
+        boolean accepted = state.isPendingTransferAccepted() || pending.map(GocastRecordingDTO::ready).orElse(false);
+        // TUM.Live can create the conversion progress row before its runner has received the file.
+        boolean converting = pending.map(GocastRecordingDTO::converting).orElse(false) && (accepted || !activeTransfers.containsKey(state.getPendingRef()));
+        return new TumLiveUploadStateDTO(connected, state.getPendingRef(), state.getPendingSince(), accepted, converting,
+                converting ? pending.map(GocastRecordingDTO::progress).orElse(0) : 0, state.getCurrentRef(), state.getLastError());
+    }
+
+    /**
+     * Cancels the unit's exact pending upload at an editor's request.
+     *
+     * @param unit the unit
+     * @param ref  the upload's reference
+     */
+    public void discard(AttachmentVideoUnit unit, String ref) {
+        uploadRepository.discardPending(unit.getId(), ref, null, ZonedDateTime.now());
+    }
+
+    /**
+     * Forgets the attached upload of a unit after an editor changed its video link to another video. The recording stays in TUM.Live.
+     *
+     * @param lectureUnitId  the unit
+     * @param newVideoSource the unit's video link now
+     */
+    public void forgetUploadUnlessShown(long lectureUnitId, String newVideoSource) {
+        // Without the TUM.Live connection the link cannot be read; the upload is then forgotten, which at worst keeps a recording in TUM.Live.
+        Long shownStreamId = gocastBindingApi.flatMap(api -> api.findStreamId(newVideoSource)).orElse(null);
+        uploadRepository.forgetCurrentUnlessShown(lectureUnitId, newVideoSource, shownStreamId);
+    }
+
+    /**
+     * Prepares units for deletion: their pending uploads are deleted in TUM.Live, their attached recordings only if the instructor chose so.
+     *
+     * @param lectureUnitIds   the units about to be deleted
+     * @param deleteRecordings whether to delete the attached TUM.Live recordings too
+     */
+    public void releaseForDeletion(Collection<Long> lectureUnitIds, boolean deleteRecordings) {
+        ZonedDateTime now = ZonedDateTime.now();
+        lectureUnitIds.forEach(id -> uploadRepository.releaseForDeletion(id, deleteRecordings, now));
+    }
+
+    /**
+     * Attaches converted uploads, and gives up failed and overdue ones.
+     */
+    public void processPendingUploads() {
+        if (gocastBindingApi.isEmpty()) {
+            return;
+        }
+        for (TumLiveUnitUpload upload : uploadRepository.findTop50ByPendingRefIsNotNullOrderByPendingCheckedAtAsc()) {
+            try {
+                processPendingUpload(gocastBindingApi.get(), upload);
+            }
+            catch (RuntimeException exception) {
+                log.warn("Could not process the TUM.Live upload of unit {}", upload.getLectureUnitId(), exception);
+            }
+        }
+    }
+
+    private void processPendingUpload(GocastBindingApi api, TumLiveUnitUpload upload) {
+        long unitId = upload.getLectureUnitId();
+        String ref = upload.getPendingRef();
+        ZonedDateTime now = ZonedDateTime.now();
+        // A recording that is ready is attached even after the maximum age, which also counts the time the browser took to send the file.
+        boolean overdue = upload.getPendingSince().plus(maxAge).isBefore(now);
+        uploadRepository.markPendingChecked(upload.getId(), ref, now);
+        if (!upload.isPendingTransferAccepted() && activeTransfers.containsKey(ref)) {
+            // The transfer still owns this recording until it saves the acknowledgement or discards the upload.
+            return;
+        }
+        if (upload.getPendingStreamId() == null) {
+            // Starting it did not finish.
+            giveUpIfOverdue(unitId, ref, overdue, now);
+            return;
+        }
+        GocastRecordingDTO recording;
+        try {
+            recording = api.getRecording(upload.getPendingGrantId(), upload.getPendingStreamId());
+        }
+        catch (GocastIntegrationException exception) {
+            if (exception.getUpstreamStatus().isSameCodeAs(HttpStatus.NOT_FOUND)) {
+                uploadRepository.discardPending(unitId, ref, "The lecture in TUM.Live no longer exists.", now);
+            }
+            // Otherwise TUM.Live could not be asked: the recording may be ready, so the upload waits for the next run also when it is overdue.
+            return;
+        }
+        if (recording.failed()) {
+            uploadRepository.discardPending(unitId, ref, "TUM.Live could not convert the video: " + recording.error(), now);
+            return;
+        }
+        if (!recording.ready()) {
+            giveUpIfOverdue(unitId, ref, overdue, now);
+            return;
+        }
+        // The slug of the connection the upload was made through: the course may be connected to another TUM.Live course by now.
+        String watchUrl = api.watchUrl(upload.getPendingCourseSlug(), upload.getPendingStreamId());
+        if (uploadRepository.attachPending(unitId, ref, watchUrl, now)) {
+            // Read again: the processing compares the stored video URL, which the attachment just changed.
+            attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(unitId)
+                    .ifPresent(attached -> contentProcessingService.ifPresent(service -> service.triggerProcessing(attached)));
+        }
+    }
+
+    private void giveUpIfOverdue(long unitId, String ref, boolean overdue, ZonedDateTime now) {
+        if (overdue) {
+            uploadRepository.discardPending(unitId, ref, "The upload did not finish in time.", now);
+        }
+    }
+
+    /**
+     * Deletes uploaded lectures Artemis no longer uses in TUM.Live. An entry stays until TUM.Live confirms; a refused one is kept with the reason and retried daily.
+     * When the grant it was uploaded through is revoked, the course's current grant of the same integration deletes it, if the course was connected again. A
+     * lecture a unit still shows, for example one imported into another lecture, stays and is checked again daily.
+     */
+    public void processCleanups() {
+        if (gocastBindingApi.isEmpty()) {
+            return;
+        }
+        GocastBindingApi api = gocastBindingApi.get();
+        ZonedDateTime now = ZonedDateTime.now();
+        List<TumLiveRecordingCleanup> due = cleanupRepository.findTop50ByNextAttemptAtLessThanEqualOrderByNextAttemptAtAsc(now);
+        Set<Long> shown = shownLectures(api, due);
+        for (TumLiveRecordingCleanup cleanup : due) {
+            try {
+                if (cleanup.getStreamId() != null && shown.contains(cleanup.getStreamId())) {
+                    cleanupRepository.postpone(cleanup.getId(), now.plus(BLOCKED_RETRY), STILL_SHOWN);
+                    continue;
+                }
+                deleteUpload(api, cleanup);
+                cleanupRepository.deleteConfirmed(cleanup.getId());
+            }
+            catch (GocastIntegrationException exception) {
+                HttpStatus status = HttpStatus.resolve(exception.getUpstreamStatus().value());
+                if (status == HttpStatus.NOT_FOUND || status == HttpStatus.CONFLICT) {
+                    log.warn("TUM.Live refused to delete the uploaded lecture {} of grant {}: {}; retrying daily", cleanup.getExternalRef(), cleanup.getGrantId(), status);
+                    cleanupRepository.postpone(cleanup.getId(), now.plus(BLOCKED_RETRY), "TUM.Live answered " + status);
+                }
+                else {
+                    // TUM.Live is unavailable: try again soon, after the entries that come next.
+                    cleanupRepository.postpone(cleanup.getId(), now.plus(UNAVAILABLE_RETRY), cleanup.getBlockedReason());
+                }
+            }
+            catch (RuntimeException exception) {
+                // For example the course's connection could not be read: the entry must not hold up the ones after it.
+                log.warn("Could not delete the uploaded lecture {} of grant {}; retrying soon", cleanup.getExternalRef(), cleanup.getGrantId(), exception);
+                cleanupRepository.postpone(cleanup.getId(), now.plus(UNAVAILABLE_RETRY), cleanup.getBlockedReason());
+            }
+        }
+        purgeRowsOfDeletedUnits();
+    }
+
+    /**
+     * Removes the rows of deleted units, but only those this node also found in its previous run: a unit's deletion releases its row right after the unit is
+     * gone, and removing the row before would lose the instructor's choice to delete the recording in TUM.Live.
+     */
+    private void purgeRowsOfDeletedUnits() {
+        Set<Long> found = new HashSet<>(uploadRepository.findIdsWithoutUnitAndPendingUpload());
+        Set<Long> foundBefore = found.stream().filter(rowsOfDeletedUnitsFoundBefore.get()::contains).collect(Collectors.toSet());
+        if (!foundBefore.isEmpty()) {
+            uploadRepository.deleteWithoutUnitAndPendingUploadByIdIn(foundBefore);
+        }
+        found.removeAll(foundBefore);
+        rowsOfDeletedUnitsFoundBefore.set(Set.copyOf(found));
+    }
+
+    /**
+     * The TUM.Live lectures lecture units still show, read once for the given queued entries: an imported unit copies the video link, so a recording can outlive
+     * the unit it was uploaded for.
+     */
+    private Set<Long> shownLectures(GocastBindingApi api, Collection<TumLiveRecordingCleanup> cleanups) {
+        if (cleanups.stream().allMatch(cleanup -> cleanup.getStreamId() == null)) {
+            return Set.of();
+        }
+        return attachmentVideoUnitRepository.findAllLectureUnitSources().stream().map(api::findStreamId).flatMap(Optional::stream).collect(Collectors.toSet());
+    }
+
+    private void deleteUpload(GocastBindingApi api, TumLiveRecordingCleanup cleanup) {
+        try {
+            api.deleteUpload(cleanup.getGrantId(), cleanup.getExternalRef());
+        }
+        catch (GocastIntegrationException exception) {
+            Optional<Long> currentGrant = api.findUploadConnection(cleanup.getCourseId())
+                    .filter(connection -> connection.integrationId() == cleanup.getIntegrationId() && connection.grantId() != cleanup.getGrantId())
+                    .map(GocastUploadConnectionDTO::grantId);
+            if (currentGrant.isEmpty() || !exception.getUpstreamStatus().isSameCodeAs(HttpStatus.NOT_FOUND)) {
+                throw exception;
+            }
+            api.deleteUpload(currentGrant.get(), cleanup.getExternalRef());
+        }
+    }
+
+    /**
+     * Before a course is disconnected from TUM.Live, deletes there what its uploads through this grant left unattached, while the grant still works: pending
+     * uploads and all queued deletions, in batches of 50. Each takes one request to TUM.Live, so a long queue delays the disconnection; an unavailable TUM.Live
+     * ends it early. Attached recordings stay, and so do queued ones a unit still shows. A failure is logged and does not stop the disconnection; the queue keeps what is left.
+     *
+     * @param event the grant about to be revoked
+     */
+    @EventListener
+    public void deleteUnattachedUploadsBeforeRevocation(GocastGrantRevokingEvent event) {
+        if (gocastBindingApi.isEmpty()) {
+            return;
+        }
+        try {
+            ZonedDateTime now = ZonedDateTime.now();
+            for (TumLiveUnitUpload upload : uploadRepository.findByCourseIdAndPendingGrantId(event.courseId(), event.grantId())) {
+                uploadRepository.discardPending(upload.getLectureUnitId(), upload.getPendingRef(), "The course was disconnected from TUM.Live.", now);
+            }
+            long lastId = 0;
+            List<TumLiveRecordingCleanup> batch;
+            // Read once, when the first entry with a known lecture comes up.
+            Set<Long> shown = null;
+            do {
+                batch = cleanupRepository.findTop50ByGrantIdAndIdGreaterThanOrderByIdAsc(event.grantId(), lastId);
+                if (shown == null && batch.stream().anyMatch(cleanup -> cleanup.getStreamId() != null)) {
+                    shown = shownLectures(gocastBindingApi.get(), batch);
+                }
+                for (TumLiveRecordingCleanup cleanup : batch) {
+                    lastId = cleanup.getId();
+                    if (shown != null && cleanup.getStreamId() != null && shown.contains(cleanup.getStreamId())) {
+                        // Stays queued; the regular cleanup checks it again.
+                        continue;
+                    }
+                    if (!deleteBeforeRevocation(event.grantId(), cleanup)) {
+                        // TUM.Live is unavailable: the disconnection should not wait for every remaining entry to time out.
+                        return;
+                    }
+                }
+            }
+            while (!batch.isEmpty());
+        }
+        catch (RuntimeException exception) {
+            log.warn("Could not delete the unattached TUM.Live uploads of course {} before disconnecting it", event.courseId(), exception);
+        }
+    }
+
+    /**
+     * Deletes a queued upload through the grant that is about to be revoked.
+     *
+     * @return false if TUM.Live is unavailable, so the remaining entries are not tried
+     */
+    private boolean deleteBeforeRevocation(long grantId, TumLiveRecordingCleanup cleanup) {
+        try {
+            gocastBindingApi.orElseThrow().deleteUpload(grantId, cleanup.getExternalRef());
+            cleanupRepository.deleteConfirmed(cleanup.getId());
+            return true;
+        }
+        catch (GocastIntegrationException exception) {
+            log.warn("Could not delete the uploaded lecture {} before the TUM.Live grant {} is revoked: {}", cleanup.getExternalRef(), grantId, exception.getUpstreamStatus());
+            HttpStatus status = HttpStatus.resolve(exception.getUpstreamStatus().value());
+            return status == HttpStatus.NOT_FOUND || status == HttpStatus.CONFLICT;
+        }
+    }
+
+    private static String newReference() {
+        byte[] bytes = new byte[32];
+        RANDOM.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private static String title(AttachmentVideoUnit unit) {
+        String unitName = unit.getName() != null && !unit.getName().isBlank() ? unit.getName() : "Unit " + unit.getId();
+        String lectureTitle = unit.getLecture().getTitle();
+        String title = lectureTitle != null && !lectureTitle.isBlank() ? lectureTitle + ": " + unitName : unitName;
+        return title.codePointCount(0, title.length()) > 255 ? title.substring(0, title.offsetByCodePoints(0, 255)) : title;
+    }
+
+    private static ConflictException notConnected() {
+        return new ConflictException("The course is not connected to TUM.Live", ENTITY_NAME, NOT_CONNECTED_ERROR);
+    }
+}

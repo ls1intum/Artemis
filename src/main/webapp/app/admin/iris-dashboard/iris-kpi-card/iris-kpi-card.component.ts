@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { TumAetUiCardComponent } from '@tumaet/ui-angular';
+import { TumAetUiCardComponent } from '@tumaet/ui-angular/card';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 
@@ -8,7 +8,7 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TumAetUiCardComponent, TranslateDirective, HelpIconComponent],
     templateUrl: './iris-kpi-card.component.html',
-    styleUrls: ['./iris-kpi-card.component.scss'],
+    styleUrls: ['./iris-kpi-card.component.css'],
 })
 export class IrisKpiCardComponent {
     /** i18n key for the card title. */

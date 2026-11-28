@@ -16,7 +16,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.eclipse.jgit.lib.PersonIdent;
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,11 +37,13 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.ParticipationFilter;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -50,7 +54,6 @@ import de.tum.cit.aet.artemis.exercise.dto.CorrectionRoundResultDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationNameExportDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.dto.StudentParticipationSubmitTargetDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -59,8 +62,10 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
+import de.tum.cit.aet.artemis.localvc.service.vcs.SetupCommit;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.OnlineIdeExperienceLevel;
@@ -120,12 +125,19 @@ public class ParticipationService {
 
     private final Optional<HyperionExerciseMutationApi> liveSaveApi;
 
+    private final CourseConfigurationRepository courseConfigurationRepository;
+
+    private final GitService gitService;
+
     public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
             ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, Optional<HyperionExerciseMutationApi> liveSaveApi) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, Optional<HyperionExerciseMutationApi> liveSaveApi,
+            CourseConfigurationRepository courseConfigurationRepository, GitService gitService) {
+        this.courseConfigurationRepository = courseConfigurationRepository;
+        this.gitService = gitService;
         this.liveSaveApi = liveSaveApi;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -718,8 +730,11 @@ public class ParticipationService {
                 VersionControlService vcs = versionControlService.orElseThrow();
                 String templateBranch = templateBranchSupplier.get();
                 // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository uri and do not copy it again
+                // The course decides who authors the setup commit. Without a choice the author of the template's first commit is kept.
+                PersonIdent setupCommitAuthor = courseConfigurationRepository.findInitialCommitAuthorByExerciseId(programmingExercise.getId())
+                        .map(setting -> setting.toIdentity(gitService.getPlaceholderIdentity(), null)).orElse(null);
                 var newRepoUri = vcs.copyRepositoryWithoutHistory(projectKey, templateRepoName, templateBranch, projectKey, repoName, participation.getAttempt(),
-                        additionalFilesSupplier.get());
+                        new SetupCommit(additionalFilesSupplier.get(), setupCommitAuthor));
                 // add the userInfo part to the repoUri only if the participation belongs to a single student (and not a team of students)
                 if (participation.getStudent().isPresent()) {
                     newRepoUri = newRepoUri.withUser(participation.getParticipantIdentifier());
@@ -1212,23 +1227,26 @@ public class ParticipationService {
      * 2. Data query — loads full entity data and the newest results for the page-sized set of IDs (FETCH JOINs, bounded)
      * 3. DTO mapping — maps entities to flat DTOs for the REST response
      *
-     * @param exercise the exercise to query
-     * @param search   search parameters including pagination, sorting, search term, filter, and score range
+     * @param exercise        the exercise to query
+     * @param search          search parameters including pagination, sorting, search term, and filter
+     * @param filters         validated filter selections
+     * @param scoreRangeLower the optional lower bound of the score range in percent
+     * @param scoreRangeUpper the optional upper bound of the score range in percent
      * @return a page of ParticipationManagementDTO
      */
-    public Page<ParticipationManagementDTO> findParticipationsForExercise(Exercise exercise, ParticipationSearchDTO search) {
-        SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
+    public Page<ParticipationManagementDTO> findParticipationsForExercise(Exercise exercise, PagedSearchDTO search, Set<ParticipationFilter> filters,
+            @Nullable Integer scoreRangeLower, @Nullable Integer scoreRangeUpper) {
         Pageable pageable = PageRequest.of(search.page(), search.pageSize());
         boolean teamMode = exercise.isTeamMode();
 
         ZonedDateTime stuckBuildCutoff = null;
-        if ("Failed".equals(search.filterProp()) && exercise instanceof ProgrammingExercise) {
+        if (filters.contains(ParticipationFilter.FAILED) && exercise instanceof ProgrammingExercise) {
             int timeoutSeconds = programmingExerciseRepository.findBuildTimeoutSecondsByExerciseId(exercise.getId()).filter(t -> t > 0).orElse(120);
             stuckBuildCutoff = ZonedDateTime.now().minusSeconds(timeoutSeconds);
         }
 
-        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForManagement(exercise.getId(), teamMode, search.searchTerm(), search.filterProp(), stuckBuildCutoff,
-                search.scoreRangeLower(), search.scoreRangeUpper(), pageable, sortOrder, search.sortedColumn());
+        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForManagement(exercise.getId(), teamMode, search, filters, scoreRangeLower, scoreRangeUpper,
+                stuckBuildCutoff, pageable);
 
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {

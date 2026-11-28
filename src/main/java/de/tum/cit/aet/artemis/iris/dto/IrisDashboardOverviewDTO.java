@@ -26,7 +26,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * @param avgResponseTimeSeconds mean answer latency in seconds
  * @param p50ResponseTimeSeconds median answer latency in seconds
  * @param p95ResponseTimeSeconds 95th percentile answer latency in seconds
- * @param totalTokenCostEur      total token cost in EUR
+ * @param totalTokenCostUsd      known total token cost in USD
+ * @param unpricedTokenCostRequests number of requests for which no price is known
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisDashboardOverviewDTO(@Schema(requiredMode = Schema.RequiredMode.REQUIRED) long totalSessions,
@@ -39,5 +40,5 @@ public record IrisDashboardOverviewDTO(@Schema(requiredMode = Schema.RequiredMod
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long sessionsWithThumbsDown, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long thumbsUpCount,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long thumbsDownCount, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) double avgResponseTimeSeconds,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) double p50ResponseTimeSeconds, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) double p95ResponseTimeSeconds,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) double totalTokenCostEur) {
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) double totalTokenCostUsd, @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long unpricedTokenCostRequests) {
 }

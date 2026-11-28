@@ -24,7 +24,7 @@ parser.add_argument('--timeout', metavar='y', type=int, help = "Timeout for runn
 args = parser.parse_args()
 
 #Run make with subprocess
-makeArgs = ["make", "-C", args.path, args.target]
+makeArgs = ["make", "-f", "Makefile", "-C", args.path, args.target]
 print(f"Running make with arguments: {makeArgs}\nTimeout is {args.timeout} seconds")
 
 #Check for timeouts

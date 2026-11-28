@@ -108,7 +108,7 @@
         </jhi-exercise-detail-actions>
     }
     @if (section() === 'configuration') {
-        <div class="my-6! flex flex-wrap items-center gap-2">
+        <div class="my-6 flex flex-wrap items-center gap-2">
             @if (irisEnabled() && exercise.type === ExerciseType.TEXT && exercise.isAtLeastInstructor && exercise.course && !isExamExercise()) {
                 <a
                     tumAetUiButton
@@ -131,7 +131,7 @@
                 deleteQuestion="artemisApp.exercise.delete.question"
                 deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
                 entitySummaryTitle="artemisApp.exercise.delete.summary.title"
-                [fetchEntitySummary]="fetchExerciseDeletionSummary()"
+                [fetchCategorizedEntitySummary]="fetchExerciseDeletionSummary()"
                 [translateValues]="{
                     courseTitle: course().title,
                     courseType: course().testCourse ? ('artemisApp.exercise.delete.testCourse' | artemisTranslate) : ('artemisApp.exercise.delete.realCourse' | artemisTranslate),

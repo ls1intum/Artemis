@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
+import de.tum.cit.aet.artemis.exercise.util.AsyncDeletionTestUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -46,6 +48,9 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
 abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtlasIntegrationTest {
+
+    @Autowired
+    private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
 
     /** Stored in {@link #setupTestScenario} so that helper methods can create prefix-matched courses. */
     protected String testPrefix;
@@ -74,11 +79,6 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         testPrefix = TEST_PREFIX;
         otherPrefix = OTHER_PREFIX;
 
-        // Mock AtlasML saves to avoid external calls in tests that create/import competencies
-        atlasMLRequestMockProvider.ifPresent(provider -> {
-            provider.enableMockingOfRequests();
-            provider.mockSaveCompetenciesAny();
-        });
         ZonedDateTime releaseDate = ZonedDateTime.now().minusDays(5);
         ZonedDateTime dueDate = releaseDate.plusHours(1);
         ZonedDateTime assessmentDueDate = dueDate.plusHours(1);
@@ -291,7 +291,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         CompetencyRelation relation = createRelation(courseCompetency, competency2, RelationType.EXTENDS);
         Prerequisite prerequisite = prerequisiteUtilService.createPrerequisite(course);
 
-        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.ACCEPTED);
+
+        asyncDeletionTestUtilService.awaitCourseDeletion(course.getId());
 
         assertThat(courseCompetencyRepository.existsById(courseCompetency.getId())).isFalse();
         assertThat(courseCompetencyRepository.existsById(competency2.getId())).isFalse();

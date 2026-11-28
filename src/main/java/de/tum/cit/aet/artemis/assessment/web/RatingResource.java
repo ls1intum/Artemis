@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -32,8 +33,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.dashboard.RatingListItemDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.RatingService;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -136,14 +137,16 @@ public class RatingResource {
      */
     @GetMapping("courses/{courseId}/rating")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<List<RatingListItemDTO>> getRatingForInstructorDashboard(@PathVariable Long courseId, Pageable pageable) {
+    public ResponseEntity<List<RatingListItemDTO>> getRatingForInstructorDashboard(@PathVariable Long courseId, @ParameterObject Pageable pageable) {
         Page<RatingListItemDTO> ratings = ratingService.getAllRatingsForDashboard(courseId, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), ratings);
         return new ResponseEntity<>(ratings.getContent(), headers, HttpStatus.OK);
     }
 
     /**
-     * Check if currently logged-in user in the owner of the participation, if this is not the case throw an AccessForbiddenException
+     * Check that the currently logged-in user is the owner of the participation the result belongs to. A caller who is
+     * not the owner receives the same {@link EntityNotFoundException} (404) as for a result that does not exist, so the
+     * response cannot be used to probe whether a foreign result exists.
      *
      * @param resultId - Id of the result that the participation belongs to
      */
@@ -152,7 +155,7 @@ public class RatingResource {
         Result result = resultRepository.findByIdElseThrow(resultId);
         if (!(result.getSubmission().getParticipation() instanceof StudentParticipation participation) || !authCheckService.isOwnerOfParticipation(participation, user)) {
             log.warn("User {} has tried to access rating for result {}", user.getLogin(), resultId);
-            throw new AccessForbiddenException();
+            throw new EntityNotFoundException("Result", resultId);
         }
     }
 }

@@ -1,28 +1,9 @@
-<div class="competency-graph-modal">
-    <div class="col p-3">
-        <div class="row m-0">
-            @if (name() !== undefined) {
-                <span
-                    class="col p-0 h5 m-0 align-self-center"
-                    jhiTranslate="artemisApp.learningPath.competencyGraphModal.titleWithName"
-                    [translateValues]="{ name: name() }"
-                ></span>
-            } @else {
-                <span class="col p-0 h5 m-0 align-self-center" jhiTranslate="artemisApp.learningPath.competencyGraphModal.title"></span>
-            }
-            <fa-icon id="close-button" (click)="closeModal()" [icon]="closeIcon" class="col-md-auto h5 clickable m-0 p-1 pe-0" />
+<div class="h-[calc(min(90dvh,700px)_-_6rem)]">
+    @if (isLoading()) {
+        <div class="m-6 flex justify-center">
+            <tumaet-ui-progress-spinner data-testid="loading-spinner" [ariaLabel]="'loading' | artemisTranslate" />
         </div>
-    </div>
-    <hr class="m-0" />
-    <div class="competency-graph-modal-body h-100">
-        @if (isLoading()) {
-            <div class="row justify-content-center m-4">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden" jhiTranslate="loading"></span>
-                </div>
-            </div>
-        } @else if (competencyGraph()) {
-            <jhi-competency-graph [competencyGraph]="competencyGraph()!" />
-        }
-    </div>
+    } @else if (competencyGraph()) {
+        <jhi-competency-graph [competencyGraph]="competencyGraph()!" />
+    }
 </div>

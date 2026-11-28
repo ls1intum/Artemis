@@ -1,21 +1,22 @@
-import {
-    TumAetUiButtonComponent,
-    TumAetUiButtonDirective,
-    TumAetUiMenuComponent,
-    TumAetUiMenuItemDirective,
-    TumAetUiMenuTriggerDirective,
-    TumAetUiTooltipDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ExerciseDetailActionsComponent } from 'app/exercise/detail/exercise-detail-actions.component';
-import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { ActionType, EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { ActionType, EntitySummaryCategory } from 'app/shared-ui/delete-dialog/delete-dialog.model';
+import { EntityDeletionService } from 'app/shared-ui/delete-dialog/service/entity-deletion.service';
+import { exerciseDeletionTarget, isDeletionCompleted, isDeletionOutcomeUnknown, trackAlive } from 'app/shared-ui/delete-dialog/entity-deletion-target.util';
+import { EntityDeletionProgress } from 'app/shared-ui/delete-dialog/entity-deletion-progress.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
+import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { faClipboardCheck, faEllipsis, faEye, faFileExport, faListAlt, faSignal, faTrash, faUndo, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Observable, Subject } from 'rxjs';
@@ -56,8 +57,12 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     private eventManager = inject(EventManager);
     private alertService = inject(AlertService);
     private exerciseService = inject(ExerciseService);
+    private featureToggleService = inject(FeatureToggleService);
+    private entityDeletionService = inject(EntityDeletionService);
     private route = inject(ActivatedRoute);
     private router = inject(Router);
+    private destroyRef = inject(DestroyRef);
+    private readonly isAlive = trackAlive(this.destroyRef);
 
     protected readonly ActionType = ActionType;
     readonly faEllipsis = faEllipsis;
@@ -69,6 +74,9 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     readonly faListAlt = faListAlt;
     readonly faUndo = faUndo;
     readonly faClipboardCheck = faClipboardCheck;
+
+    /** The server rejects the export of a whole exercise while the exports are switched off. */
+    protected readonly exportsEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.Exports), { initialValue: false });
 
     protected dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -89,6 +97,27 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
 
     loadQuizExercises = output<void>();
 
+    /** Ends a pending check for a running deletion: when the component is destroyed and when it is reused for another quiz. */
+    private readonly resumeCheckEnded$ = new Subject<void>();
+    private resumeCheckedQuizId?: number;
+
+    constructor() {
+        // The detail page reuses this component for another quiz. The status response of the previous quiz must not open its progress dialog over the
+        // quiz that is shown now, and the quiz that is shown now is checked for a running deletion itself.
+        effect(() => {
+            const quizExercise = this.quizExercise();
+            untracked(() => {
+                if (this.resumeCheckedQuizId !== undefined && this.resumeCheckedQuizId !== quizExercise.id) {
+                    this.resumeCheckEnded$.next();
+                    if (this.ownsDeletion() && quizExercise.isAtLeastInstructor) {
+                        this.resumeRunningDeletion();
+                    }
+                }
+            });
+        });
+        this.destroyRef.onDestroy(() => this.resumeCheckEnded$.next());
+    }
+
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
@@ -102,18 +131,40 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
         } else {
             this.baseUrl.set(`/course-management/${this.courseId}`);
         }
+
+        if (this.ownsDeletion() && this.quizExercise().isAtLeastInstructor) {
+            this.resumeRunningDeletion();
+        }
     }
 
     /**
-     * Exports questions for the given quiz exercise in json file
-     * @param exportAll If true exports all questions, else exports only those whose export flag is true
+     * The detail page shows this component twice. Only the administration section, which holds the delete button, follows a deletion,
+     * so that a running deletion is neither checked nor handled twice.
      */
-    exportQuizExercise(exportAll: boolean) {
+    private ownsDeletion(): boolean {
+        return this.isDetailPage() && this.detailPageSection() === 'administration';
+    }
+
+    /**
+     * Downloads the whole quiz exercise as a zip file, the format that "Import from file" reads when a quiz is imported.
+     */
+    exportQuizExercise() {
+        this.exerciseService.exportToFile(this.quizExercise()).subscribe({
+            next: (response) => downloadZipFileFromResponse(response),
+            error: () => this.alertService.error('error.exportFailed'),
+        });
+    }
+
+    /**
+     * Downloads the questions of the quiz exercise, and the images of its drag and drop questions, in the format that "Import Question(s)" reads in the quiz editor.
+     * It is not a quiz exercise: "Import from file" does not accept it.
+     */
+    exportQuizQuestions() {
         (this.isExamMode || this.quizExercise().exerciseGroup
             ? this.quizExerciseService.findForExam(this.quizExercise().id!)
             : this.quizExerciseService.find(this.quizExercise().id!)
         ).subscribe((exercise) => {
-            this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll, exercise.title);
+            this.quizExerciseService.exportQuiz(exercise.quizQuestions, true, exercise.title);
         });
     }
 
@@ -121,19 +172,42 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
      * Deletes quiz exercise
      */
     deleteQuizExercise() {
-        this.quizExerciseDeletionApi.deleteQuizExercise(this.quizExercise().id!).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'quizExerciseListModification',
-                    content: 'Deleted an quizExercise',
-                });
+        const quizExercise = this.quizExercise();
+        this.entityDeletionService.delete(exerciseDeletionTarget(quizExercise), this.quizExerciseDeletionApi.deleteQuizExercise(quizExercise.id!)).subscribe({
+            next: (progress) => {
+                this.onDeletionEnded(progress, quizExercise.id);
+                // A failed deletion is reported by the progress dialog; this only ends the confirmation dialog.
                 this.dialogErrorSource.next('');
-                if (this.isDetailPage()) {
-                    void this.router.navigate(['course-management', this.courseId, 'exercises']);
-                }
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
+    }
+
+    /**
+     * Shows the progress of a deletion of this quiz that is already running, e.g. after the page was reloaded or another instructor started it.
+     */
+    private resumeRunningDeletion() {
+        const quizExercise = this.quizExercise();
+        this.resumeCheckedQuizId = quizExercise.id;
+        this.entityDeletionService.resume(exerciseDeletionTarget(quizExercise), this.resumeCheckEnded$).subscribe((progress) => this.onDeletionEnded(progress, quizExercise.id));
+    }
+
+    private onDeletionEnded(progress: EntityDeletionProgress, deletedQuizId: number | undefined) {
+        if (isDeletionCompleted(progress)) {
+            this.eventManager.broadcast({
+                name: 'quizExerciseListModification',
+                content: 'Deleted an quizExercise',
+            });
+            // The detail page reuses this component for other quizzes, so it must still show the deleted quiz before it navigates away from it.
+            if (this.isDetailPage() && this.isAlive() && this.quizExercise().id === deletedQuizId) {
+                void this.router.navigate(['course-management', this.courseId, 'exercises']);
+            }
+        } else if (isDeletionOutcomeUnknown(progress)) {
+            // Not known how it ended: only refresh the list, which shows the real state, instead of announcing a deletion or leaving the page.
+            this.eventManager.broadcast({ name: 'quizExerciseListModification', content: 'Refresh after an unknown deletion outcome' });
+            // The detail page reloads the quiz, which tells whether it still exists.
+            this.loadQuizExercises.emit();
+        }
     }
 
     /**
@@ -175,7 +249,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
         });
     }
 
-    fetchExerciseDeletionSummary(): Observable<EntitySummary> {
+    fetchExerciseDeletionSummary(): Observable<EntitySummaryCategory[]> {
         return this.exerciseService.getDeletionSummary(this.quizExercise());
     }
 }

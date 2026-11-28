@@ -32,7 +32,6 @@
                 "coursePrerequisites": "Prerequisites",
                 "noCourse": "No courses available for enrollment",
                 "courseLoading": "Course is loading...",
-                "coursesLoading": "Courses are loading...",
                 "courseEnrollmentConfirmationTitle": "Confirm enrollment for course \"{{ courseName }}\""
             },
             "course": "Course"
@@ -42,6 +41,12 @@
             "exerciseLoadFailed": "The exercises could not be loaded. Please try again.",
             "showMore": "Show more",
             "showLess": "Show less",
+            "scienceConsent": {
+                "title": "Contribute course interaction data?",
+                "description": "{{ courseTitle }} uses voluntary science data collection for educational research and platform improvement. Artemis records selected course interaction events only if you agree. You can withdraw consent or delete your course interaction data later in user settings.",
+                "decline": "Do not contribute",
+                "accept": "Contribute data"
+            },
             "general": {
                 "noDataFound": "No data found.",
                 "noElementFoundWithAppliedFilter": "No element matches the applied filter."
@@ -61,8 +66,8 @@
                 "currentTutorialLecture": "Current Lesson",
                 "furtherTutorialLectures": "Further Lessons",
                 "real": "Exams",
-                "test": "Test Exams",
-                "attempt": "Test Exam Attempts",
+                "test": "Practice Exams",
+                "attempt": "Practice Exam Attempts",
                 "testExamAttempt": "Attempt",
                 "attempts": "Attempts",
                 "start": "Start",
@@ -115,13 +120,14 @@
                 "more": "More",
                 "iris": "Iris",
                 "exams": "Exams",
-                "testExam": "Test Exam",
+                "testExam": "Practice Exam",
                 "communication": "Communication",
                 "plagiarismCases": "Plagiarism Cases",
                 "gradingSystem": "Grading System",
                 "faq": "FAQ",
                 "settings": "Settings",
-                "calendar": "Calendar"
+                "calendar": "Calendar",
+                "home": "Home"
             },
             "exerciseFilter": {
                 "modalTitle": "Filter Exercises",
@@ -216,10 +222,8 @@
             },
             "statistics": {
                 "totalScore": "Your overall points",
-                "totalPresentationScore": "Your total presentation score: {{ number }}",
-                "presentationScoreBonus": "Required presentation score for the bonus: {{ number }}",
-                "totalPresentationPoints": "Your presentation points: {{ number }}",
-                "achievablePresentationPoints": "Achievable presentation points: {{ number }}",
+                "currentPresentationScore": "Current presentation score: {{ current }}/{{ required }}",
+                "gradedPresentationPoints": "Presentation points: {{ earned }} / {{ attainable }} pt",
                 "hideNotIncludedInScoreExercises": "Hide Optional",
                 "exerciseCount": "{{ number }} {{type}}",
                 "yourPoints": "Your points: {{ number }}",
@@ -324,7 +328,7 @@
                     "threshold": "Mastery threshold",
                     "masteryMeaning": "Progress and mastery are distinct Artemis measures. The instructor sets each competency's mastery threshold.",
                     "competencyError": "Competency progress could not be loaded.",
-                    "pointDetails": "Point breakdown and course scoring rules",
+                    "pointDetails": "Point breakdown",
                     "points": "Credited points",
                     "attainable": "Attainable points",
                     "total": "Overall points",

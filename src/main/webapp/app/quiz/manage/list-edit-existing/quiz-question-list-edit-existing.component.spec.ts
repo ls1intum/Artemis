@@ -29,8 +29,8 @@ import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.mode
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { ChangeDetectorRef } from '@angular/core';
-import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { strToU8 } from 'fflate';
 import { ZipBuilder } from 'app/foundation/util/zip.util';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -110,7 +110,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
     let examService: ExamManagementService;
     let quizExerciseService: QuizExerciseService;
     let fileService: FileService;
-    let dialogService: DialogService;
+    let dialogService: TumAetUiDialogService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -125,7 +125,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
                 MockProvider(ChangeDetectorRef),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
@@ -138,7 +138,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
         courseService = TestBed.inject(CourseManagementService);
         quizExerciseService = TestBed.inject(QuizExerciseService);
         fileService = TestBed.inject(FileService);
-        dialogService = fixture.debugElement.injector.get(DialogService);
+        dialogService = fixture.debugElement.injector.get(TumAetUiDialogService);
         component = fixture.componentInstance;
     });
 
@@ -293,6 +293,59 @@ describe('QuizQuestionListEditExistingComponent', () => {
 
         expect(courseFind).toHaveBeenCalledExactlyOnceWith(11);
         expect(examFind).toHaveBeenCalledExactlyOnceWith(22);
+    });
+
+    describe('column sorting', () => {
+        const questionOf = (id: number, title: string, type: QuizQuestionType, exerciseTitle?: string) =>
+            ({ id, title, type, exercise: exerciseTitle ? { title: exerciseTitle } : undefined }) as unknown as QuizQuestion;
+        const titles = () => component.sortedQuestions().map((question) => question.title);
+
+        beforeEach(() => {
+            component.existingQuestions.set([
+                questionOf(1, 'banana', QuizQuestionType.SHORT_ANSWER, 'Exam B'),
+                questionOf(2, 'Cherry', QuizQuestionType.MULTIPLE_CHOICE),
+                questionOf(3, 'apple', QuizQuestionType.DRAG_AND_DROP, 'exam a'),
+            ]);
+        });
+
+        it('keeps the server order until a column is picked', () => {
+            expect(component.sortField()).toBe('');
+            expect(component.sortedQuestions()).toBe(component.existingQuestions());
+            expect(titles()).toEqual(['banana', 'Cherry', 'apple']);
+        });
+
+        it('sorts by title case-insensitively in both directions', () => {
+            component.onSort({ field: 'title', order: 1 });
+
+            expect(component.sortField()).toBe('title');
+            expect(component.sortOrder()).toBe(1);
+            expect(titles()).toEqual(['apple', 'banana', 'Cherry']);
+
+            component.onSort({ field: 'title', order: -1 });
+
+            expect(component.sortOrder()).toBe(-1);
+            expect(titles()).toEqual(['Cherry', 'banana', 'apple']);
+        });
+
+        it('sorts by the title of the source exercise and puts questions without one first when ascending', () => {
+            component.onSort({ field: 'exercise', order: 1 });
+
+            expect(titles()).toEqual(['Cherry', 'apple', 'banana']);
+
+            component.onSort({ field: 'exercise', order: -1 });
+
+            expect(titles()).toEqual(['banana', 'apple', 'Cherry']);
+        });
+
+        it('sorts by question type', () => {
+            component.onSort({ field: 'type', order: 1 });
+
+            expect(component.sortedQuestions().map((question) => question.type)).toEqual([
+                QuizQuestionType.DRAG_AND_DROP,
+                QuizQuestionType.MULTIPLE_CHOICE,
+                QuizQuestionType.SHORT_ANSWER,
+            ]);
+        });
     });
 
     describe('applyFilter', () => {
@@ -473,13 +526,13 @@ describe('QuizQuestionListEditExistingComponent', () => {
             expect(invalidMap).toEqual({ 2: [] }); // question1 with id=2 should be in the map
 
             const onClose = new Subject<boolean | undefined>();
-            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as DynamicDialogRef);
+            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue({ onClose } as unknown as TumAetUiDialogRef);
 
             await component.addQuestions(questions);
 
             expect(openDialogSpy).toHaveBeenCalledOnce();
-            // The confirm dialog must stay within the viewport on narrow screens (responsive breakpoints, not a fixed width).
-            expect(openDialogSpy).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ width: '50rem', breakpoints: { '850px': '95vw' } }));
+            // The confirm dialog uses a responsive size, which stays within the viewport on narrow screens.
+            expect(openDialogSpy).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ size: 'medium', showHeader: false }));
         });
 
         it('should emit onQuestionsAdded when all questions are valid', async () => {
@@ -592,7 +645,7 @@ describe('QuizQuestionListEditExistingComponent question preview', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(DialogService),
+                MockProvider(TumAetUiDialogService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },

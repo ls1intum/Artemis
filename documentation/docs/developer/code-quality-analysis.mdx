@@ -2,14 +2,13 @@
 id: code-quality-analysis
 title: Code Quality Analysis
 sidebar_label: Code Quality Analysis
-last_reviewed: 2026-11-03
+last_reviewed: 2026-11-18
 ---
 
 import Callout from "../../src/components/Callout/Callout";
 import {CalloutVariant} from "../../src/components/Callout/Callout.types";
 
-Artemis enforces code quality in its own CI and, separately, publishes a code quality grade through
-external services. The two are easy to confuse, and they carry very different weight.
+Artemis enforces code quality in CI and publishes its code quality ratings through SonarQube Cloud.
 
 **The enforcing checks are the ones in this repository.** A pull request cannot merge until
 `ci-quality.yml` and `ci-test.yml` are green, and between them they run Spotless, Checkstyle,
@@ -19,40 +18,33 @@ the large-class and complex-bean ceilings in `supporting_scripts/analyze_java_fi
 over-fetch detector in `supporting_scripts/find_slow_queries.py`, and the per-module coverage floors
 in `gradle/jacoco.gradle`. This is where a quality problem actually stops you.
 
-**Codacy is signal, not a gate.** It cannot block a merge and should not be read as a summary of the list above.
-SonarQube Cloud is the exception: its new-code quality gate is required for relevant ready pull requests, see
-[SonarQube Cloud](#sonarqube-cloud).
+The [SonarQube Cloud](#sonarqube-cloud) new-code quality gate is also required for relevant ready pull requests.
 
 ## Codacy
 
-Codacy analyzes every `develop` commit on its own infrastructure. Nothing in this repository triggers
-it, and no CI job depends on it. It serves the `code quality` badge in the root `README.md`, and that
-badge links to the repository dashboard at
-[app.codacy.com](https://app.codacy.com/gh/ls1intum/Artemis/dashboard?branch=develop).
+Artemis has disabled Codacy status checks and cloud analysis. The repository dashboard shows the
+last available analysis. [Codacy dashboard](https://app.codacy.com/gh/ls1intum/Artemis/dashboard?branch=develop)
 
-Its analysis scope comes from `.codacy.yaml`, which Codacy reads from `develop`. That file has two
-layers: a repository-wide `exclude_paths` floor that every engine inherits, and per-engine
-`exclude_paths` beneath it. The floor exists because **tools can only be enabled in Codacy Cloud, not
-from the configuration file** — the set of active engines therefore changes without any commit to
-this repository, and a per-engine list would silently fail to cover a newly enabled engine.
+If Codacy is re-enabled, it will read the retained `.codacy.yaml`. The file defines repository-wide
+`exclude_paths` for every engine and adds narrower exclusions for individual engines. Tools are
+enabled in Codacy Cloud, so a newly enabled engine inherits the repository-wide exclusions.
 
 <Callout variant={CalloutVariant.info}>
-    A Codacy "A" is narrower than it sounds. The active pattern set is essentially static application
+    A Codacy "A" is narrower than it sounds. The previous pattern set was primarily static application
     security testing, so the grade reflects how few flagged findings there are per line. It says
     nothing about the architecture rules, the signal-API rules, the cloning rules, or the coverage
     floors that CI actually enforces.
 </Callout>
 
-Codacy's *coverage* figure is a separate matter: it is stale, which is why the `coverage` badge in
-the root `README.md` is computed and hosted by Artemis instead. See
-`supporting_scripts/code-coverage/coverage-badge/README.md`.
+Artemis computes and publishes its own coverage badge from CI results.
+[Coverage badge workflow](https://github.com/ls1intum/Artemis/blob/develop/supporting_scripts/code-coverage/coverage-badge/README.md)
 
 ## SonarQube Cloud
 
-SonarQube Cloud analyzes the deployed application (server and client in one project), and its grade can be
-compared against Codacy's on the same code. Its **new-code quality gate is a required pre-merge check** for
-relevant ready pull requests: scanner, upload, timeout and quality-gate failures fail **All required CI
-Passed**. Its ratings are shown as badges in the root `README.md`.
+SonarQube Cloud analyzes the deployed application, with the server and client in one project. Its
+**new-code quality gate is a required pre-merge check** for relevant ready pull requests. Scanner,
+upload, timeout and quality-gate failures fail **All required CI Passed**. Its ratings appear as
+badges in the root `README.md`.
 
 The analysis runs from `.github/workflows/ci-sonar.yml`, called from `ci.yml` after the test jobs, importing the
 JaCoCo and LCOV reports they already uploaded, so no test suite is re-run. All configuration lives in
@@ -98,15 +90,10 @@ reproduces the degraded configuration described below instead of the real one, a
 
 ### Two things to know before changing it
 
-**Scope is a contract with `.codacy.yaml`.** The exclusion list in `gradle/sonar.gradle` mirrors that
-file's repository-wide `exclude_paths` floor: exercise templates, test code and specs, Storybook
-stories, `supporting_scripts`, and the throwaway OIDC test provider. Change one list without the
-other and the two grades stop measuring the same code, which removes the only reason to run both.
-
-What is shared is that floor, not the whole scope. Sonar additionally narrows analysis to the four
-roots named in `sonar.sources`, while Codacy declares no `include_paths` and therefore also grades
-supported repository tooling that sits outside them. So the two grades are comparable on the
-application code, and Codacy's covers somewhat more than that.
+**Sonar scans the roots listed in `sonar.sources`.** The exclusions in `gradle/sonar.gradle` omit
+exercise templates, test code and specs, Storybook stories, `supporting_scripts`, and the local
+OIDC test provider. The historical Codacy analysis used similar exclusions and also covered
+supported repository tooling outside the Sonar source roots.
 
 **`compileJava` is required, not an optimization.** Sonar's Java analyzer needs bytecode. The Gradle
 plugin derives `sonar.java.binaries` from the main source set's output directory, but only if that

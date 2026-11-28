@@ -1,3 +1,4 @@
+import { ExamConductionCounts } from 'app/exam/shared/entities/exam-conduction-counts.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
@@ -9,7 +10,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { MockExamChecklistService } from 'test/helpers/mocks/service/mock-exam-checklist.service';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import * as ErrorReporting from 'app/core/error-reporting/capture-exception';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -35,6 +36,7 @@ import deExam from '../../../../../i18n/de/exam.json';
 import enPlagiarism from '../../../../../i18n/en/plagiarism.json';
 import dePlagiarism from '../../../../../i18n/de/plagiarism.json';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
@@ -193,7 +195,7 @@ describe('ExamChecklistComponent', () => {
             examManagementService = TestBed.inject(ExamManagementService);
             const checklist = Object.assign(new ExamChecklist(), { numberOfExamsStarted: 3, numberOfExamsSubmitted: 2, numberOfTotalParticipationsForAssessment: 3 }, stats);
             vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(checklist));
-            const testedExam = Object.assign(new Exam(), { id: 1, testExam: false, course: { id: 1, isAtLeastInstructor: true } }, examOverrides);
+            const testedExam = Object.assign(new Exam(), { id: 1, examMode: ExamMode.REAL, course: { id: 1, isAtLeastInstructor: true } }, examOverrides);
             examChecklistComponentFixture.componentRef.setInput('exam', testedExam);
             return testedExam;
         };
@@ -229,6 +231,121 @@ describe('ExamChecklistComponent', () => {
             websocketService.emit('/topic/exam/1/started', undefined);
             expect(component.numberOfSubmitted()).toBe(4);
             expect(component.numberOfStarted()).toBe(4);
+        });
+
+        it.each([
+            { description: 'already generated on the coverpage', initialGenerated: 1, generatedAfterStart: 1 },
+            { description: 'created after the initial statistics', initialGenerated: 0, generatedAfterStart: 2 },
+        ])('should use the authoritative total for a test exam $description', ({ initialGenerated, generatedAfterStart }) => {
+            setUp({ examMode: ExamMode.TEST }, { numberOfGeneratedStudentExams: initialGenerated, numberOfExamsStarted: 0 });
+            const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
+            examChecklistComponentFixture.detectChanges();
+            expect(component.numberOfGeneratedStudentExams()).toBe(initialGenerated);
+            vi.spyOn(examChecklistService, 'getExamConductionCounts').mockReturnValue(
+                of({ numberOfGeneratedStudentExams: generatedAfterStart, numberOfExamsStarted: 1, numberOfExamsSubmitted: 2 }),
+            );
+
+            websocketService.emit('/topic/exam/1/started', undefined);
+            examChecklistComponentFixture.detectChanges();
+
+            expect(component.numberOfStarted()).toBe(1);
+            expect(component.numberOfGeneratedStudentExams()).toBe(generatedAfterStart);
+        });
+
+        it('should retain the initial nonzero baseline while start events arrive', () => {
+            setUp({ examMode: ExamMode.TEST });
+            const initial = new Subject<ExamChecklist>();
+            const refreshedCounts = new Subject<ExamConductionCounts>();
+            const fetchCounts = vi.spyOn(examChecklistService, 'getExamConductionCounts').mockReturnValue(refreshedCounts);
+            vi.mocked(examChecklistService.getExamStatistics).mockReturnValueOnce(initial).mockReturnValue(of(new ExamChecklist()));
+            examChecklistComponentFixture.detectChanges();
+            const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
+
+            websocketService.emit('/topic/exam/1/started', undefined);
+            websocketService.emit('/topic/exam/1/started', undefined);
+            expect(initial.observed).toBe(true);
+            expect(examChecklistService.getExamStatistics).toHaveBeenCalledTimes(1);
+            initial.next(Object.assign(new ExamChecklist(), { numberOfGeneratedStudentExams: 8, numberOfExamsStarted: 5, numberOfExamsSubmitted: 2 }));
+            initial.complete();
+
+            expect(component.numberOfGeneratedStudentExams()).toBe(8);
+            expect(component.numberOfStarted()).toBe(5);
+            expect(component.numberOfSubmitted()).toBe(2);
+            expect(fetchCounts).toHaveBeenCalledTimes(1);
+            refreshedCounts.next({ numberOfGeneratedStudentExams: 8, numberOfExamsStarted: 7, numberOfExamsSubmitted: 2 });
+            refreshedCounts.complete();
+            expect(component.numberOfStarted()).toBe(7);
+        });
+
+        it('should cancel stale counts and unsubscribe on exam change and destroy', () => {
+            setUp({ examMode: ExamMode.TEST }, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 });
+            const previous = new Subject<ExamConductionCounts>();
+            const current = new Subject<ExamConductionCounts>();
+            vi.spyOn(examChecklistService, 'getExamConductionCounts').mockReturnValueOnce(previous).mockReturnValue(current);
+            examChecklistComponentFixture.detectChanges();
+            const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
+            websocketService.emit('/topic/exam/1/started', undefined);
+            expect(previous.observed).toBe(true);
+
+            examChecklistComponentFixture.componentRef.setInput('exam', { ...component.exam(), id: 2, course: { id: 2 } });
+            examChecklistComponentFixture.detectChanges();
+            expect(previous.observed).toBe(false);
+            previous.next({ numberOfGeneratedStudentExams: 100, numberOfExamsStarted: 100, numberOfExamsSubmitted: 100 });
+            expect(component.numberOfGeneratedStudentExams()).toBe(1);
+            websocketService.emit('/topic/exam/1/started', undefined);
+            expect(component.numberOfStarted()).toBe(0);
+            websocketService.emit('/topic/exam/2/started', undefined);
+            expect(current.observed).toBe(true);
+            examChecklistComponentFixture.destroy();
+            expect(current.observed).toBe(false);
+            current.next({ numberOfGeneratedStudentExams: 100, numberOfExamsStarted: 100, numberOfExamsSubmitted: 100 });
+            expect(component.numberOfGeneratedStudentExams()).toBe(1);
+        });
+
+        it('should coalesce overlapping starts without repeating the full checklist', () => {
+            vi.useFakeTimers();
+            try {
+                setUp({ examMode: ExamMode.TEST }, { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0 });
+                const baseline = Object.assign(new ExamChecklist(), { numberOfGeneratedStudentExams: 1, numberOfExamsStarted: 0, numberOfExamsSubmitted: 0 });
+                vi.spyOn(examChecklistService, 'getExamStatistics').mockReturnValue(of(baseline));
+                const first = new Subject<ExamConductionCounts>();
+                const fetchCounts = vi
+                    .spyOn(examChecklistService, 'getExamConductionCounts')
+                    .mockReturnValueOnce(first)
+                    .mockReturnValue(of({ numberOfGeneratedStudentExams: 22, numberOfExamsStarted: 21, numberOfExamsSubmitted: 0 }));
+                examChecklistComponentFixture.detectChanges();
+                const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
+                websocketService.emit('/topic/exam/1/started', undefined);
+                for (let i = 0; i < 20; i++) {
+                    vi.advanceTimersByTime(200);
+                    websocketService.emit('/topic/exam/1/started', undefined);
+                }
+                expect(examChecklistService.getExamStatistics).toHaveBeenCalledTimes(1);
+                expect(fetchCounts).toHaveBeenCalledTimes(1);
+                expect(first.observed).toBe(true);
+                first.next({ numberOfGeneratedStudentExams: 2, numberOfExamsStarted: 1, numberOfExamsSubmitted: 0 });
+                expect(component.numberOfStarted()).toBe(21);
+                first.complete();
+                expect(fetchCounts).toHaveBeenCalledTimes(2);
+                expect(component.numberOfStarted()).toBe(21);
+                expect(component.numberOfGeneratedStudentExams()).toBe(22);
+            } finally {
+                examChecklistComponentFixture.destroy();
+                vi.useRealTimers();
+            }
+        });
+
+        it('should keep the number of generated student exams of a regular exam when a student starts', () => {
+            // the student exams of a regular exam exist before anybody starts, so a start does not create one
+            setUp({ examMode: ExamMode.REAL }, { numberOfGeneratedStudentExams: 12, numberOfExamsStarted: 3 });
+            const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
+            examChecklistComponentFixture.detectChanges();
+
+            websocketService.emit('/topic/exam/1/started', undefined);
+
+            expect(component.numberOfStarted()).toBe(4);
+            expect(component.numberOfGeneratedStudentExams()).toBe(12);
+            expect(examChecklistService.getExamStatistics).toHaveBeenCalledExactlyOnceWith(component.exam());
         });
 
         it.each([
@@ -362,7 +479,10 @@ describe('ExamChecklistComponent', () => {
 
         const render = ({ testExam = false, plagiarismActive = true, instructor = true } = {}) => {
             getProfileInfoSub.mockReturnValue({ activeModuleFeatures: plagiarismActive ? [MODULE_FEATURE_TEXT, MODULE_FEATURE_PLAGIARISM] : [MODULE_FEATURE_TEXT] });
-            examChecklistComponentFixture.componentRef.setInput('exam', Object.assign(new Exam(), { id: 1, testExam, course: { id: 1, isAtLeastInstructor: instructor } }));
+            examChecklistComponentFixture.componentRef.setInput(
+                'exam',
+                Object.assign(new Exam(), { id: 1, examMode: testExam ? ExamMode.TEST : ExamMode.REAL, course: { id: 1, isAtLeastInstructor: instructor } }),
+            );
             examChecklistComponentFixture.componentRef.setInput('getExamRoutesByIdentifier', (identifier: string) => ['/course-management', 1, 'exams', 1, identifier]);
             examChecklistComponentFixture.detectChanges();
             return examChecklistComponentFixture.nativeElement as HTMLElement;
@@ -404,7 +524,7 @@ describe('ExamChecklistComponent', () => {
 
         it.each([
             { plagiarismActive: true, disabledClasses: [] as string[] },
-            { plagiarismActive: false, disabledClasses: ['pe-none', 'opacity-50'] },
+            { plagiarismActive: false, disabledClasses: ['pointer-events-none', 'opacity-50'] },
         ])('should only enable the plagiarism cases link when the plagiarism module is active (active: $plagiarismActive)', ({ plagiarismActive, disabledClasses }) => {
             const element = render({ plagiarismActive });
 
@@ -414,7 +534,7 @@ describe('ExamChecklistComponent', () => {
             expect(overlay).not.toBeNull();
             // the overlay keeps the link in the DOM and only disables it through its wrapper classes
             const wrapper = link.parentElement!;
-            expect(Array.from(wrapper.classList).filter((cssClass) => ['pe-none', 'opacity-50'].includes(cssClass))).toEqual(disabledClasses);
+            expect(Array.from(wrapper.classList).filter((cssClass) => ['pointer-events-none', 'opacity-50'].includes(cssClass))).toEqual(disabledClasses);
             // the other steps are never disabled by the plagiarism module
             const assessmentOverlay = element.querySelector(assessmentDashboardLink)!.closest('jhi-feature-overlay');
             expect(assessmentOverlay).toBeNull();

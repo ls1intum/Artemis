@@ -1,12 +1,7 @@
-import {
-    TumAetUiButtonDirective,
-    TumAetUiConfirmDialogComponent,
-    TumAetUiConfirmationService,
-    TumAetUiInputDirective,
-    TumAetUiMenuComponent,
-    TumAetUiMenuItemDirective,
-    TumAetUiMenuTriggerDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
 
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
@@ -41,7 +36,7 @@ interface RelatedThreadLocation {
 @Component({
     selector: 'jhi-review-comment-thread-widget',
     templateUrl: './review-comment-thread-widget.component.html',
-    styleUrls: ['./review-comment-thread-widget.component.scss'],
+    styleUrls: ['./review-comment-thread-widget.component.css'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     // Monaco view zones render outside Angular's host tree, so styles must stay global.
     encapsulation: ViewEncapsulation.None,

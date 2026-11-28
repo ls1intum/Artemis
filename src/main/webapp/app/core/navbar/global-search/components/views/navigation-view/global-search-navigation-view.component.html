@@ -5,7 +5,7 @@
 
 <!-- Error state -->
 @if (searchError()) {
-    <div class="search-error-state mt-3 p-3 text-center text-danger">
+    <div class="search-error-state mt-4 p-4 text-center text-state-danger">
         <p>{{ searchError()! | artemisTranslate }}</p>
     </div>
 }
@@ -28,7 +28,7 @@
                     (click)="showContentHits.emit()"
                     (keydown.enter)="showContentHits.emit()"
                 >
-                    <fa-icon [icon]="faPhotoFilm" class="text-primary" aria-hidden="true" />
+                    <fa-icon [icon]="faPhotoFilm" class="content-hits-row-action" aria-hidden="true" />
                     <span class="grow min-w-0 truncate">
                         {{ 'global.search.contentHitsRow' | artemisTranslate: { count: contentPreview().length, lectures: contentLectureNames() } }}
                     </span>
@@ -37,7 +37,7 @@
             </div>
         }
         @if (resultRowsShown()) {
-            <div class="search-results-list" [class.mt-3]="irisOccupiesSpace() && !hasContentRow()">
+            <div class="search-results-list" [class.search-results-spaced]="irisOccupiesSpace() && !hasContentRow()">
                 @for (result of results(); track result.id; let i = $index) {
                     <div #selectableItem>
                         <jhi-global-search-result-item
@@ -58,12 +58,12 @@
 @if (showResults() && !isLoading() && !searchError()) {
     @if (results().length > 0) {
         @if (canShowMore()) {
-            <button type="button" class="show-more-results-btn w-full bg-transparent border-0 p-2 font-medium" data-testid="global-search-show-more" (click)="showMore.emit()">
+            <button type="button" class="show-more-results-btn w-full p-2 font-medium" data-testid="global-search-show-more" (click)="showMore.emit()">
                 {{ 'global.search.showMoreResults' | artemisTranslate }}
             </button>
         }
     } @else {
-        <div class="no-results-state p-3 text-center text-secondary" [class.mt-3]="irisOccupiesSpace()">
+        <div class="no-results-state p-4 text-center" [class.search-results-spaced]="irisOccupiesSpace()">
             @if (isContentSearchPrompt()) {
                 <p>{{ 'global.search.contentSearchPrompt' | artemisTranslate }}</p>
             } @else if (isTooShortQuery()) {
@@ -71,27 +71,27 @@
             } @else {
                 <p>{{ 'global.search.noResultsFound' | artemisTranslate }}</p>
                 @if (isShortQuery()) {
-                    <p class="text-body-tertiary small">{{ 'global.search.shortQueryHint' | artemisTranslate }}</p>
+                    <p class="no-results-hint">{{ 'global.search.shortQueryHint' | artemisTranslate }}</p>
                 }
             }
         </div>
     }
 } @else if (isLoading()) {
     <!-- Skeleton loading placeholders -->
-    <div class="search-results-list" [class.mt-3]="irisOccupiesSpace()">
+    <div class="search-results-list" [class.search-results-spaced]="irisOccupiesSpace()">
         @for (_ of skeletonItems; track $index) {
-            <div class="skeleton-result-item p-3" aria-hidden="true">
-                <div class="d-flex align-items-start gap-3">
+            <div class="skeleton-result-item p-4" aria-hidden="true">
+                <div class="flex items-start gap-4">
                     <!-- Icon placeholder -->
-                    <p-skeleton width="2.5rem" height="2.5rem" borderRadius="0.375rem" class="flex-shrink-0" />
+                    <tumaet-ui-skeleton class="size-10 shrink-0 rounded-md" />
                     <!-- Content placeholder -->
-                    <div class="d-flex flex-column flex-grow-1" style="gap: 0.5rem">
-                        <div class="d-flex align-items-center gap-2">
-                            <p-skeleton width="45%" height="1rem" borderRadius="0.25rem" />
-                            <p-skeleton width="4.5rem" height="1.25rem" borderRadius="0.25rem" />
+                    <div class="flex grow flex-col gap-2">
+                        <div class="flex items-center gap-2">
+                            <tumaet-ui-skeleton class="h-4 w-[45%]" />
+                            <tumaet-ui-skeleton class="h-5 w-18" />
                         </div>
-                        <p-skeleton width="65%" height="0.75rem" borderRadius="0.25rem" />
-                        <p-skeleton width="80%" height="0.75rem" borderRadius="0.25rem" />
+                        <tumaet-ui-skeleton class="h-3 w-[65%]" />
+                        <tumaet-ui-skeleton class="h-3 w-[80%]" />
                     </div>
                 </div>
             </div>

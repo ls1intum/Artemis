@@ -32,7 +32,8 @@ const zeroOverview: IrisDashboardOverview = {
     avgResponseTimeSeconds: 0,
     p50ResponseTimeSeconds: 0,
     p95ResponseTimeSeconds: 0,
-    totalTokenCostEur: 0,
+    totalTokenCostUsd: 0,
+    unpricedTokenCostRequests: 0,
 };
 
 describe('Iris dashboard generated HTTP boundary', () => {
@@ -72,7 +73,7 @@ describe('Iris dashboard generated HTTP boundary', () => {
 
     it.each(['CHAT_MODE', 'COURSE', 'MODEL'] as const)('delegates %s without losing map keys, zeroes or optional labels', (dimension) => {
         const entries: IrisDashboardBreakdownEntry[] = [
-            { label: 'example', values: { sessions: 1, activeSessions: 0, messages: 2, noResponseRate: 0, totalTokens: 42, costEur: 0, extraMetric: 3.25 } },
+            { label: 'example', values: { sessions: 1, activeSessions: 0, messages: 2, noResponseRate: 0, totalTokens: 42, costUsd: 0, unpricedRequests: 0, extraMetric: 3.25 } },
             { values: { sessions: 0 } },
         ];
         let actual: IrisDashboardBreakdownEntry[] | undefined;

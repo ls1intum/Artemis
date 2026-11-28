@@ -18,10 +18,10 @@ import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive
 @Component({
     selector: 'jhi-resizeable-container',
     templateUrl: './resizeable-container.component.html',
-    styleUrls: ['./resizeable-container.component.scss'],
+    styleUrls: ['./resizeable-container.component.css'],
     imports: [FaIconComponent, NgTemplateOutlet, ResizableDirective],
     host: {
-        class: 'flex-grow-1',
+        class: 'grow',
         '(window:resize)': 'onWindowResize($event)',
     },
 })
@@ -29,7 +29,7 @@ export class ResizeableContainerComponent {
     readonly collapsed = model<boolean>(false);
     readonly isExerciseParticipation = input<boolean>(false);
     /**
-     * Whether the left body drops its padding so its content can reach the card's
+     * Whether the left body drops its padding so its content can reach the pane's
      * edges. Defaults to {@link isExerciseParticipation}, which historically decided
      * both this and the header — but a full-bleed surface under a visible header,
      * like the exam's modeling canvas, needs the one without the other.

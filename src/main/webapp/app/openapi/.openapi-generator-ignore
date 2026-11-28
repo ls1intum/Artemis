@@ -35,11 +35,12 @@ api/hyperion-quiz-question-generation-resources.ts
 api/quiz-submission-resources.ts
 api/tutorial-group-session-resources.ts
 api/quiz-exercise-evaluation-resources.ts
+api/tutor-participation-resources.ts
 api/hyperion-programming-variant-resources.ts
 api/hyperion-problem-statement-resources.ts
 api/quiz-exercise-deletion-resources.ts
-api/quiz-exercise-resources.ts
 api/hyperion-faq-resources.ts
-api/quiz-exercise-batch-resources.ts
+api/complaint-response-resources.ts
 api/quiz-assessment-resources.ts
+api/quiz-exercise-batch-resources.ts
 api/quiz-exercise-creation-update-resources.ts

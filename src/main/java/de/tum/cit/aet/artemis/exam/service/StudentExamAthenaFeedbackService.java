@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam.service;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -98,7 +99,7 @@ public class StudentExamAthenaFeedbackService {
         }
         // Test runs are an instructor's own rehearsal of a real exam, so they get the same formative feedback as a
         // student's test-exam attempt. Regular attempts of a real exam are excluded: those are graded by the course.
-        if (!studentExam.isTestExam() && !studentExam.isTestRun()) {
+        if (studentExam.getExamMode().isReal() && !studentExam.isTestRun()) {
             throw new BadRequestAlertException("Athena feedback is only available for test exams and test runs", "StudentExam", "notTestExam");
         }
         if (athenaFeedbackApi.isEmpty() || (textFeedbackApi.isEmpty() && modelingFeedbackApi.isEmpty())) {
@@ -117,7 +118,8 @@ public class StudentExamAthenaFeedbackService {
         // course has formative feedback enabled - otherwise a request could reserve a cap slot without ever
         // generating feedback.
         // Athena's configuration is lazy and an exam does not otherwise need it, so this is where it gets read
-        studentExam.getExercises().forEach(courseAthenaConfigRepository::attachToCourseOf);
+        // The ordered exercise list can hold a null at a gap in the order column, which the filter below tolerates as well.
+        studentExam.getExercises().stream().filter(Objects::nonNull).forEach(courseAthenaConfigRepository::attachToCourseOf);
         Set<Long> eligibleExerciseIds = studentExam.getExercises().stream()
                 .filter(exercise -> (exercise instanceof TextExercise || exercise instanceof ModelingExercise) && exercise.getAllowFeedbackRequests()).map(Exercise::getId)
                 .collect(Collectors.toSet());

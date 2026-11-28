@@ -1,7 +1,10 @@
 import { Component, OnDestroy, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { faChevronLeft, faPeopleGroup, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiButtonGroupComponent } from '@tumaet/ui-angular/button-group';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { Course } from 'app/course/shared/entities/course.model';
 
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -34,11 +37,22 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-conversation-header',
     templateUrl: './conversation-header.component.html',
-    styleUrls: ['./conversation-header.component.scss'],
-    imports: [FaIconComponent, ChannelIconComponent, ProfilePictureComponent, TranslateDirective, RouterLink, EmojiComponent, ArtemisTranslatePipe],
+    styleUrls: ['./conversation-header.component.css'],
+    imports: [
+        FaIconComponent,
+        ChannelIconComponent,
+        ProfilePictureComponent,
+        TranslateDirective,
+        RouterLink,
+        EmojiComponent,
+        ArtemisTranslatePipe,
+        TumAetUiButtonDirective,
+        TumAetUiButtonGroupComponent,
+    ],
 })
 export class ConversationHeaderComponent implements OnInit, OnDestroy {
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
+    private translateService = inject(TranslateService);
     courseConversationsService = inject(CourseConversationsService);
     conversationService = inject(ConversationService);
     private communicationService = inject(CommunicationService);
@@ -135,13 +149,15 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
         const ref = this.dialogService.open(
             ConversationAddUsersDialogComponent,
             cloneWith(defaultFirstLayerDialogOptions, {
+                ariaLabel: this.translateService.instant('artemisApp.dialogs.conversationDetail.memberTab.addUsers'),
+                autoFocus: 'first-tabbable',
                 data: {
                     course: this.course(),
                     activeConversation: this.activeConversation(),
                 },
             }),
         );
-        ref?.onClose
+        ref.onClose
             .pipe(
                 filter((result) => !!result),
                 takeUntil(this.ngUnsubscribe),
@@ -162,16 +178,19 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
      */
     openConversationDetailDialog(event: MouseEvent, tab: ConversationDetailTabs) {
         event.stopPropagation();
-        const selectedTab = this.getAsOneToOneChat(this.activeConversation()) ? ConversationDetailTabs.INFO : tab;
+        const activeConversation = this.activeConversation();
+        const selectedTab = this.getAsOneToOneChat(activeConversation) ? ConversationDetailTabs.INFO : tab;
         const ref = this.dialogService.open(
             ConversationDetailDialogComponent,
             cloneWith(defaultFirstLayerDialogOptions, {
+                ariaLabel:
+                    this.conversationService.getConversationName(activeConversation, true) || this.translateService.instant('artemisApp.dialogs.conversationDetail.tabs.info'),
                 data: {
                     course: this.course(),
-                    activeConversation: this.activeConversation(),
+                    activeConversation,
                     selectedTab,
                     onUserNameClicked: (userId: number) => {
-                        ref?.destroy();
+                        ref.close();
                         this.courseConversationsService.createOneToOneChatWithId(userId).subscribe({
                             // the chat is created before the conversations are reloaded, and a failed reload is already
                             // reported by the service, so it must not surface as an unhandled error here
@@ -182,7 +201,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
             }),
         );
 
-        ref?.onClose
+        ref.onClose
             .pipe(
                 filter((result) => !!result),
                 takeUntil(this.ngUnsubscribe),

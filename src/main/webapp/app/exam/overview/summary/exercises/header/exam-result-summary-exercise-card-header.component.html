@@ -1,16 +1,16 @@
 <div class="flex min-w-0 items-center">
-    <h5 class="m-0! flex min-w-0 items-center gap-2 text-base! leading-tight! font-semibold!" [id]="'exercise-group-title-' + exercise().id">
+    <h5 class="m-0 flex min-w-0 items-center gap-2 text-base leading-tight font-semibold" [id]="'exercise-group-title-' + exercise().id">
         <span class="shrink-0">#{{ index() + 1 }}</span>
         @if (exercise()?.type && exerciseInfo()?.icon) {
             <fa-icon class="shrink-0" [icon]="exerciseInfo()!.icon" [fixedWidth]="true" />
         }
         <span class="min-w-0 truncate">{{ exercise().exerciseGroup?.title }}</span>
     </h5>
-    <div class="ml-4 shrink-0" data-testid="exercise-result-score">
+    <div class="ml-6 shrink-0" data-testid="exercise-result-score">
         @if (resultsPublished() && exerciseInfo()?.achievedPoints !== undefined) {
             <div class="flex items-center">
                 [{{ exerciseInfo()?.achievedPoints }} / {{ exercise().maxPoints }} {{ 'artemisApp.examParticipation.exercisePoints' | artemisTranslate }}]
-                <div class="ml-4">
+                <div class="ml-6">
                     @if (exerciseInfo()?.resultIconClass) {
                         <fa-icon [class]="exerciseInfo()?.colorClass" [icon]="exerciseInfo()?.resultIconClass!" size="lg" />
                     }

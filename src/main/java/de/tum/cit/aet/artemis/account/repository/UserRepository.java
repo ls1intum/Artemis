@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecip
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.CourseRoleCountDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseRoleMembersSearchDTO;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserRoleDTO;
@@ -569,6 +569,25 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     List<User> findAllByCourseIdAndRoleAndLoginIn(@Param("courseId") long courseId, @Param("role") CourseRole role, @Param("logins") Set<String> logins);
 
     /**
+     * Finds all non-deleted users with one of the given roles in a course whose id is in the given set.
+     *
+     * @param courseId the ID of the course
+     * @param roles    the course roles to filter by
+     * @param ids      the set of user ids to search for
+     * @return list of matching users
+     */
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+                JOIN user.courseRoles ucr
+            WHERE ucr.course.id = :courseId
+                AND ucr.role IN :roles
+                AND user.id IN :ids
+                AND user.deleted = FALSE
+            """)
+    List<User> findAllByCourseIdAndRoleInAndIdIn(@Param("courseId") long courseId, @Param("roles") Set<CourseRole> roles, @Param("ids") Set<Long> ids);
+
+    /**
      * Finds all non-deleted users enrolled in a course with the given role whose registration number is in the given set.
      *
      * @param courseId            the ID of the course
@@ -677,7 +696,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Page<User> searchAllByLoginOrName(Pageable page, @Param("loginOrName") String loginOrName);
 
     /**
-     * Searches for users by login (prefix), full name (contains), email (contains), or registration number (contains).
+     * Searches for users whose login, full name, email or registration number contains the search term.
      * Used for the generic user-registration modal to find users that can be added to an entity (e.g. exam).
      * Escapes LIKE wildcard characters ({@code %}, {@code _}, {@code \}) in {@code searchTerm} before querying.
      *
@@ -703,8 +722,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
             WHERE user.deleted = FALSE
                 AND (
-                    LOWER(user.login) LIKE :#{#searchTerm}% ESCAPE '\\'
-                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    LOWER(user.login) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    OR LOWER(CONCAT(COALESCE(user.firstName, ''), ' ', COALESCE(user.lastName, ''))) LIKE %:#{#searchTerm}% ESCAPE '\\'
                     OR LOWER(user.email) LIKE %:#{#searchTerm}% ESCAPE '\\'
                     OR LOWER(user.registrationNumber) LIKE %:#{#searchTerm}% ESCAPE '\\'
                 )
@@ -712,8 +731,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Page<User> findAllByLoginOrNameOrEmailOrRegistrationNumber(Pageable page, @Param("searchTerm") String searchTerm);
 
     /**
-     * Searches for users by login (prefix), full name (contains), email (contains), or registration number (contains),
-     * excluding users who hold a staff role (teaching assistant, editor, instructor) in the given course or have
+     * Searches for users whose login, full name, email or registration number contains the search term, excluding users
+     * who hold a staff role (teaching assistant, editor, instructor) in the given course or have
      * admin/super-admin authority.
      * Escapes LIKE wildcard characters ({@code %}, {@code _}, {@code \}) in {@code searchTerm} before querying.
      *
@@ -736,8 +755,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
             WHERE user.deleted = FALSE
                 AND (
-                    LOWER(user.login) LIKE :#{#searchTerm}% ESCAPE '\\'
-                    OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    LOWER(user.login) LIKE %:#{#searchTerm}% ESCAPE '\\'
+                    OR LOWER(CONCAT(COALESCE(user.firstName, ''), ' ', COALESCE(user.lastName, ''))) LIKE %:#{#searchTerm}% ESCAPE '\\'
                     OR LOWER(user.email) LIKE %:#{#searchTerm}% ESCAPE '\\'
                     OR LOWER(user.registrationNumber) LIKE %:#{#searchTerm}% ESCAPE '\\'
                 )
@@ -964,6 +983,57 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     /**
+     * Applies a confirmed e-mail change, as one statement that only matches while the request still exists, is the one identified by the two keys and has been confirmed from both
+     * addresses, and while the account is active. Cancelling, replacing or recovering the account before this statement runs therefore stops the change, and no stale copy of the
+     * request that was read earlier can apply it afterwards. It also matches only while the account still has the address it had when the request was made, null for an
+     * account that had none: the confirmation of the current address proves that mailbox and no other, so an address that was assigned in between is never replaced. It
+     * matches likewise only while the credentials have not changed since the request was made, null-safe: a password change ends a pending request, but a request that is stored
+     * late, after that change, would otherwise survive it. The address is written straight to the column, bypassing {@code User.setEmail}, so the caller has to pass the canonical
+     * address, see {@code User.canonicalEmail}. It
+     * matches only once: when two confirmations complete the request at the same moment, the second finds the address already changed and applies nothing.
+     *
+     * @param userId       the id of the account
+     * @param email        the canonical new address
+     * @param currentKeyId the id of the key that was mailed to the current address
+     * @param newKeyId     the id of the key that was mailed to the new address
+     * @return 1 if the address was changed, 0 if there was nothing left to apply
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.email = :email
+            WHERE user.id = :userId
+                AND user.activated = TRUE
+                AND user.deleted = FALSE
+                AND (user.email IS NULL OR user.email <> :email)
+                AND EXISTS (
+                    SELECT recoveryKey.userId
+                    FROM UserRecoveryKey recoveryKey
+                    WHERE recoveryKey.userId = :userId
+                        AND recoveryKey.pendingEmailChange.currentKeyId = :currentKeyId
+                        AND recoveryKey.pendingEmailChange.newKeyId = :newKeyId
+                        AND recoveryKey.pendingEmailChange.currentConfirmedAt IS NOT NULL
+                        AND recoveryKey.pendingEmailChange.newConfirmedAt IS NOT NULL
+                        AND (user.email = recoveryKey.pendingEmailChange.originalEmail
+                            OR (user.email IS NULL AND recoveryKey.pendingEmailChange.originalEmail IS NULL))
+                        AND (EXISTS (
+                                SELECT activity.userId
+                                FROM UserActivity activity
+                                WHERE activity.userId = user.id
+                                    AND activity.credentialsChangedDate = recoveryKey.pendingEmailChange.credentialsChangedAt
+                            )
+                            OR (recoveryKey.pendingEmailChange.credentialsChangedAt IS NULL AND NOT EXISTS (
+                                SELECT activity.userId
+                                FROM UserActivity activity
+                                WHERE activity.userId = user.id
+                                    AND activity.credentialsChangedDate IS NOT NULL
+                            )))
+                )
+            """)
+    int applyConfirmedEmailChange(@Param("userId") long userId, @Param("email") String email, @Param("currentKeyId") String currentKeyId, @Param("newKeyId") String newKeyId);
+
+    /**
      * Writes the stored profile picture reference straight to the column, bypassing {@code User.setImageUrl}. The caller therefore has to pass the filename, never the URL the
      * picture is served under.
      *
@@ -978,6 +1048,32 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             WHERE user.id = :userId
             """)
     void updateUserImageUrl(@Param("userId") long userId, @Param("filename") String filename);
+
+    /**
+     * Writes the fields of the settings form and nothing else on the account, as a single statement. Saving the entity that was read instead writes every column back as it was
+     * read, so an address that a confirmation applied in the meantime would be replaced by the old one.
+     *
+     * @param userId     the account
+     * @param firstName  the first name
+     * @param lastName   the last name
+     * @param langKey    the language key
+     * @param modifiedBy who changed the account, which saving the entity would record through auditing
+     * @param modifiedAt when the account was changed
+     * @return 1 if the account was changed
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.firstName = :firstName,
+                user.lastName = :lastName,
+                user.langKey = :langKey,
+                user.lastModifiedBy = :modifiedBy,
+                user.lastModifiedDate = :modifiedAt
+            WHERE user.id = :userId
+            """)
+    int updateBasicInformation(@Param("userId") long userId, @Param("firstName") String firstName, @Param("lastName") String lastName, @Param("langKey") String langKey,
+            @Param("modifiedBy") String modifiedBy, @Param("modifiedAt") Instant modifiedAt);
 
     @Modifying
     @Transactional // ok because of modifying query
@@ -1116,7 +1212,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param userSearch used to find users
      * @return all users
      */
-    default Page<UserDTO> getAllManagedUsers(UserPageableSearchDTO userSearch) {
+    // Reviewed false positive (Sonar S7186): the page index, page size and sort are part of the search DTO, and the Pageable is built inside from them.
+    default Page<UserDTO> getAllManagedUsers(UserPageableSearchDTO userSearch) { // NOSONAR
         // Prepare filter
         final var searchTerm = userSearch.getSearchTerm();
         var sorting = Sort.by(userSearch.getSortedColumn());
@@ -1630,12 +1727,27 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return existsByLoginInParticipationWithMinRole(login, participationId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
+    /**
+     * Checks whether the user has at least one of the roles in the course of the lecture unit.
+     * <p>
+     * This is one plain join that starts at the lecture unit, so that PostgreSQL looks up the single role row of the user by its primary key. The same check written
+     * as a user joined to the lecture without a join condition plus a correlated {@code EXISTS} was planned as a semi-join that sorted and de-duplicated the whole
+     * {@code user_course_role} table (2.2 s on 2.5 million rows, against 0.1 ms for this form).
+     *
+     * @param login         the login of the user
+     * @param lectureUnitId the id of the lecture unit
+     * @param roles         the roles that grant access, normally the given role and all roles above it
+     * @return true if the user has one of the roles in the course of the lecture unit
+     */
     @Query("""
             SELECT EXISTS (
-                FROM User user
-                    INNER JOIN LectureUnit lectureUnit ON user.login = :login AND lectureUnit.id = :lectureUnitId
-                    LEFT JOIN lectureUnit.lecture.course course
-                WHERE course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles)
+                FROM LectureUnit lectureUnit
+                    INNER JOIN lectureUnit.lecture lecture
+                    INNER JOIN UserCourseRole ucr ON ucr.course.id = lecture.course.id
+                    INNER JOIN ucr.user user
+                WHERE lectureUnit.id = :lectureUnitId
+                    AND user.login = :login
+                    AND ucr.role IN :roles
             )
             """)
     boolean existsByLoginInLectureUnitWithMinRole(@Param("login") String login, @Param("lectureUnitId") long lectureUnitId, @Param("roles") Collection<CourseRole> roles);
@@ -1656,12 +1768,22 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return existsByLoginInLectureUnitWithMinRole(login, lectureUnitId, CourseRole.valuesAtLeast(CourseRole.INSTRUCTOR));
     }
 
+    /**
+     * Checks whether the user has at least one of the roles in the course of the lecture, with the same single join as {@link #existsByLoginInLectureUnitWithMinRole}.
+     *
+     * @param login     the login of the user
+     * @param lectureId the id of the lecture
+     * @param roles     the roles that grant access, normally the given role and all roles above it
+     * @return true if the user has one of the roles in the course of the lecture
+     */
     @Query("""
             SELECT EXISTS (
-                FROM User user
-                    INNER JOIN Lecture lecture ON user.login = :login AND lecture.id = :lectureId
-                    LEFT JOIN lecture.course course
-                WHERE course IS NOT NULL AND EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course = course AND ucr.role IN :roles)
+                FROM Lecture lecture
+                    INNER JOIN UserCourseRole ucr ON ucr.course.id = lecture.course.id
+                    INNER JOIN ucr.user user
+                WHERE lecture.id = :lectureId
+                    AND user.login = :login
+                    AND ucr.role IN :roles
             )
             """)
     boolean existsByLoginInLectureWithMinRole(@Param("login") String login, @Param("lectureId") long lectureId, @Param("roles") Collection<CourseRole> roles);
@@ -1760,7 +1882,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @param role     the {@link CourseRole} to filter by
      * @return page of matching {@link User} entities
      */
-    default Page<User> searchUsersInCourseRole(Pageable pageable, CourseRoleMembersSearchDTO search, long courseId, CourseRole role) {
+    default Page<User> searchUsersInCourseRole(Pageable pageable, PagedSearchDTO search, long courseId, CourseRole role) {
         // orderByColumn() applies the sort as a query.orderBy() side effect, so the Pageable itself stays unsorted.
         Specification<User> spec = notSoftDeleted().and(inCourseWithRole(courseId, role)).and(searchByLoginNameEmailOrRegistrationNumber(search.searchTerm()))
                 .and(orderByColumn(search.sortedColumn(), search.sortingOrder()));
