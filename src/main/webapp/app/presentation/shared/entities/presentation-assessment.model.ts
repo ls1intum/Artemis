@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { User } from 'app/account/user/user.model';
+import { User, UserNameAndLoginDTO } from 'app/account/user/user.model';
 
 export interface PresentationAssessment {
     id?: number;
@@ -20,6 +20,9 @@ export interface PresentationAssessmentInstance {
     passed?: boolean | null;
     rubricScore?: number | null;
     student?: Pick<User, 'login' | 'name' | 'firstName' | 'lastName' | 'email'>;
+    assessor?: UserNameAndLoginDTO;
+    /** Who last changed the result, only set when that person is not the assessor. */
+    gradeEditedBy?: UserNameAndLoginDTO;
     language?: string;
     mode?: PresentationAssessmentMode;
     location?: string;
@@ -39,6 +42,7 @@ export interface PresentationAssessmentInstanceRequest {
     meetingLink?: string;
     remark?: string;
     ratings?: PresentationRubricRating[];
+    assessorLogin?: string;
 }
 
 export interface PresentationAssessmentInstancesCreate {
@@ -52,6 +56,7 @@ export interface PresentationAssessmentInstancesCreate {
     meetingLink?: string;
     remark?: string;
     ratings?: PresentationRubricRating[];
+    assessorLogin?: string;
 }
 
 export interface PresentationRubricLevel {

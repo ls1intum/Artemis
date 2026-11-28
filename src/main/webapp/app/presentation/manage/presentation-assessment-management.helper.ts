@@ -24,6 +24,8 @@ export interface PresentationStudentTableRow extends PresentationStudentRow {
     rowKey: string;
     displayName: string;
     assessed: boolean;
+    /** Tutors only edit presentations they assess themselves or that nobody assessed yet. */
+    editable: boolean;
 }
 
 export function createPresentationSidebarData(

@@ -15,9 +15,12 @@ public record PresentationAssessmentStudentRowDTO(PresentationAssessmentDTO pres
 
     public PresentationAssessmentStudentRowDTO(Long assessmentId, String title, String description, PresentationGradingMethod gradingMethod, Double maxPoints, Long courseId,
             Long exerciseId, String exerciseTitle, Long instanceId, ZonedDateTime presentationDate, Double resultPoints, Boolean passed, Double rubricScore, String language,
-            PresentationAssessmentMode mode, String location, String meetingLink, String remark, String studentLogin, String firstName, String lastName, String email) {
+            PresentationAssessmentMode mode, String location, String meetingLink, String remark, String studentLogin, String firstName, String lastName, String email,
+            String assessorLogin, String assessorFirstName, String assessorLastName, String graderLogin, String graderFirstName, String graderLastName) {
         this(new PresentationAssessmentDTO(assessmentId, title, description, gradingMethod, maxPoints, courseId, exerciseId, exerciseTitle),
                 new PresentationAssessmentInstanceDTO(instanceId, presentationDate, resultPoints, passed, rubricScore, language, mode, location, meetingLink, remark,
-                        new PresentationAssessmentStudentDTO(studentLogin, firstName, lastName, email)));
+                        new PresentationAssessmentStudentDTO(studentLogin, firstName, lastName, email),
+                        assessorLogin != null ? new UserNameAndLoginDTO(assessorLogin, assessorFirstName, assessorLastName) : null,
+                        graderLogin != null && !graderLogin.equals(assessorLogin) ? new UserNameAndLoginDTO(graderLogin, graderFirstName, graderLastName) : null));
     }
 }

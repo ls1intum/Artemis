@@ -298,6 +298,7 @@
                 [instance]="dialogInstance()"
                 [initialAssignedStudents]="dialogAssignedStudents()"
                 [isSaving]="isSaving()"
+                [canChooseAssessor]="isAtLeastInstructor()"
                 (saved)="handleInstanceDialogSave($event)"
                 (cancelled)="handleInstanceDialogCancel()"
             />

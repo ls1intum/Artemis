@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.assessment.service.PresentationAssessmentService;
 import de.tum.cit.aet.artemis.assessment.service.PresentationRubricService;
 import de.tum.cit.aet.artemis.assessment.service.PresentationRubricService.RubricGrade;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -612,6 +613,77 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
         }
     }
 
+    /** Every grading method makes its result a grade, so the assessor and who last changed the result follow the result of the method, not only points. */
+    @Nested
+    class AssessorAndGrader {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+        void passFailResult_shouldStoreTheTutorAsAssessor() throws Exception {
+            long presentationId = createPresentationAsInstructor(PresentationGradingMethod.PASS_FAIL, null);
+
+            PresentationAssessmentInstanceDTO created = createInstances(presentationId, List.of(student(1)), null, true, null).getFirst();
+
+            assertThat(created.assessor().login()).isEqualTo(TEST_PREFIX + "tutor1");
+            assertThat(created.gradeEditedBy()).isNull();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+        void rubricRatings_shouldStoreTheTutorAsAssessor() throws Exception {
+            long presentationId = createRubricPresentationAsInstructor();
+
+            PresentationAssessmentInstanceDTO created = createInstances(presentationId, List.of(student(1)), null, null, rubricRatings(presentationId)).getFirst();
+
+            assertThat(created.assessor().login()).isEqualTo(TEST_PREFIX + "tutor1");
+            assertThat(created.gradeEditedBy()).isNull();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+        void instructorChangingThePassFailResult_shouldBeNamedAsEditor() throws Exception {
+            long presentationId = createPresentationAsInstructor(PresentationGradingMethod.PASS_FAIL, null);
+            PresentationAssessmentInstanceDTO instance = createInstances(presentationId, List.of(student(1)), null, true, null).getFirst();
+            userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+            PresentationAssessmentInstanceDTO updated = updateInstance(presentationId, instanceUpdate(instance, student(1), null, false, null, TEST_PREFIX + "tutor1"),
+                    HttpStatus.OK);
+
+            assertThat(updated.assessor().login()).isEqualTo(TEST_PREFIX + "tutor1");
+            assertThat(updated.gradeEditedBy().login()).isEqualTo(TEST_PREFIX + "instructor1");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+        void instructorChangingARubricLevel_shouldBeNamedAsEditor() throws Exception {
+            long presentationId = createRubricPresentationAsInstructor();
+            PresentationRubricDTO rubric = getRubric(presentationId);
+            PresentationAssessmentInstanceDTO instance = createInstances(presentationId, List.of(student(1)), null, null, ratings(rubric, 3, 2, 1)).getFirst();
+            userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+            PresentationAssessmentInstanceDTO updated = updateInstance(presentationId,
+                    instanceUpdate(instance, student(1), null, null, ratings(rubric, 4, 2, 1), TEST_PREFIX + "tutor1"), HttpStatus.OK);
+
+            assertThat(updated.gradeEditedBy().login()).isEqualTo(TEST_PREFIX + "instructor1");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+        void instructorOnlyChangingARubricComment_shouldNotBeNamedAsEditor() throws Exception {
+            long presentationId = createRubricPresentationAsInstructor();
+            PresentationRubricDTO rubric = getRubric(presentationId);
+            PresentationAssessmentInstanceDTO instance = createInstances(presentationId, List.of(student(1)), null, null, ratings(rubric, 3, 2, 1)).getFirst();
+            userUtilService.changeUser(TEST_PREFIX + "instructor1");
+            List<PresentationRubricRatingDTO> commented = withComments(ratings(rubric, 3, 2, 1), "Clear structure", null, null);
+
+            PresentationAssessmentInstanceDTO updated = updateInstance(presentationId, instanceUpdate(instance, student(1), null, null, commented, TEST_PREFIX + "tutor1"),
+                    HttpStatus.OK);
+
+            assertThat(updated.gradeEditedBy()).isNull();
+            assertThat(getRatings(presentationId, instance.id())).containsExactlyElementsOf(commented);
+        }
+    }
+
     @Nested
     class StatisticsAndRows {
 
@@ -821,13 +893,23 @@ class PresentationGradingMethodIntegrationTest extends AbstractSpringIntegration
 
     private static PresentationAssessmentInstancesBatchCreateDTO batch(List<String> studentLogins, Double resultPoints, Boolean passed, List<PresentationRubricRatingDTO> ratings) {
         return new PresentationAssessmentInstancesBatchCreateDTO(FIXED_DATE, resultPoints, passed, studentLogins, "en", PresentationAssessmentMode.IN_PERSON, null, null, null,
-                ratings);
+                ratings, currentUserLogin());
     }
 
     private static PresentationAssessmentInstanceRequestDTO instanceUpdate(PresentationAssessmentInstanceDTO instance, String studentLogin, Double resultPoints, Boolean passed,
             List<PresentationRubricRatingDTO> ratings) {
+        return instanceUpdate(instance, studentLogin, resultPoints, passed, ratings, currentUserLogin());
+    }
+
+    private static PresentationAssessmentInstanceRequestDTO instanceUpdate(PresentationAssessmentInstanceDTO instance, String studentLogin, Double resultPoints, Boolean passed,
+            List<PresentationRubricRatingDTO> ratings, String assessorLogin) {
         return new PresentationAssessmentInstanceRequestDTO(instance.id(), FIXED_DATE, resultPoints, passed, studentLogin, "en", PresentationAssessmentMode.IN_PERSON, null, null,
-                null, ratings);
+                null, ratings, assessorLogin);
+    }
+
+    /** The client fills in the signed-in user as the assessor, so the requests of these tests do the same. */
+    private static String currentUserLogin() {
+        return SecurityUtils.getCurrentUserLogin().orElseThrow();
     }
 
     /** Ratings that refer to no rubric, for requests that must be rejected before the ratings are resolved. */

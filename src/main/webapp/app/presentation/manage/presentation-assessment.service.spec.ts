@@ -126,6 +126,17 @@ describe('PresentationAssessmentService', () => {
         req.flush({ totalCount: 5, assessedCount: 3 });
     });
 
+    it('should search assessors by term', () => {
+        const assessors = [{ login: 'ghopper', name: 'Grace Hopper' }];
+
+        service.searchAssessors(courseId, 'grace').subscribe((response) => {
+            expect(response.body).toEqual(assessors);
+        });
+
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/assessors?searchTerm=grace` });
+        req.flush(assessors);
+    });
+
     it('should create a presentation assessment', () => {
         const presentationAssessment: PresentationAssessment = {
             title: 'Final presentation',
@@ -180,6 +191,7 @@ describe('PresentationAssessmentService', () => {
             studentLogins: ['student1', 'student2'],
             language: 'en',
             mode: PresentationAssessmentMode.IN_PERSON,
+            assessorLogin: 'tutor1',
         };
 
         service.saveInstances(courseId, 1, request).subscribe((response) => {
@@ -206,6 +218,7 @@ describe('PresentationAssessmentService', () => {
             studentLogin: 'student1',
             language: 'en',
             mode: PresentationAssessmentMode.IN_PERSON,
+            assessorLogin: 'tutor1',
         };
 
         service.updateInstance(courseId, 42, request).subscribe((response) => {
@@ -224,6 +237,7 @@ describe('PresentationAssessmentService', () => {
             studentLogin: 'student1',
             language: 'en',
             mode: PresentationAssessmentMode.IN_PERSON,
+            assessorLogin: 'tutor1',
         });
         req.flush({
             id: 11,

@@ -26,6 +26,7 @@ describe('PresentationAssessmentOverviewTableComponent', () => {
             rowKey: '10:student1',
             displayName: 'Student One',
             assessed: true,
+            editable: true,
             ...overrides,
         };
     }
@@ -60,6 +61,15 @@ describe('PresentationAssessmentOverviewTableComponent', () => {
 
         render([]);
         expect(bodyRows()).toHaveLength(0);
+    });
+
+    it('should show the assessor name and login and a dash without one', () => {
+        render([createRow({ instance: { id: 10, resultPoints: 12, assessor: { login: 'tutor1', name: 'Tutor One' } } }), exerciseRow()]);
+
+        const [assessed, unassessed] = Array.from(element().querySelectorAll<HTMLElement>('[data-testid="overview-assessor"]'));
+        expect(assessed.querySelector('span')?.textContent?.trim()).toBe('Tutor One');
+        expect(assessed.querySelector('small')?.textContent?.trim()).toBe('tutor1');
+        expect(unassessed.textContent?.trim()).toBe('-');
     });
 
     it('should show the result points against the maximum of the row presentation', () => {

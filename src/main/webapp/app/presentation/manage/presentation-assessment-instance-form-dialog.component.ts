@@ -1,13 +1,14 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { rxResource, takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, FormsModule, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { forkJoin, map, merge, of, pairwise, startWith, switchMap, tap } from 'rxjs';
+import { Observable, Subject, catchError, debounceTime, distinctUntilChanged, forkJoin, map, merge, of, pairwise, startWith, switchMap, tap } from 'rxjs';
 import dayjs from 'dayjs/esm';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBan, faCheck, faSave, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiAutoCompleteComponent } from '@tumaet/ui-angular/autocomplete';
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
 import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
@@ -18,11 +19,12 @@ import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { onError } from 'app/foundation/util/global.utils';
 import { Course } from 'app/course/shared/entities/course.model';
-import { User } from 'app/account/user/user.model';
+import { User, UserNameAndLoginDTO } from 'app/account/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
 import {
     PresentationAssessment,
     PresentationAssessmentInstance,
@@ -33,8 +35,9 @@ import {
 } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { TranslateService } from '@ngx-translate/core';
 import { PresentationAssessmentPresenterSelectorComponent } from 'app/presentation/manage/presentation-assessment-presenter-selector.component';
-import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
 import { PresentationAssessmentService } from 'app/presentation/manage/presentation-assessment.service';
+import { PointsInputComponent } from 'app/shared-ui/tum-aet-ui-integration/points-input/points-input.component';
+import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { PresentationRubricGradingComponent } from 'app/presentation/manage/presentation-rubric-grading.component';
 import { RatingsForm, countUnrated, createRatingsForm, readRatingsForm } from 'app/presentation/manage/presentation-rubric-rating-form';
 import { isSet } from 'app/presentation/shared/presentation.util';
@@ -45,6 +48,23 @@ const resultPointsDoNotExceedMaxPoints: ValidatorFn = (control: AbstractControl)
     return resultPoints !== null && resultPoints !== undefined && Number(resultPoints) > Number(maxPoints) ? { resultPointsExceedMaxPoints: true } : null;
 };
 
+/**
+ * Only a graded presentation has an assessor, so the assessor is required as soon as the form holds a result. The autocomplete writes the typed text into
+ * the control, so only a selected assessor (an object) counts; without a result neither is checked, as the field is hidden then.
+ */
+function assessorSelectedForResult(hasResult: () => boolean): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+        if (!hasResult()) {
+            return null;
+        }
+        const assessorOption = control.get('assessorOption')?.value;
+        if (!assessorOption) {
+            return { assessorRequired: true };
+        }
+        return typeof assessorOption === 'string' ? { assessorNotSelected: true } : null;
+    };
+}
+
 /** A meeting link is rendered as a link, so without a scheme the browser would open it relative to the Artemis URL. */
 const httpUrl: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
     typeof control.value === 'string' && control.value.trim().length > 0 && !/^https?:\/\/\S+$/i.test(control.value.trim()) ? { pattern: true } : null;
@@ -53,9 +73,41 @@ const RESULT_POINTS_UPPER_BOUND = 10000;
 const MIN_PRESENTATION_DATE = dayjs('1970-01-01T00:00:00');
 const minimumPresentationDate: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
     control.value && dayjs(control.value).isBefore(MIN_PRESENTATION_DATE) ? { minDate: true } : null;
+
+/** The assessor together with the text the autocomplete shows for it, like the presenter options of the presenter selector. */
+interface AssessorOption {
+    assessor: UserNameAndLoginDTO;
+    label: string;
+}
+
 /** The criteria still to rate while a rubric is rated incompletely, or 0 while it is rated completely or, being optional, not at all. */
 function remainingCriteriaOf(ratingsForm: RatingsForm): number {
     return ratingsForm.hasError('ratingsIncomplete') || ratingsForm.hasError('ratingsRequired') ? countUnrated(ratingsForm) : 0;
+}
+
+/**
+ * Whether a result of the grading method is entered; only a graded presentation has an assessor. A rubric counts as soon as one criterion is rated,
+ * as only then its ratings are sent.
+ */
+function hasResultOf(
+    gradingMethod: PresentationGradingMethod | undefined,
+    passed: boolean | null | undefined,
+    resultPoints: number | null | undefined,
+    ratedCriteria: number,
+): boolean {
+    switch (gradingMethod) {
+        case PresentationGradingMethod.PASS_FAIL:
+            return isSet(passed);
+        case PresentationGradingMethod.RUBRIC:
+            return ratedCriteria > 0;
+        default:
+            return isSet(resultPoints);
+    }
+}
+
+/** The assessor of the autocomplete, or undefined while it is empty or holds text that was typed but not selected. */
+function selectedAssessor(value: AssessorOption | string | undefined | null): AssessorOption | undefined {
+    return value && typeof value === 'object' ? value : undefined;
 }
 const OUTCOMES = [
     { key: 'passed', value: true, icon: faCheck },
@@ -75,10 +127,12 @@ export type PresentationAssessmentInstanceFormResult =
         TranslateDirective,
         ArtemisTranslatePipe,
         PresentationAssessmentPresenterSelectorComponent,
+        TumAetUiAutoCompleteComponent,
         TumAetUiButtonComponent,
         TumAetUiDatePickerComponent,
         TumAetUiInputDirective,
         PointsInputComponent,
+        ProfilePictureComponent,
         TumAetUiMessageComponent,
         TumAetUiProgressSpinnerComponent,
         TumAetUiRadioButtonComponent,
@@ -89,6 +143,7 @@ export type PresentationAssessmentInstanceFormResult =
 export class PresentationAssessmentInstanceFormDialogComponent {
     private readonly formBuilder = inject(FormBuilder);
     private readonly translateService = inject(TranslateService);
+    private readonly accountService = inject(AccountService);
     private readonly presentationAssessmentService = inject(PresentationAssessmentService);
     private readonly alertService = inject(AlertService);
     private readonly translationChanges = toSignal(merge(this.translateService.onLangChange, this.translateService.onTranslationChange));
@@ -100,6 +155,8 @@ export class PresentationAssessmentInstanceFormDialogComponent {
     readonly instance = input<PresentationAssessmentInstance>();
     readonly initialAssignedStudents = input<User[]>([]);
     readonly isSaving = input(false);
+    /** Instructors choose the assessor; tutors and editors keep the given one or assess themselves. */
+    readonly canChooseAssessor = input(false);
     readonly saved = output<PresentationAssessmentInstanceFormResult>();
     readonly cancelled = output<void>();
 
@@ -127,6 +184,35 @@ export class PresentationAssessmentInstanceFormDialogComponent {
     });
 
     readonly assignedStudents = signal<User[]>([]);
+
+    private readonly assessorSearchTerms = new Subject<string>();
+
+    searchAssessors(searchTerms: Observable<string>): Observable<UserNameAndLoginDTO[]> {
+        return searchTerms.pipe(
+            debounceTime(200),
+            distinctUntilChanged(),
+            switchMap((term) => {
+                if (term.trim().length < 3) {
+                    return of([]);
+                }
+                return this.presentationAssessmentService.searchAssessors(this.courseId(), term).pipe(
+                    map((response) => response.body ?? []),
+                    catchError(() => {
+                        this.alertService.error('artemisApp.presentationAssessment.assessorSearchFailed');
+                        return of([]);
+                    }),
+                );
+            }),
+        );
+    }
+
+    protected readonly assessorSuggestions = toSignal(this.searchAssessors(this.assessorSearchTerms), { initialValue: [] });
+
+    protected searchAssessorsByQuery(query: string): void {
+        this.assessorSearchTerms.next(query);
+    }
+
+    protected readonly assessorOptions = computed(() => this.assessorSuggestions().map((assessor) => this.toAssessorOption(assessor)));
 
     protected readonly gradingMethod = computed(() => this.presentationAssessment().gradingMethod);
 
@@ -183,14 +269,51 @@ export class PresentationAssessmentInstanceFormDialogComponent {
             resultPoints: [undefined as number | undefined, [Validators.min(0), Validators.max(RESULT_POINTS_UPPER_BOUND)]],
             passed: [undefined as boolean | undefined],
             maxPoints: [0],
+            assessorOption: [undefined as AssessorOption | undefined],
             language: ['en', Validators.required],
             mode: [PresentationAssessmentMode.IN_PERSON, Validators.required],
             location: ['', Validators.maxLength(255)],
             meetingLink: ['', [Validators.maxLength(1000), httpUrl]],
             remark: ['', Validators.maxLength(1000)],
         },
-        { validators: resultPointsDoNotExceedMaxPoints },
+        { validators: [resultPointsDoNotExceedMaxPoints, assessorSelectedForResult(() => this.formHasResult())] },
     );
+
+    /** The values of the form, updated with every change; disabled controls count too, as the form is disabled while saving. */
+    private readonly formValue = toSignal(this.editForm.valueChanges.pipe(map(() => this.editForm.getRawValue())), { initialValue: this.editForm.getRawValue() });
+    /** The number of rated criteria of a rubric, updated with every change of the ratings. */
+    private readonly ratedCriteria = toSignal(
+        toObservable(this.ratingsForm).pipe(
+            switchMap((ratingsForm) =>
+                ratingsForm
+                    ? ratingsForm.valueChanges.pipe(
+                          startWith(undefined),
+                          map(() => ratingsForm.length - countUnrated(ratingsForm)),
+                      )
+                    : of(0),
+            ),
+        ),
+        { initialValue: 0 },
+    );
+    protected readonly selectedAssessorOption = computed(() => selectedAssessor(this.formValue().assessorOption));
+    protected readonly hasResult = computed(() => {
+        const value = this.formValue();
+        return hasResultOf(this.gradingMethod(), value.passed, value.resultPoints, this.ratedCriteria());
+    });
+
+    /**
+     * Whether the controls hold a result, read from the controls themselves as the form validates before it emits its new value. The form also validates
+     * while it is built, before it is assigned, and inside effects, which must not rerun and reset it whenever the result changes, so the signals are read
+     * untracked.
+     */
+    private formHasResult(): boolean {
+        if (!this.editForm) {
+            return false;
+        }
+        const ratingsForm = untracked(this.ratingsForm);
+        const ratedCriteria = ratingsForm ? ratingsForm.length - countUnrated(ratingsForm) : 0;
+        return hasResultOf(untracked(this.gradingMethod), this.editForm.controls.passed.value, this.editForm.controls.resultPoints.value, ratedCriteria);
+    }
 
     constructor() {
         this.editForm.controls.mode.valueChanges.pipe(pairwise(), takeUntilDestroyed()).subscribe(([previousMode, mode]) => {
@@ -218,6 +341,7 @@ export class PresentationAssessmentInstanceFormDialogComponent {
                 resultPoints: instance?.resultPoints,
                 passed: instance?.passed ?? undefined,
                 maxPoints: this.presentationAssessment().maxPoints ?? 0,
+                assessorOption: this.initialAssessorOption(instance),
                 language: instance?.language ?? 'en',
                 mode: instance?.mode ?? PresentationAssessmentMode.IN_PERSON,
                 location: instance?.location ?? '',
@@ -235,6 +359,11 @@ export class PresentationAssessmentInstanceFormDialogComponent {
                 ratingsForm?.enable({ emitEvent: false });
             }
         });
+        // A rated criterion makes the assessor required, so the ratings validate the form again like the other results do
+        effect((onCleanup) => {
+            const subscription = this.ratingsForm()?.valueChanges.subscribe(() => this.editForm.updateValueAndValidity());
+            onCleanup(() => subscription?.unsubscribe());
+        });
     }
 
     save(): void {
@@ -248,7 +377,9 @@ export class PresentationAssessmentInstanceFormDialogComponent {
         }
 
         const value = this.editForm.getRawValue();
-        if (!value.presentationDate || !value.language || !value.mode) {
+        const graded = this.formHasResult();
+        const assessorLogin = graded ? this.selectedAssessorOption()?.assessor.login : undefined;
+        if (!value.presentationDate || !value.language || !value.mode || (graded && !assessorLogin)) {
             return;
         }
 
@@ -271,6 +402,7 @@ export class PresentationAssessmentInstanceFormDialogComponent {
             location: value.mode === PresentationAssessmentMode.IN_PERSON ? value.location?.trim() || undefined : undefined,
             meetingLink: value.mode === PresentationAssessmentMode.ONLINE ? value.meetingLink?.trim() || undefined : undefined,
             remark: value.remark?.trim() || undefined,
+            assessorLogin,
         } satisfies Omit<PresentationAssessmentInstancesCreate, 'studentLogins'>;
 
         if (instance) {
@@ -307,5 +439,15 @@ export class PresentationAssessmentInstanceFormDialogComponent {
 
     cancel(): void {
         this.cancelled.emit();
+    }
+
+    private toAssessorOption(assessor: UserNameAndLoginDTO): AssessorOption {
+        return { assessor, label: `${assessor.name ?? ''} (${assessor.login ?? ''})` };
+    }
+
+    /** An existing instance keeps its assessor; a new one, or one graded before assessors were stored, is assessed by the current user. */
+    private initialAssessorOption(instance?: PresentationAssessmentInstance): AssessorOption | undefined {
+        const assessor = instance?.assessor ?? untracked(() => this.accountService.userIdentity());
+        return assessor ? this.toAssessorOption({ name: assessor.name, login: assessor.login }) : undefined;
     }
 }

@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStatisticsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationAssessmentStudentRowDTO;
 import de.tum.cit.aet.artemis.assessment.dto.PresentationRubricRatingDTO;
+import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentRepository;
 import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentWriteRepository.PresentationRubricChanges;
@@ -44,6 +45,7 @@ import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
 import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -60,6 +62,12 @@ public class PresentationAssessmentService {
 
     private static final LocalDate EARLIEST_PRESENTATION_DATE = LocalDate.of(1970, 1, 1);
 
+    private static final Set<CourseRole> ASSESSOR_ROLES = Set.copyOf(CourseRole.valuesAtLeast(CourseRole.TEACHING_ASSISTANT));
+
+    private static final int ASSESSOR_SEARCH_MIN_LENGTH = 3;
+
+    private static final int ASSESSOR_SEARCH_RESULT_LIMIT = 25;
+
     private final PresentationAssessmentRepository presentationAssessmentRepository;
 
     private final UserRepository userRepository;
@@ -72,13 +80,15 @@ public class PresentationAssessmentService {
 
     private final CourseConfigurationRepository courseConfigurationRepository;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     private final PresentationRubricService presentationRubricService;
 
     private final PresentationRubricRatingRepository presentationRubricRatingRepository;
 
     public PresentationAssessmentService(PresentationAssessmentRepository presentationAssessmentRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository, CourseRepository courseRepository,
-            CourseConfigurationRepository courseConfigurationRepository, PresentationRubricService presentationRubricService,
+            CourseConfigurationRepository courseConfigurationRepository, AuthorizationCheckService authorizationCheckService, PresentationRubricService presentationRubricService,
             PresentationRubricRatingRepository presentationRubricRatingRepository) {
         this.presentationAssessmentRepository = presentationAssessmentRepository;
         this.userRepository = userRepository;
@@ -86,6 +96,7 @@ public class PresentationAssessmentService {
         this.presentationAssessmentInstanceRepository = presentationAssessmentInstanceRepository;
         this.courseRepository = courseRepository;
         this.courseConfigurationRepository = courseConfigurationRepository;
+        this.authorizationCheckService = authorizationCheckService;
         this.presentationRubricService = presentationRubricService;
         this.presentationRubricRatingRepository = presentationRubricRatingRepository;
     }
@@ -110,6 +121,22 @@ public class PresentationAssessmentService {
     public PresentationAssessmentStatisticsDTO getStatistics(long courseId) {
         checkPresentationAssessmentsEnabled(courseId);
         return presentationAssessmentInstanceRepository.findStatisticsByCourseId(courseId);
+    }
+
+    /**
+     * Searches the course staff that can be chosen as the assessor of a presentation.
+     *
+     * @param courseId   the course id
+     * @param searchTerm text to search in the login or full name, at least three characters long
+     * @return the name and login of the matching tutors, editors and instructors ordered by name, at most 25
+     */
+    public List<UserNameAndLoginDTO> searchAssessorOptions(long courseId, String searchTerm) {
+        if (searchTerm.trim().length() < ASSESSOR_SEARCH_MIN_LENGTH) {
+            throw new BadRequestAlertException("The search term must be at least three characters long", PresentationAssessmentInstance.ENTITY_NAME, "searchTermTooShort");
+        }
+        checkPresentationAssessmentsEnabled(courseId);
+        String searchPattern = "%" + StringUtil.escapeForLikeLowerCase(searchTerm) + "%";
+        return userRepository.searchNameAndLoginByLoginOrNameInCourseWithRoles(courseId, ASSESSOR_ROLES, searchPattern, PageRequest.of(0, ASSESSOR_SEARCH_RESULT_LIMIT));
     }
 
     private PresentationAssessment findByIdAndCourseIdElseThrow(long courseId, long assessmentId) {
@@ -293,8 +320,12 @@ public class PresentationAssessmentService {
         rejectAlreadyAssignedStudents(assessmentId, students);
         RubricGrade grade = gradeRubric(assessment, dto.ratings());
 
-        List<PresentationAssessmentInstance> instances = students.stream().map(student -> createIndividualInstance(assessment, dto.forStudent(student.getLogin()), student, grade))
-                .toList();
+        boolean graded = hasResult(assessment.getGradingMethod(), dto.passed(), dto.resultPoints(), grade);
+        User currentUser = userRepository.getUser();
+        User assessor = resolveAssessor(courseId, currentUser, null, graded, dto.assessorLogin());
+        User gradedBy = graded ? currentUser : null;
+        List<PresentationAssessmentInstance> instances = students.stream()
+                .map(student -> createIndividualInstance(assessment, dto.forStudent(student.getLogin()), student, grade, assessor, gradedBy)).toList();
         List<PresentationRubricRating> ratings = grade == null ? List.of() : instances.stream().flatMap(instance -> grade.ratingsFor(instance).stream()).toList();
         return presentationAssessmentRepository.createInstancesIfVersionMatches(courseId, assessmentId, expectedVersion, instances, ratings);
     }
@@ -351,8 +382,89 @@ public class PresentationAssessmentService {
                 && presentationAssessmentInstanceRepository.existsByPresentationAssessmentIdAndStudentIdAndIdNot(assessment.getId(), student.getId(), instance.getId())) {
             throwStudentAlreadyAssigned(List.of(student.getLogin()));
         }
+        boolean resultChanged = changesResult(assessment, instance, dto, grade);
         applyInstanceData(assessment, instance, dto, grade);
         instance.setStudent(student);
+        User currentUser = userRepository.getUser();
+        boolean graded = hasResult(assessment.getGradingMethod(), dto.passed(), dto.resultPoints(), grade);
+        instance.setAssessor(resolveAssessor(courseId, currentUser, instance.getAssessor(), graded, dto.assessorLogin()));
+        // Who last changed the result; the client names them when they differ from the assessor.
+        if (resultChanged) {
+            instance.setGradedBy(currentUser);
+        }
+    }
+
+    /**
+     * Only a graded presentation has an assessor, so one without a result of its grading method has none. Instructors choose any tutor,
+     * editor or instructor of the course as the assessor; like the presenter, an unchanged assessor is kept even if they left the course. Tutors and editors
+     * always assess as themselves and cannot edit an instance that someone else assesses, as only instructors override another person's result of an exercise.
+     * Like the assessor of a result, anyone allowed to grade may assess as themselves, so an administrator without a course role can too.
+     *
+     * @param courseId        the owning course id
+     * @param currentUser     the user who sends the request
+     * @param currentAssessor the assessor of the instance being updated, or null for a new instance or one without an assessor
+     * @param graded          whether the request contains a result of the grading method of the presentation
+     * @param assessorLogin   the requested assessor login, only required with a result
+     * @return the assessor to store, or null for an ungraded presentation
+     */
+    private User resolveAssessor(long courseId, User currentUser, User currentAssessor, boolean graded, String assessorLogin) {
+        boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(courseId);
+        boolean assessedBySomeoneElse = currentAssessor != null && !currentAssessor.getId().equals(currentUser.getId());
+        if (!isAtLeastInstructor && assessedBySomeoneElse) {
+            throw new AccessForbiddenException("Tutors and editors cannot edit presentations assessed by someone else");
+        }
+        if (!graded) {
+            return null;
+        }
+        String login = assessorLogin == null ? "" : assessorLogin.trim();
+        if (login.isEmpty()) {
+            throw new BadRequestAlertException("A graded presentation needs an assessor", PresentationAssessmentInstance.ENTITY_NAME, "assessorMissing");
+        }
+        if (currentUser.getLogin().equals(login)) {
+            return currentUser;
+        }
+        if (!isAtLeastInstructor) {
+            throw new AccessForbiddenException("Tutors and editors only assess presentations as themselves");
+        }
+        if (currentAssessor != null && currentAssessor.getLogin().equals(login)) {
+            return currentAssessor;
+        }
+        return userRepository.findOneByCourseIdAndCourseRolesInAndLogin(courseId, ASSESSOR_ROLES, login).orElseThrow(
+                () -> new BadRequestAlertException("The assessor must be at least a tutor in the course", PresentationAssessmentInstance.ENTITY_NAME, "assessorNotInCourse"));
+    }
+
+    /** Whether the request grades the presentation with the result of its grading method; results of another method are rejected when the data is applied. */
+    private static boolean hasResult(PresentationGradingMethod gradingMethod, @Nullable Boolean passed, @Nullable Double resultPoints, @Nullable RubricGrade grade) {
+        return switch (gradingMethod) {
+            case PASS_FAIL -> passed != null;
+            case SCORE -> resultPoints != null;
+            case RUBRIC -> grade != null;
+        };
+    }
+
+    /**
+     * Whether the request changes the saved result of the grading method. For a rubric, another level of any criterion counts, while a changed comment does not,
+     * just as a changed remark does not count for the other methods.
+     */
+    private boolean changesResult(PresentationAssessment assessment, PresentationAssessmentInstance instance, PresentationAssessmentInstanceRequestDTO dto,
+            @Nullable RubricGrade grade) {
+        return switch (assessment.getGradingMethod()) {
+            case PASS_FAIL -> dto.passed() != null && !dto.passed().equals(instance.getPassed());
+            case SCORE -> dto.resultPoints() != null && !dto.resultPoints().equals(instance.getResultPoints());
+            case RUBRIC -> grade != null && !levelsByCriterion(grade).equals(savedLevelsByCriterion(instance));
+        };
+    }
+
+    private static Map<Long, Long> levelsByCriterion(RubricGrade grade) {
+        return grade.ratings().stream().collect(Collectors.toMap(rating -> rating.criterion().getId(), rating -> rating.level().getId()));
+    }
+
+    private Map<Long, Long> savedLevelsByCriterion(PresentationAssessmentInstance instance) {
+        if (instance.getRubricScore() == null) {
+            return Map.of();
+        }
+        return presentationRubricRatingRepository.findAllByInstanceIdOrderByCriterionPosition(instance.getId()).stream()
+                .collect(Collectors.toMap(rating -> rating.getCriterion().getId(), rating -> rating.getLevel().getId()));
     }
 
     /**
@@ -426,11 +538,13 @@ public class PresentationAssessmentService {
     }
 
     private PresentationAssessmentInstance createIndividualInstance(PresentationAssessment assessment, PresentationAssessmentInstanceRequestDTO dto, User student,
-            @Nullable RubricGrade grade) {
+            @Nullable RubricGrade grade, User assessor, User gradedBy) {
         PresentationAssessmentInstance instance = new PresentationAssessmentInstance();
         instance.setPresentationAssessment(assessment);
         applyInstanceData(assessment, instance, dto, grade);
         instance.setStudent(student);
+        instance.setAssessor(assessor);
+        instance.setGradedBy(gradedBy);
         return instance;
     }
 
