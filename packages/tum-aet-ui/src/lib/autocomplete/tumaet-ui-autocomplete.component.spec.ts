@@ -206,6 +206,20 @@ describe('TumAetUiAutoCompleteComponent (multiple mode)', () => {
         expect(selectSpy).toHaveBeenCalledWith(expect.objectContaining({ value: 'admin' }));
     });
 
+    it('scrolls the highlighted option into view when moving down and up with the arrow keys', async () => {
+        await search('a', ['admin', 'artemis']);
+        const [first, second] = options();
+        first.scrollIntoView = vi.fn();
+        second.scrollIntoView = vi.fn();
+
+        input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+        expect(second.scrollIntoView).toHaveBeenCalledExactlyOnceWith({ block: 'nearest' });
+        input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+        expect(first.scrollIntoView).toHaveBeenCalledTimes(2);
+        expect(first.scrollIntoView).toHaveBeenLastCalledWith({ block: 'nearest' });
+    });
+
     it('does not intercept native text-editing or Tab keys', async () => {
         const selectSpy = vi.spyOn(component.optionSelected, 'emit');
         await search('a', ['admin', 'artemis']);

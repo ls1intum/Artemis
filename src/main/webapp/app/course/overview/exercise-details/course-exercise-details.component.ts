@@ -25,7 +25,7 @@ function isStudentParticipationChange(participation: Participation | undefined):
 }
 import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { hasExerciseDueDatePassed, withPracticeParticipations } from 'app/exercise/util/exercise.utils';
+import { hasExerciseDueDatePassed, participationsAfterTeamAssignment } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseBuildWindowNoticeComponent } from 'app/programming/shared/build-window-notice/programming-exercise-build-window-notice.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -589,12 +589,31 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 takeUntilDestroyed(this.destroyRef),
             )
             .subscribe((teamAssignment) => {
-                if (this.exercise && teamAssignment.studentParticipations) {
+                if (this.exercise) {
                     const updatedExercise = deepClone(this.exercise);
                     updatedExercise.studentAssignedTeamId = teamAssignment.teamId;
-                    updatedExercise.studentParticipations = withPracticeParticipations(this.exercise.studentParticipations, teamAssignment.studentParticipations);
+                    if (teamAssignment.studentParticipations === undefined && teamAssignment.teamId !== undefined) {
+                        // A team without participations leaves the participations as they are. The shown ones are updated by the result handler and can be newer than those of the
+                        // exercise, so they are neither replaced nor merged again from the exercise, which would roll them back.
+                        this.exercise = updatedExercise;
+                        return;
+                    }
+                    updatedExercise.studentParticipations = participationsAfterTeamAssignment(this.exercise.studentParticipations, teamAssignment);
+                    // The participations that the assignment replaced must not stay in the cache that loadExercise() seeds the page from when it is opened again.
+                    const remainingIds = new Set(updatedExercise.studentParticipations?.map((participation) => participation.id));
+                    const replacedIds = (this.exercise.studentParticipations ?? []).flatMap((participation) =>
+                        participation.id !== undefined && !remainingIds.has(participation.id) ? [participation.id] : [],
+                    );
+                    if (replacedIds.length) {
+                        this.participationWebsocketService.removeCachedParticipations(replacedIds);
+                    }
                     this.exercise = updatedExercise;
-                    this.mergeResultsAndSubmissionsForParticipations();
+                    if (updatedExercise.studentParticipations?.length) {
+                        this.mergeResultsAndSubmissionsForParticipations();
+                    } else {
+                        // The merge only replaces the shown participations by a non-empty list, so those of the team that the student left are cleared here.
+                        this._studentParticipations.set([]);
+                    }
                 }
             });
     }
