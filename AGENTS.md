@@ -15,6 +15,7 @@ see [Work with AI](documentation/docs/developer/work-with-ai.mdx) for native ski
 | Write or debug JUnit or Vitest tests                          | [write-tests](skills/write-tests/SKILL.md)                 |
 | Set up, build, or troubleshoot the local application          | [local-setup](skills/local-setup/SKILL.md)                 |
 | Test a change in a local browser across every affected screen | [browser-qa](skills/browser-qa/SKILL.md)                   |
+| Render, update or add documentation trailers                  | [trailers](skills/trailers/SKILL.md)                       |
 
 Read the relevant guideline for a rule-governed change. Keep procedures in the matching skill.
 When changing a convention, update its skill and supporting documentation in the same change.
@@ -85,6 +86,10 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 - Remove unreachable code, even when its only user is its own test. Required checks run on every
   PR: `python3 supporting_scripts/check_dead_code.py` and `pnpm run dead-code:client`.
   [dead code](documentation/docs/developer/guidelines/dead-code.mdx)
+- Write new scripts for builds, CI and repository tooling in TypeScript or JavaScript (`.mjs`, run by Node) with a test
+  beside them, not in Python; a workflow step calls a few commands directly and otherwise calls a script. Port an existing
+  Python script when you change it substantially.
+  [builds and dependencies](documentation/docs/developer/builds-and-dependencies.mdx#scripts)
 - Use **client** and **server**, not "frontend" or "backend". <!-- terminology-check: allow -->
   Use **provider** for a swappable distributed-data implementation and **adapter** for its glue.
   This also applies to commit messages and PR text. [terminology](documentation/docs/developer/guidelines/terminology.mdx)
@@ -115,14 +120,9 @@ These are Artemis-specific rules. The linked guidelines give reasons and excepti
 - Screenshots in documentation and PRs must be captured from a running Artemis instance with realistic data
   and the actual theme and background colours. Never use synthetic, AI-generated, mocked or isolated-component
   screenshots, or override theme colours or recolour a capture. Automated browser capture of the real application is allowed.
-- The programming exercise trailers embedded in the student and instructor documentation are rendered by
-  `supporting_scripts/trailer/render_trailer.py` from documentation screenshots. When a PR changes a screenshot
-  the script uses, or the programming exercise UI that a trailer shows, update the trailers in the same PR;
-  this is part of the change, not a follow-up. Adjust the storyboard (crops, highlights, captions) so the
-  trailers still match the application and no resting frame cuts through text, check the scenes with
-  `--preview`, render both cuts, commit the videos and say in the PR description what changed in them.
-  The committed videos need the macOS fonts; without them, ask a maintainer with macOS to render them for
-  the same PR. See the [trailer README](supporting_scripts/trailer/README.md).
+- The module trailers embedded in the documentation are rendered from documentation screenshots. When a PR
+  changes a screenshot a trailer uses, or the UI it shows, update the trailers in the same PR and describe the
+  change in the PR description. Procedure: [trailers](skills/trailers/SKILL.md).
 - Do not commit plans, design specs or scratch notes. Keep working notes in the issue or PR;
   maintained documentation belongs on the documentation site.
 

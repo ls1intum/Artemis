@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { MockPipe } from 'ng-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';

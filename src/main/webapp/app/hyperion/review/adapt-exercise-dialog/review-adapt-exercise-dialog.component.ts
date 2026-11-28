@@ -1,12 +1,9 @@
-import {
-    TumAetUiButtonComponent,
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiInputDirective,
-    TumAetUiSearchFieldComponent,
-    TumAetUiSelectButtonComponent,
-    TumAetUiTagComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiSearchFieldComponent } from '@tumaet/ui-angular/search-field';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal, output, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink, UrlTree } from '@angular/router';

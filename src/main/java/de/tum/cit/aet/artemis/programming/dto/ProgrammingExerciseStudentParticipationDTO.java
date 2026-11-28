@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
  * <p>
  * {@code exercise} is {@code null} when the participation is embedded under an exercise — that is the cycle break the
  * entity wire achieves with {@code @JsonIgnoreProperties}. It is populated when the participation itself is the
- * response root, where the client reads the nested exercise (and its course group names) for access rights and
+ * response root, where the client reads the nested exercise (and its course) for access rights and
  * navigation. {@code team} carries the team members because the client verifies participation ownership against
  * {@code team.students[*].login}; {@code student} is the individual counterpart of that check — the clone/code button
  * decides that a repository is the caller's own (and must therefore use the participation token rather than the staff

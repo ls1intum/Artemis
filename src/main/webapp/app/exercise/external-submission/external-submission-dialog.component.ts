@@ -1,6 +1,6 @@
-import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
-import { TumAetUiInputDirective } from '@tumaet/ui-angular';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
@@ -19,7 +19,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
-import { TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExternalSubmissionStudentSearchComponent } from 'app/exercise/external-submission/external-submission-student-search.component';
 import { ExternalSubmissionCandidate } from 'app/exercise/external-submission/external-submission-candidate.model';
@@ -27,7 +27,7 @@ import { ExternalSubmissionCandidate } from 'app/exercise/external-submission/ex
 @Component({
     selector: 'jhi-external-submission-dialog',
     templateUrl: './external-submission-dialog.component.html',
-    styleUrl: './external-submission-dialog.component.scss',
+    styleUrl: './external-submission-dialog.component.css',
     imports: [
         TumAetUiCheckboxComponent,
         TumAetUiInputDirective,

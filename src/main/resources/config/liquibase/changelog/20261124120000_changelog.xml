@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20261124120000-01-weaviate-outbox-origin-created-at-index" author="krusche">
+        <comment>The dispatcher looks at the size and the age of the queued rows of one origin once a minute. Background rows can be numerous, so the rows for user actions are found by an index.</comment>
+        <createIndex indexName="idx_weaviate_outbox_origin_created_at" tableName="weaviate_outbox">
+            <column name="origin"/>
+            <column name="created_at"/>
+        </createIndex>
+        <rollback>
+            <dropIndex indexName="idx_weaviate_outbox_origin_created_at" tableName="weaviate_outbox"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

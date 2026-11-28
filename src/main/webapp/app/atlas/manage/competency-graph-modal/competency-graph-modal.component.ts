@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal, untracked } from '@angular/core';
-import { TumAetUiDialogConfig, TumAetUiDialogService, TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogConfig, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { AlertService } from 'app/foundation/service/alert.service';

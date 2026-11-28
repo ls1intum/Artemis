@@ -38,6 +38,19 @@ public record JsonRpcResponseDTO<R>(String jsonrpc, @JsonInclude() JsonRpcIdDTO 
      * @return the answer
      */
     public static JsonRpcResponseDTO<Void> failure(JsonRpcIdDTO id, int code, String message) {
-        return new JsonRpcResponseDTO<>(VERSION, id, null, new JsonRpcErrorDTO(code, message));
+        return failure(id, code, message, null);
+    }
+
+    /**
+     * The answer to a call that failed in a way that defines data for the client.
+     *
+     * @param id      the id of the request, or null if it could not be read
+     * @param code    the JSON-RPC error code
+     * @param message what went wrong
+     * @param data    what the client needs to react, or null
+     * @return the answer
+     */
+    public static JsonRpcResponseDTO<Void> failure(JsonRpcIdDTO id, int code, String message, Object data) {
+        return new JsonRpcResponseDTO<>(VERSION, id, null, new JsonRpcErrorDTO(code, message, data));
     }
 }

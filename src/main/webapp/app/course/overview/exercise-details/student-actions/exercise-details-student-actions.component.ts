@@ -15,7 +15,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 
 import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { RequestFeedbackButtonComponent } from '../request-feedback-button/request-feedback-button.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -37,7 +37,7 @@ import { OpenCodeEditorButtonComponent } from 'app/course/overview/exercise-deta
     providers: [ExternalCloningService],
     selector: 'jhi-exercise-details-student-actions',
     templateUrl: './exercise-details-student-actions.component.html',
-    styleUrls: ['../../course-overview/course-overview.scss'],
+    styleUrls: ['../../course-overview/course-overview.css'],
     host: {
         '[class]': 'columnClasses()',
     },

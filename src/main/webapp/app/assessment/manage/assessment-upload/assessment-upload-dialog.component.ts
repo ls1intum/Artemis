@@ -10,7 +10,10 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { alertIfAssessmentNotPossibleYet } from 'app/assessment/shared/util/assessment-availability.util';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
-import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiDialogComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { AssessmentUploadApi } from 'app/openapi/api/assessment-upload-api';
 import { AssessmentUploadError } from 'app/openapi/model/assessment-upload-error';
 import { AssessmentUploadResult } from 'app/openapi/model/assessment-upload-result';
@@ -30,7 +33,7 @@ import { AssessmentUploadResult } from 'app/openapi/model/assessment-upload-resu
 @Component({
     selector: 'jhi-assessment-upload-dialog',
     templateUrl: './assessment-upload-dialog.component.html',
-    styleUrls: ['./assessment-upload-dialog.component.scss'],
+    styleUrls: ['./assessment-upload-dialog.component.css'],
     imports: [
         NgClass,
         FaIconComponent,

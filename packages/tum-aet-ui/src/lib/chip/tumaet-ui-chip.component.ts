@@ -8,7 +8,7 @@ export type TumAetUiChipSize = 'small';
 @Component({
     selector: 'tumaet-ui-chip',
     templateUrl: './tumaet-ui-chip.component.html',
-    styleUrl: './tumaet-ui-chip.component.scss',
+    styleUrl: './tumaet-ui-chip.component.css',
     imports: [FaIconComponent, TumAetUiTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

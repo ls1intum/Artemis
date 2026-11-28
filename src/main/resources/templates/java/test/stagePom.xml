@@ -24,7 +24,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.6.0</version>
+                <version>3.6.1</version>
                 <configuration>
                     <!-- Ares requires the student code to be located within its working directory. The test repository
                          (containing the security policy) is the parent of the build stage directories. -->

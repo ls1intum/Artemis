@@ -5,7 +5,7 @@ import { IrisBaseChatbotComponent } from '../base-chatbot/iris-base-chatbot.comp
 @Component({
     selector: 'jhi-course-chatbot',
     templateUrl: './course-chatbot.component.html',
-    styleUrl: './course-chatbot.component.scss',
+    styleUrl: './course-chatbot.component.css',
     imports: [IrisBaseChatbotComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

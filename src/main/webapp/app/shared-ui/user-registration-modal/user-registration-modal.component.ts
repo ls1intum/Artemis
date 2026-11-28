@@ -2,7 +2,9 @@ import { Component, DestroyRef, ElementRef, TemplateRef, computed, effect, injec
 import { Observable } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleCheck, faEye, faSearch, faUsers } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { buildDbQueryFromLazyEvent } from 'app/shared-ui/table-view/request-builder';
 import { TableViewLazyLoadEvent } from 'app/shared-ui/table-view/table-view-query';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -77,6 +79,7 @@ export class UserRegistrationModalComponent {
     readonly selectedUsers = signal<UserForRegistration[]>([]);
     readonly isViewingSelected = signal(false);
     private requestId = 0;
+    private modalSession = 0;
 
     readonly selectedCount = computed(() => this.selectedUsers().length);
     readonly searchPlaceholderKey = computed(() => (this.isViewingSelected() ? 'userRegistrationModal.viewingSelectedPlaceholder' : 'userRegistrationModal.searchPlaceholder'));
@@ -124,29 +127,44 @@ export class UserRegistrationModalComponent {
         this.isOpen.set(false);
     }
 
+    /** Dismissing the dialog with the close button or the backdrop closes it like cancel, so no selection or pending search survives. */
+    onVisibleChange(visible: boolean): void {
+        if (visible) {
+            this.isOpen.set(true);
+        } else {
+            this.close();
+        }
+    }
+
     onSearch(searchTerm: string): void {
         const trimmed = searchTerm.trim();
         this.searchTerm.set(trimmed);
-        clearTimeout(this.debounceTimer);
+        this.cancelPendingSearch();
+        // Drop the previous term's rows and ignore its pending response right away, not only when the debounce fires.
+        // Otherwise those rows stay selectable while typing and would be registered for a search the user no longer sees.
+        this.requestId++;
+        this.searchResults.set([]);
+        this.totalSearchResults.set(0);
 
         if (!trimmed) {
             this.hasSearched.set(false);
-            this.searchResults.set([]);
-            this.totalSearchResults.set(0);
+            this.isLoading.set(false);
             return;
         }
 
+        this.isLoading.set(true);
         this.debounceTimer = setTimeout(() => {
-            this.isLoading.set(true);
+            this.debounceTimer = undefined;
             this.hasSearched.set(true);
             // A new search term always starts from page 0 — reload() defaults to the current page, which would be wrong here.
-            this.tableViewRef()?.reload(0);
+            this.tableViewRef()?.reload({ page: 0 });
         }, UserRegistrationModalComponent.SEARCH_DEBOUNCE_MS);
     }
 
     onTableLazyLoad(event: TableViewLazyLoadEvent): void {
         const searchTerm = this.searchTerm();
-        if (!searchTerm) return;
+        // A table that mounts while the debounce is pending loads on init; the debounce loads the term once it fires.
+        if (!searchTerm || this.debounceTimer !== undefined) return;
 
         const { page, pageSize } = buildDbQueryFromLazyEvent(event, { pageSize: 10 });
         const currentRequestId = ++this.requestId;
@@ -208,21 +226,31 @@ export class UserRegistrationModalComponent {
         const users = this.selectedUsers();
         if (!users.length) return;
 
+        const session = this.modalSession;
         this.isLoading.set(true);
+        // The registration still completes if the modal is dismissed meanwhile, so the parent is notified either way,
+        // but a reopened modal keeps its own state.
         this.registerFn()(users).subscribe({
             next: () => {
                 this.registered.emit();
-                this.close();
+                if (session === this.modalSession) {
+                    this.close();
+                }
             },
             error: () => {
                 this.alertService.error('userRegistrationModal.registerError');
-                this.isLoading.set(false);
+                if (session === this.modalSession) {
+                    this.isLoading.set(false);
+                }
             },
         });
     }
 
     private resetState(): void {
+        this.cancelPendingSearch();
+        this.modalSession++;
         this.requestId++;
+        this.isLoading.set(false);
         this.searchTerm.set('');
         this.hasSearched.set(false);
         this.searchResults.set([]);
@@ -230,5 +258,10 @@ export class UserRegistrationModalComponent {
         this.selectedUsers.set([]);
         this.isViewingSelected.set(false);
         this.searchFilterRef()?.resetSearchValue();
+    }
+
+    private cancelPendingSearch(): void {
+        clearTimeout(this.debounceTimer);
+        this.debounceTimer = undefined;
     }
 }

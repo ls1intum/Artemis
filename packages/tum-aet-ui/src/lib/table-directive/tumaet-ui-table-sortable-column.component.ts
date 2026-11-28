@@ -8,7 +8,7 @@ type TumAetUiSortDirection = 'asc' | 'desc' | 'none';
 @Component({
     selector: 'th[tumAetUiSortableColumn]',
     templateUrl: './tumaet-ui-table-sortable-column.component.html',
-    styleUrl: './tumaet-ui-table-sortable-column.component.scss',
+    styleUrl: './tumaet-ui-table-sortable-column.component.css',
     imports: [FaIconComponent],
     host: {
         '[class]': 'hostClasses()',

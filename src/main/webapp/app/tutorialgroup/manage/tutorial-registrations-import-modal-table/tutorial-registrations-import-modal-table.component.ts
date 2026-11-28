@@ -1,4 +1,5 @@
-import { TumAetUiTableDirective, TumAetUiTableLayoutComponent } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTableLayoutComponent } from '@tumaet/ui-angular/table-layout';
 import { Component, input } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 

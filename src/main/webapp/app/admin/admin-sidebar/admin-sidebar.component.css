@@ -1,0 +1,77 @@
+/*
+ * Width is driven by the runtime `collapsed` class and a custom (960px) breakpoint that interact via
+ * `!important`, so it stays in CSS rather than as Tailwind utilities (stateful + custom breakpoint override).
+ */
+.sidebar-container {
+    width: var(--sidebar-nav-width);
+}
+
+.sidebar-container.collapsed {
+    width: var(--sidebar-nav-width-collapsed) !important;
+}
+
+@media screen and (max-width: 960px) {
+    .sidebar-container {
+        width: var(--sidebar-nav-width-collapsed) !important;
+    }
+
+    .auto-collapse {
+        display: none;
+    }
+
+    .nav-group-header {
+        display: none;
+    }
+}
+
+/*
+ * Collapsed an item is nothing but its icon, so centre it in the rail. The gap to the label sits on the label rather
+ * than on the icon for exactly this reason: with the label gone there is no margin left to push the icon off-centre.
+ */
+.collapsed .nav-link-sidebar {
+    justify-content: center;
+}
+
+/*
+ * Base text color for nav links. It replaces the link colour that `base.css` gives to every anchor.
+ */
+.nav-link-sidebar {
+    color: var(--tumaet-ui-text-color);
+}
+
+/*
+ * Hover / router-active state for nav links. Stateful selectors plus an `!important` override of the global
+ * anchor hover style, so they cannot be plain template utilities.
+ */
+.nav-link-sidebar:hover,
+.nav-link-sidebar.active {
+    width: 100%;
+    background-color: var(--link-item-bg);
+    color: var(--link-item-color);
+}
+
+/* Override global anchor hover styles for sidebar nav links only. */
+.sidebar-container a.nav-link-sidebar:hover {
+    text-decoration: none !important;
+}
+
+.nav-link-sidebar:hover span {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+}
+
+.double-arrow-icon {
+    transition: transform 0.3s ease;
+    transform: rotate(180deg);
+}
+
+.menu-collapsed .double-arrow-icon {
+    transform: rotate(0deg);
+}
+
+@media print {
+    :host {
+        display: none;
+    }
+}
