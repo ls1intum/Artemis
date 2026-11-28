@@ -16,6 +16,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { OnlineCourse } from '../model/online-course';
+import { Lti13AuthenticationResponse } from '../model/lti13authentication-response';
 import { DeepLinkingTarget } from '../model/deep-linking-target';
 import { OnlineCourseConfiguration } from '../model/online-course-configuration';
 import { appendQueryParam } from './query-params';
@@ -37,6 +38,28 @@ export class LtiApi {
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/lti/courses/for-lti-dashboard${queryString ? `?${queryString}` : ''}`;
         return this.http.get<Array<OnlineCourse>>(url, options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) });
+    }
+
+    /**
+     * Completes an LTI 1.3 launch with the state and id token that the platform sent
+     *
+     * @param state
+     * @param idToken
+     * @param options the HttpContext and extra headers of this request; a declared header parameter overrides a header of the same name
+     */
+    lti13AuthLogin(state: string, idToken: string, options?: import('./request-options').RequestOptions): Observable<Lti13AuthenticationResponse> {
+        const url = `${this.basePath}/api/lti/public/lti13/auth-login`;
+        const headers: Record<string, string> = Object.assign(Object.create(null), options?.headers);
+        Object.keys(headers).forEach(key => {
+            if (key.toLowerCase() === 'content-type') {
+                delete headers[key];
+            }
+        });
+        headers['Content-Type'] = 'application/x-www-form-urlencoded';
+        const formBody = new URLSearchParams();
+        appendQueryParam(formBody, 'state', state);
+        appendQueryParam(formBody, 'id_token', idToken);
+        return this.http.post<Lti13AuthenticationResponse>(url, formBody.toString(), { ...(options && { ...(options.context !== undefined && { context: options.context }), ...(options.headers !== undefined && { headers: options.headers }) }), headers });
     }
 
     /**
