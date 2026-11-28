@@ -12,9 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.ChatMemoryRepository;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -73,19 +70,9 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
     @MockitoSpyBean
     protected CompetencyProgressApi competencyProgressApi;
 
-    // NOTE: MockitoBean is used here because ChatModel and ChatClient cannot be instantiated in tests without Azure OpenAI credentials
-    // These beans are provided by SpringAIConfiguration in production, but need to be mocked for tests
+    // every LLM preset answers through this mock (see MockChatModelLlmConfiguration), so no test reaches a provider
     @MockitoBean
     protected ChatModel chatModel;
-
-    @MockitoBean
-    protected ChatClient chatClient;
-
-    @MockitoBean
-    protected ChatMemory chatMemory;
-
-    @MockitoBean
-    protected ChatMemoryRepository chatMemoryRepository;
 
     // Mock for TUM Live service used in TUM Live playlist resource
     @MockitoBean
@@ -151,9 +138,6 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
         if (chatModel != null) {
             Mockito.reset(chatModel);
         }
-        if (chatClient != null) {
-            Mockito.reset(chatClient);
-        }
         if (tumLiveService != null) {
             Mockito.reset(tumLiveService);
         }
@@ -165,12 +149,6 @@ public abstract class AbstractSpringIntegrationIndependentTestBase extends Abstr
         }
         if (athenaScheduleService != null) {
             Mockito.reset(athenaScheduleService);
-        }
-        if (chatMemoryRepository != null) {
-            Mockito.reset(chatMemoryRepository);
-        }
-        if (chatMemory != null) {
-            Mockito.reset(chatMemory);
         }
         super.resetSpyBeans();
     }

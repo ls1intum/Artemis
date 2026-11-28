@@ -84,7 +84,7 @@ jobs:
 
       - name: Run the Hyperion variant e2e against the mock LLM
         # RUN_HYPERION=true makes the runner start the mock LLM, wait for it, enable Hyperion on the server pointed at
-        # it through spring.ai.openai.*, and only then start the tests. The suite is selected by path rather than by a
+        # it through an artemis.llm endpoint and preset, and only then start the tests. The suite is selected by path rather than by a
         # title filter, so a renamed test cannot silently turn the run into "no tests found". The suite additionally
         # skips itself unless /management/info reports the hyperion module feature.
         env:

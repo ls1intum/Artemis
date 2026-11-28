@@ -4,12 +4,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.LongSupplier;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -17,9 +18,12 @@ import org.apache.sshd.common.keyprovider.KeyPairProvider;
 import org.apache.sshd.server.SshServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.localvc.dto.SshHostKeyFingerprintDTO;
 
 /**
  * Service responsible for providing SSH fingerprints of the SSH server running in Artemis.
@@ -31,16 +35,29 @@ public class SshFingerprintsProviderService {
 
     private static final Logger log = LoggerFactory.getLogger(SshFingerprintsProviderService.class);
 
+    /**
+     * How long the fingerprints are kept before the keys are read again. The host key provider of the server decides when keys change: one that reads a directory of key files
+     * reads
+     * it for every SSH session, so a key file that is added or removed takes effect without a restart. A short time keeps the published fingerprints close to the keys that the
+     * server presents, and still means that a request that anyone can send does not read the key files every time.
+     */
+    static final Duration CACHE_DURATION = Duration.ofSeconds(30);
+
     private final SshServer sshServer;
 
-    /**
-     * The fingerprints by algorithm, read from the key files once. The host keys of the SSH server do not change while it runs, so the cache is never invalidated:
-     * after the keys were replaced on disk, the server has to be restarted, which also makes it present the new keys.
-     */
-    private final AtomicReference<Map<String, List<String>>> cachedFingerprints = new AtomicReference<>();
+    private final LongSupplier nanoClock;
 
+    /** The fingerprints that were read last, with the time they were read. Replaced as a whole. */
+    private final AtomicReference<CachedFingerprints> cached = new AtomicReference<>();
+
+    @Autowired
     public SshFingerprintsProviderService(SshServer sshServer) {
+        this(sshServer, System::nanoTime);
+    }
+
+    SshFingerprintsProviderService(SshServer sshServer, LongSupplier nanoClock) {
         this.sshServer = sshServer;
+        this.nanoClock = nanoClock;
     }
 
     /**
@@ -50,49 +67,57 @@ public class SshFingerprintsProviderService {
      * @throws BadRequestException if there is an error loading keys from the SSH server.
      */
     public Map<String, String> getSshFingerPrints() {
-        Map<String, String> fingerprints = new HashMap<>();
-        getAllSshFingerprints().forEach((algorithm, values) -> fingerprints.put(algorithm, values.getFirst()));
+        Map<String, String> fingerprints = new LinkedHashMap<>();
+        getHostKeyFingerprints().forEach(hostKey -> fingerprints.putIfAbsent(hostKey.algorithm(), hostKey.fingerprint()));
         return fingerprints;
     }
 
     /**
      * Retrieves the fingerprints of all stored SSH keys, including several keys of one algorithm, as it is the case while a key is replaced.
-     * The key files are read on the first call only.
+     * The key files are read again when the fingerprints that were read last are older than {@link #CACHE_DURATION}.
      *
-     * @return the SHA-256 fingerprints by the algorithm of the public key
+     * @return the SHA-256 fingerprint of every host key, with the algorithm of its public key
      * @throws BadRequestException if there is an error loading keys from the SSH server.
      */
-    public Map<String, List<String>> getAllSshFingerprints() {
-        Map<String, List<String>> cached = cachedFingerprints.get();
-        if (cached != null) {
-            return cached;
+    public List<SshHostKeyFingerprintDTO> getHostKeyFingerprints() {
+        CachedFingerprints current = cached.get();
+        if (isFresh(current)) {
+            return current.fingerprints();
         }
         synchronized (this) {
-            Map<String, List<String>> cachedInLock = cachedFingerprints.get();
-            if (cachedInLock != null) {
-                return cachedInLock;
+            CachedFingerprints currentInLock = cached.get();
+            if (isFresh(currentInLock)) {
+                return currentInLock.fingerprints();
             }
-            Map<String, List<String>> loaded = loadFingerprints();
+            List<SshHostKeyFingerprintDTO> loaded = loadFingerprints();
+            // Nothing is kept when no key could be read, so the next request reads again
             if (!loaded.isEmpty()) {
-                cachedFingerprints.set(loaded);
+                cached.set(new CachedFingerprints(loaded, nanoClock.getAsLong()));
             }
             return loaded;
         }
     }
 
-    private Map<String, List<String>> loadFingerprints() {
-        Map<String, List<String>> fingerprints = new LinkedHashMap<>();
+    private boolean isFresh(CachedFingerprints fingerprints) {
+        return fingerprints != null && nanoClock.getAsLong() - fingerprints.loadedAtNanos() < CACHE_DURATION.toNanos();
+    }
+
+    private List<SshHostKeyFingerprintDTO> loadFingerprints() {
+        List<SshHostKeyFingerprintDTO> fingerprints = new ArrayList<>();
         KeyPairProvider keyPairProvider = sshServer.getKeyPairProvider();
         if (keyPairProvider != null) {
             try {
-                keyPairProvider.loadKeys(null).iterator().forEachRemaining(keyPair -> fingerprints
-                        .computeIfAbsent(keyPair.getPublic().getAlgorithm(), algorithm -> new ArrayList<>()).add(HashUtils.getSha256Fingerprint(keyPair.getPublic())));
+                keyPairProvider.loadKeys(null).iterator().forEachRemaining(
+                        keyPair -> fingerprints.add(new SshHostKeyFingerprintDTO(keyPair.getPublic().getAlgorithm(), HashUtils.getSha256Fingerprint(keyPair.getPublic()))));
             }
             catch (IOException | GeneralSecurityException e) {
                 log.info("Could not load keys from the ssh server while trying to get SSH key fingerprints", e);
                 throw new BadRequestException("Could not load keys from the ssh server");
             }
         }
-        return fingerprints;
+        return List.copyOf(fingerprints);
+    }
+
+    private record CachedFingerprints(List<SshHostKeyFingerprintDTO> fingerprints, long loadedAtNanos) {
     }
 }

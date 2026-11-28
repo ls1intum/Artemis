@@ -1,13 +1,10 @@
 import { AfterViewChecked, AfterViewInit, Component, ElementRef, OnInit, computed, inject, output, signal, viewChild } from '@angular/core';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiDialogConfig,
-    TumAetUiDialogRef,
-    TumAetUiInputDirective,
-    TumAetUiSelectComponent,
-    TumAetUiTagComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPaperPlane, faRobot, faTimes, faUser } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -58,7 +55,7 @@ export interface AgentChatModalData {
         TumAetUiTagComponent,
     ],
     templateUrl: './agent-chat-modal.component.html',
-    styleUrl: './agent-chat-modal.component.scss',
+    styleUrl: './agent-chat-modal.component.css',
 })
 export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterViewChecked {
     private readonly dialogRef = inject(TumAetUiDialogRef);

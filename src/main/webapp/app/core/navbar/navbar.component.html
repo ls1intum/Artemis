@@ -1,7 +1,10 @@
 <ng-template #iconMenu>
     <div id="navbar-icon-menu" [ngClass]="{ evenly: isIconMenuCompact(), 'in-menu': iconsMovedToMenu() }">
         @if (currAccount() && !isExamActive() && !isExamStarted() && (hyperionExerciseGenerationEnabled() || hyperionEnabled())) {
-            <jhi-hyperion-activity-tray [authoringEnabled]="hyperionExerciseGenerationEnabled()" />
+            <!-- Deferred: the tray pulls in the markdown renderer, highlight.js, KaTeX and the exercise wizard, none of which a visitor of the sign-in page needs. -->
+            @defer {
+                <jhi-hyperion-activity-tray [authoringEnabled]="hyperionExerciseGenerationEnabled()" />
+            }
         }
         @if (perspectiveSwitchLinks(); as perspectiveSwitchLinks) {
             <div id="perspective-switch" class="perspective-switch">
@@ -23,10 +26,12 @@
             </div>
         }
         @if (currAccount() && !isExamActive() && !isExamStarted() && globalSearchEnabled()) {
-            <jhi-global-search-navbar />
+            @defer {
+                <jhi-global-search-navbar />
+            }
         }
         @if (!currAccount() && languages && languages.length > 1) {
-            <div class="pointer">
+            <div class="cursor-pointer">
                 <button type="button" class="jh-menu-toggle" id="languagesnavBarDropdown" [tumAetUiMenuTrigger]="guestLanguageMenu">
                     <span>
                         <fa-icon [icon]="faFlag" />
@@ -47,13 +52,15 @@
         @if (currentCourse(); as course) {
             @if (course.id && !isExamActive() && !isExamStarted()) {
                 <div class="flex items-center">
-                    <jhi-course-notification-overview [courseId]="course.id" />
+                    @defer {
+                        <jhi-course-notification-overview [courseId]="course.id" />
+                    }
                 </div>
             }
         }
         <jhi-theme-switch [popoverPlacement]="iconsMovedToMenu() ? 'bottom' : 'bottom-right'" />
         @if (isAuthenticated()) {
-            <div class="pointer">
+            <div class="cursor-pointer">
                 <button type="button" class="jh-menu-toggle" id="account-menu" [tumAetUiMenuTrigger]="accountMenu" [tumAetUiMenuPosition]="accountMenuPositions">
                     @if (getImageUrl(); as imageUrl) {
                         <span>
@@ -147,7 +154,7 @@
         </div>
         @if (navigationContextIndicatorData(); as context) {
             <div>|</div>
-            <a class="jh-course-link flex min-w-0 items-center gap-2" [routerLink]="context.routerLink" (click)="collapseNavbar()">
+            <a class="jh-course-link flex min-w-0 items-center gap-2!" [routerLink]="context.routerLink" (click)="collapseNavbar()">
                 @switch (context.type) {
                     @case ('course') {
                         <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: context.imagePath, courseTitle: context.title }" />

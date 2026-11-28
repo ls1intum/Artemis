@@ -10,7 +10,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowDown, faArrowUp } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { GlobalSearchNavigationViewComponent } from 'app/core/navbar/global-search/components/views/navigation-view/global-search-navigation-view.component';
 import { MIN_SEARCH_QUERY_LENGTH, SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
@@ -59,7 +59,7 @@ const CHIP_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'Backspace', 'Delete']);
     imports: [TumAetUiDialogComponent, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, SearchInputComponent, GlobalSearchFilterMenuComponent],
     providers: [GlobalSearchFilterService],
     templateUrl: './global-search-modal.component.html',
-    styleUrls: ['./global-search-modal.component.scss'],
+    styleUrls: ['./global-search-modal.component.css'],
 })
 export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly overlay = inject(SearchOverlayService);

@@ -1,5 +1,5 @@
-<div class="update-footer gap-6!">
-    <div class="text-start">
+<div class="update-footer gap-6">
+    <div class="text-left">
         @if (isSimpleMode() !== undefined && switchEditMode() !== undefined && !isImport()) {
             <div class="flex items-center">
                 <div
@@ -32,7 +32,7 @@
             }
         </ul>
     }
-    <div class="flex gap-2 text-end">
+    <div class="flex gap-2 text-right">
         @if (isSaving()) {
             <tumaet-ui-tag severity="secondary" size="sm" class="self-center" data-testid="form-footer-saving"><span jhiTranslate="entity.action.saving"></span></tumaet-ui-tag>
         }
@@ -53,7 +53,7 @@
             type="button"
             id="save-entity"
             [severity]="isImport() ? 'secondary' : 'primary'"
-            class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
+            class="aria-disabled:opacity-60"
             size="small"
             [tumAetUiTooltip]="invalidReasonTexts()"
             [tumAetUiTooltipDescribesHost]="false"

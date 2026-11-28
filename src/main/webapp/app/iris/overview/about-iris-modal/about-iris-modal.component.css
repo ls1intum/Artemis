@@ -1,0 +1,22 @@
+.about-iris__body {
+    scrollbar-gutter: stable;
+}
+
+.about-iris__muted {
+    color: var(--iris-label-color);
+}
+
+.about-iris__divider {
+    border-color: var(--border-color);
+    opacity: 1;
+}
+
+.about-iris__icon {
+    background-color: color-mix(in srgb, var(--primary) 10%, transparent);
+    color: var(--primary);
+}
+
+.about-iris__icon--expect {
+    background-color: color-mix(in srgb, var(--iris-tertiary-background) 70%, transparent);
+    color: var(--iris-label-color);
+}

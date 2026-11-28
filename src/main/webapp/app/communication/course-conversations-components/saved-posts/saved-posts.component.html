@@ -12,7 +12,7 @@
     </div>
     <hr class="my-2" />
     @if (isShowDeleteNotice()) {
-        <div class="saved-posts-delete-notice fs-x-small m-2 text-muted-color">
+        <div class="saved-posts-delete-notice text-[0.75rem] m-2 text-muted-color">
             <fa-icon class="me-1" [icon]="faInfoCircle" />
             <span jhiTranslate="artemisApp.communication.overview.deleteNoticeSavedPosts"></span>
         </div>
@@ -32,7 +32,7 @@
             }
         } @else {
             <div class="saved-posts-empty-notice text-muted-color">
-                <fa-icon class="mb-4!" size="3x" [icon]="faBookmark" />
+                <fa-icon class="mb-4" size="3x" [icon]="faBookmark" />
                 <span jhiTranslate="artemisApp.communication.overview.emptySavedPosts"></span>
             </div>
         }

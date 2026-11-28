@@ -59,6 +59,8 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitCountDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolStateCountDTO;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolBuildRepository;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
@@ -102,6 +104,9 @@ class HyperionQuizQuestionPoolServiceTest {
     @Mock
     private HyperionQuizQuestionPoolModelService modelService;
 
+    @Mock
+    private HyperionQuizQuestionPoolSelectionService selectionService;
+
     private HyperionQuizQuestionPoolService service;
 
     private AutoCloseable mocks;
@@ -113,7 +118,7 @@ class HyperionQuizQuestionPoolServiceTest {
         mocks = MockitoAnnotations.openMocks(this);
         when(modelService.isConfigured()).thenReturn(true);
         service = new HyperionQuizQuestionPoolService(buildService, taskService, itemRepository, settingsService, Optional.of(courseCompetencyApi), Optional.of(lectureUnitApi),
-                lectureUnitRepository, buildRepository, materialService, courseRepository, modelService);
+                lectureUnitRepository, buildRepository, materialService, courseRepository, modelService, selectionService);
         course = new Course();
         course.setId(5L);
         lenient().when(buildRepository.findAllByCourseIdNewestFirst(eq(5L), any())).thenReturn(List.of());
@@ -142,7 +147,7 @@ class HyperionQuizQuestionPoolServiceTest {
     void startBuild_isRefusedWithoutAConfiguredModel() {
         when(modelService.isConfigured()).thenReturn(false);
 
-        assertThatThrownBy(() -> service.startBuild(course, 7L)).isInstanceOf(ServiceUnavailableAlertException.class).hasMessageContaining("no local model configured");
+        assertThatThrownBy(() -> service.startBuild(course, 7L)).isInstanceOf(ServiceUnavailableAlertException.class).hasMessageContaining("no LLM presets assigned");
         verify(buildService, never()).tryStart(anyLong());
         verify(buildService, never()).enqueue(course);
     }
@@ -239,6 +244,40 @@ class HyperionQuizQuestionPoolServiceTest {
         when(itemRepository.countByStateForCourse(5L)).thenReturn(List.of());
 
         assertThat(service.getProgress(5L).buildSettings()).isEqualTo(HyperionCourseSettingsDTO.of(settings));
+    }
+
+    @Test
+    void selectQuestions_mapsTheDrawnItemsWithTheirNames() {
+        Competency competency = new Competency();
+        competency.setId(9L);
+        competency.setTitle("Arrays");
+        when(courseCompetencyApi.findAllForCourse(5L)).thenReturn(Set.of(competency));
+        TextUnit unit = new TextUnit();
+        unit.setId(4L);
+        unit.setName("Arrays in Java");
+        when(lectureUnitApi.findAllByIds(anyCollection())).thenReturn(List.of(unit));
+        QuizQuestionPoolItem item = new QuizQuestionPoolItem();
+        item.setId(11L);
+        item.setCourse(course);
+        item.setCompetencyId(9L);
+        item.setLectureUnitId(4L);
+        item.setLanguage(QuizQuestionGenerationLanguage.EN);
+        item.setQuestionType(QuizQuestionGenerationType.SINGLE_CHOICE);
+        item.setDifficulty(QuizQuestionDifficulty.MEDIUM);
+        item.setState(QuizQuestionPoolItemState.FILTERED);
+        item.setReviewState(QuizQuestionReviewState.APPROVED);
+        QuizQuestionPoolSelectionRequestDTO request = new QuizQuestionPoolSelectionRequestDTO(List.of(9L, 10L), null, 3, null, null);
+        when(selectionService.select(5L, request)).thenReturn(new HyperionQuizQuestionPoolSelectionService.Selection(List.of(item), List.of(10L)));
+
+        QuizQuestionPoolSelectionDTO selection = service.selectQuestions(5L, request);
+
+        assertThat(selection.requested()).isEqualTo(3);
+        assertThat(selection.competencyIdsWithoutQuestions()).containsExactly(10L);
+        assertThat(selection.questions()).singleElement().satisfies(question -> {
+            assertThat(question.id()).isEqualTo(11L);
+            assertThat(question.competencyTitle()).isEqualTo("Arrays");
+            assertThat(question.lectureUnitName()).isEqualTo("Arrays in Java");
+        });
     }
 
     @Test

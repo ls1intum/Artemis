@@ -21,7 +21,7 @@
             "updated": "Übung aktualisiert mit ID {{ param }}",
             "deleted": "Übung gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll die Übung <strong>{{ title }}</strong> des <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann <strong class=\"text-danger\">NICHT</strong> rückgängig gemacht werden!",
+                "question": "Soll die Übung <strong>{{ title }}</strong> des <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann <strong class=\"text-state-danger\">NICHT</strong> rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Übung zur Bestätigung ein.",
                 "testCourse": "Testkurses",
                 "realCourse": "echten Kurses",
@@ -107,6 +107,7 @@
                 "fileTypeNotSupportedError": "Der Dateityp wird nicht unterstützt. Wähle eine Datei mit der Endung .zip.",
                 "noExerciseDetailsJson": "Das Zip-Archiv enthält nicht genau eine JSON-Datei mit den Aufgabendetails.",
                 "exerciseTypeDoesntMatch": "Die Datei enthält keine Aufgabe des gewählten Typs.",
+                "questionsExport": "Das Zip-Archiv enthält die Fragen eines Quiz, keine Quiz-Aufgabe. Importiere es im Quiz-Editor mit \"Fragen importieren (JSON/Zip)\" oder importiere ein Zip-Archiv, das du mit \"Export\" in der Aufgabenübersicht eines Quiz heruntergeladen hast.",
                 "missingImage": "Das Zip-Archiv enthält das Bild {{ fileName }} nicht.",
                 "imageUploadFailed": "Das Bild {{ fileName }} konnte nicht hochgeladen werden.",
                 "importFailed": "Der Aufgabenimport konnte nicht vorbereitet werden. Bitte versuche es erneut."
@@ -386,8 +387,8 @@
                 "packageName": {
                     "undefined": "Du musst einen Package-Namen angeben.",
                     "pattern": {
-                        "JAVA": "Der Package-Name muss aus einem oder mehreren gültigen Java-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.java\".",
-                        "KOTLIN": "Der Package-Name muss aus einem oder mehreren gültigen Kotlin-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.kotlin\".",
+                        "JAVA": "Der Package-Name muss aus einem oder mehreren gültigen Java-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.java\". Die Namen \"de\", \"de.tum\", \"de.tum.cit\", \"de.tum.cit.ase\", \"com\", \"org\", \"net\", \"com.ibm\" und \"com.tngtech\" sind nicht erlaubt, ebenso wenig Namen innerhalb eines Packages, das für die Tests und ihre Bibliotheken reserviert ist, etwa \"java\", \"org.apache\", \"org.junit\" oder \"de.tum.cit.ase.ares\" (z.B. \"java.util\").",
+                        "KOTLIN": "Der Package-Name muss aus einem oder mehreren gültigen Kotlin-Bezeichnern bestehen, die mit '.' getrennt sind, z.B. \"net.kotlin\". Die Namen \"de\", \"de.tum\", \"de.tum.cit\", \"de.tum.cit.ase\", \"com\", \"org\", \"net\", \"com.ibm\" und \"com.tngtech\" sind nicht erlaubt, ebenso wenig Namen innerhalb eines Packages, das für die Tests und ihre Bibliotheken reserviert ist, etwa \"java\", \"org.apache\", \"org.junit\" oder \"de.tum.cit.ase.ares\" (z.B. \"java.util\").",
                         "SWIFT": "Der Package-Name muss aus einem oder mehreren gültigen Swift-Bezeichnern bestehen, die nicht voneinander separiert sind, z.B. \"SwiftEx\".",
                         "JAVA_BLACKBOX": "Der Paketname muss ein gültiger Java-Bezeicher sein. Zusätzlich sind Trennpunkte im Paketnamen für den DejaGnu Aufgabentyp nicht erlaubt.",
                         "GO": "Der Package-Name muss ein gültiger Go-Identifier sein, z.B. \"exercise\".",

@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -19,10 +20,13 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -47,6 +51,7 @@ import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.videosource.api.GocastBindingApi;
+import de.tum.cit.aet.artemis.videosource.dto.GocastRecordingDTO;
 import de.tum.cit.aet.artemis.videosource.dto.GocastUploadConnectionDTO;
 import de.tum.cit.aet.artemis.videosource.dto.GocastUploadTargetDTO;
 
@@ -57,6 +62,9 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
     private static final String WATCH_PAGE = "https://tum.live/w/algo/55";
 
     private static final String YOUTUBE = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
+
+    @Autowired
+    private Optional<GocastBindingApi> gocastBindingApi;
 
     @Autowired
     private MockMvc mockMvc;
@@ -422,9 +430,49 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         mockMvc.perform(delete("/api/lecture/lectures/" + lecture.getId() + "/lecture-units/" + unit.getId()).param("deleteTumLiveRecordings", "true")).andExpect(status().isOk());
 
-        assertThat(queued(ref("first"))).isTrue();
-        assertThat(queued(ref("second"))).isTrue();
+        var deletedAt = ZonedDateTime.now();
+        assertThat(cleanupRepository.findAll()).filteredOn(cleanup -> !cleanup.getNextAttemptAt().isAfter(deletedAt)).extracting(TumLiveRecordingCleanup::getExternalRef)
+                .contains(ref("first"), ref("second"));
         assertThat(uploadRepository.findByLectureUnitId(unit.getId())).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void deletingALectureMakesTheRecordingEligibleForCleanupAndProtectsImportedCopies(boolean importedCopy) throws Exception {
+        var now = ZonedDateTime.now();
+        long streamId = 800_000 + unit.getId();
+        String watchPage = "https://tum.live/w/algo/" + streamId;
+        uploadRepository.startPending(unit.getId(), 17, 23, "algo", ref("first"), now);
+        uploadRepository.recordPendingStream(unit.getId(), ref("first"), streamId);
+        uploadRepository.attachPending(unit.getId(), ref("first"), watchPage, now);
+        if (importedCopy) {
+            lectureImportService.importLecture(lectureRepository.findByIdWithLectureUnitsElseThrow(lecture.getId()), lecture.getCourse(), true);
+        }
+
+        mockMvc.perform(delete("/api/lecture/lectures/" + lecture.getId()).param("deleteTumLiveRecordings", "true")).andExpect(status().isOk());
+
+        var cleanup = cleanupRepository.findAll().stream().filter(entry -> ref("first").equals(entry.getExternalRef())).findFirst().orElseThrow();
+        assertThat(cleanup.getNextAttemptAt()).isBeforeOrEqualTo(ZonedDateTime.now());
+
+        // Process this test's entry while retaining the real lecture-unit links read by the cleanup job.
+        var batch = mock(TumLiveRecordingCleanupRepository.class);
+        when(batch.findTop50ByNextAttemptAtLessThanEqualOrderByNextAttemptAtAsc(any())).thenReturn(List.of(cleanup));
+        var goCast = mock(GocastBindingApi.class);
+        when(goCast.findStreamId(watchPage)).thenReturn(Optional.of(streamId));
+        var uploadService = new TumLiveUploadService(mock(TumLiveUnitUploadRepository.class), batch, attachmentVideoUnitRepository, Optional.of(goCast), Optional.empty(),
+                new LocalDataProviderService(), Duration.ofHours(6));
+
+        uploadService.processCleanups();
+
+        if (importedCopy) {
+            verify(goCast, never()).deleteUpload(23, ref("first"));
+            verify(batch).postpone(eq(cleanup.getId()), any(), eq("A lecture unit still shows this video."));
+        }
+        else {
+            verify(goCast).deleteUpload(23, ref("first"));
+            verify(batch).deleteConfirmed(cleanup.getId());
+        }
     }
 
     @Test
@@ -485,18 +533,43 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+    void courseEditorCanCheckAvailabilityWhenTheIntegrationIsDisabled() throws Exception {
+        assertThat(gocastBindingApi).isEmpty();
+        mockMvc.perform(get("/api/lecture/courses/" + courseId() + "/tumlive-upload-availability")).andExpect(status().isOk()).andExpect(jsonPath("$.available").value(false));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void studentsCannotCheckUploadAvailability() throws Exception {
+        mockMvc.perform(get("/api/lecture/courses/" + courseId() + "/tumlive-upload-availability")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "othereditor1", roles = "USER")
+    void editorsCannotCheckAvailabilityForAnotherCourse() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX + "other", 0, 0, 1, 0);
+        mockMvc.perform(get("/api/lecture/courses/" + courseId() + "/tumlive-upload-availability")).andExpect(status().isForbidden());
+    }
+
+    @Test
     void reservesAnUploadAndForwardsItsBytes() {
         var goCast = mock(GocastBindingApi.class);
         when(goCast.findUploadConnection(lecture.getCourse().getId())).thenReturn(Optional.of(new GocastUploadConnectionDTO(17, 23, "algo")));
         var uploadService = new TumLiveUploadService(uploadRepository, cleanupRepository, attachmentVideoUnitRepository, Optional.of(goCast), Optional.empty(),
                 new LocalDataProviderService(), Duration.ofHours(6));
+        assertThat(uploadService.isUploadAvailable(courseId())).isTrue();
         String ref = uploadService.start(unit);
         assertThat(ref).isNotBlank();
 
         var target = new GocastUploadTargetDTO(55, "https://tum.live/upload");
         byte[] video = { 0, 1, 2, -1 };
         when(goCast.createUpload(eq(23L), eq(ref), anyString())).thenReturn(target);
+        when(goCast.getRecording(23, 55)).thenReturn(new GocastRecordingDTO(null, true, 0, false, null)).thenReturn(new GocastRecordingDTO(null, false, 0, false, null));
         doAnswer(invocation -> {
+            var state = uploadService.getState(unit);
+            assertThat(state.transferAccepted()).isFalse();
+            assertThat(state.converting()).isFalse();
             InputStream body = invocation.getArgument(1);
             assertThat(body.readAllBytes()).containsExactly(video);
             return null;
@@ -508,6 +581,17 @@ class TumLiveUploadIntegrationTest extends AbstractSpringIntegrationIndependentT
         var pending = uploadRepository.findByLectureUnitId(unit.getId()).orElseThrow();
         assertThat(pending.getPendingRef()).isEqualTo(ref);
         assertThat(pending.getPendingStreamId()).isEqualTo(target.streamId());
+        var state = uploadService.getState(unit);
+        assertThat(state.transferAccepted()).isTrue();
+        assertThat(state.converting()).isFalse();
+
+        uploadRepository.discardPending(unit.getId(), ref, null, ZonedDateTime.now());
+        String nextRef = uploadService.start(unit);
+        uploadRepository.markTransferAccepted(unit.getId(), ref);
+
+        var replacement = uploadService.getState(unit);
+        assertThat(replacement.pendingRef()).isEqualTo(nextRef);
+        assertThat(replacement.transferAccepted()).isFalse();
     }
 
     @Test

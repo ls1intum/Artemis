@@ -1,0 +1,92 @@
+<tumaet-ui-dialog [(visible)]="visible" [header]="'artemisApp.hyperion.quizQuestionPool.createQuiz.title' | artemisTranslate" size="medium">
+    <div class="pool-create-quiz" data-testid="pool-create-quiz-dialog">
+        <p class="pool-create-quiz-intro" jhiTranslate="artemisApp.hyperion.quizQuestionPool.createQuiz.intro"></p>
+
+        <div class="pool-create-quiz-field">
+            <label for="pool-quiz-competencies" jhiTranslate="artemisApp.hyperion.quizQuestionPool.createQuiz.competencies"></label>
+            <tumaet-ui-multi-select
+                inputId="pool-quiz-competencies"
+                data-testid="pool-quiz-competencies"
+                [options]="competencies()"
+                optionLabel="title"
+                optionValue="id"
+                [ngModel]="selectedCompetencyIds()"
+                (ngModelChange)="setCompetencies($event)"
+                [placeholder]="'artemisApp.hyperion.quizQuestionPool.createQuiz.competenciesPlaceholder' | artemisTranslate"
+            />
+        </div>
+
+        <div class="pool-create-quiz-field">
+            <label for="pool-quiz-lecture-units" jhiTranslate="artemisApp.hyperion.quizQuestionPool.createQuiz.lectureUnits"></label>
+            <tumaet-ui-multi-select
+                inputId="pool-quiz-lecture-units"
+                data-testid="pool-quiz-lecture-units"
+                [options]="unitOptions()"
+                optionLabel="label"
+                optionValue="value"
+                [ngModel]="selectedLectureUnitIds()"
+                (ngModelChange)="selectedLectureUnitIds.set($event ?? [])"
+                [placeholder]="'artemisApp.hyperion.quizQuestionPool.createQuiz.lectureUnitsPlaceholder' | artemisTranslate"
+                [disabled]="!unitOptions().length"
+            />
+        </div>
+
+        <div class="pool-create-quiz-row">
+            <div class="pool-create-quiz-field">
+                <label for="pool-quiz-count" jhiTranslate="artemisApp.hyperion.quizQuestionPool.createQuiz.count"></label>
+                <tumaet-ui-input-number
+                    inputId="pool-quiz-count"
+                    [ngModel]="count()"
+                    (ngModelChange)="count.set($event ?? 0)"
+                    [min]="minCount"
+                    [max]="maxCount"
+                    [showButtons]="true"
+                    [useGrouping]="false"
+                    [step]="1"
+                    [fluid]="true"
+                />
+            </div>
+            <div class="pool-create-quiz-field">
+                <label for="pool-quiz-types" jhiTranslate="artemisApp.hyperion.quizQuestionPool.createQuiz.questionTypes"></label>
+                <tumaet-ui-multi-select
+                    inputId="pool-quiz-types"
+                    [options]="typeOptions()"
+                    optionLabel="label"
+                    optionValue="value"
+                    [ngModel]="selectedTypes()"
+                    (ngModelChange)="selectedTypes.set($event ?? [])"
+                    [placeholder]="'artemisApp.hyperion.quizQuestionPool.createQuiz.questionTypesPlaceholder' | artemisTranslate"
+                />
+            </div>
+            <div class="pool-create-quiz-field">
+                <label for="pool-quiz-difficulties" jhiTranslate="artemisApp.hyperion.quizQuestionPool.createQuiz.difficulties"></label>
+                <tumaet-ui-multi-select
+                    inputId="pool-quiz-difficulties"
+                    [options]="difficultyOptions()"
+                    optionLabel="label"
+                    optionValue="value"
+                    [ngModel]="selectedDifficulties()"
+                    (ngModelChange)="selectedDifficulties.set($event ?? [])"
+                    [placeholder]="'artemisApp.hyperion.quizQuestionPool.createQuiz.difficultiesPlaceholder' | artemisTranslate"
+                />
+            </div>
+        </div>
+
+        <p
+            class="pool-create-quiz-available"
+            [class.pool-create-quiz-available-none]="availableCount() === 0"
+            data-testid="pool-create-quiz-available"
+            jhiTranslate="artemisApp.hyperion.quizQuestionPool.createQuiz.available"
+            [translateValues]="{ count: availableCount() }"
+        ></p>
+    </div>
+
+    <ng-template #footer>
+        <button tumAetUiButton type="button" severity="secondary" variant="outlined" data-testid="pool-create-quiz-cancel" (click)="cancel()">
+            <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.createQuiz.cancel"></span>
+        </button>
+        <button tumAetUiButton type="button" data-testid="pool-create-quiz-submit" [disabled]="!isValid() || busy() || availableCount() === 0" (click)="submit()">
+            <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.createQuiz.submit"></span>
+        </button>
+    </ng-template>
+</tumaet-ui-dialog>

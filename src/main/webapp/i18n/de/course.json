@@ -11,7 +11,7 @@
             "updated": "Kurs aktualisiert mit Titel {{ param }}",
             "deleted": "Kurs gelöscht mit Titel {{ param }}",
             "delete": {
-                "question": "Soll der <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente, inklusive der Klausuren, Aufgaben sowie Repositories und Build-Pläne werden gelöscht. <strong class=\"text-danger\">Diese Aktion kann NICHT rückgängig gemacht werden!</strong>",
+                "question": "Soll der <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente, inklusive der Klausuren, Aufgaben sowie Repositories und Build-Pläne werden gelöscht. <strong class=\"text-state-danger\">Diese Aktion kann NICHT rückgängig gemacht werden!</strong>",
                 "testCourse": "Testkurs",
                 "realCourse": "echte Kurs",
                 "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein.",
@@ -58,7 +58,7 @@
                 }
             },
             "reset": {
-                "question": "Soll der <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Alle Studierenden-Daten werden gelöscht, einschließlich Abgaben, Teilnahmen, Beiträge und Einschreibungen. Studierende, Tutor:innen und Editor:innen werden aus dem Kurs entfernt - nur Lehrende bleiben erhalten. Die Kursstruktur (Aufgaben, Vorlesungen, Klausuren, Kompetenzen, Übungsgruppen-Konfiguration) bleibt zur Wiederverwendung erhalten. <strong class=\"text-danger\">Diese Aktion kann NICHT rückgängig gemacht werden!</strong>",
+                "question": "Soll der <strong class=\"text-state-danger\">{{ courseType }}</strong> <strong>{{ title }}</strong> wirklich zurückgesetzt werden? Alle Studierenden-Daten werden gelöscht, einschließlich Abgaben, Teilnahmen, Beiträge und Einschreibungen. Studierende, Tutor:innen und Editor:innen werden aus dem Kurs entfernt - nur Lehrende bleiben erhalten. Die Kursstruktur (Aufgaben, Vorlesungen, Klausuren, Kompetenzen, Übungsgruppen-Konfiguration) bleibt zur Wiederverwendung erhalten. <strong class=\"text-state-danger\">Diese Aktion kann NICHT rückgängig gemacht werden!</strong>",
                 "testCourse": "Testkurs",
                 "realCourse": "echte Kurs",
                 "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein.",
@@ -466,7 +466,7 @@
             "assessmentDueDate": "Bewertung",
             "cleanup": {
                 "title": "Aufräumen",
-                "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studierenden-Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
+                "question": "Möchtest du den Kurs <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studierenden-Repositories für <strong>Übungen</strong> und <strong>Prüfungen</strong> gelöscht. Diese Aktion kann <strong class='text-state-danger'>NICHT</strong> rückgängig gemacht werden!"
             },
             "detail": {
                 "title": "Kurs Details:",
@@ -593,6 +593,39 @@
                     }
                 },
                 "replayWizard": "Einrichtungsassistent wiederholen"
+            },
+            "initialCommitAuthor": {
+                "label": "Autor des ersten Commits",
+                "hint": "Wähle, wer als Autor des ersten Commits angezeigt wird, den Artemis erstellt: im Template-, Lösungs- und Test-Repository von Programmieraufgaben, die du erstellst oder aus einer Datei importierst, und im Repository jeder Studentin und jedes Studenten, das Artemis ab jetzt erstellt. Bestehende Repositories behalten ihren Verlauf. Bei der ersten Option wird nichts umgeschrieben: Das Repository einer Studentin oder eines Studenten behält den Autor des ersten Commits des Template-Repositorys, der von der Person abweichen kann, die die Aufgabe erstellt hat.",
+                "creator": {
+                    "label": "Die Person, die die Aufgabe erstellt",
+                    "description": "Es wird nichts umgeschrieben. Repositories behalten den Autor, mit dem sie erstellt wurden."
+                },
+                "placeholder": {
+                    "label": "Der Artemis-Platzhalter",
+                    "description": "Der Name und die E-Mail-Adresse, die der Artemis-Server für Commits konfiguriert, die er selbst erstellt."
+                },
+                "custom": {
+                    "label": "Ein Name und eine E-Mail-Adresse deiner Wahl",
+                    "description": "Zum Beispiel ein Kurs-Team. Verwende eine Adresse, die du Studierenden gerne zeigst."
+                },
+                "name": {
+                    "label": "Name des Autors",
+                    "required": "Gib einen Namen ein.",
+                    "tooLong": "Verwende höchstens {{ max }} Zeichen.",
+                    "invalid": "Der Name darf weder < oder > noch Zeilenumbrüche enthalten."
+                },
+                "email": {
+                    "label": "E-Mail-Adresse des Autors",
+                    "required": "Gib eine E-Mail-Adresse ein.",
+                    "tooLong": "Verwende höchstens {{ max }} Zeichen.",
+                    "invalid": "Gib eine gültige E-Mail-Adresse ein."
+                }
+            },
+            "studentWelcomeContext": {
+                "label": "Startseite für Studierende: Lernansatz",
+                "hint": "Optional: Beschreiben Sie, wie Studierende in diesem Kurs lernen sollen (bis zu 2.000 Zeichen). Der Text erscheint beim ersten Besuch der Startseite und wird für optionale KI-Begrüßungen verwendet.",
+                "tooLong": "Verwenden Sie höchstens 2.000 Zeichen."
             }
         },
         "courseStatistics": {

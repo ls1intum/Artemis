@@ -7,6 +7,10 @@
             "application": "Anwendung"
         },
         "notFound": "Kein Audit gefunden",
+        "search": {
+            "placeholder": "Nach vollständigem Login suchen",
+            "ariaLabel": "Nach vollständigem Login suchen, filtert das Audit-Log"
+        },
         "filter": {
             "title": "Nach Datum filtern",
             "from": "von",

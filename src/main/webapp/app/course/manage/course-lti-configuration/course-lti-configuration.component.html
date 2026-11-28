@@ -1,6 +1,6 @@
 <form name="editForm" role="form" novalidate>
     <div class="lti-edit-button flex shrink-0 items-center">
-        <h4 class="mb-0!" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.configurationForCourse" [translateValues]="{ title: course()?.title }">
+        <h4 class="mb-0" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.configurationForCourse" [translateValues]="{ title: course()?.title }">
             LTI Configuration for course {{ course()?.title }}
         </h4>
         @if (course()?.isAtLeastInstructor) {
@@ -11,7 +11,7 @@
             </div>
         }
     </div>
-    <tumaet-ui-tabs [(value)]="activeTab" class="mt-6!">
+    <tumaet-ui-tabs [(value)]="activeTab" class="mt-6">
         <tumaet-ui-tab-list>
             <tumaet-ui-tab [value]="1" jhiTranslate="artemisApp.lti.generalConfiguration" />
             <tumaet-ui-tab [value]="2" jhiTranslate="artemisApp.lti.exercises" />
@@ -32,7 +32,7 @@
                     <dd>
                         <span jhiTranslate="{{ onlineCourseConfiguration()?.requireExistingUser ? 'global.generic.yes' : 'global.generic.no' }}"></span>
                     </dd>
-                    <div class="mb-4!">
+                    <div class="mb-4">
                         <dt>
                             <span>{{ 'LTI Version' }}</span>
                         </dt>

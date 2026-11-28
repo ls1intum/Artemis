@@ -1,0 +1,123 @@
+.course-card-header {
+    /* needed, otherwise the hover effect won't work because the cover link of the card lies on top */
+    z-index: 2;
+    position: relative;
+    height: 85px;
+    opacity: 1;
+    transition:
+        background-color 0.15s,
+        color 0.15s;
+    background-color: var(--background-color-for-hover) !important;
+    color: var(--title-color) !important;
+
+    /* inner border radius : outer border radius - outer border thickness (8px - 1px) */
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
+}
+
+.course-card-header:not(.dual-zone-card):hover {
+    background-color: color-mix(in srgb, var(--background-color-for-hover) 88%, var(--title-color) 12%) !important;
+}
+
+/*
+ * The flex item that holds the title has to be allowed to shrink below its content width. Otherwise a long word
+ * keeps it wider than the card and the title overflows instead of wrapping.
+ */
+.course-card-header .course-title-container {
+    min-width: 0;
+}
+
+.course-card-header .course-title {
+    font-size: 16px;
+    color: inherit;
+    margin-top: 0;
+
+    /*
+     * Three lines (3 * 1.2 * 16px = 57.6px) fit into the 85px header. The clamp ends the title with an ellipsis,
+     * where a fixed max-height cut the fourth line in half. The full title is available as tooltip.
+     */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+
+    /* break a word that is wider than the card rather than overflowing it */
+    overflow-wrap: anywhere;
+
+    /* the title is centered vertically, so it must not carry the bottom margin of a heading */
+    margin-bottom: 0;
+}
+
+.course-card-header .course-circle {
+    /* same size as the course icons */
+    height: 65px;
+    min-width: 65px;
+    background-color: var(--course-image-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--body-color);
+}
+
+.course-card-header .course-circle .course-initial {
+    /* the responsive size of a fourth-level heading */
+    font-size: calc(1.275rem + 0.3vw);
+}
+
+@media (min-width: 1200px) {
+    .course-card-header .course-circle .course-initial {
+        font-size: 1.5rem;
+    }
+}
+
+.course-card-header .cover-link::after {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    content: '';
+}
+
+.course-card-header .notification-bubble-anchor {
+    position: absolute;
+    top: 0;
+    right: -0.5rem;
+}
+
+.course-card-header.dual-zone-card {
+    overflow: hidden;
+}
+
+.course-card-header.dual-zone-card a.archive-card-zone {
+    transition: background-color 0.15s;
+    text-decoration: none !important;
+    color: inherit;
+}
+
+.course-card-header.dual-zone-card a.archive-card-zone:hover,
+.course-card-header.dual-zone-card a.archive-card-zone:focus-visible {
+    text-decoration: none !important;
+    background-color: color-mix(in srgb, var(--background-color-for-hover) 88%, var(--title-color) 12%) !important;
+}
+
+.archive-mode-card .course-title-container {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.archive-course-zone {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.archive-management-zone {
+    flex: 0 0 5.25rem;
+    border-inline-start: 1px solid color-mix(in srgb, var(--title-color), transparent 70%);
+}
+
+jhi-image ::ng-deep img {
+    border-radius: 50%;
+    height: 65px;
+    width: auto;
+}

@@ -1,7 +1,7 @@
 <!-- The heading stays outside the result guard below: without it the exam title bar would show the exam name and
      nothing else while the scores load, and permanently for an exam that has no results yet. -->
 <div *titleBarTitle class="flex items-center">
-    <h5 class="mb-0!">
+    <h5 class="mb-0">
         <span jhiTranslate="entity.action.scores"></span>
     </h5>
 </div>
@@ -14,12 +14,12 @@
     @if (!isLoading() && (!studentResults()?.length || !exerciseGroups()?.length)) {
         <div>
             @if (!exerciseGroups()?.length) {
-                <tumaet-ui-message severity="warn" class="mb-6!" [icon]="faExclamationTriangle">
+                <tumaet-ui-message severity="warn" class="mb-6" [icon]="faExclamationTriangle">
                     <span jhiTranslate="artemisApp.examScores.noExerciseGroupAvailable"></span>
                 </tumaet-ui-message>
             }
             @if (!studentResults()?.length) {
-                <tumaet-ui-message severity="info" class="mb-6!">
+                <tumaet-ui-message severity="info" class="mb-6">
                     <span jhiTranslate="artemisApp.examScores.noStudentResultAvailable"></span>
                 </tumaet-ui-message>
             }
@@ -36,7 +36,7 @@
                     (onExport)="exportExamResults($event)"
                 />
             </ng-template>
-            <div class="mt-2 flex flex-wrap items-center gap-x-6! gap-y-1 text-muted-color">
+            <div class="mt-2 flex flex-wrap items-center gap-x-6 gap-y-1 text-muted-color">
                 @if (!hasPerAttemptMaxima() && examScoreDTO().maxPoints) {
                     <span data-testid="configured-exam-max-points">{{ 'artemisApp.examScores.maxPoints' | artemisTranslate }}: {{ localize(examScoreDTO().maxPoints) }}</span>
                 }
@@ -47,13 +47,13 @@
                     {{ aggregatedExamResults().noOfRegisteredUsers }} {{ 'artemisApp.examScores.registered' | artemisTranslate }}
                 </a>
             </div>
-            <div class="mt-6 mb-6!">
-                <h4 class="mb-0!">
+            <div class="mt-6 mb-6">
+                <h4 class="mb-0">
                     <span jhiTranslate="artemisApp.examScores.examStatisticsTitle"></span>
                 </h4>
             </div>
             <!-- Filter settings -->
-            <div class="mb-6! flex flex-wrap content-center items-center gap-6!">
+            <div class="mb-6 flex flex-wrap content-center items-center gap-6">
                 <div class="flex items-center gap-2">
                     <tumaet-ui-checkbox inputId="toggleFilterForSubmittedExam" [checked]="filterForSubmittedExams()" (checkedChange)="toggleFilterForSubmittedExam()" />
                     <label for="toggleFilterForSubmittedExam" jhiTranslate="artemisApp.examScores.filterForSubmittedExams"></label>
@@ -68,8 +68,8 @@
                 </div>
             </div>
             <!-- Exam Point Statistics -->
-            <div class="mb-6! overflow-x-auto">
-                <table tumAetUiTable striped class="w-auto!">
+            <div class="mb-6 overflow-x-auto">
+                <table tumAetUiTable striped class="w-auto">
                     @if (hasSecondCorrectionAndStarted()) {
                         <thead>
                             <tr>
@@ -372,9 +372,9 @@
                 </div>
                 <!-- Histogram -->
                 @if (hasBonus()) {
-                    <h4 class="mt-6! mb-0! text-center" jhiTranslate="artemisApp.examScores.gradesBeforeBonus"></h4>
+                    <h4 class="mt-6 mb-0 text-center" jhiTranslate="artemisApp.examScores.gradesBeforeBonus"></h4>
                 } @else {
-                    <h5 class="mt-4! mb-2! text-center text-base font-semibold" jhiTranslate="artemisApp.examScores.scoreDistributionTitle"></h5>
+                    <h5 class="mt-4 mb-2 text-center" jhiTranslate="artemisApp.examScores.scoreDistributionTitle"></h5>
                 }
                 <div class="flex justify-center">
                     <!-- The accessible name mirrors the heading above, so the two distributions on this page
@@ -391,7 +391,7 @@
                 </div>
                 <!-- Histogram with bonus -->
                 @if (hasBonus()) {
-                    <h4 class="mt-12! mb-0! text-center" jhiTranslate="artemisApp.examScores.gradesAfterBonus"></h4>
+                    <h4 class="mt-12 mb-0 text-center" jhiTranslate="artemisApp.examScores.gradesAfterBonus"></h4>
                 }
                 @if (hasBonus()) {
                     <div class="flex justify-center">
@@ -410,12 +410,12 @@
             <!-- Exercise Statistics -->
             @if (aggregatedExerciseGroupResults()) {
                 <div>
-                    <h4 class="mt-12! mb-4!">
+                    <h4 class="mt-12 mb-4">
                         <span jhiTranslate="artemisApp.examScores.ExerciseGroupsTitle"></span>
                     </h4>
                     @if (course()) {
                         <!-- gap-8 keeps each group's chart title clearly attached to its own chart -->
-                        <div class="mb-6! flex flex-col gap-8">
+                        <div class="mb-6 flex flex-col gap-8">
                             @for (exerciseGroup of aggregatedExerciseGroupResults(); track exerciseGroup.exerciseGroupId) {
                                 <jhi-exam-scores-average-scores-graph [averageScores]="exerciseGroup" [course]="course()!" />
                             }
@@ -517,7 +517,7 @@
                 </div>
             }
             <!-- Student Result Table -->
-            <h4 class="mt-12! mb-4!">
+            <h4 class="mt-12 mb-4">
                 <span jhiTranslate="artemisApp.examScores.studentResultsTitle"></span>
             </h4>
             <tumaet-ui-table-layout [empty]="!studentResults()?.length">

@@ -1,4 +1,4 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -22,7 +22,7 @@ import dayjs from 'dayjs/esm';
 @Component({
     selector: 'jhi-course-onboarding',
     templateUrl: './course-onboarding.component.html',
-    styleUrls: ['./course-onboarding.component.scss'],
+    styleUrls: ['./course-onboarding.component.css'],
     imports: [
         TranslateDirective,
         ArtemisTranslatePipe,

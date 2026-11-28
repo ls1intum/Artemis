@@ -2,11 +2,15 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,7 +38,7 @@ class PublishedFingerprintsFetcherTest {
         HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/", exchange -> {
             requests.incrementAndGet();
-            byte[] body = "{\"ssh-ed25519\":[\"SHA256:abc\"]}".getBytes();
+            byte[] body = "{\"hostKeys\":[{\"algorithm\":\"Ed25519\",\"fingerprint\":\"SHA256:abc\"}]}".getBytes();
             exchange.sendResponseHeaders(200, body.length);
             exchange.getResponseBody().write(body);
             exchange.close();
@@ -45,6 +49,93 @@ class PublishedFingerprintsFetcherTest {
 
             assertThat(fetcher.get()).as("fingerprints that arrive over an unprotected channel prove nothing").isEmpty();
             assertThat(requests).as("and they are not even asked for").hasValue(0);
+        }
+        finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void everyPublishedFingerprintIsReadAlsoSeveralOfOneAlgorithm() throws Exception {
+        String published = fetchedFrom(200, """
+                {"hostKeys":[{"algorithm":"RSA","fingerprint":"SHA256:a"},{"algorithm":"RSA","fingerprint":"SHA256:b"},{"algorithm":"Ed25519","fingerprint":"SHA256:c"}]}""");
+
+        assertThat(published).isEqualTo("SHA256:a,SHA256:b,SHA256:c");
+    }
+
+    @Test
+    void fieldsThatAnotherVersionAddsAreIgnored() throws Exception {
+        String published = fetchedFrom(200, """
+                {"hostKeys":[{"algorithm":"RSA","fingerprint":"SHA256:a","validUntil":"2030-01-01"}],"nodeId":3}""");
+
+        assertThat(published).isEqualTo("SHA256:a");
+    }
+
+    @Test
+    void theFormatOfAnOlderVersionIsNotReadAsPublishedFingerprints() throws Exception {
+        // fingerprints that cannot be read are the case that the setting of the agent decides, so nothing may be taken from a body in another shape
+        assertThat(fetchedFrom(200, "{\"RSA\":[\"SHA256:a\"]}")).isEmpty();
+        assertThat(fetchedFrom(200, "{}")).isEmpty();
+        assertThat(fetchedFrom(200, "null")).isEmpty();
+        assertThat(fetchedFrom(200, "{\"hostKeys\":[null,{\"algorithm\":\"RSA\"}]}")).isEmpty();
+    }
+
+    @Test
+    void nothingIsReadFromAnErrorAnswer() throws Exception {
+        assertThat(fetchedFrom(503, "{\"hostKeys\":[{\"algorithm\":\"RSA\",\"fingerprint\":\"SHA256:a\"}]}")).isEmpty();
+    }
+
+    /** Serves the body with the status and returns what the fetcher reads from it, sorted and joined by commas. */
+    private static String fetchedFrom(int status, String body) throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/", exchange -> {
+            byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(status, bytes.length);
+            exchange.getResponseBody().write(bytes);
+            exchange.close();
+        });
+        server.start();
+        try {
+            // fetch does not check the scheme, which get() does, so that a plain server can be used here
+            return new PublishedFingerprintsFetcher(URI.create("http://127.0.0.1:" + server.getAddress().getPort())).fetch(Duration.ofSeconds(5)).stream().sorted()
+                    .collect(Collectors.joining(","));
+        }
+        finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void theTransferOfABodyThatDripsPastTheDeadlineIsCancelled() throws Exception {
+        // Returning at the deadline is not enough: the exchange must also stop reading, which the server sees as a closed connection
+        CountDownLatch clientGone = new CountDownLatch(1);
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/", exchange -> {
+            exchange.sendResponseHeaders(200, 1000);
+            try {
+                for (int i = 0; i < 200; i++) {
+                    exchange.getResponseBody().write('{');
+                    exchange.getResponseBody().flush();
+                    Thread.sleep(25);
+                }
+            }
+            catch (IOException e) {
+                clientGone.countDown();
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            finally {
+                exchange.close();
+            }
+        });
+        server.start();
+        try {
+            var fetcher = new PublishedFingerprintsFetcher(URI.create("http://127.0.0.1:" + server.getAddress().getPort()));
+
+            assertThat(fetcher.fetch(Duration.ofMillis(300))).isEmpty();
+
+            assertThat(clientGone.await(3, TimeUnit.SECONDS)).as("the fetcher closed the connection after the deadline").isTrue();
         }
         finally {
             server.stop(0);

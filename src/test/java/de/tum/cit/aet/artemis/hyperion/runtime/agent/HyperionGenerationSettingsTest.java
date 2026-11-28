@@ -26,21 +26,21 @@ class HyperionGenerationSettingsTest {
     @Test
     void tokenOnlyLimitKeepsEngineDefaultsAndOtherProfileValues() {
         assertThat(settings.tightenedBy(400L, null))
-                .isEqualTo(new HyperionGenerationSettings("review", "Review", 10, Duration.ofMinutes(20), 400, true, "CONTINUOUS", 32_000, null, true, false));
+                .isEqualTo(new HyperionGenerationSettings("review", "Review", 10, Duration.ofMinutes(20), 400, true, "CONTINUOUS", 32_000, "testpreset", null, true, false));
         assertThat(settings.maxTokensPerJob()).isEqualTo(1_000);
     }
 
     @Test
     void shorterDeadlineDisablesSharedEngineDefaultsWithoutWideningTokens() {
         assertThat(settings.tightenedBy(2_000L, Duration.ofMinutes(5)))
-                .isEqualTo(new HyperionGenerationSettings("review", "Review", 10, Duration.ofMinutes(5), 1_000, true, "CONTINUOUS", 32_000, null, false, false));
+                .isEqualTo(new HyperionGenerationSettings("review", "Review", 10, Duration.ofMinutes(5), 1_000, true, "CONTINUOUS", 32_000, "testpreset", null, false, false));
     }
 
     @Test
     void tighteningPreservesAnExistingEngineOverride() {
-        var overridden = new HyperionGenerationSettings("custom", null, 10, Duration.ofMinutes(20), 1_000, false, "FRESH", 32_000, null, false, true);
+        var overridden = new HyperionGenerationSettings("custom", null, 10, Duration.ofMinutes(20), 1_000, false, "FRESH", 32_000, "testpreset", null, false, true);
         assertThat(overridden.tightenedBy(400L, null))
-                .isEqualTo(new HyperionGenerationSettings("custom", null, 10, Duration.ofMinutes(20), 400, false, "FRESH", 32_000, null, false, true));
+                .isEqualTo(new HyperionGenerationSettings("custom", null, 10, Duration.ofMinutes(20), 400, false, "FRESH", 32_000, "testpreset", null, false, true));
     }
 
     @ParameterizedTest
@@ -67,6 +67,6 @@ class HyperionGenerationSettingsTest {
     }
 
     private static HyperionGenerationSettings settings(int turns, Duration duration, long tokens, int context) {
-        return new HyperionGenerationSettings("review", "Review", turns, duration, tokens, true, "CONTINUOUS", context, null, true, false);
+        return new HyperionGenerationSettings("review", "Review", turns, duration, tokens, true, "CONTINUOUS", context, "testpreset", null, true, false);
     }
 }

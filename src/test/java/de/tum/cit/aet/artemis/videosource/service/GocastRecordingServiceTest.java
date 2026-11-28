@@ -107,10 +107,10 @@ class GocastRecordingServiceTest {
             // 64 MiB is larger than the socket buffers, but the input itself only allocates one block for its contents.
             var block = new byte[64 * 1024];
             var blocks = IntStream.range(0, 1024).mapToObj(_ -> new ByteArrayInputStream(block)).toList();
-            try (var video = new SequenceInputStream(Collections.enumeration(blocks))) {
-                assertThatThrownBy(() -> recordingService.transferUpload(target, video)).isInstanceOfSatisfying(GocastIntegrationException.class,
-                        failure -> assertThat(failure.getUpstreamStatus()).isEqualTo(HttpStatus.BAD_GATEWAY));
-            }
+            // The multipart writer owns this in-memory stream and can still be closing it when the timeout returns.
+            var video = new SequenceInputStream(Collections.enumeration(blocks));
+            assertThatThrownBy(() -> recordingService.transferUpload(target, video)).isInstanceOfSatisfying(GocastIntegrationException.class,
+                    failure -> assertThat(failure.getUpstreamStatus()).isEqualTo(HttpStatus.BAD_GATEWAY));
             // The peer did receive the start of the request. It never drained the body or returned a response.
             try (var peer = listener.accept()) {
                 peer.setSoTimeout(1000);
@@ -142,6 +142,15 @@ class GocastRecordingServiceTest {
 
         when(connectionRepository.getBindingSnapshot(7)).thenReturn(Optional.of(binding(GocastBindingStatus.REVOKED)));
         assertThat(service.lookUpConnectedPlaylist(7, WATCH_PAGE)).isEmpty();
+        verifyNoInteractions(connectorService);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = GocastBindingStatus.class, names = { "PENDING", "REVOKED" })
+    void anInactiveCourseBindingDoesNotOfferUploads(GocastBindingStatus status) {
+        when(connectionRepository.getBindingSnapshot(7)).thenReturn(Optional.of(binding(status)));
+
+        assertThat(service.findUploadConnection(7)).isEmpty();
         verifyNoInteractions(connectorService);
     }
 

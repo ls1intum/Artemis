@@ -1,0 +1,91 @@
+.editable-instruction-container {
+    position: relative;
+    display: flex;
+    flex-flow: column nowrap;
+    flex: 1 1 auto;
+    height: 100%;
+}
+
+/* Custom preview styling for programming exercise instructions */
+.editable-instruction-container .instructions-preview-wrapper {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 200px;
+}
+
+.editable-instruction-container .instructions-preview {
+    display: block;
+    padding: 0.5rem;
+}
+
+.editable-instruction-container__instructions {
+    height: 100%;
+}
+
+.editable-instruction-container .markdown-editor {
+    border-left: var(--border-color) 1px solid;
+    border-right: var(--border-color) 1px solid;
+    border-bottom: var(--border-color) 1px solid;
+}
+
+.editable-instruction-container jhi-markdown-editor-monaco .markdown-editor-wrapper {
+    /*
+     * The child's scoped rule is .markdown-editor-wrapper[_ngcontent-*] (0,2,0) and loads after this stylesheet.
+     * The element selector raises this rule to (0,2,1), so it wins whatever the insertion order.
+     */
+    background-color: var(--markdown-preview-editor-background);
+}
+
+.editable-instruction-container .instructions__content__markdown,
+.editable-instruction-container .editor-panel-second-header {
+    background-color: var(--markdown-preview-editor-background);
+}
+
+.editable-instruction-container .editor-panel-second-header {
+    padding: 10px 15px;
+}
+
+.editable-instruction-container__save {
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    right: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.editable-instruction-container__status {
+    display: grid;
+    grid-template-columns: 1fr 2fr; /* left | right */
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background-color: color-mix(in srgb, var(--body-color) 3%, transparent);
+    border-top: 1px solid var(--border-color);
+}
+
+.editable-instruction-container__status .instructions-status {
+    grid-column: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+}
+
+.editable-instruction-container__status__testcase {
+    grid-column: 2;
+    min-width: 0;
+}
+
+.editable-instruction-container__status__testcase > .editable-instruction-container__status__container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    border-left: 1px solid var(--border-color);
+    padding-left: 0.75rem;
+}
+
+.editable-instruction-container__status__testcase > .editable-instruction-container__status__container > * {
+    justify-self: center;
+    text-align: center;
+}

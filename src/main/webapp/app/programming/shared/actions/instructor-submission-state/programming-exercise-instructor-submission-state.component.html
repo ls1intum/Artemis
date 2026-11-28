@@ -58,7 +58,9 @@
             [attr.aria-label]="'artemisApp.participation.triggerOptions' | artemisTranslate"
         >
             <fa-icon [icon]="faRedo" />
-            <span>{{ 'artemisApp.participation.triggerOptions' | artemisTranslate }}</span>
+            <span [class]="shouldToggle() ? (toggleBreakpoint() === 'md' ? 'hidden md:inline' : 'hidden xl:inline') : ''">{{
+                'artemisApp.participation.triggerOptions' | artemisTranslate
+            }}</span>
             <fa-icon [icon]="faChevronDown" />
         </button>
         <tumaet-ui-popover class="contents" #triggerPopover [ariaLabel]="'artemisApp.participation.triggerOptions' | artemisTranslate">
@@ -81,7 +83,7 @@
                     (click)="triggerBuildOfFailedSubmissions()"
                 >
                     <fa-icon [icon]="faRedo" [animation]="isBuildingFailedSubmissions() ? 'spin' : undefined" />
-                    <span class="flex-1 text-start" [jhiTranslate]="'artemisApp.programmingExercise.resubmitFailed'"></span>
+                    <span class="flex-1 text-left" [jhiTranslate]="'artemisApp.programmingExercise.resubmitFailed'"></span>
                 </button>
             </div>
         </tumaet-ui-popover>

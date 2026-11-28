@@ -4,7 +4,8 @@ import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta
 import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { generateUuid } from 'app/foundation/util/crypto.utils';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 
 /**
  * Interactive multiple-choice question component rendered inside Iris chat messages.
@@ -16,7 +17,7 @@ import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-an
     imports: [TranslateDirective, IrisCitationTextComponent, TumAetUiButtonDirective, TumAetUiMessageComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './iris-mcq-question.component.html',
-    styleUrl: './iris-mcq-question.component.scss',
+    styleUrl: './iris-mcq-question.component.css',
 })
 export class IrisMcqQuestionComponent {
     private readonly injector = inject(Injector);

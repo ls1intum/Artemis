@@ -1,9 +1,12 @@
-import { Component, inject, output, signal } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { RangeSliderComponent } from 'app/shared-ui/range-slider/range-slider.component';
 import { FeedbackAnalysisService } from 'app/programming/manage/grading/feedback-analysis/service/feedback-analysis.service';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
 export interface FilterData {
@@ -16,14 +19,15 @@ export interface FilterData {
 @Component({
     selector: 'jhi-feedback-filter-modal',
     templateUrl: './feedback-filter-modal.component.html',
-    imports: [RangeSliderComponent, TranslateDirective],
+    imports: [RangeSliderComponent, TranslateDirective, ArtemisTranslatePipe, TumAetUiDialogComponent, TumAetUiButtonDirective, TumAetUiCheckboxComponent],
     providers: [FeedbackAnalysisService],
 })
-export class FeedbackFilterModalComponent {
+export class FeedbackFilterModalComponent implements OnInit {
     private localStorageService = inject(LocalStorageService);
-    private activeModal = inject(NgbActiveModal);
 
     filterApplied = output<FilterData>();
+    /** Emits once the dialog was closed, whether filters were applied or not, so the host can remove it. */
+    closed = output<void>();
 
     readonly TRANSLATION_BASE = 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.filterModal';
     readonly FILTER_TASKS_KEY = 'feedbackAnalysis.tasks';
@@ -31,14 +35,16 @@ export class FeedbackFilterModalComponent {
     readonly FILTER_OCCURRENCE_KEY = 'feedbackAnalysis.occurrence';
     readonly FILTER_ERROR_CATEGORIES_KEY = 'feedbackAnalysis.errorCategories';
 
-    readonly testCaseNames = signal<string[]>([]);
-    readonly minCount = signal<number>(0);
-    readonly maxCount = signal<number>(0);
-    readonly taskArray = signal<string[]>([]);
-    readonly errorCategories = signal<string[]>([]);
+    readonly testCaseNames = input<string[]>([]);
+    readonly minCount = input<number>(0);
+    readonly maxCount = input<number>(0);
+    readonly taskArray = input<string[]>([]);
+    readonly errorCategories = input<string[]>([]);
+    /** The filters to start from; the dialog edits this object in place and reports it through `filterApplied`. */
+    readonly initialFilters = input<FilterData>();
 
     // filters is a deep two-way binding target (jhi-range-slider writes back to filters.occurrence[0]/[1]) and is
-    // mutated in place by onCheckboxChange, so it is backed by a signal via a getter/setter facade. Reads stay
+    // mutated in place by onFilterToggle, so it is backed by a signal via a getter/setter facade. Reads stay
     // reactive; commitFilters() rebuilds the reference after in-place mutations the template depends on.
     // `equal: () => false` so re-setting the same reference emits after the template mutates the filter arrays
     // in place; copying them would detach what the two-way bindings write into.
@@ -63,13 +69,20 @@ export class FeedbackFilterModalComponent {
         this._filters.set(this._filters());
     }
 
+    ngOnInit(): void {
+        const initialFilters = this.initialFilters();
+        if (initialFilters) {
+            this.filters = initialFilters;
+        }
+    }
+
     applyFilter(): void {
         this.localStorageService.store(this.FILTER_TASKS_KEY, this.filters.tasks);
         this.localStorageService.store(this.FILTER_TEST_CASES_KEY, this.filters.testCases);
         this.localStorageService.store(this.FILTER_OCCURRENCE_KEY, this.filters.occurrence);
         this.localStorageService.store(this.FILTER_ERROR_CATEGORIES_KEY, this.filters.errorCategories);
         this.filterApplied.emit(this.filters);
-        this.activeModal.close();
+        this.closed.emit();
     }
 
     clearFilter(): void {
@@ -84,25 +97,20 @@ export class FeedbackFilterModalComponent {
             errorCategories: [],
         };
         this.filterApplied.emit(this.filters);
-        this.activeModal.close();
+        this.closed.emit();
     }
 
-    onCheckboxChange(event: Event, controlName: keyof FilterData): void {
-        const checkbox = event.target as HTMLInputElement;
-        const values = this.filters[controlName];
-
-        if (controlName === 'occurrence') {
-            const numericValue = Number(checkbox.value);
-            this.pushValue(checkbox, values as number[], numericValue);
-        } else {
-            this.pushValue(checkbox, values as string[], checkbox.value);
-        }
-        // The checkbox [checked] bindings read filters.*; rebuild the reference so the signal fires after the in-place mutation.
+    /**
+     * Adds the value to, or removes it from, one of the text filters.
+     */
+    onFilterToggle(checked: boolean, controlName: 'tasks' | 'testCases' | 'errorCategories', value: string): void {
+        this.pushValue(checked, this.filters[controlName], value);
+        // The checkbox [checked] bindings read filters.*; re-set the reference so the signal fires after the in-place mutation.
         this.commitFilters();
     }
 
-    private pushValue<T>(checkbox: HTMLInputElement, values: T[], valueToAddOrRemove: T): void {
-        if (checkbox.checked) {
+    private pushValue<T>(checked: boolean, values: T[], valueToAddOrRemove: T): void {
+        if (checked) {
             values.push(valueToAddOrRemove);
         } else {
             const index = values.indexOf(valueToAddOrRemove);
@@ -113,6 +121,12 @@ export class FeedbackFilterModalComponent {
     }
 
     closeModal(): void {
-        this.activeModal.dismiss();
+        this.closed.emit();
+    }
+
+    protected onVisibleChange(visible: boolean): void {
+        if (!visible) {
+            this.closeModal();
+        }
     }
 }

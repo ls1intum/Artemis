@@ -8,12 +8,17 @@ import { Observable, of } from 'rxjs';
 export interface LectureUnsavedChangesComponent {
     shouldDisplayDismissWarning: boolean;
     /** Decides whether the page can be left, asking the user when changes would be lost; emits true once when it may be left and false otherwise. */
-    confirmLeave(): Observable<boolean>;
+    confirmLeave(nextUrl?: string): Observable<boolean>;
 }
 
-export const hasLectureUnsavedChangesGuard: CanDeactivateFn<LectureUnsavedChangesComponent> = (component: LectureUnsavedChangesComponent): Observable<boolean> => {
+export const hasLectureUnsavedChangesGuard: CanDeactivateFn<LectureUnsavedChangesComponent> = (
+    component: LectureUnsavedChangesComponent,
+    _currentRoute,
+    _currentState,
+    nextState,
+): Observable<boolean> => {
     if (!component.shouldDisplayDismissWarning) {
         return of(true);
     }
-    return component.confirmLeave();
+    return component.confirmLeave(nextState?.url);
 };

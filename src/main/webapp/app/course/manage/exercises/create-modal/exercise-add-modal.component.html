@@ -1,5 +1,5 @@
 <tumaet-ui-dialog [header]="'artemisApp.exerciseManagement.addModal.header' | artemisTranslate" [visible]="visible()" (visibleChange)="visibleChange.emit($event)" size="medium">
-    <div class="tab-bar mb-4! flex-wrap">
+    <div class="tab-bar mb-4 flex-wrap">
         <button
             type="button"
             [attr.aria-current]="activeTab() === 'create' ? 'true' : null"
@@ -109,7 +109,7 @@
     <!-- ── Export tab ── -->
     @if (activeTab() === 'export' && canExport()) {
         @if (exportType(); as type) {
-            <button type="button" class="back-link mb-4!" data-testid="export-back" (click)="exportType.set(undefined)">
+            <button type="button" class="back-link mb-4" data-testid="export-back" (click)="exportType.set(undefined)">
                 <fa-icon [icon]="faArrowLeft" class="me-1" />
                 <span jhiTranslate="entity.action.back"></span>
             </button>

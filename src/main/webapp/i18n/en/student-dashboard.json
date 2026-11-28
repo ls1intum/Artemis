@@ -126,7 +126,8 @@
                 "gradingSystem": "Grading System",
                 "faq": "FAQ",
                 "settings": "Settings",
-                "calendar": "Calendar"
+                "calendar": "Calendar",
+                "home": "Home"
             },
             "exerciseFilter": {
                 "modalTitle": "Filter Exercises",
@@ -221,10 +222,8 @@
             },
             "statistics": {
                 "totalScore": "Your overall points",
-                "totalPresentationScore": "Your total presentation score: {{ number }}",
-                "presentationScoreBonus": "Required presentation score for the bonus: {{ number }}",
-                "totalPresentationPoints": "Your presentation points: {{ number }}",
-                "achievablePresentationPoints": "Achievable presentation points: {{ number }}",
+                "currentPresentationScore": "Current presentation score: {{ current }}/{{ required }}",
+                "gradedPresentationPoints": "Presentation points: {{ earned }} / {{ attainable }} pt",
                 "hideNotIncludedInScoreExercises": "Hide Optional",
                 "exerciseCount": "{{ number }} {{type}}",
                 "yourPoints": "Your points: {{ number }}",
@@ -329,7 +328,7 @@
                     "threshold": "Mastery threshold",
                     "masteryMeaning": "Progress and mastery are distinct Artemis measures. The instructor sets each competency's mastery threshold.",
                     "competencyError": "Competency progress could not be loaded.",
-                    "pointDetails": "Point breakdown and course scoring rules",
+                    "pointDetails": "Point breakdown",
                     "points": "Credited points",
                     "attainable": "Attainable points",
                     "total": "Overall points",

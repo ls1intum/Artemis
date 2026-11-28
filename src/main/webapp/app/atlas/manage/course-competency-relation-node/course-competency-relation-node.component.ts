@@ -2,14 +2,14 @@ import { AfterViewInit, Component, ElementRef, computed, inject, input, output }
 import { SizeUpdate } from 'app/atlas/manage/competency-node/competency-node.component';
 import { CourseCompetencyGraphNode, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-competency-relation-node',
     imports: [TranslateDirective, TumAetUiTooltipDirective, ArtemisTranslatePipe],
     templateUrl: './course-competency-relation-node.component.html',
-    styleUrl: './course-competency-relation-node.component.scss',
+    styleUrl: './course-competency-relation-node.component.css',
 })
 export class CourseCompetencyRelationNodeComponent implements AfterViewInit {
     private readonly element = inject(ElementRef);

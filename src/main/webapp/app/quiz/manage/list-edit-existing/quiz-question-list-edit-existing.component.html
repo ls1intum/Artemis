@@ -1,6 +1,6 @@
 @if (show()) {
     <div>
-        <div class="flex w-full flex-wrap justify-center border-b border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-4! py-2!">
+        <div class="flex w-full flex-wrap justify-center border-b border-(--border-color) bg-(--hover-slightly-darker-body-bg) px-4 py-2">
             <div class="flex flex-wrap gap-2">
                 @for (state of State | keyvalue; track state; let i = $index) {
                     <button
@@ -17,12 +17,12 @@
             </div>
         </div>
         <hr />
-        <div class="question-options existing-question-container [&>*]:mx-1">
+        <div class="question-options existing-question-container [&>*:not(input):not(button):not(select):not(textarea)]:mx-1">
             @if (currentState() === State.COURSE) {
                 <div class="existing-question-select-course w-full">
                     <span jhiTranslate="artemisApp.quizExercise.selectCourse" class="align-middle font-bold"></span>
                     <tumaet-ui-select
-                        class="ms-12! flex-1"
+                        class="ms-12 flex-1"
                         [options]="courses()"
                         optionLabel="title"
                         optionValue="id"
@@ -36,7 +36,7 @@
                 <div class="existing-question-select-course w-full">
                     <span jhiTranslate="artemisApp.quizExercise.selectExam" class="align-middle font-bold"></span>
                     <tumaet-ui-select
-                        class="ms-12! flex-1"
+                        class="ms-12 flex-1"
                         [options]="exams()"
                         optionLabel="title"
                         optionValue="id"
@@ -49,7 +49,7 @@
             @if (currentState() === State.FILE) {
                 <div class="question-options m-0 flex-wrap! justify-start!">
                     <div class="me-2 grow-0" style="white-space: nowrap">
-                        <span jhiTranslate="artemisApp.quizExercise.importJSON" class="colon-suffix no-flex-shrink font-bold"></span>
+                        <span jhiTranslate="artemisApp.quizExercise.importJSON" class="colon-suffix shrink-0 font-bold"></span>
                     </div>
                     <div class="flex flex-1 items-stretch gap-2">
                         <input

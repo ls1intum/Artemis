@@ -6,7 +6,6 @@ import preferSignalTemplateState from './prefer-signal-template-state.mjs';
 import noRawTailwindColorPalette from './no-raw-tailwind-color-palette.mjs';
 import noBootstrapClasses from './no-bootstrap-classes.mjs';
 import noBootstrapClassesInCode from './no-bootstrap-classes-in-code.mjs';
-import noAmbiguousSpacingUtility from './no-ambiguous-spacing-utility.mjs';
 import noPrimengComponentClasses from './no-primeng-component-classes.mjs';
 import requireChartAccessibleName from './require-chart-accessible-name.mjs';
 import noNavigationInEffect from './no-navigation-in-effect.mjs';
@@ -17,9 +16,11 @@ import noComponentRefSetInput from './no-component-ref-set-input.mjs';
 import preferDeepClone from './prefer-deep-clone.mjs';
 import noBindInTemplateBinding from './no-bind-in-template-binding.mjs';
 import enforceButtonIntent from './enforce-button-intent.mjs';
+import sharingModuleBoundary from './sharing-module-boundary.mjs';
 
 export default {
     rules: {
+        'sharing-module-boundary': sharingModuleBoundary,
         'require-signal-reference-ngb-modal-input': requireSignalReferenceNgbModalInput,
         'enforce-signal-apis': enforceSignalApis,
         'enforce-cleanup-on-destroy': enforceCleanupOnDestroy,
@@ -28,7 +29,6 @@ export default {
         'no-raw-tailwind-color-palette': noRawTailwindColorPalette,
         'no-bootstrap-classes': noBootstrapClasses,
         'no-bootstrap-classes-in-code': noBootstrapClassesInCode,
-        'no-ambiguous-spacing-utility': noAmbiguousSpacingUtility,
         'no-primeng-component-classes': noPrimengComponentClasses,
         'require-chart-accessible-name': requireChartAccessibleName,
         'no-navigation-in-effect': noNavigationInEffect,

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { Services } from 'app/admin/metrics/metrics.model';
 import { DecimalPipe, KeyValuePipe } from '@angular/common';
-import { TumAetUiTableDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 
 @Component({
     selector: 'jhi-metrics-endpoints-requests',

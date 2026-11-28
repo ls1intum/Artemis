@@ -1,4 +1,5 @@
-import { TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { Component, computed, input } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleNotch, faQuestionCircle, faRobot, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
@@ -32,7 +33,7 @@ export type FeedbackSuggestionsBannerAppearance = 'banner' | 'chrome';
 @Component({
     selector: 'jhi-feedback-suggestions-banner',
     templateUrl: './feedback-suggestions-banner.component.html',
-    styleUrls: ['./feedback-suggestions-banner.component.scss'],
+    styleUrls: ['./feedback-suggestions-banner.component.css'],
     imports: [TumAetUiMessageComponent, TumAetUiTooltipDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
     host: {
         '[class.feedback-suggestions-banner--chrome]': "appearance() === 'chrome'",
