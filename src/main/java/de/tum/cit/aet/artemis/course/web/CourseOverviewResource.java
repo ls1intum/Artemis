@@ -303,6 +303,7 @@ public class CourseOverviewResource {
             // We prefer to have better performance for 99.9% of the users without plagiarism cases over accurate scores for the 0.1% of users with plagiarism cases.
             CourseForDashboardDTO courseForDashboardDTO = courseScoreCalculationService.getScoresAndParticipationResults(course, null, user.getId());
             coursesForDashboard.add(courseForDashboardDTO);
+            log.debug("Course {} has {} members", course.getId(), courseRepository.countCourseMembers(course.getId()));
         }
         logDuration(courses, user, timeNanoStart, "courses/for-dashboard (multiple courses)");
         final var dto = new CoursesForDashboardDTO(coursesForDashboard, activeExams.stream().map(ActiveExamForCourseDashboardDTO::of).collect(Collectors.toSet()));
