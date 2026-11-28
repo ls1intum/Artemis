@@ -1,7 +1,7 @@
 import { Component, OnInit, Signal, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { ConfirmationService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TumAetUiCheckboxChangeEvent, TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Dayjs } from 'dayjs/esm';
@@ -26,14 +26,14 @@ import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-da
 @Component({
     selector: 'jhi-programming-exercise-timeline',
     templateUrl: './programming-exercise-timeline.component.html',
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, TimelineComponent, ConfirmDialogModule, ExerciseGroupDateNoticeComponent],
-    providers: [ConfirmationService],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, TimelineComponent, TumAetUiCheckboxComponent, TumAetUiConfirmDialogComponent, ExerciseGroupDateNoticeComponent],
+    providers: [TumAetUiConfirmationService],
 })
 export class ProgrammingExerciseTimelineComponent implements OnInit {
     private profileService = inject(ProfileService);
     private activatedRoute = inject(ActivatedRoute);
     private programmingExerciseService = inject(ProgrammingExerciseService);
-    private confirmationService = inject(ConfirmationService);
+    private confirmationService = inject(TumAetUiConfirmationService);
     private translateService = inject(TranslateService);
 
     protected readonly AssessmentType = AssessmentType;
@@ -158,24 +158,31 @@ export class ProgrammingExerciseTimelineComponent implements OnInit {
         this.assessmentType.update((assessmentType) => (assessmentType === AssessmentType.AUTOMATIC ? AssessmentType.SEMI_AUTOMATIC : AssessmentType.AUTOMATIC));
     }
 
-    onSetTestCaseVisibilityClick(event: Event) {
-        const input = event.target as HTMLInputElement;
-        const newValue = input.checked;
-
+    /**
+     * Applies a change of the test case visibility checkbox. Unchecking it for an imported exam exercise can leak
+     * feedback, so that change only takes effect after the user confirmed it; until then the checkbox stays checked.
+     *
+     * @param event the change the checkbox reported
+     * @param checkbox the checkbox that reported the change
+     */
+    onSetTestCaseVisibilityChange(event: TumAetUiCheckboxChangeEvent, checkbox: TumAetUiCheckboxComponent) {
+        const newValue = event.checked;
         if (!newValue && this.isImport() && this.isExamMode()) {
-            event.preventDefault(); // immediately revert the visual state of the checkbox
+            checkbox.checked.set(true);
+            // The click already unchecked the native input, and the binding sees no change to write back, so check it
+            // again here. Otherwise the box shows a tick while the input, and with it assistive technology, says unchecked.
+            const input = event.originalEvent.target;
+            if (input instanceof HTMLInputElement) {
+                input.checked = true;
+            }
 
             this.confirmationService.confirm({
                 message: this.translateService.instant('artemisApp.programmingExercise.timeline.warningLeakFeedback'),
                 header: this.translateService.instant('artemisApp.programmingExercise.timeline.warningLeakFeedbackHeader'),
-                acceptButtonProps: {
-                    label: this.translateService.instant('entity.action.confirm'),
-                    severity: 'danger',
-                },
-                rejectButtonProps: {
-                    label: this.translateService.instant('entity.action.cancel'),
-                    severity: 'secondary',
-                },
+                acceptLabel: this.translateService.instant('entity.action.confirm'),
+                acceptSeverity: 'danger',
+                rejectLabel: this.translateService.instant('entity.action.cancel'),
+                rejectSeverity: 'secondary',
                 accept: () => {
                     this.setTestCaseVisibilityToAfterDueDate.set(false);
                 },

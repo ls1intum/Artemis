@@ -1,4 +1,4 @@
-import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { Component, input } from '@angular/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
@@ -16,7 +16,7 @@ import { AssessmentNotPossibleYetState } from 'app/assessment/shared/util/assess
     selector: 'jhi-assessment-not-possible-yet',
     imports: [TumAetUiMessageComponent, TranslateDirective, ArtemisDatePipe],
     template: `
-        <tumaet-ui-message severity="info" id="assessment-not-possible-yet" class="flex items-center gap-1 mt-4">
+        <tumaet-ui-message severity="info" id="assessment-not-possible-yet" class="flex items-center gap-1 mt-6!">
             <span [jhiTranslate]="reason().translationKey" [translateValues]="{ date: reason().date | artemisDate }"></span>
         </tumaet-ui-message>
     `,

@@ -1,17 +1,18 @@
 import { Component, inject } from '@angular/core';
-import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-course-competency-explanation-modal',
-    imports: [TranslateDirective, FontAwesomeModule],
+    imports: [TranslateDirective, FaIconComponent, TumAetUiButtonDirective, ArtemisTranslatePipe],
     templateUrl: './course-competency-explanation-modal.component.html',
-    styleUrl: './course-competency-explanation-modal.component.scss',
 })
 export class CourseCompetencyExplanationModalComponent {
-    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogRef = inject(TumAetUiDialogRef);
 
     protected readonly closeIcon = faXmark;
 

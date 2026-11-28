@@ -24,6 +24,8 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
 
     private ProgrammingExerciseParticipation participation;
 
+    private volatile boolean configOverrideUnsaved;
+
     @Nullable
     private Path localPath;
 
@@ -70,9 +72,9 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
     }
 
     /**
-     * The configuration of this repository, with git hooks disabled as Artemis does not use them.
-     * The hooks directory is set on every access, as the configuration may be reloaded from disk.
-     * As it is part of the configuration, a configuration file that is saved contains it as well.
+     * The configuration of this repository, with git hooks and filter drivers disabled as Artemis does not use them, and without symbolic links.
+     * The hooks directory and the symbolic link setting are set and the filter drivers are removed on every access, as the configuration may be reloaded from disk.
+     * As they are part of the configuration, a configuration file that is saved contains them as well.
      *
      * @return the configuration of this repository
      */
@@ -81,8 +83,33 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
         FileBasedConfig config = super.getConfig();
         if (!NO_HOOKS_PATH.equals(config.getString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_HOOKS_PATH))) {
             config.setString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_HOOKS_PATH, NO_HOOKS_PATH);
+            configOverrideUnsaved = true;
+        }
+        // Symbolic links are never created in a working copy: an entry that is a link is written as a plain file holding the target, and a link is not followed
+        if (!"false".equals(config.getString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS))) {
+            config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false);
+            configOverrideUnsaved = true;
+        }
+        for (String filterDriver : config.getSubsections(ConfigConstants.CONFIG_FILTER_SECTION)) {
+            config.unsetSection(ConfigConstants.CONFIG_FILTER_SECTION, filterDriver);
+            configOverrideUnsaved = true;
         }
         return config;
+    }
+
+    /**
+     * Whether {@link #getConfig()} changed a value that the configuration file on disk still holds differently. The code that writes the configuration of a repository uses this,
+     * as it does not see such a value as a change.
+     *
+     * @return true if the configuration in memory differs from the file because of the settings that are always applied
+     */
+    public boolean hasUnsavedConfigOverride() {
+        return configOverrideUnsaved;
+    }
+
+    /** Records that the configuration was written to the file, including the settings that are always applied. */
+    public void markConfigOverrideSaved() {
+        configOverrideUnsaved = false;
     }
 
     public ProgrammingExerciseParticipation getParticipation() {

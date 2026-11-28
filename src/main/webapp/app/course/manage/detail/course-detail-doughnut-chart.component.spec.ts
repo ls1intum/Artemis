@@ -12,7 +12,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiChartTooltipConfig, TumAetUiDoughnutChartComponent } from '@tumaet/ui-angular';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { TumAetUiChartTooltipConfig, TumAetUiDoughnutChartComponent } from '@tumaet/ui-angular/chart';
 
 describe('CourseDetailDoughnutChartComponent', () => {
     let fixture: ComponentFixture<CourseDetailDoughnutChartComponent>;
@@ -33,7 +34,7 @@ describe('CourseDetailDoughnutChartComponent', () => {
             ],
         }).overrideComponent(CourseDetailDoughnutChartComponent, {
             set: {
-                imports: [RouterLink, NgClass, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), TumAetUiDoughnutChartComponent],
+                imports: [RouterLink, NgClass, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), TumAetUiDoughnutChartComponent, TranslateDirective],
             },
         });
         await TestBed.compileComponents();
@@ -143,12 +144,12 @@ describe('CourseDetailDoughnutChartComponent', () => {
         componentRef.setInput('currentAbsolute', undefined);
         componentRef.setInput('currentPercentage', undefined);
         componentRef.setInput('currentMax', 0);
-        componentRef.setInput('showText', `${cost} €`);
+        componentRef.setInput('showText', `${cost} USD`);
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
 
-        expect(fixture.nativeElement.querySelector('[data-testid="course-chart-values"]').textContent).toContain(`${cost} €`);
+        expect(fixture.nativeElement.querySelector('[data-testid="course-chart-values"]').textContent).toContain(`${cost} USD`);
         const placeholder = fixture.nativeElement.querySelectorAll('tumaet-ui-doughnut-chart svg path')[2] as SVGPathElement;
         placeholder.dispatchEvent(new MouseEvent('mouseenter', { clientX: 40, clientY: 40 }));
         fixture.detectChanges();

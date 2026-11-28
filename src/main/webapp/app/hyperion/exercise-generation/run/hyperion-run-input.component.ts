@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { TumAetUiPanelComponent } from '@tumaet/ui-angular';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ExerciseGenerationInput } from 'app/openapi/model/exercise-generation-input';
@@ -17,11 +17,11 @@ import { ExerciseGenerationInput } from 'app/openapi/model/exercise-generation-i
             data-testid="hyperion-run-input"
         >
             @if (context().prompt; as prompt) {
-                <p class="mt-0 mb-3 whitespace-pre-wrap wrap-anywhere" data-testid="hyperion-run-input-prompt">{{ prompt }}</p>
+                <p class="mt-0 mb-4! whitespace-pre-wrap wrap-anywhere" data-testid="hyperion-run-input-prompt">{{ prompt }}</p>
             }
             @if (context().reviewFeedback?.length) {
-                <h2 class="text-base font-semibold" jhiTranslate="artemisApp.hyperion.generation.run.selectedFeedback"></h2>
-                <ul class="m-0 flex list-none flex-col gap-3 p-0" data-testid="hyperion-run-input-feedback">
+                <h2 jhiTranslate="artemisApp.hyperion.generation.run.selectedFeedback"></h2>
+                <ul class="m-0 flex list-none flex-col gap-4! p-0" data-testid="hyperion-run-input-feedback">
                     @for (thread of context().reviewFeedback; track $index) {
                         <li class="border-l-2 border-border pl-3">
                             <p class="mt-0 mb-1 text-sm text-muted-color">

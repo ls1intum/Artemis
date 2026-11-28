@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
@@ -8,7 +9,10 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { TestExamWorkingTimeComponent } from 'app/exam/overview/test-exam-working-time/test-exam-working-time.component';
 import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-control/working-time-control.component';
 import dayjs from 'dayjs/esm';
-import { TumAetUiButtonDirective, TumAetUiDialogComponent, TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
@@ -90,7 +94,7 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
                 this.courseId.set(params.courseId);
                 const studentExamWithGrade = data.studentExam as StudentExamWithGradeDTO;
                 this.setStudentExamWithGrade(studentExamWithGrade);
-                this.isTestExam.set(studentExamWithGrade.studentExam?.exam?.testExam || false);
+                this.isTestExam.set(!isRealExam(studentExamWithGrade.studentExam?.exam));
                 this.isTestRun.set(url[1]?.toString() === 'test-runs');
             });
     }

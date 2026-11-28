@@ -18,7 +18,7 @@ import { StatisticsGraphComponent } from 'app/exercise/statistics-graph/statisti
 @Component({
     selector: 'jhi-exercise-statistics',
     templateUrl: './exercise-statistics.component.html',
-    styleUrls: ['../../course/manage/statistics/course-management-statistics.component.scss'],
+    styleUrls: ['../../course/manage/statistics/course-management-statistics.component.css'],
     imports: [StatisticsSpanSelectorComponent, TranslateDirective, ExerciseDetailStatisticsComponent, StatisticsScoreDistributionGraphComponent, StatisticsGraphComponent],
 })
 export class ExerciseStatisticsComponent implements OnInit {

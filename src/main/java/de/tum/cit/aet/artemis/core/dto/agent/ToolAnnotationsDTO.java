@@ -7,7 +7,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *
  * @param readOnlyHint    whether the tool changes nothing
  * @param destructiveHint whether the tool replaces content that is already stored; no tool deletes anything
+ * @param openWorldHint   whether the tool reaches outside Artemis; none does, but the protocol assumes it does unless told otherwise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ToolAnnotationsDTO(boolean readOnlyHint, boolean destructiveHint) {
+public record ToolAnnotationsDTO(boolean readOnlyHint, boolean destructiveHint, boolean openWorldHint) {
 }

@@ -3,26 +3,26 @@ import { IconDefinition, faMoon, faSun } from '@fortawesome/free-solid-svg-icons
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
 export const THEME_LOCAL_STORAGE_KEY = 'artemisapp.theme.preference';
-export const THEME_OVERRIDE_ID = 'artemis-theme-override';
+const THEME_ATTRIBUTE = 'data-theme';
+const DARK_SCHEME_QUERY = '(prefers-color-scheme: dark)';
 
 /**
  * Contains definitions for a theme.
  * If you add new themes, make sure to adapt the theme switch component which currently only supports two themes.
  */
 export class Theme {
-    public static readonly LIGHT = new Theme('LIGHT', true, undefined, faSun);
-    public static readonly DARK = new Theme('DARK', false, 'theme-dark.css', faMoon);
+    public static readonly LIGHT = new Theme('LIGHT', 'light', faSun);
+    public static readonly DARK = new Theme('DARK', 'dark', faMoon);
 
-    private constructor(identifier: string, isDefault: boolean, fileName: string | undefined, icon: IconDefinition) {
+    private constructor(identifier: string, attributeValue: 'light' | 'dark', icon: IconDefinition) {
         this.identifier = identifier;
-        this.isDefault = isDefault;
-        this.fileName = fileName;
+        this.attributeValue = attributeValue;
         this.icon = icon;
     }
 
     public readonly identifier: string;
-    public readonly isDefault: boolean;
-    public readonly fileName: string | undefined;
+    /** The value of the `data-theme` attribute of the root element that selects the tokens of this theme. */
+    public readonly attributeValue: 'light' | 'dark';
     public readonly icon: IconDefinition;
 
     /**
@@ -46,7 +46,7 @@ export class ThemeService {
      * The user preference changes as WritableSignal.
      * If changed, the theme is applied immediately.
      */
-    private _userPreference = signal<Theme | undefined>(undefined);
+    private _userPreference = signal<Theme | undefined>(this.getStoredThemePreference());
 
     /**
      * The user preference changes as ReadonlySignal.
@@ -56,24 +56,15 @@ export class ThemeService {
 
     /**
      * The system preference as WritableSignal.
+     * Like the user preference, it has its real value from the start: the script in `index.html` has already set the
+     * theme of the page from the same two sources, and the first run of the effect below must not change it back.
      */
-    private systemPreference = signal<Theme>(Theme.LIGHT);
+    private systemPreference = signal<Theme>(typeof window.matchMedia === 'function' && window.matchMedia(DARK_SCHEME_QUERY).matches ? Theme.DARK : Theme.LIGHT);
 
     /**
      * The currently applied theme as Signal.
      */
     public currentTheme = computed(() => this.userPreference() ?? this.systemPreference());
-
-    /**
-     * Revision counter that is bumped once a theme's CSS variables are actually in effect.
-     * Unlike {@link currentTheme}, which switches as soon as the user toggles the theme, this signal only
-     * changes after the dark theme stylesheet finished loading (or the override was removed for the light
-     * theme). Consumers that resolve CSS custom properties via getComputedStyle (e.g. canvas-based charts)
-     * must depend on this signal instead of {@link currentTheme} to avoid reading stale variable values.
-     */
-    private _appliedThemeRevision = signal(0);
-
-    public readonly appliedThemeRevision = this._appliedThemeRevision.asReadonly();
 
     private darkSchemeMediaQuery!: MediaQueryList; // set in initialize(), called once on application startup before any read
 
@@ -87,11 +78,11 @@ export class ThemeService {
 
     /**
      * Should be called once on application startup.
-     * Sets up the system preference listener and applies the theme initially
+     * Sets up the system preference listener
      * Sets up a local storage listener to account for changes in other tabs
      */
     initialize() {
-        this.darkSchemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        this.darkSchemeMediaQuery = window.matchMedia(DARK_SCHEME_QUERY);
         if (this.darkSchemeMediaQuery.media !== 'not all') {
             this.darkSchemeMediaQuery.addEventListener('change', () => {
                 if (this.darkSchemeMediaQuery.matches) {
@@ -103,7 +94,7 @@ export class ThemeService {
         }
 
         addEventListener('storage', (event) => {
-            if (event.key === 'jhi-' + THEME_LOCAL_STORAGE_KEY) {
+            if (event.key === THEME_LOCAL_STORAGE_KEY) {
                 this._userPreference.set(this.getStoredThemePreference());
             }
         });
@@ -116,7 +107,14 @@ export class ThemeService {
      * Returns the theme preference stored in local storage or undefined if no preference is stored
      */
     private getStoredThemePreference(): Theme | undefined {
-        const storedIdentifier = this.localStorageService.retrieve<string>(THEME_LOCAL_STORAGE_KEY);
+        let storedIdentifier: string | undefined;
+        try {
+            storedIdentifier = this.localStorageService.retrieve<string>(THEME_LOCAL_STORAGE_KEY);
+        } catch {
+            // The storage is blocked or holds a value that is not JSON. The script of index.html follows the system in
+            // this case, and so does the service. It runs while the service is created, so it must not throw.
+            return undefined;
+        }
         const storedTheme = Theme.all.find((theme) => theme.identifier === storedIdentifier);
 
         // An unknown theme was stored. Let's clear it
@@ -129,15 +127,12 @@ export class ThemeService {
 
     /**
      * Prints the current page.
-     * Disables any theme override before doing that to ensure that we print in default theme.
+     * Switches to the light theme before doing that to ensure that we print in the default theme.
      * Resets the theme afterward if needed
      */
     public async print(): Promise<void> {
         return new Promise<void>((resolve) => {
-            const overrideTag = document.getElementById(THEME_OVERRIDE_ID) as HTMLLinkElement | null;
-            if (overrideTag) {
-                overrideTag.rel = 'none-tmp';
-            }
+            this.applyTheme(Theme.LIGHT);
             setTimeout(() => {
                 const notificationSidebarDisplayAttribute = this.hideNotificationSidebar();
 
@@ -146,9 +141,8 @@ export class ThemeService {
                 this.showNotificationSidebar(notificationSidebarDisplayAttribute);
             }, 250);
             setTimeout(() => {
-                if (overrideTag) {
-                    overrideTag.rel = 'stylesheet';
-                }
+                // the theme may have changed while the print dialog was open
+                this.applyTheme(this.currentTheme());
                 resolve();
             }, 500);
         });
@@ -178,49 +172,10 @@ export class ThemeService {
      * @param theme the theme to apply
      */
     private applyTheme(theme: Theme) {
-        const html = document.documentElement;
-        if (theme === Theme.DARK) {
-            html.setAttribute('prime-ng-use-dark-theme', 'true');
-        } else {
-            html.setAttribute('prime-ng-use-dark-theme', 'false');
-        }
-
-        // Mirror the active scheme onto the standard `data-theme` attribute so embedded
-        // widgets that follow that convention switch with Artemis. The Apollon modeling
-        // editor reads `data-theme` from any ancestor for its light/dark base.
-        html.setAttribute('data-theme', theme === Theme.DARK ? 'dark' : 'light');
-
-        // Get current <link> theme override
-        const overrideTag = document.getElementById(THEME_OVERRIDE_ID);
-        if (theme.isDefault) {
-            // The default theme is always injected by Angular; therefore, we just need to remove
-            // our theme override, if present
-            overrideTag?.remove();
-            this._appliedThemeRevision.update((revision) => revision + 1);
-        } else {
-            // If the theme is not the default theme, we need to add a theme override stylesheet to the page header
-
-            // Select the head element
-            const head = document.getElementsByTagName('head')[0];
-
-            // Create new override tag from the current theme
-            const newTag = document.createElement('link');
-            newTag.id = THEME_OVERRIDE_ID;
-            newTag.rel = 'stylesheet';
-            // Use cache busting so the browser will reload the stylesheet at least once per hour
-            newTag.href = theme.fileName! + '?_=' + new Date().setMinutes(0, 0, 0);
-
-            // As soon as the new style sheet loaded, remove the old override (if present)
-            newTag.onload = () => {
-                overrideTag?.remove();
-                this._appliedThemeRevision.update((revision) => revision + 1);
-            };
-
-            // Insert the new stylesheet link tag after the last existing link tag
-            const existingLinkTags = head.getElementsByTagName('link');
-            const lastLinkTag = existingLinkTags[existingLinkTags.length - 1];
-            head.insertBefore(newTag, lastLinkTag?.nextSibling);
-        }
+        // Both themes are part of the one global stylesheet; the attribute selects the tokens of the dark theme.
+        // Embedded widgets that follow the `data-theme` convention switch with Artemis: the Apollon modeling
+        // editor reads the attribute from any ancestor for its light/dark base.
+        document.documentElement.setAttribute(THEME_ATTRIBUTE, theme.attributeValue);
     }
 
     /**

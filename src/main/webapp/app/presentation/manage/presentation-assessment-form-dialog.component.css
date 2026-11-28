@@ -1,0 +1,28 @@
+/* The line that connects a step to the next one */
+.presentation-assessment-steps__step:not(:last-child)::after {
+    content: '';
+    flex: 1;
+    min-width: 1rem;
+    height: 1px;
+    background: var(--border-color);
+}
+
+.presentation-assessment-steps__step--current {
+    color: var(--body-color);
+}
+
+/* Only the current step keeps its text on a narrow screen, so that the steps fit next to each other */
+@media (max-width: 40rem) {
+    .presentation-assessment-steps__step:not(.presentation-assessment-steps__step--current) .presentation-assessment-steps__text {
+        display: none;
+    }
+}
+
+/* The global legend style is meant for form titles; this legend holds a heading of its own */
+.presentation-assessment-methods__legend {
+    float: left;
+    width: 100%;
+    margin-bottom: 0.5rem;
+    padding: 0;
+    font-size: inherit;
+}

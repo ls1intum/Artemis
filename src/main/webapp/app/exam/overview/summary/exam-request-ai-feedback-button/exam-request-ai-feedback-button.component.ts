@@ -3,7 +3,7 @@ import { Component, DestroyRef, computed, effect, inject, input, signal, untrack
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription, filter, skip } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { faRobot, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -14,6 +14,7 @@ import { UserService } from 'app/account/user/shared/user.service';
 import { MODULE_FEATURE_ATHENA } from 'app/app.constants';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { isRealExam } from 'app/exam/overview/exam.utils';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -76,7 +77,7 @@ export class ExamRequestAiFeedbackButtonComponent {
         if (isTestRun && exam?.user?.id !== this.accountService.userIdentity()?.id) {
             return false;
         }
-        const isTestExamOrTestRun = !!exam?.exam?.testExam || isTestRun;
+        const isTestExamOrTestRun = !isRealExam(exam.exam) || isTestRun;
         return isTestExamOrTestRun && this.athenaEnabled() && !!exam.submitted && !this.testExamConduction() && this.hasAthenaFeedbackSupportedExercise();
     });
 

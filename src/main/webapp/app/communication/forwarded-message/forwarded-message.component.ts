@@ -11,15 +11,15 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-forwarded-message',
     templateUrl: './forwarded-message.component.html',
-    styleUrls: ['./forwarded-message.component.scss'],
-    imports: [ProfilePictureComponent, TranslateDirective, FaIconComponent, NgbTooltip, PostingContentComponent, ArtemisTranslatePipe, ArtemisDatePipe],
+    styleUrls: ['./forwarded-message.component.css'],
+    imports: [ProfilePictureComponent, TranslateDirective, FaIconComponent, TumAetUiTooltipDirective, PostingContentComponent, ArtemisTranslatePipe, ArtemisDatePipe],
 })
 export class ForwardedMessageComponent {
     readonly faShare = faShare;

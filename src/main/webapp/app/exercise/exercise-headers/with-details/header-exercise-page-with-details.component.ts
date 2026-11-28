@@ -1,4 +1,4 @@
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { Component, OnInit, computed, inject, input, signal } from '@angular/core';
 import { SortService } from 'app/foundation/service/sort.service';
@@ -30,7 +30,7 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
     templateUrl: './header-exercise-page-with-details.component.html',
-    styleUrls: ['./header-exercise-page-with-details.component.scss'],
+    styleUrls: ['./header-exercise-page-with-details.component.css'],
     imports: [
         TumAetUiTooltipDirective,
         NgTemplateOutlet,

@@ -43,7 +43,7 @@ const HIDE_BELOW_CLASSES: Record<NonNullable<ColumnDef<unknown>['hideBelow']>, s
 @Component({
     selector: 'tumaet-ui-table',
     templateUrl: './tumaet-ui-table.component.html',
-    styleUrl: './tumaet-ui-table.component.scss',
+    styleUrl: './tumaet-ui-table.component.css',
     imports: [CdkTableModule, NgTemplateOutlet, FaIconComponent, TumAetUiTranslatePipe, TumAetUiPaginatorComponent, TumAetUiTableLayoutComponent, TumAetUiTooltipDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

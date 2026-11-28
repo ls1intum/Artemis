@@ -92,9 +92,9 @@ class HyperionChecklistServiceCoverageTest {
     }
 
     private HyperionChecklistService createService(boolean atlasEnabled) {
-        return new HyperionChecklistService(ChatClient.create(model), templates, ObservationRegistry.create(), atlasEnabled ? Optional.of(catalog) : Optional.empty(),
-                atlasEnabled ? Optional.of(courseCompetencies) : Optional.empty(), tasks, exercises, new JsonMapper(), mock(LLMTokenUsageService.class),
-                mock(UserTestRepository.class));
+        return new HyperionChecklistService(HyperionTestChatClients.returning(ChatClient.create(model)), templates, ObservationRegistry.create(),
+                atlasEnabled ? Optional.of(catalog) : Optional.empty(), atlasEnabled ? Optional.of(courseCompetencies) : Optional.empty(), tasks, exercises, new JsonMapper(),
+                mock(LLMTokenUsageService.class), mock(UserTestRepository.class));
     }
 
     private ChecklistAnalysisResponseDTO section(ChecklistSection section, String response, String difficulty) throws Exception {

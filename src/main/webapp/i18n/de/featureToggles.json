@@ -215,6 +215,11 @@
                     "name": "Globale Suche: Abgleich – verwaiste Einträge entfernen",
                     "description": "Durchsucht den Suchindex der globalen Suche nach Einträgen, deren zugehöriges Objekt nicht mehr existiert, und entfernt sie – abgeleitet allein aus dem Index, nicht für jedes Objekt einzeln anhand der Datenbank bestätigt. Zuerst „Globale Suche: Abgleich“ einschalten und beobachten, bevor dies aktiviert wird.",
                     "disableWarning": "Suchergebnisse können Einträge für bereits gelöschte Objekte enthalten, bis dies wieder eingeschaltet wird."
+                },
+                "SmartQuizzes": {
+                    "name": "Smart Quizzes",
+                    "description": "Ermöglicht es Lehrenden, Quizfragenpools zu verwalten und sie manuell oder zeitgesteuert aufzubauen. Erfordert Hyperion und Atlas.",
+                    "disableWarning": "Lehrende verlieren den Zugriff auf Smart Quizzes, und es werden keine neuen Pool-Aufbauten gestartet. Laufende Aufbauten können abgeschlossen werden. Bestehende Fragen und Kurseinstellungen bleiben erhalten."
                 }
             }
         }

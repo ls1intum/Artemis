@@ -1,3 +1,5 @@
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { Component, model, signal } from '@angular/core';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
@@ -5,7 +7,6 @@ import { getSemesters } from 'app/foundation/util/semester-utils';
 import { CourseCompetencyFilter } from 'app/foundation/pagination/pageable-table';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
@@ -13,7 +14,7 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-competency-search',
     templateUrl: './competency-search.component.html',
-    imports: [TranslateDirective, FormsModule, NgbCollapse, ButtonComponent, FaIconComponent],
+    imports: [TranslateDirective, FormsModule, ButtonComponent, FaIconComponent, TumAetUiInputDirective, TumAetUiSelectComponent],
 })
 export class CompetencySearchComponent {
     search = model.required<CourseCompetencyFilter>();

@@ -1,0 +1,17 @@
+.color-box {
+    border-radius: 3px;
+    height: 15px;
+    width: 15px;
+}
+
+.sufficient-performance {
+    background: var(--graph-grey);
+}
+
+.insufficient-performance {
+    background: var(--graph-red);
+}
+
+.critical-performance {
+    background: var(--graph-yellow);
+}

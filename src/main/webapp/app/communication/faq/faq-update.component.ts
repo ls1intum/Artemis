@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
-import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormulaAction } from 'app/editor/monaco-editor/model/actions/formula.action';
 import { CreateFaqDTO, Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
 import { FaqService } from 'app/communication/faq/faq.service';
@@ -24,12 +24,26 @@ import { CategorySelectorComponent } from 'app/exercise/category-selector/catego
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FaqConsistencyComponent } from 'app/communication/faq/faq-consistency.component';
 import { RewriteResult } from 'app/hyperion/editor/artemis-intelligence/rewriting-result';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 
 @Component({
     selector: 'jhi-faq-update',
     templateUrl: './faq-update.component.html',
-    styleUrls: ['./faq-update.component.scss'],
-    imports: [CategorySelectorComponent, MarkdownEditorMonacoComponent, TranslateDirective, FontAwesomeModule, FormsModule, FaqConsistencyComponent],
+    imports: [
+        CategorySelectorComponent,
+        MarkdownEditorMonacoComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        FontAwesomeModule,
+        FormsModule,
+        FaqConsistencyComponent,
+        TumAetUiButtonDirective,
+        TumAetUiFormFieldComponent,
+        TumAetUiInputDirective,
+    ],
 })
 export class FaqUpdateComponent implements OnInit {
     private alertService = inject(AlertService);
@@ -78,7 +92,6 @@ export class FaqUpdateComponent implements OnInit {
     });
 
     // Icons
-    readonly faQuestionCircle = faQuestionCircle;
     readonly faSave = faSave;
     readonly faBan = faBan;
 

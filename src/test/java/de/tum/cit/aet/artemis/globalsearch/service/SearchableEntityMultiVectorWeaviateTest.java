@@ -29,6 +29,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.mock.env.MockEnvironment;
 import org.testcontainers.weaviate.WeaviateContainer;
 
+import de.tum.cit.aet.artemis.core.config.llm.LlmProperties;
+import de.tum.cit.aet.artemis.core.config.llm.LlmTestCatalog;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -105,19 +107,23 @@ class SearchableEntityMultiVectorWeaviateTest {
     }
 
     private static WeaviateConfigurationProperties properties(String model) {
-        return new WeaviateConfigurationProperties(true, weaviate.getHost(), weaviate.getMappedPort(8080), weaviate.getMappedPort(50051), "http", PREFIX, "text2vec-openai", model,
-                "http://localhost:1", "unused", null, null);
+        return new WeaviateConfigurationProperties(true, weaviate.getHost(), weaviate.getMappedPort(8080), weaviate.getMappedPort(50051), "http", PREFIX, "text2vec-openai",
+                "embedding", null, null);
+    }
+
+    private static LlmProperties catalog(String model) {
+        return LlmTestCatalog.embedding(model, "http://localhost:1", "unused");
     }
 
     private void useModel(String model) {
-        weaviateService = new WeaviateService(Optional.of(client), properties(model), new MockEnvironment());
+        weaviateService = new WeaviateService(Optional.of(client), properties(model), catalog(model), new MockEnvironment());
         var vectorWriter = new SearchableEntityVectorWriter(weaviateService, embeddingClient);
         searchService = new SearchableEntityWeaviateService(weaviateService, mock(WeaviateOutboxRepository.class), resolver, JsonObjectMapper.get(),
                 new SearchableEntityContentHasher(JsonObjectMapper.get()), mock(ApplicationEventPublisher.class), vectorWriter, embeddingClient, Runnable::run);
     }
 
     private SearchableEntityIndexRebuildService rebuildService(String model) {
-        return new SearchableEntityIndexRebuildService(Optional.of(client), properties(model), new MockEnvironment(), weaviateService, syncStateRepository,
+        return new SearchableEntityIndexRebuildService(Optional.of(client), properties(model), catalog(model), new MockEnvironment(), weaviateService, syncStateRepository,
                 reconcileStateRepository, mock(WeaviateOutboxRepository.class));
     }
 
@@ -213,8 +219,8 @@ class SearchableEntityMultiVectorWeaviateTest {
             collection.data.insert(row, object -> object.uuid(WeaviateUuidUtil.deterministicUuid(SearchableEntitySchema.TypeValues.CHANNEL, channelId)));
         }
         WeaviateOutboxRepository outboxRepository = mock(WeaviateOutboxRepository.class);
-        var rebuild = new SearchableEntityIndexRebuildService(Optional.of(client), properties("model-a"), new MockEnvironment(), weaviateService, syncStateRepository,
-                reconcileStateRepository, outboxRepository);
+        var rebuild = new SearchableEntityIndexRebuildService(Optional.of(client), properties("model-a"), catalog("model-a"), new MockEnvironment(), weaviateService,
+                syncStateRepository, reconcileStateRepository, outboxRepository);
 
         assertThat(rebuild.queueChannelRowsWithoutVisibilityDate(2)).isEqualTo(4);
 
@@ -260,12 +266,12 @@ class SearchableEntityMultiVectorWeaviateTest {
     @Test
     void switchingFromKeywordOnlyToEmbeddingsRebuildsTheIndex() throws Exception {
         var keywordOnly = new WeaviateConfigurationProperties(true, weaviate.getHost(), weaviate.getMappedPort(8080), weaviate.getMappedPort(50051), "http", PREFIX, "none", null,
-                null, null, null, null);
+                null, null);
         dropCollections();
         client = WeaviateClient.connectToLocal(config -> config.host(weaviate.getHost()).port(weaviate.getMappedPort(8080)).grpcPort(weaviate.getMappedPort(50051)));
-        var keywordService = new WeaviateService(Optional.of(client), keywordOnly, new MockEnvironment());
-        assertThat(new SearchableEntityIndexRebuildService(Optional.of(client), keywordOnly, new MockEnvironment(), keywordService, syncStateRepository, reconcileStateRepository,
-                mock(WeaviateOutboxRepository.class)).ensureIndexMatchesConfiguration()).isTrue();
+        var keywordService = new WeaviateService(Optional.of(client), keywordOnly, LlmTestCatalog.empty(), new MockEnvironment());
+        assertThat(new SearchableEntityIndexRebuildService(Optional.of(client), keywordOnly, LlmTestCatalog.empty(), new MockEnvironment(), keywordService, syncStateRepository,
+                reconcileStateRepository, mock(WeaviateOutboxRepository.class)).ensureIndexMatchesConfiguration()).isTrue();
 
         useModel("model-a");
         assertThat(rebuildService("model-a").ensureIndexMatchesConfiguration()).isTrue();
@@ -315,15 +321,15 @@ class SearchableEntityMultiVectorWeaviateTest {
         // Earlier versions let Weaviate call the embedding endpoint itself. Keeping such a collection in keyword mode would
         // keep that vectorizer, which then fails on every write without the API key Artemis used to forward.
         var keywordOnly = new WeaviateConfigurationProperties(true, weaviate.getHost(), weaviate.getMappedPort(8080), weaviate.getMappedPort(50051), "http", PREFIX, "none", null,
-                null, null, null, null);
+                null, null);
         dropCollections();
         client = WeaviateClient.connectToLocal(config -> config.host(weaviate.getHost()).port(weaviate.getMappedPort(8080)).grpcPort(weaviate.getMappedPort(50051)));
         client.collections.create(PREFIX + SearchableEntitySchema.COLLECTION_NAME,
                 config -> config.vectorConfig(io.weaviate.client6.v1.api.collections.VectorConfig.text2vecOpenAi()));
-        var keywordService = new WeaviateService(Optional.of(client), keywordOnly, new MockEnvironment());
+        var keywordService = new WeaviateService(Optional.of(client), keywordOnly, LlmTestCatalog.empty(), new MockEnvironment());
 
-        assertThat(new SearchableEntityIndexRebuildService(Optional.of(client), keywordOnly, new MockEnvironment(), keywordService, syncStateRepository, reconcileStateRepository,
-                mock(WeaviateOutboxRepository.class)).ensureIndexMatchesConfiguration()).isTrue();
+        assertThat(new SearchableEntityIndexRebuildService(Optional.of(client), keywordOnly, LlmTestCatalog.empty(), new MockEnvironment(), keywordService, syncStateRepository,
+                reconcileStateRepository, mock(WeaviateOutboxRepository.class)).ensureIndexMatchesConfiguration()).isTrue();
 
         var vectors = client.collections.getConfig(PREFIX + SearchableEntitySchema.COLLECTION_NAME).orElseThrow().vectors().values();
         assertThat(vectors).as("the collection was recreated with vectors provided by Artemis")

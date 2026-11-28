@@ -13,10 +13,8 @@
  * Response containing consistency check costs
  */
 export interface Costs {
-    /** Prompt costs in EUR */
-    promptEur?: number;
-    /** Completion costs in EUR */
-    completionEur?: number;
-    /** Total costs in EUR */
-    totalEur?: number;
+    /** Known cost in USD; a lower bound when incomplete */
+    totalUsd?: number;
+    /** Whether every recorded request has a USD cost */
+    totalUsdComplete: boolean;
 }

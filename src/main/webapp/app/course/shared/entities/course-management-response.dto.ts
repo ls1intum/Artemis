@@ -3,6 +3,7 @@ import type { CompetencyTaxonomy, CourseCompetencyType } from 'app/atlas/shared/
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { Organization } from 'app/admin/organization-management/organization.model';
 import { Course, CourseInformationSharingConfiguration, Language } from 'app/course/shared/entities/course.model';
+import type { InitialCommitAuthor } from 'app/course/shared/entities/course-configuration.model';
 import { convertDateStringFromServer } from 'app/foundation/util/date.utils';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
@@ -49,12 +50,14 @@ export interface CourseMemberDTO {
 }
 
 export interface CourseConfigurationResponseDTO {
+    studentWelcomeContext?: string;
     id: number;
     gradeRelevant: boolean;
     dataRetentionHold: boolean;
     autoOrchestratorEnabled: boolean;
     debounceWindowSecondsOverride?: number;
     maxDailyOrchestrationOverride?: number;
+    initialCommitAuthor?: InitialCommitAuthor;
 }
 
 export interface LtiPlatformConfigurationResponseDTO {

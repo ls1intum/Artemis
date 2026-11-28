@@ -1,17 +1,19 @@
-import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { ConnectedPosition } from '@angular/cdk/overlay';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import type { ParticipationForExport } from 'app/openapi/model/participation-for-export';
+import type { ResultWithPointsPerGradingCriterion } from 'app/openapi/model/result-with-points-per-grading-criterion';
 import { roundValueSpecifiedByCourseSettings, scrollToTopOfPage } from 'app/foundation/util/utils';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Component, inject, input } from '@angular/core';
-import { ResultService } from 'app/exercise/result/result.service';
+import { ResultApi } from 'app/openapi/api/result-api';
 import { getTestCaseNamesFromResults, getTestCaseResults } from 'app/exercise/result/result.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
-import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faChevronDown, faChevronRight, faDownload } from '@fortawesome/free-solid-svg-icons';
 import { CsvCellValue, CsvRow, downloadCsv } from 'app/foundation/util/csv-download.util';
 import { TestCaseResult } from 'app/programming/shared/entities/test-case-result.model';
 
@@ -34,8 +36,16 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     ],
 })
 export class ExerciseScoresExportButtonComponent {
-    private resultService = inject(ResultService);
+    private resultApi = inject(ResultApi);
     private alertService = inject(AlertService);
+
+    readonly inDropdown = input(false);
+    protected readonly submenuPositions: ConnectedPosition[] = [
+        { originX: 'end', originY: 'top', overlayX: 'start', overlayY: 'top' },
+        { originX: 'start', originY: 'top', overlayX: 'end', overlayY: 'top' },
+    ];
+    protected readonly faChevronRight = faChevronRight;
+    protected readonly faChevronDown = faChevronDown;
 
     readonly exercises = input<Exercise[]>([]); // Used to export multiple scores together
     readonly exercise = input<Exercise | ProgrammingExercise>();
@@ -66,14 +76,13 @@ export class ExerciseScoresExportButtonComponent {
      * @param withFeedback optional parameter including the feedback's full text in case of failed test case
      */
     private constructCSV(exercise: Exercise, withTestCases?: boolean, withFeedback?: boolean) {
-        this.resultService.getResultsWithPointsPerGradingCriterion(exercise).subscribe((data) => {
-            const results: ResultWithPointsPerGradingCriterion[] = data.body || [];
+        this.resultApi.getResultsForExerciseWithPointsPerCriterion(exercise.id!, exercise.type === ExerciseType.MODELING).subscribe((results) => {
             if (results.length === 0) {
                 this.alertService.warning(`artemisApp.exercise.export.results.emptyError`, { exercise: exercise.title });
                 scrollToTopOfPage();
                 return;
             }
-            const isTeamExercise = !!(results[0].result.submission!.participation! as StudentParticipation).team;
+            const isTeamExercise = !!results[0].result!.submission!.participation!.team;
             const gradingCriteria: GradingCriterion[] = ExerciseScoresExportButtonComponent.sortedGradingCriteria(exercise);
 
             let keys;
@@ -82,14 +91,14 @@ export class ExerciseScoresExportButtonComponent {
                 const testCasesNames = getTestCaseNamesFromResults(results);
                 keys = ExerciseScoresRowBuilder.keys(exercise, isTeamExercise, gradingCriteria, testCasesNames);
                 rows = results.map((resultWithPoints) => {
-                    const studentParticipation = resultWithPoints.result.submission!.participation! as StudentParticipation;
+                    const studentParticipation = resultWithPoints.result!.submission!.participation!;
                     const testCaseResults = getTestCaseResults(resultWithPoints, testCasesNames, withFeedback);
                     return new ExerciseScoresRowBuilder(exercise, gradingCriteria, studentParticipation, resultWithPoints, testCaseResults).build();
                 });
             } else {
                 keys = ExerciseScoresRowBuilder.keys(exercise, isTeamExercise, gradingCriteria);
                 rows = results.map((resultWithPoints) => {
-                    const studentParticipation = resultWithPoints.result.submission!.participation! as StudentParticipation;
+                    const studentParticipation = resultWithPoints.result!.submission!.participation!;
                     return new ExerciseScoresRowBuilder(exercise, gradingCriteria, studentParticipation, resultWithPoints).build();
                 });
             }
@@ -150,7 +159,7 @@ type ExerciseScoresRow = CsvRow;
 class ExerciseScoresRowBuilder {
     private readonly exercise: Exercise;
     private readonly gradingCriteria: GradingCriterion[];
-    private readonly participation: StudentParticipation;
+    private readonly participation: ParticipationForExport;
     private readonly resultWithPoints: ResultWithPointsPerGradingCriterion;
     private readonly testCaseResults?: TestCaseResult[];
 
@@ -159,7 +168,7 @@ class ExerciseScoresRowBuilder {
     constructor(
         exercise: Exercise,
         gradingCriteria: GradingCriterion[],
-        participation: StudentParticipation,
+        participation: ParticipationForExport,
         resultWithPoints: ResultWithPointsPerGradingCriterion,
         testCaseResults?: TestCaseResult[],
     ) {
@@ -176,7 +185,7 @@ class ExerciseScoresRowBuilder {
     public build(): ExerciseScoresRow {
         this.setName();
 
-        const score = roundValueSpecifiedByCourseSettings(this.resultWithPoints.result.score, getCourseFromExercise(this.exercise));
+        const score = roundValueSpecifiedByCourseSettings(this.resultWithPoints.result?.score, getCourseFromExercise(this.exercise));
         this.set('Score', score);
         this.set('Points', this.resultWithPoints.totalPoints);
 
@@ -220,7 +229,7 @@ class ExerciseScoresRowBuilder {
         let unnamedCriterionIndex = 1;
         this.gradingCriteria.forEach((criterion) => {
             const pointsPerCriterion = this.resultWithPoints.pointsPerCriterion;
-            const points = pointsPerCriterion instanceof Map ? pointsPerCriterion.get(criterion.id!) || 0 : +(pointsPerCriterion[criterion.id!] || 0);
+            const points = +(pointsPerCriterion?.[criterion.id!] || 0);
             if (criterion.title) {
                 this.set(criterion.title, points);
             } else {
@@ -235,7 +244,7 @@ class ExerciseScoresRowBuilder {
      */
     private setProgrammingExerciseInformation() {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            const repoLink = (this.participation as ProgrammingExerciseStudentParticipation).repositoryUri;
+            const repoLink = this.participation.repositoryUri;
             this.set('Repo Link', repoLink);
         }
     }

@@ -1,6 +1,5 @@
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { Component, input, output } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorFileBrowserNodeComponent } from 'app/programming/manage/code-editor/file-browser/node/code-editor-file-browser-node.component';
 import { faChevronDown, faChevronRight, faEdit, faFile, faFolder, faFolderOpen, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -12,7 +11,6 @@ import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models
 @Component({
     selector: 'jhi-code-editor-file-browser-folder',
     templateUrl: './code-editor-file-browser-folder.component.html',
-    providers: [NgbModal],
     imports: [TumAetUiButtonDirective, FaIconComponent, CodeEditorFileBrowserBadgeComponent, ArtemisTranslatePipe],
 })
 export class CodeEditorFileBrowserFolderComponent extends CodeEditorFileBrowserNodeComponent {

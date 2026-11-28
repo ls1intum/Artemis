@@ -8,6 +8,7 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 import { currentNavigationId } from 'app/course/overview/services/navigation-scope';
 import { AccountService } from 'app/core/auth/account.service';
+import { onUserChange } from 'app/core/auth/user-change.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { TeamService } from 'app/exercise/team/team.service';
@@ -49,18 +50,7 @@ export class CourseOverviewExercisesService implements OnDestroy {
     private liveUpdatesCourseId?: number;
     private liveUpdatesGeneration = 0;
 
-    private currentUserId?: number;
-    private readonly authenticationStateSubscription: Subscription;
-
-    constructor() {
-        this.currentUserId = this.accountService.userIdentity()?.id;
-        this.authenticationStateSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
-            if (this.currentUserId !== user?.id) {
-                this.currentUserId = user?.id;
-                this.clear();
-            }
-        });
-    }
+    private readonly authenticationStateSubscription = onUserChange(this.accountService, () => this.clear());
 
     ngOnDestroy(): void {
         this.clear();

@@ -10,12 +10,13 @@ description: Set up or troubleshoot a local Artemis server and client developmen
 | Tool   | Version          | Note                                                                  |
 | ------ | ---------------- | --------------------------------------------------------------------- |
 | JDK    | 25               | Pinned by the Gradle toolchain                                        |
-| Node   | 24.21.0 or newer | Pinned in `gradle.properties` and `package.json`                      |
-| pnpm   | 12.15.0          | Pinned by the `packageManager` field; activate with `corepack enable` |
+| Node   | 26.13.1 or newer | Pinned in `gradle.properties` and `package.json`                      |
+| pnpm   | 12.18.0          | Pinned by the `packageManager` field; activate with `corepack enable` |
 | Docker | current          | Required for the database and for server tests                        |
 
-Run `corepack enable` once. It activates the exact pnpm version the repository pins, which avoids a
-whole category of lockfile arguments.
+Run `npm install --global corepack` and `corepack enable` once (Node 25 and later no longer bundle
+Corepack). It activates the exact pnpm version the repository pins, which avoids a whole category of
+lockfile arguments.
 
 Python helper tools install with `python -m pip install --require-hashes -r requirements.txt` in a
 virtual environment. Change `requirements.in` and regenerate locks with
@@ -36,6 +37,7 @@ sudo ln -sfn "$(brew --prefix openjdk@25)/libexec/openjdk.jdk" /Library/Java/Jav
 ## Install dependencies
 
 ```bash
+npm install --global corepack   # once; Node 25 and later do not bundle it
 corepack enable
 pnpm install --frozen-lockfile
 ```
@@ -120,9 +122,11 @@ an `autoconfigure.exclude` is replacing rather than merging the expected exclusi
 mismatch does exactly this. The two are coupled: a Boot minor bump needs the matching Cloud release
 train. Both are pinned in `gradle.properties`.
 
-**Aggregate health reports DOWN.** This does not by itself mean the server is broken. Check the
-readiness and liveness endpoints and look for "Started ArtemisApp" in the log; a single unconfigured
-optional integration pulls the aggregate down.
+**Aggregate health reports DEGRADED.** An optional external system (Athena, Pyris, Hermes, Apollon,
+Weaviate, the sharing platform, the Hyperion workers) is not reachable or not configured. This is not
+an error: the aggregate answers HTTP 200 and the admin health page names the component. A `DOWN`
+(HTTP 503) means a critical component fails, such as the database. For "is the server up?" use the
+readiness endpoint and look for "Started ArtemisApp" in the log.
 
 **Port already in use.** `./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --stop` frees 8080 and 9000 by killing the
 server and client. The LocalVC SSH listener on 7921 lives inside the server JVM, so it goes with it.

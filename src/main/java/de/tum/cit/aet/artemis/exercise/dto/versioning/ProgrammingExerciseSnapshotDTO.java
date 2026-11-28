@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.dto.BuildConfigAdvancedSettingsDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -141,7 +142,8 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record ProgrammingExerciseBuildConfigSnapshotDTO(Boolean sequentialTestRuns, String branch, String buildPlanConfiguration, String buildScript,
             boolean checkoutSolutionRepository, String testCheckoutPath, String assignmentCheckoutPath, String solutionCheckoutPath, int timeoutSeconds, String dockerFlags,
-            String theiaImage, OnlineIdeExperienceLevel onlineIdeExperienceLevel, boolean allowBranching, String branchRegex) implements Serializable {
+            String theiaImage, OnlineIdeExperienceLevel onlineIdeExperienceLevel, boolean allowBranching, String branchRegex, BuildConfigAdvancedSettingsDTO advancedSettings)
+            implements Serializable {
 
         private static ProgrammingExerciseBuildConfigSnapshotDTO of(ProgrammingExerciseBuildConfig buildConfig) {
             if (buildConfig == null) {
@@ -150,7 +152,8 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
             return new ProgrammingExerciseBuildConfigSnapshotDTO(buildConfig.hasSequentialTestRuns() ? buildConfig.hasSequentialTestRuns() : null, buildConfig.getBranch(),
                     buildConfig.getBuildPlanConfiguration(), buildConfig.getBuildScript(), buildConfig.getCheckoutSolutionRepository(), buildConfig.getTestCheckoutPath(),
                     buildConfig.getAssignmentCheckoutPath(), buildConfig.getSolutionCheckoutPath(), buildConfig.getTimeoutSeconds(), buildConfig.getDockerFlags(),
-                    buildConfig.getTheiaImage(), buildConfig.getOnlineIdeExperienceLevel(), buildConfig.isAllowBranching(), buildConfig.getBranchRegex());
+                    buildConfig.getTheiaImage(), buildConfig.getOnlineIdeExperienceLevel(), buildConfig.isAllowBranching(), buildConfig.getBranchRegex(),
+                    BuildConfigAdvancedSettingsDTO.of(buildConfig.getBuildTimeWindow()));
         }
     }
 

@@ -1,7 +1,7 @@
-<div class="mt-2 grid grid-cols-1 items-stretch gap-6! lg:grid-cols-[1.1fr_1fr]">
+<div class="mt-2 grid grid-cols-1 items-stretch gap-6 lg:grid-cols-[1.1fr_1fr]">
     <tumaet-ui-panel class="h-full min-w-0">
         <span tumAetUiPanelHeader class="text-base font-semibold text-color" jhiTranslate="artemisApp.assessmentDashboard.progressTitle"></span>
-        <div class="mb-4! flex flex-wrap items-baseline gap-2">
+        <div class="mb-4 flex flex-wrap items-baseline gap-2">
             <span class="text-4xl font-bold leading-none text-color">{{ assessedSubmissions() }} / {{ totalProgressItems() }}</span>
             <span class="text-base text-muted-color">
                 <span jhiTranslate="artemisApp.assessmentDashboard.assessmentsCompleted"></span>
@@ -32,7 +32,7 @@
                 aria-hidden="true"
             ></span>
         </div>
-        <div class="flex flex-wrap gap-x-6! gap-y-4! text-sm text-muted-color">
+        <div class="flex flex-wrap gap-x-6 gap-y-4 text-sm text-muted-color">
             <span class="inline-flex items-center gap-1.5">
                 <span class="h-3 w-3 rounded-sm bg-state-success text-(--tumaet-ui-state-success-contrast)"></span>
                 <span jhiTranslate="artemisApp.assessmentDashboard.assessed"></span>
@@ -53,7 +53,7 @@
 
     <tumaet-ui-panel class="h-full min-w-0 overflow-hidden [&_.tumaet-ui-panel-header]:!hidden">
         <div class="-mx-[calc(var(--tumaet-ui-spacing)*4.5)] -mb-[calc(var(--tumaet-ui-spacing)*4.5)]">
-            <table class="w-full table-fixed border-collapse text-base text-muted-color" tumAetUiTable>
+            <table class="w-full table-fixed text-muted-color" tumAetUiTable>
                 <colgroup>
                     <col class="w-[60%]" />
                     <col class="w-[23%]" />
@@ -61,54 +61,42 @@
                 </colgroup>
                 <thead>
                     <tr>
-                        <th
-                            class="border-b border-surface bg-(--surface-ground) px-6 text-start font-semibold text-color"
-                            scope="col"
-                            jhiTranslate="artemisApp.assessmentDashboard.assessmentInformation"
-                        ></th>
-                        <th
-                            class="border-b border-surface bg-(--surface-ground) px-6 text-end font-semibold text-color"
-                            scope="col"
-                            jhiTranslate="artemisApp.assessmentDashboard.course"
-                        ></th>
-                        <th
-                            class="border-b border-surface bg-(--surface-ground) px-6 text-end font-semibold text-color"
-                            scope="col"
-                            jhiTranslate="artemisApp.assessmentDashboard.yours"
-                        ></th>
+                        <th class="text-left" scope="col" jhiTranslate="artemisApp.assessmentDashboard.assessmentInformation"></th>
+                        <th class="text-right" scope="col" jhiTranslate="artemisApp.assessmentDashboard.course"></th>
+                        <th class="text-right" scope="col" jhiTranslate="artemisApp.assessmentDashboard.yours"></th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <th
-                            class="!border-b !border-surface px-6 py-2.5 text-start font-normal align-middle"
+                            class="border-b border-surface px-6 py-2.5 text-left font-normal align-middle"
                             scope="row"
                             jhiTranslate="artemisApp.assessmentDashboard.assessments"
                         ></th>
-                        <td class="!border-b !border-surface whitespace-nowrap px-6 py-2.5 text-end align-middle">{{ assessedSubmissions() }} / {{ totalProgressItems() }}</td>
-                        <td class="!border-b !border-surface whitespace-nowrap px-6 py-2.5 text-end align-middle">{{ numberOfTutorAssessments() }}</td>
+                        <td class="border-b border-surface whitespace-nowrap text-right align-middle">{{ assessedSubmissions() }} / {{ totalProgressItems() }}</td>
+                        <td class="border-b border-surface whitespace-nowrap text-right align-middle">{{ numberOfTutorAssessments() }}</td>
                     </tr>
                     @if (isExamMode() || complaintsEnabled()) {
                         <tr>
                             <th
-                                class="!border-b !border-surface px-6 py-2.5 text-start font-normal align-middle"
+                                class="border-b border-surface px-6 py-2.5 text-left font-normal align-middle"
                                 scope="row"
                                 jhiTranslate="artemisApp.assessmentDashboard.complaints"
                             ></th>
-                            <td class="!border-b !border-surface whitespace-nowrap px-6 py-2.5 text-end align-middle">
+                            <td class="border-b border-surface whitespace-nowrap text-right align-middle">
                                 @if (isExamMode() && course()?.isAtLeastInstructor) {
-                                    <a [routerLink]="complaintsLink()" [queryParams]="{ correctionRound: numberOfCorrectionRounds() - 1 }" class="font-semibold text-state-danger">
+                                    <a [routerLink]="complaintsLink()" [queryParams]="{ correctionRound: numberOfCorrectionRounds() - 1 }" class="font-semibold">
                                         {{ openComplaints() }} <span jhiTranslate="artemisApp.assessmentDashboard.open"></span>
                                     </a>
                                 } @else if (!isExamMode() && course()?.isAtLeastInstructor) {
-                                    <a data-testid="open-complaints" [routerLink]="complaintsLink()" class="font-semibold text-state-danger">
+                                    <a data-testid="open-complaints" [routerLink]="complaintsLink()" class="font-semibold">
                                         {{ openComplaints() }} <span jhiTranslate="artemisApp.assessmentDashboard.open"></span>
                                     </a>
                                 } @else {
                                     <span class="font-semibold text-state-danger"> {{ openComplaints() }} <span jhiTranslate="artemisApp.assessmentDashboard.open"></span> </span>
                                 }
                             </td>
-                            <td class="!border-b !border-surface whitespace-nowrap px-6 py-2.5 text-end align-middle">
+                            <td class="border-b border-surface whitespace-nowrap text-right align-middle">
                                 @if (!isExamMode() || course()?.isAtLeastInstructor) {
                                     <a [routerLink]="complaintsLink()" [queryParams]="{ tutorId: tutorId() }">{{ complaints().tutor }}</a>
                                 } @else {
@@ -120,13 +108,13 @@
                     @if (!isExamMode() && feedbackRequestEnabled()) {
                         <tr>
                             <th
-                                class="!border-b !border-surface px-6 py-2.5 text-start font-normal align-middle"
+                                class="border-b border-surface px-6 py-2.5 text-left font-normal align-middle"
                                 scope="row"
                                 jhiTranslate="artemisApp.assessmentDashboard.moreFeedbackRequests"
                             ></th>
-                            <td class="!border-b !border-surface whitespace-nowrap px-6 py-2.5 text-end align-middle">
+                            <td class="border-b border-surface whitespace-nowrap text-right align-middle">
                                 @if (course()?.isAtLeastInstructor) {
-                                    <a [routerLink]="moreFeedbackRequestsLink()" class="font-semibold text-state-danger">
+                                    <a [routerLink]="moreFeedbackRequestsLink()" class="font-semibold">
                                         {{ openMoreFeedbackRequests() }} <span jhiTranslate="artemisApp.assessmentDashboard.open"></span>
                                     </a>
                                 } @else {
@@ -135,25 +123,25 @@
                                     </span>
                                 }
                             </td>
-                            <td class="!border-b !border-surface whitespace-nowrap px-6 py-2.5 text-end align-middle">
+                            <td class="border-b border-surface whitespace-nowrap text-right align-middle">
                                 <a [routerLink]="moreFeedbackRequestsLink()" [queryParams]="{ tutorId: tutorId() }">{{ moreFeedbackRequests().tutor }}</a>
                             </td>
                         </tr>
                     }
                     <tr>
                         <th
-                            class="!border-b !border-surface px-6 py-2.5 text-start font-normal align-middle"
+                            class="border-b border-surface px-6 py-2.5 text-left font-normal align-middle"
                             scope="row"
                             jhiTranslate="artemisApp.assessmentDashboard.assessmentLocks"
                         ></th>
-                        <td class="!border-b !border-surface whitespace-nowrap px-6 py-2.5 text-end align-middle">
+                        <td class="border-b border-surface whitespace-nowrap text-right align-middle">
                             @if (isExamMode() && course()?.isAtLeastInstructor) {
                                 <a [routerLink]="assessmentLocksLink()">{{ assessmentLocks().total }}</a>
                             } @else {
                                 {{ assessmentLocks().total }}
                             }
                         </td>
-                        <td class="!border-b !border-surface whitespace-nowrap px-6 py-2.5 text-end align-middle">
+                        <td class="border-b border-surface whitespace-nowrap text-right align-middle">
                             @if (!isExamMode()) {
                                 <a [routerLink]="assessmentLocksLink()" [queryParams]="{ tutorId: tutorId() }">{{ assessmentLocks().tutor }}</a>
                             } @else {
@@ -163,25 +151,25 @@
                     </tr>
                     @if (!isExamMode()) {
                         <tr>
-                            <th class="px-6 py-2.5 text-start font-normal align-middle" scope="row" jhiTranslate="artemisApp.exerciseAssessmentDashboard.ratings"></th>
-                            <td class="whitespace-nowrap px-6 py-2.5 text-end align-middle">
+                            <th class="px-6 py-2.5 text-left font-normal align-middle" scope="row" jhiTranslate="artemisApp.exerciseAssessmentDashboard.ratings"></th>
+                            <td class="whitespace-nowrap text-right align-middle">
                                 @if (course()?.isAtLeastInstructor) {
                                     <a [routerLink]="ratingsLink()">{{ ratings().total }}</a>
                                 } @else {
                                     {{ ratings().total }}
                                 }
                             </td>
-                            <td class="whitespace-nowrap px-6 py-2.5 text-end align-middle">{{ ratings().tutor }}</td>
+                            <td class="whitespace-nowrap text-right align-middle">{{ ratings().tutor }}</td>
                         </tr>
                     }
                     @if (isExamMode() && numberOfAssessmentsOfCorrectionRounds().length > 0) {
                         <tr>
                             <th
-                                class="px-6 py-2.5 text-start font-normal align-middle"
+                                class="px-6 py-2.5 text-left font-normal align-middle"
                                 scope="row"
                                 jhiTranslate="artemisApp.assessmentDashboard.totalAssessmentsForCorrectionrounds"
                             ></th>
-                            <td class="whitespace-nowrap px-6 py-2.5 text-end align-middle" colspan="2">
+                            <td class="whitespace-nowrap text-right align-middle" colspan="2">
                                 {{ numberOfAssessmentsOfCorrectionRounds()[0].inTime }}
                                 @if (numberOfAssessmentsOfCorrectionRounds()[1]) {
                                     <span> - {{ numberOfAssessmentsOfCorrectionRounds()[1].inTime }}</span>

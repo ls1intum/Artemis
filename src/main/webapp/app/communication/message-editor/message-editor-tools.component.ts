@@ -18,7 +18,9 @@ import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFaceSmile, faFileArrowUp, faFileCircleQuestion, faFilePowerpoint } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiInputDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { EmojiEvent } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { EmojiPickerComponent } from 'app/communication/emoji/emoji-picker.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -219,6 +221,7 @@ export class MessageEditorToolsComponent {
     protected keydown(event: Event): void {
         // Safari may confirm a candidate after compositionend with keyCode 229 and isComposing=false.
         event.stopPropagation();
+        // eslint-disable-next-line @typescript-eslint/no-deprecated -- keyCode 229 is the only signal of that confirmation
         if (!(event instanceof KeyboardEvent) || event.isComposing || this.composing || event.keyCode === 229) {
             return;
         }

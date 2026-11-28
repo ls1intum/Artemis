@@ -41,14 +41,14 @@ public interface LLMTokenUsageTraceRepository extends ArtemisJpaRepository<LLMTo
     List<LLMTokenUsageTrace> findAllWithRequestsByCourseId(@Param("courseId") long courseId);
 
     @Query("""
-            SELECT COALESCE(ROUND(SUM(((req.numInputTokens - req.numCachedInputTokens - req.numCacheWriteInputTokens) * req.costPerMillionInputTokens / 1000000) +
-                            (req.numCachedInputTokens * req.costPerMillionCachedInputTokens / 1000000) +
-                            (req.numCacheWriteInputTokens * req.costPerMillionCacheWriteInputTokens / 1000000) +
-                            (req.numOutputTokens * req.costPerMillionOutputTokens / 1000000)), 2), 0.0)
+            SELECT COALESCE(SUM(req.totalCostUsd), 0.0)
             FROM LLMTokenUsageRequest req
             WHERE req.trace.courseId = :courseId
             """)
-    Double calculateTotalLlmCostInEurForCourse(@Param("courseId") Long courseId);
+    Double calculateTotalLlmCostInUsdForCourse(@Param("courseId") Long courseId);
+
+    @Query("SELECT COUNT(req) FROM LLMTokenUsageRequest req WHERE req.trace.courseId = :courseId AND req.totalCostUsd IS NULL")
+    long countUnpricedRequestsForCourse(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT COALESCE(SUM(req.numInputTokens + req.numOutputTokens), 0)
