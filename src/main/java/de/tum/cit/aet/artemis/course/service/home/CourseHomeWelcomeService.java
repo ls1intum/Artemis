@@ -65,7 +65,7 @@ public class CourseHomeWelcomeService {
      * @return a future containing validated encouragement or the fallback marker
      */
     public CompletableFuture<CourseHomeGeneratedWelcomeDTO> generate(long courseId, User user, CourseHomeWelcomeRequestDTO request, Instant asOf) {
-        if (client.isEmpty() || !policy.canGenerate(user.getId())) {
+        if (client.isEmpty() || policy.selection(user.getId()).isEmpty()) {
             return CompletableFuture.completedFuture(fallback(request, "ineligible"));
         }
         // Authorization is intentionally outside the provider-failure boundary.
@@ -80,15 +80,16 @@ public class CourseHomeWelcomeService {
         catch (RuntimeException ex) {
             return CompletableFuture.completedFuture(fallback(request, "prompt"));
         }
-        if (!policy.canGenerate(user.getId())) {
+        var selection = policy.selection(user.getId());
+        if (selection.isEmpty()) {
             return CompletableFuture.completedFuture(fallback(request, "revoked"));
         }
         try {
-            return client.get().generate(input).thenApply(output -> output.orElse(null)).handle((output, error) -> {
+            return client.get().generate(selection.get().preset(), input).thenApply(output -> output.orElse(null)).handle((output, error) -> {
                 if (error != null || output == null) {
                     return fallback(request, "provider");
                 }
-                if (!policy.canGenerate(user.getId())) {
+                if (!selection.equals(policy.selection(user.getId()))) {
                     return fallback(request, "revoked");
                 }
                 String text = output.strip();
