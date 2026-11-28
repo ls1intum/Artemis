@@ -2,6 +2,7 @@ import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { EMPTY, Observable, Subscription, firstValueFrom } from 'rxjs';
@@ -111,6 +112,23 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // clone-and-replace here would detach this object from the one reachable via participation().submissions[0].results[0],
     // which is what feeds the code editor's inline feedback widgets; the two must stay the same object.
     readonly manualResult = signal<Result | undefined>(undefined, { equal: () => false });
+    /** The badge needs a fresh input on each score change. Count the same tests the tutor can open in its feedback dialog. */
+    readonly resultPreview = computed<Result | undefined>(() => {
+        const result = this.manualResult();
+        if (!result) {
+            return undefined;
+        }
+        // The editor owns these graphs; keep their references out of the metadata clone.
+        const { submission, feedbacks, ...metadata } = result;
+        const tests = feedbacks?.filter(Feedback.isTestCaseFeedback);
+        return cloneWith(metadata, {
+            submission,
+            feedbacks,
+            testCaseCount: tests?.length ?? result.testCaseCount,
+            passedTestCaseCount: tests?.filter(Feedback.testCasePassed).length ?? result.passedTestCaseCount,
+        });
+    });
+
     userId!: number; // set async in ngOnInit() from accountService.identity()
     // for assessment-layout
     readonly isTestRun = signal(false);
@@ -894,9 +912,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.isFirstAssessment = false;
 
         manualResult.score = (totalScore / this.exercise().maxPoints!) * 100;
-        // Re-set the same reference to update the result string in result.component.ts: `manualResult` has
-        // `equal: () => false`, so this still notifies without cloning (see the signal's declaration for why a
-        // clone would break the code editor's inline feedback rendering).
+        // Notify the preview while keeping the result shared with the editor's inline feedback.
         this.manualResult.set(manualResult);
     }
 

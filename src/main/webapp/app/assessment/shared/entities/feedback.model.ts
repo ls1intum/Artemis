@@ -109,6 +109,14 @@ export class Feedback implements BaseEntity {
         return !!feedback.testCase;
     }
 
+    /** Older results may only carry the credits. An explicit outcome also covers zero-point passes and partial credit on failures. */
+    public static testCasePassed(feedback: Pick<Feedback, 'positive' | 'credits'>): boolean | undefined {
+        if (feedback.positive !== undefined) {
+            return feedback.positive;
+        }
+        return feedback.credits === undefined ? undefined : feedback.credits > 0;
+    }
+
     public static isStaticCodeAnalysisFeedback(that: Feedback): boolean {
         if (!that.text) {
             return false;

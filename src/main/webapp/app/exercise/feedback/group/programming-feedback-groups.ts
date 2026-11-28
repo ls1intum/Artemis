@@ -1,3 +1,4 @@
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -24,7 +25,7 @@ class ProgrammingFeedbackGroupWrong extends FeedbackGroup {
     shouldContain(feedbackItem: FeedbackItem): boolean {
         const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits !== undefined && feedbackItem.credits < 0;
         const isTestFeedback = feedbackItem.type === 'Test';
-        const isFailedTest = feedbackItem.positive === false || (feedbackItem.positive === undefined && feedbackItem.credits === 0);
+        const isFailedTest = Feedback.testCasePassed(feedbackItem) === false;
         return isReviewerFeedback || (isTestFeedback && isFailedTest);
     }
 }
@@ -83,7 +84,7 @@ class ProgrammingFeedbackGroupCorrect extends FeedbackGroup {
     shouldContain(feedbackItem: FeedbackItem): boolean {
         const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits !== undefined && feedbackItem.credits > 0;
         const isTestFeedback = feedbackItem.type === 'Test';
-        const isSuccessfulTest = feedbackItem.positive === true || (feedbackItem.positive === undefined && !!feedbackItem.credits);
+        const isSuccessfulTest = Feedback.testCasePassed(feedbackItem) === true;
         return isReviewerFeedback || (isTestFeedback && isSuccessfulTest);
     }
 }
