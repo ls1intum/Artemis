@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { QuizQuestionPoolService } from './quiz-question-pool.service';
-import { PoolBuildStart, PoolProgress, PoolQuestion, PoolQuestionPage, PoolSettings } from './quiz-question-pool.types';
+import { PoolBuildStart, PoolLectureUnit, PoolProgress, PoolQuestion, PoolQuestionPage, PoolSelection, PoolSelectionCandidate, PoolSettings } from './quiz-question-pool.types';
 
 describe('QuizQuestionPoolService', () => {
     let service: QuizQuestionPoolService;
@@ -87,6 +87,39 @@ describe('QuizQuestionPoolService', () => {
         expect(result).toEqual({ planned: 36, missing: 12 });
     });
 
+    it('should load the lecture units and change the relevance of one', () => {
+        let units: PoolLectureUnit[] | undefined;
+        service.getLectureUnits(7).subscribe((result) => (units = result));
+        httpMock
+            .expectOne((r) => r.method === 'GET' && r.url === '/api/hyperion/courses/7/quiz-question-pool/lecture-units')
+            .flush([
+                { competencyId: 9, competencyTitle: 'Arrays', lectureUnitId: 4, lectureUnitName: 'Arrays in Java', excluded: false, materialChanged: true, questionCount: 12 },
+            ]);
+
+        expect(units).toEqual([
+            {
+                competencyId: 9,
+                competencyTitle: 'Arrays',
+                lectureUnitId: 4,
+                lectureUnitName: 'Arrays in Java',
+                lectureTitle: undefined,
+                excluded: false,
+                materialChanged: true,
+                questionCount: 12,
+                approvedCount: 0,
+                lastBuiltAt: undefined,
+            },
+        ]);
+
+        let excluded: boolean | undefined;
+        service.updateLectureUnitRelevance(7, 4, true).subscribe((result) => (excluded = result));
+        const req = httpMock.expectOne((r) => r.method === 'PUT' && r.url === '/api/hyperion/courses/7/quiz-question-pool/lecture-units/4/relevance');
+        expect(req.request.body).toEqual({ excluded: true });
+        req.flush({ excluded: true });
+
+        expect(excluded).toBe(true);
+    });
+
     it('should map progress with defaults for omitted counts', () => {
         let result: PoolProgress | undefined;
         service.getProgress(7).subscribe((progress) => (result = progress));
@@ -144,6 +177,42 @@ describe('QuizQuestionPoolService', () => {
         expect(req.request.body).toEqual(changed);
         req.flush(changed);
         expect(updated).toEqual(changed);
+    });
+
+    it('should load the questions a draw may take per cell with defaults for omitted counts', () => {
+        let result: PoolSelectionCandidate[] | undefined;
+        service.getSelectionCandidates(7).subscribe((candidates) => (result = candidates));
+
+        httpMock
+            .expectOne((r) => r.method === 'GET' && r.url === '/api/hyperion/courses/7/quiz-question-pool/selection-candidates')
+            .flush([
+                { competencyId: 9, lectureUnitId: 90, questionType: 'single-choice', difficulty: 'MEDIUM', count: 3 },
+                { questionType: 'true-false', difficulty: 'EASY' },
+            ]);
+
+        expect(result).toEqual([
+            { competencyId: 9, lectureUnitId: 90, questionType: 'single-choice', difficulty: 'MEDIUM', count: 3 },
+            { competencyId: 0, lectureUnitId: 0, questionType: 'true-false', difficulty: 'EASY', count: 0 },
+        ]);
+    });
+
+    it('should draw questions for a quiz and map the selection with defaults for omitted fields', () => {
+        let result: PoolSelection | undefined;
+        service.selectQuestions(7, { competencyIds: [9], count: 2, questionTypes: ['single-choice'] }).subscribe((selection) => (result = selection));
+
+        const req = httpMock.expectOne((r) => r.method === 'POST' && r.url === '/api/hyperion/courses/7/quiz-question-pool/select');
+        expect(req.request.body).toEqual({ competencyIds: [9], count: 2, questionTypes: ['single-choice'] });
+        req.flush({ questions: [item], requested: 2 });
+
+        expect(result!.requested).toBe(2);
+        expect(result!.competencyIdsWithoutQuestions).toEqual([]);
+        expect(result!.questions).toHaveLength(1);
+        expect(result!.questions[0].question!.id).toBe('pool-11');
+
+        service.selectQuestions(7, { competencyIds: [9, 10], count: 3 }).subscribe((selection) => (result = selection));
+        httpMock.expectOne((r) => r.method === 'POST' && r.url === '/api/hyperion/courses/7/quiz-question-pool/select').flush({ competencyIdsWithoutQuestions: [10] });
+
+        expect(result).toEqual({ questions: [], requested: 3, competencyIdsWithoutQuestions: [10] });
     });
 
     it('should send the review decision and map the updated item', () => {

@@ -216,6 +216,7 @@ data-exports/
 #################################
 /src/main/webapp/app/core/environments/environment.*.ts
 /src/main/webapp/i18n/*.json
+/src/main/webapp/vendor-styles/
 
 ######################
 # TypeScript output (should go to build/, but gitignore as safeguard)

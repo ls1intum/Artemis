@@ -14,6 +14,7 @@ import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ExamMode } from 'app/exam/shared/entities/exam-mode.model';
 
 describe('ExamBarComponent', () => {
     let fixture: ComponentFixture<ExamBarComponent>;
@@ -72,7 +73,7 @@ describe('ExamBarComponent', () => {
 
     it('should inset its title and its buttons by 12px, where the title of every page of the exam starts', () => {
         const bar: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exam-bar"]');
-        expect(bar.classList).toContain('px-3!');
+        expect(bar.classList).toContain('px-3');
         expect(bar.classList).not.toContain('px-4!');
         expect(bar.classList).not.toContain('px-6!');
     });
@@ -108,7 +109,7 @@ describe('ExamBarComponent', () => {
         it('should derive exam properties from inputs', () => {
             const exam = new Exam();
             exam.title = 'Test Exam Title';
-            exam.testExam = true;
+            exam.examMode = ExamMode.TEST;
             const studentExam = new StudentExam();
             studentExam.testRun = true;
             studentExam.exercises = [{ id: 1 } as Exercise];

@@ -48,7 +48,8 @@ public final class GenerationOutcome {
             @Nullable String capturedProblemStatement, SpecFidelityReport specFidelityReport, @Nullable String specDocument, @Nullable String testPlanJson) {
         this.loopResult = loopResult;
         this.verification = verification;
-        this.errorMessage = null;
+        // An unverified candidate kept after the agent loop failed carries the loop's stop cause, so the run reports why it stopped instead of only "not verified".
+        this.errorMessage = verification == null ? loopResult.stopCause() : null;
         this.capturedProducedFiles = capturedProducedFiles.entrySet().stream()
                 .collect(java.util.stream.Collectors.toUnmodifiableMap(Map.Entry::getKey, entry -> Map.copyOf(entry.getValue())));
         this.capturedProblemStatement = capturedProblemStatement;
@@ -73,7 +74,7 @@ public final class GenerationOutcome {
     }
 
     static GenerationOutcome error(AgentLoopResult loopResult) {
-        return new GenerationOutcome(loopResult, "The agent loop ended with an error.");
+        return new GenerationOutcome(loopResult, loopResult.stopCause() != null ? loopResult.stopCause() : "The agent loop ended with an error.");
     }
 
     static GenerationOutcome error(AgentLoopResult loopResult, String errorMessage) {

@@ -15,18 +15,28 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { TagModule } from 'primeng/tag';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular/tag';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 @Component({
     selector: 'jhi-posting-header',
     templateUrl: './posting-header.component.html',
-    styleUrls: ['../communication.component.scss'],
-    imports: [ProfilePictureComponent, NgClass, FaIconComponent, NgbTooltip, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, EmojiComponent, TagModule],
+    styleUrls: ['../communication.component.css'],
+    imports: [
+        ProfilePictureComponent,
+        NgClass,
+        FaIconComponent,
+        TumAetUiTooltipDirective,
+        TranslateDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        EmojiComponent,
+        TumAetUiTagComponent,
+    ],
 })
 export class PostingHeaderComponent implements OnInit {
     private communicationService = inject(CommunicationService);

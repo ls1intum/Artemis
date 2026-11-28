@@ -26,7 +26,7 @@ import { TUM_AET_UI_TRANSLATOR } from '../i18n/tumaet-ui-translations';
     selector: 'tumaet-ui-splitter',
     imports: [NgTemplateOutlet],
     templateUrl: './tumaet-ui-splitter.component.html',
-    styleUrl: './tumaet-ui-splitter.component.scss',
+    styleUrl: './tumaet-ui-splitter.component.css',
     host: { '[attr.data-layout]': 'layout()', '[class.vertical]': 'layout() === "vertical"' },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

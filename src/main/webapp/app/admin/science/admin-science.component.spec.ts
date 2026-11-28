@@ -11,7 +11,7 @@ import { ScienceEnabledCourse } from 'app/admin/science/admin-science.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ScienceEventType } from 'app/foundation/science/science.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TumAetUiAutoCompleteSearchEvent } from '@tumaet/ui-angular';
+import { TumAetUiAutoCompleteSearchEvent } from '@tumaet/ui-angular/autocomplete';
 
 describe('AdminScienceComponent', () => {
     let fixture: ComponentFixture<AdminScienceComponent>;

@@ -1,0 +1,212 @@
+:host {
+    display: block;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.example-submission-page {
+    display: flex;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+    gap: 0.5rem;
+    overflow: hidden;
+}
+
+.example-submission-header {
+    display: flex;
+    container-type: inline-size;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    flex-wrap: wrap;
+}
+
+.example-submission-header__identity,
+.example-submission-header__controls,
+.example-submission-header__training-mode {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.example-submission-header__identity {
+    flex: 1 1 12rem;
+}
+
+.example-submission-header__title {
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    color: var(--tumaet-ui-text-color);
+    font-size: 1.05rem;
+    font-weight: 650;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.example-submission-header__training {
+    display: inline-flex;
+    min-height: 1.75rem;
+    align-items: center;
+    padding: 0.2rem 0.55rem;
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-md);
+    background: var(--tumaet-ui-hover-background);
+    color: var(--tumaet-ui-muted-color);
+    font-size: 0.75rem;
+    font-weight: 650;
+    white-space: nowrap;
+}
+
+.example-submission-header__controls {
+    flex: 0 1 auto;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.example-submission-header__training-mode {
+    padding-right: 0.65rem;
+    border-right: 1px solid var(--tumaet-ui-border-color);
+}
+
+.example-submission-header__control-label {
+    color: var(--tumaet-ui-muted-color);
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.example-submission-header__score {
+    display: flex;
+    min-height: 2.25rem;
+    align-items: center;
+    padding: 0.35rem 0.65rem;
+    border: 1px solid var(--tumaet-ui-border-color);
+    border-radius: var(--tumaet-ui-radius-md);
+    background: var(--tumaet-ui-content-background);
+    white-space: nowrap;
+}
+
+.example-submission-workspace {
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex: 1;
+    overflow: hidden;
+}
+
+.example-submission-workspace > jhi-assessment-workspace {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+
+.example-submission-editor-canvas,
+.example-submission-assessment-canvas {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+
+.example-submission-editor-canvas jhi-modeling-editor,
+.example-submission-editor-canvas jhi-modeling-assessment,
+.example-submission-assessment-canvas jhi-modeling-editor,
+.example-submission-assessment-canvas jhi-modeling-assessment {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+
+.example-submission-mode-switch {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+}
+
+.example-assessment-rationale {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.example-assessment-rationale__header h3,
+.example-assessment-rationale__header p {
+    margin: 0;
+}
+
+.example-assessment-rationale__header h3 {
+    color: var(--tumaet-ui-text-color);
+    font-size: 1rem;
+    font-weight: 650;
+}
+
+.example-assessment-rationale__header p {
+    margin-top: 0.2rem;
+    color: var(--tumaet-ui-muted-color);
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.example-assessment-rationale textarea {
+    width: 100%;
+    min-width: 0;
+    max-height: 12rem;
+    overflow-y: auto;
+}
+
+.example-submission-feedback {
+    min-width: 0;
+}
+
+.example-submission-assessment-details {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+@container (max-width: 48rem) {
+    .example-submission-header__control-label {
+        display: none;
+    }
+
+    .example-submission-header__training-mode {
+        padding-right: 0;
+        border-right: 0;
+    }
+}
+
+@media (max-width: 48rem) {
+    .example-submission-header__identity,
+    .example-submission-header__controls {
+        width: 100%;
+    }
+
+    .example-submission-header__controls {
+        justify-content: space-between;
+    }
+
+    .example-submission-header__training-mode {
+        min-width: 0;
+        padding-right: 0;
+        border-right: 0;
+    }
+
+    .example-submission-header__control-label,
+    .example-submission-header__training {
+        display: none;
+    }
+}

@@ -58,7 +58,7 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTestBase extends Ab
     // subclass sets. All three subclasses run against the same Weaviate container but have their own database, and
     // entity ids overlap between them, so sharing one collection makes them observe each other's rows.
 
-    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.
+    // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestClient.
     @MockitoSpyBean
     protected JenkinsService continuousIntegrationService;
 

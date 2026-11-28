@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.account.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.ACCOUNT_EMAIL_CHANGED;
+import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.ACCOUNT_EMAIL_CHANGE_REQUESTED;
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.ACCOUNT_REGISTERED;
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.PASSWORD_RESET_REQUESTED;
 import static de.tum.cit.aet.artemis.core.config.audit.AuditEventConstants.PASSWORD_RESET_REQUEST_REJECTED;
@@ -90,6 +91,16 @@ public class AccountSecurityEventService {
     // A completed reset is recorded and announced by AccountSecurityNotificationService.passwordChanged with the RESET
     // actor, called from UserService.completePasswordReset. That path also reports what was revoked alongside the reset,
     // so a second notice here would only mean two audit rows and two near-identical emails for one reset.
+
+    /**
+     * Records that an e-mail change was requested. No notification is sent from here: the confirmation mail to the current address
+     * is the notification, and it tells the owner what to do if they did not ask for it.
+     *
+     * @param user the account the change was requested for
+     */
+    public void recordEmailChangeRequested(User user) {
+        addAuditEvent(user.getLogin(), ACCOUNT_EMAIL_CHANGE_REQUESTED, Map.of());
+    }
 
     /**
      * Records a self-service e-mail change and notifies the <b>previous</b> address.

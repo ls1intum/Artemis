@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import de.tum.cit.aet.artemis.buildagent.config.KubernetesBuildRunnerProperties;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
+import de.tum.cit.aet.artemis.localci.exception.ContainerNetworkNotAllowedException;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import io.fabric8.kubernetes.api.model.CapabilitiesBuilder;
 import io.fabric8.kubernetes.api.model.Container;
@@ -95,6 +96,9 @@ public class KubernetesBuildJobFactory {
     @Value("${artemis.continuous-integration.container-flags-limit.max-memory:0}")
     private int maximumMemoryMegabytes;
 
+    @Value("${artemis.continuous-integration.allow-privilege-escalation:true}")
+    private boolean allowPrivilegeEscalation = true;
+
     public KubernetesBuildJobFactory(KubernetesBuildRunnerProperties properties) {
         this.properties = properties;
     }
@@ -157,23 +161,26 @@ public class KubernetesBuildJobFactory {
      * Kubernetes leaves seccomp unconfined unless a profile is requested, while the Docker build runner always applies the container runtime's default profile. Requesting
      * {@code RuntimeDefault} therefore restores parity with the Docker runner instead of silently running with a weaker sandbox.
      * <p>
-     * {@code allowPrivilegeEscalation} and the default capability set are deliberately left untouched: exercise images legitimately install packages as root and use setuid
-     * tooling such as {@code sudo} or {@code gosu}. Disabling either would break those exercises, and the Docker runner does not restrict them either. Isolation of the builder
-     * relies on the Pod boundary, the disabled service account token, and the optional network isolation init container.
+     * The container runs with the same restrictions as the Docker build runner: the capabilities that the default set contains but that no build needs are dropped, and unless
+     * the administrator allows it with {@code artemis.continuous-integration.allow-privilege-escalation}, processes cannot gain privileges through setuid programs
+     * ({@code allowPrivilegeEscalation} is false). Network access, file ownership and the installation of packages as root keep working.
      * <p>
-     * The one exception is a build with the network {@code none}. That isolation is a set of firewall rules in the network namespace of the Pod, and a root process that keeps
-     * {@code CAP_NET_RAW}, which the default capability set contains, can open a packet socket that sends and receives frames without passing through them. Student code could
-     * then reach the network although the exercise forbids it, so this capability is dropped. It costs the build raw sockets, which a build without a network has no use for.
+     * A build with the network {@code none} also loses {@code CAP_NET_RAW}. That isolation is a set of firewall rules in the network namespace of the Pod, and a root process that
+     * keeps this capability can open a packet socket that sends and receives frames without passing through them. A build without a network has no use for raw sockets.
      *
      * @param networkIsolated whether the build runs with the network {@code none}
      * @return the security context applied to the builder container
      */
     private SecurityContext builderSecurityContext(boolean networkIsolated) {
-        var securityContext = new SecurityContextBuilder().withSeccompProfile(new SeccompProfileBuilder().withType("RuntimeDefault").build());
-        if (networkIsolated) {
-            securityContext.withCapabilities(new CapabilitiesBuilder().withDrop("NET_RAW").build());
+        List<String> dropped = new ArrayList<>(List.of("MKNOD", "SYS_CHROOT", "SETFCAP"));
+        if (!allowPrivilegeEscalation) {
+            dropped.add("AUDIT_WRITE");
         }
-        return securityContext.build();
+        if (networkIsolated) {
+            dropped.add("NET_RAW");
+        }
+        return new SecurityContextBuilder().withSeccompProfile(new SeccompProfileBuilder().withType("RuntimeDefault").build())
+                .withAllowPrivilegeEscalation(allowPrivilegeEscalation ? null : Boolean.FALSE).withCapabilities(new CapabilitiesBuilder().withDrop(dropped).build()).build();
     }
 
     private Container helperContainer() {
@@ -290,7 +297,7 @@ public class KubernetesBuildJobFactory {
             throw new LocalCIException("Custom memory swap is not supported by the Kubernetes build runner");
         }
         if (runConfig.network() != null && !runConfig.network().isBlank() && !"none".equals(runConfig.network())) {
-            throw new LocalCIException("Named Docker networks are not supported by the Kubernetes build runner. Supported values are empty and 'none'.");
+            throw new ContainerNetworkNotAllowedException("Named Docker networks are not supported by the Kubernetes build runner. Supported values are empty and 'none'.");
         }
     }
 }

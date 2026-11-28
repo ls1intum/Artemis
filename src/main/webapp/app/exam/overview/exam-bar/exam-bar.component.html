@@ -1,10 +1,10 @@
 <div
-    class="exam-bar flex h-10 shrink-0 items-center justify-between gap-4! rounded-lg bg-(--module-bg) px-3!"
+    class="exam-bar flex h-10 shrink-0 items-center justify-between gap-4 rounded-lg bg-(--module-bg) px-3"
     data-testid="exam-bar"
     [class]="isEndView() ? 'mx-auto w-full max-w-[900px] max-[900px]:max-w-[600px] max-[600px]:max-w-[500px]' : ''"
 >
     <div class="flex min-w-0 items-center gap-2">
-        <h3 class="m-0! truncate text-base! leading-tight! font-semibold!" data-testid="exam-bar-title">{{ examTitle() }}</h3>
+        <h3 class="m-0 truncate text-base leading-tight font-semibold" data-testid="exam-bar-title">{{ examTitle() }}</h3>
         @if (isTestRun()) {
             <tumaet-ui-tag id="testRunRibbon" severity="danger" class="shrink-0">
                 <span jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
@@ -12,8 +12,8 @@
         }
     </div>
     @if (!examTimeLineView()) {
-        <!-- Every button of the bar is 30px high like the buttons of a title row (see jhi-exam-exercise-header): 4px padding, a 20px line and the border. The important spelling beats the padding of the kit. -->
-        <div class="flex shrink-0 items-center gap-4! [&_.tumaet-ui-btn]:py-1! [&_.tumaet-ui-btn]:leading-5!">
+        <!-- Every button of the bar is 30px high like the buttons of a title row (see jhi-exam-exercise-header): 4px padding, a 20px line and the border. The utilities override the padding of the kit. -->
+        <div class="flex shrink-0 items-center gap-4 [&_.tumaet-ui-btn]:py-1! [&_.tumaet-ui-btn]:leading-5!">
             <jhi-exam-timer
                 [criticalTime]="isEndView() ? criticalTimeEndView : criticalTime"
                 [endDate]="endDate()"

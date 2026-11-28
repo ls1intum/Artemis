@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.net.SocketTimeoutException;
 
 import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -19,8 +18,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.ResponseActions;
-import org.springframework.web.client.RestTemplate;
 
+import de.tum.cit.aet.artemis.core.connector.MockRestClientServers;
 import de.tum.cit.aet.artemis.modeling.config.ApollonEnabled;
 
 @Component
@@ -28,11 +27,9 @@ import de.tum.cit.aet.artemis.modeling.config.ApollonEnabled;
 @Lazy
 public class ApollonRequestMockProvider {
 
-    private final RestTemplate restTemplate;
+    private final MockRestClientServers mockRestClientServers;
 
     private MockRestServiceServer mockServer;
-
-    private final RestTemplate shortTimeoutRestTemplate;
 
     private MockRestServiceServer mockServerShortTimeout;
 
@@ -41,20 +38,13 @@ public class ApollonRequestMockProvider {
 
     private AutoCloseable closeable;
 
-    public ApollonRequestMockProvider(@Qualifier("apollonRestTemplate") RestTemplate restTemplate,
-            @Qualifier("shortTimeoutApollonRestTemplate") RestTemplate shortTimeoutRestTemplate) {
-        this.restTemplate = restTemplate;
-        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
+    public ApollonRequestMockProvider(MockRestClientServers mockRestClientServers) {
+        this.mockRestClientServers = mockRestClientServers;
     }
 
     public void enableMockingOfRequests() {
-        MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
-        builder.ignoreExpectOrder(true);
-        mockServer = builder.build();
-
-        MockRestServiceServer.MockRestServiceServerBuilder builderShortTimeout = MockRestServiceServer.bindTo(shortTimeoutRestTemplate);
-        builderShortTimeout.ignoreExpectOrder(true);
-        mockServerShortTimeout = builderShortTimeout.build();
+        mockServer = mockRestClientServers.serverOf("apollonRestClient");
+        mockServerShortTimeout = mockRestClientServers.serverOf("shortTimeoutApollonRestClient");
 
         closeable = MockitoAnnotations.openMocks(this);
     }

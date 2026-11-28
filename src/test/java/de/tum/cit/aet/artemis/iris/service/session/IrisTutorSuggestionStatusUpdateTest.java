@@ -90,7 +90,7 @@ class IrisTutorSuggestionStatusUpdateTest {
         var existing = new LLMTokenUsageTrace();
         existing.setId(9L);
         when(usage.findLLMTokenUsageTraceById(9L)).thenReturn(Optional.of(existing));
-        var tokens = List.of(new LLMRequest("model", 10, 1f, 5, 2f, "pipeline"));
+        var tokens = List.of(new LLMRequest("model", 10, 5, "pipeline"));
         var traced = job.withTraceId(9L);
         assertThat(service.handleStatusUpdate(traced, new TutorSuggestionStatusUpdateDTO(null, null, PyrisRunState.RUNNING, null, tokens))).isEqualTo(traced);
         verify(usage).appendRequestsToTrace(tokens, existing);
@@ -102,7 +102,7 @@ class IrisTutorSuggestionStatusUpdateTest {
         var trace = new LLMTokenUsageTrace();
         trace.setId(9L);
         when(usage.saveLLMTokenUsage(any(), any(), any())).thenReturn(trace);
-        var tokens = List.of(new LLMRequest("model", 10, 1f, 5, 2f, "pipeline"));
+        var tokens = List.of(new LLMRequest("model", 10, 5, "pipeline"));
         var result = service.handleStatusUpdate(job, new TutorSuggestionStatusUpdateDTO(null, null, PyrisRunState.RUNNING, null, tokens));
         assertThat(result.traceId()).isEqualTo(9L);
         assertThat(result.sessionId()).isEqualTo(2L);

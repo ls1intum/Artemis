@@ -5,13 +5,14 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { createPanelOverlay } from 'app/tutorialgroup/shared/util/search-input-overlay';
-import { TumAetUiFormFieldComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiFormFieldComponent } from '@tumaet/ui-angular/form-field';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 
 @Component({
     selector: 'jhi-tutorial-edit-languages-input',
     imports: [TumAetUiFormFieldComponent, TumAetUiInputDirective, FormsModule, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './tutorial-edit-languages-input.component.html',
-    styleUrl: './tutorial-edit-languages-input.component.scss',
+    styleUrl: './tutorial-edit-languages-input.component.css',
 })
 export class TutorialEditLanguagesInputComponent implements OnDestroy {
     private overlay = inject(Overlay);

@@ -1,4 +1,4 @@
-<div class="col">
+<div>
     <div class="mb-2 flex flex-wrap items-baseline justify-between gap-x-4">
         <h5 class="m-0" jhiTranslate="artemisApp.learningPathManagement.learningPathsTable.title"></h5>
         <div>
@@ -45,18 +45,14 @@
                             <jhi-search-highlight [result]="learningPath.user.login" [term]="searchTerm()" />
                         </td>
                         <td>
-                            <span
+                            <button
+                                type="button"
                                 [id]="'open-competency-graph-button-' + learningPath.id"
-                                class="clickable link-primary"
+                                class="cursor-pointer border-0 bg-transparent p-0 text-primary underline"
                                 (click)="openCompetencyGraph(learningPath.id, learningPath.user.name)"
-                                #keyboardAction42
-                                role="button"
-                                tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction42.click() : undefined"
-                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction42.click() : undefined"
-                                ><u>{{ learningPath.progress }} %</u></span
                             >
+                                {{ learningPath.progress }} %
+                            </button>
                         </td>
                     </tr>
                 }

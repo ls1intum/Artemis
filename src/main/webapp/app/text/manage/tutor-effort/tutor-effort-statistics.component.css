@@ -1,0 +1,26 @@
+.effort-summary tr {
+    text-align: start;
+}
+
+.effort-summary td {
+    text-align: center;
+    font-size: x-large;
+    font-weight: bolder;
+}
+
+.effort-summary th {
+    text-align: center;
+}
+
+.effort-summary th .color-legend {
+    width: 5px;
+    height: 5px;
+    background: var(--graph-blue);
+    border-radius: 3px;
+}
+
+jhi-help-icon {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    margin-left: 5px;
+}

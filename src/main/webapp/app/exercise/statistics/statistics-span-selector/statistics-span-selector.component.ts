@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiSelectButtonComponent } from '@tumaet/ui-angular/select-button';
 import { SpanType } from 'app/exercise/shared/entities/statistics.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 

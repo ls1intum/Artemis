@@ -247,7 +247,7 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
         apollonDiagramRepository.save(apollonDiagram);
 
         String url = "/api/modeling/courses/" + course1.getId() + "/apollon-diagrams";
-        // Warm up request-independent caches (user groups, course authorization, feature toggles) so the comparison below
+        // Warm up request-independent caches (course roles, course authorization, feature toggles) so the comparison below
         // reflects only per-row query growth and not first-call cold-cache effects.
         request.getList(url, HttpStatus.OK, ApollonDiagramDTO.class);
 
@@ -376,7 +376,7 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetDiagramTitleAsUser() throws Exception {
         testGetDiagramTitle();
     }
@@ -387,6 +387,16 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
 
         final var title = request.get("/api/modeling/apollon-diagrams/" + savedDiagram.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(apollonDiagram.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "outsider", roles = "USER")
+    void testGetDiagramTitleAsUserOutsideTheCourse_forbidden() throws Exception {
+        userUtilService.createAndSaveUser(TEST_PREFIX + "outsider");
+        apollonDiagram.setCourseId(course1.getId());
+        ApollonDiagram savedDiagram = apollonDiagramRepository.save(apollonDiagram);
+
+        request.get("/api/modeling/apollon-diagrams/" + savedDiagram.getId() + "/title", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test

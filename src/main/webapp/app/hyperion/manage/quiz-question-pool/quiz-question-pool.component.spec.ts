@@ -2,15 +2,17 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
-import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular/confirm-dialog';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CourseTitleBarTitleComponent } from 'app/course/shared/course-title-bar-title/course-title-bar-title.component';
 import { QuizQuestionPoolItemListComponent } from './quiz-question-pool-item-list/quiz-question-pool-item-list.component';
 import { QuizQuestionPoolSettingsDialogComponent } from './quiz-question-pool-settings-dialog/quiz-question-pool-settings-dialog.component';
+import { QuizQuestionPoolCreateQuizDialogComponent } from './quiz-question-pool-create-quiz-dialog/quiz-question-pool-create-quiz-dialog.component';
+import { QuizQuestionHandoffService } from 'app/quiz/manage/update/quiz-question-handoff.service';
 import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 import { InfiniteScrollDirective } from 'app/shared-ui/infinite-scroll/infinite-scroll.directive';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -18,7 +20,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { Course } from 'app/course/shared/entities/course.model';
 import { QuizQuestionPoolComponent } from './quiz-question-pool.component';
 import { QuizQuestionPoolService } from './quiz-question-pool.service';
-import { PoolProgress, PoolQuestion, PoolQuestionPage, PoolQuestionQuery, PoolSettings } from './quiz-question-pool.types';
+import { PoolProgress, PoolQuestion, PoolQuestionPage, PoolQuestionQuery, PoolSelection, PoolSettings } from './quiz-question-pool.types';
 
 describe('QuizQuestionPoolComponent', () => {
     let fixture: ComponentFixture<QuizQuestionPoolComponent>;
@@ -26,6 +28,8 @@ describe('QuizQuestionPoolComponent', () => {
     let poolService: QuizQuestionPoolService;
     let courseManagementService: CourseManagementService;
     let alertService: AlertService;
+    let router: Router;
+    let handoffService: QuizQuestionHandoffService;
 
     const progress: PoolProgress = { running: false, total: 10, toGenerate: 0, toJudge: 0, judged: 9, accepted: 7, rejected: 2, failed: 1, modelConfigured: true };
     const settings: PoolSettings = {
@@ -55,6 +59,7 @@ describe('QuizQuestionPoolComponent', () => {
             flagged: false,
             question: { id: `pool-${id}`, type: 'single-choice', title: `Q${id}`, questionText: 'Q?', options: [{ text: 'A', correct: true }] },
             decision: { accepted: true, aggregateScore: 1, verdicts: [], rationale: 'ok' },
+            materialChanged: false,
             updatedAt: '2026-10-13T10:00:00Z',
         };
     }
@@ -84,17 +89,27 @@ describe('QuizQuestionPoolComponent', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideRouter([]),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: { params } },
                 MockProvider(DeleteDialogService),
             ],
         }).overrideComponent(QuizQuestionPoolComponent, {
-            remove: { imports: [CourseTitleBarTitleComponent, QuizQuestionPoolItemListComponent, QuizQuestionPoolSettingsDialogComponent, InfiniteScrollDirective] },
+            remove: {
+                imports: [
+                    CourseTitleBarTitleComponent,
+                    QuizQuestionPoolItemListComponent,
+                    QuizQuestionPoolSettingsDialogComponent,
+                    QuizQuestionPoolCreateQuizDialogComponent,
+                    InfiniteScrollDirective,
+                ],
+            },
             add: {
                 imports: [
                     MockComponent(CourseTitleBarTitleComponent),
                     MockComponent(QuizQuestionPoolItemListComponent),
                     MockComponent(QuizQuestionPoolSettingsDialogComponent),
+                    MockComponent(QuizQuestionPoolCreateQuizDialogComponent),
                     MockDirective(InfiniteScrollDirective),
                 ],
             },
@@ -102,11 +117,15 @@ describe('QuizQuestionPoolComponent', () => {
         poolService = TestBed.inject(QuizQuestionPoolService);
         courseManagementService = TestBed.inject(CourseManagementService);
         alertService = TestBed.inject(AlertService);
+        router = TestBed.inject(Router);
+        handoffService = TestBed.inject(QuizQuestionHandoffService);
+        vi.spyOn(router, 'navigate').mockResolvedValue(true);
         vi.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: { id: 1, ...course } as Course })));
         vi.spyOn(poolService, 'getProgress').mockReturnValue(of(progress));
         vi.spyOn(poolService, 'getQuestions').mockImplementation(pagesOf(questions()));
         vi.spyOn(poolService, 'getSettings').mockReturnValue(of(settings));
         vi.spyOn(poolService, 'getPlan').mockReturnValue(of({ planned: 10, missing: 0 }));
+        vi.spyOn(poolService, 'getLectureUnits').mockReturnValue(of([]));
         fixture = TestBed.createComponent(QuizQuestionPoolComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
@@ -115,6 +134,139 @@ describe('QuizQuestionPoolComponent', () => {
     afterEach(() => {
         vi.useRealTimers();
         vi.restoreAllMocks();
+    });
+
+    it('should load the questions a draw may take before opening the create-quiz dialog', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: false });
+        const candidates = [{ competencyId: 9, lectureUnitId: 90, questionType: 'single-choice' as const, difficulty: 'MEDIUM' as const, count: 2 }];
+        vi.spyOn(poolService, 'getSelectionCandidates').mockReturnValue(of(candidates));
+
+        component.openCreateQuizDialog();
+
+        expect(poolService.getSelectionCandidates).toHaveBeenCalledWith(1);
+        expect(component.selectionCandidates()).toEqual(candidates);
+        expect(component.createQuizDialogVisible()).toBe(true);
+        expect(component.isLoadingCandidates()).toBe(false);
+    });
+
+    it('should not open the create-quiz dialog when the questions a draw may take cannot be loaded', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: false });
+        vi.spyOn(poolService, 'getSelectionCandidates').mockReturnValue(throwError(() => new Error('boom')));
+        const errorSpy = vi.spyOn(alertService, 'error');
+
+        component.openCreateQuizDialog();
+
+        expect(component.createQuizDialogVisible()).toBe(false);
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.quizQuestionPool.createQuiz.failed');
+    });
+
+    it('should draw questions, hand them to the quiz editor and navigate there', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: false });
+        const drawn = questions().slice(0, 2);
+        vi.spyOn(poolService, 'selectQuestions').mockReturnValue(of({ questions: drawn, requested: 2, competencyIdsWithoutQuestions: [] }));
+        const offerSpy = vi.spyOn(handoffService, 'offer');
+        const infoSpy = vi.spyOn(alertService, 'info');
+        component.createQuizDialogVisible.set(true);
+
+        component.createQuiz({ competencyIds: [9], count: 2 });
+
+        expect(poolService.selectQuestions).toHaveBeenCalledWith(1, { competencyIds: [9], count: 2 });
+        expect(offerSpy).toHaveBeenCalledWith(
+            1,
+            drawn.map((q) => q.question),
+        );
+        expect(router.navigate).toHaveBeenCalledWith(['/course-management', 1, 'quiz-exercises', 'new']);
+        expect(infoSpy).not.toHaveBeenCalled();
+        expect(component.createQuizDialogVisible()).toBe(false);
+        expect(component.isCreatingQuiz()).toBe(false);
+    });
+
+    it('should cancel a pending draw when the create-quiz dialog is closed', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: false });
+        const response = new Subject<PoolSelection>();
+        vi.spyOn(poolService, 'selectQuestions').mockReturnValue(response);
+        const offerSpy = vi.spyOn(handoffService, 'offer');
+        component.setCreateQuizDialogVisible(true);
+
+        component.createQuiz({ competencyIds: [9], count: 2 });
+        expect(component.isCreatingQuiz()).toBe(true);
+        component.setCreateQuizDialogVisible(false);
+        response.next({ questions: questions().slice(0, 2), requested: 2, competencyIdsWithoutQuestions: [] });
+
+        expect(response.observed).toBe(false);
+        expect(offerSpy).not.toHaveBeenCalled();
+        expect(router.navigate).not.toHaveBeenCalled();
+        expect(component.isCreatingQuiz()).toBe(false);
+        expect(component.createQuizDialogVisible()).toBe(false);
+    });
+
+    it('should drop the handed-over questions when the quiz editor does not open', async () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: false });
+        vi.spyOn(poolService, 'selectQuestions').mockReturnValue(of({ questions: questions().slice(0, 2), requested: 2, competencyIdsWithoutQuestions: [] }));
+        vi.mocked(router.navigate).mockResolvedValue(false);
+        const clearSpy = vi.spyOn(handoffService, 'clear');
+
+        component.createQuiz({ competencyIds: [9], count: 2 });
+        await Promise.resolve();
+
+        expect(clearSpy).toHaveBeenCalledOnce();
+        expect(handoffService.take(1)).toEqual([]);
+    });
+
+    it('should keep the questions of a later draw when the navigation of an earlier one is superseded', async () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: false });
+        const drawn = questions();
+        vi.spyOn(poolService, 'selectQuestions')
+            .mockReturnValueOnce(of({ questions: drawn.slice(0, 1), requested: 1, competencyIdsWithoutQuestions: [] }))
+            .mockReturnValueOnce(of({ questions: drawn.slice(1, 2), requested: 1, competencyIdsWithoutQuestions: [] }));
+        let resolveFirst!: (opened: boolean) => void;
+        vi.mocked(router.navigate)
+            .mockReturnValueOnce(new Promise<boolean>((resolve) => (resolveFirst = resolve)))
+            .mockResolvedValueOnce(true);
+
+        component.createQuiz({ competencyIds: [9], count: 1 });
+        component.createQuiz({ competencyIds: [9], count: 1 });
+        resolveFirst(false);
+        await Promise.resolve();
+
+        expect(handoffService.take(1)).toEqual([drawn[1].question]);
+    });
+
+    it('should say so when the draw yields fewer questions than requested', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: false });
+        vi.spyOn(poolService, 'selectQuestions').mockReturnValue(of({ questions: questions().slice(0, 1), requested: 5, competencyIdsWithoutQuestions: [10] }));
+        const infoSpy = vi.spyOn(alertService, 'info');
+
+        component.createQuiz({ competencyIds: [9, 10], count: 5 });
+
+        expect(infoSpy).toHaveBeenCalledWith('artemisApp.hyperion.quizQuestionPool.createQuiz.fewer', { selected: 1, requested: 5 });
+        expect(router.navigate).toHaveBeenCalled();
+    });
+
+    it('should keep the dialog open and warn when the draw yields nothing', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: false });
+        vi.spyOn(poolService, 'selectQuestions').mockReturnValue(of({ questions: [], requested: 5, competencyIdsWithoutQuestions: [9] }));
+        const warningSpy = vi.spyOn(alertService, 'warning');
+        const offerSpy = vi.spyOn(handoffService, 'offer');
+        component.createQuizDialogVisible.set(true);
+
+        component.createQuiz({ competencyIds: [9], count: 5 });
+
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.quizQuestionPool.createQuiz.none');
+        expect(offerSpy).not.toHaveBeenCalled();
+        expect(router.navigate).not.toHaveBeenCalled();
+        expect(component.createQuizDialogVisible()).toBe(true);
+    });
+
+    it('should report a failed draw', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: false });
+        vi.spyOn(poolService, 'selectQuestions').mockReturnValue(throwError(() => new Error('boom')));
+        const errorSpy = vi.spyOn(alertService, 'error');
+
+        component.createQuiz({ competencyIds: [9], count: 5 });
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.quizQuestionPool.createQuiz.failed');
+        expect(component.isCreatingQuiz()).toBe(false);
     });
 
     it('should load course, progress, questions and settings for an instructor', () => {
@@ -213,6 +365,21 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.questions()).toHaveLength(40);
         expect(component.questions().at(-1)?.id).toBe(40);
         expect(component.remainingQuestions()).toBe(210);
+    });
+
+    it('should keep the review queue as the user folded it when the page refreshes', () => {
+        const all = [{ ...question(1, 9, 'Arrays'), flagged: true }, question(2, 9, 'Arrays')];
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        vi.spyOn(poolService, 'getQuestions').mockImplementation(pagesOf(all));
+        component.refresh();
+        expect(component.queueCollapsed()).toBe(false);
+
+        component.queueCollapsed.set(true);
+        all.push({ ...question(3, 10, 'Loops'), flagged: true });
+        component.refresh();
+
+        expect(component.needsReviewQuestions().map((item) => item.id)).toEqual([1, 3]);
+        expect(component.queueCollapsed()).toBe(true);
     });
 
     it('should show flagged questions as a queue that folds once every one of them is reviewed', () => {
@@ -560,6 +727,26 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.isRunning()).toBe(false);
         expect(progressSpy.mock.calls.filter((call) => call[0] === 1)).toHaveLength(pollsOfFirstCourse);
         expect(progressSpy).toHaveBeenCalledWith(2);
+    });
+
+    it('should drop a draw started during an earlier visit of the same course', () => {
+        const params = new Subject<Record<string, string>>();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: false }, params.asObservable());
+        const response = new Subject<PoolSelection>();
+        vi.spyOn(poolService, 'selectQuestions').mockReturnValue(response);
+        const offerSpy = vi.spyOn(handoffService, 'offer');
+        params.next({ courseId: '1' });
+        component.createQuiz({ competencyIds: [9], count: 2 });
+
+        params.next({ courseId: '2' });
+        params.next({ courseId: '1' });
+        response.next({ questions: questions().slice(0, 2), requested: 2, competencyIdsWithoutQuestions: [] });
+
+        expect(component.courseId()).toBe(1);
+        expect(response.observed).toBe(false);
+        expect(offerSpy).not.toHaveBeenCalled();
+        expect(router.navigate).not.toHaveBeenCalled();
+        expect(component.isCreatingQuiz()).toBe(false);
     });
 
     it('should ignore a late build start and a late settings save of a previous course', () => {
@@ -1028,7 +1215,7 @@ describe('QuizQuestionPoolComponent', () => {
 
         expect(component.runningBuildSettings()).toEqual(buildSettings);
         expect(component.runningBuildFacts().map((fact) => fact.values['count'])).toEqual([10, 5, 12, undefined]);
-        expect(component.settingsFacts().map((fact) => fact.changed)).toEqual([false, true, true, false]);
+        expect(component.settingsFacts().map((fact) => fact.changed)).toEqual([false, true, true, false, false]);
         expect(fixture.nativeElement.querySelector('[data-testid="pool-build-settings-summary"]')).not.toBeNull();
         expect(fixture.nativeElement.querySelectorAll('[data-testid="pool-settings-summary"] [data-changed]')).toHaveLength(2);
 
@@ -1104,6 +1291,147 @@ describe('QuizQuestionPoolComponent', () => {
         first.complete();
 
         expect(component.questions().map((question) => question.state)).toEqual(['FILTERED', 'FILTERED', 'FILTERED']);
+    });
+
+    it('should show the last build with its trigger, counts and failure', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        component.progress.set({
+            ...progress,
+            lastBuild: {
+                id: 3,
+                trigger: 'SCHEDULED',
+                startedAt: '2026-11-02T02:00:00Z',
+                finishedAt: '2026-11-02T02:10:00Z',
+                enqueued: 12,
+                generated: 14,
+                judged: 12,
+                accepted: 10,
+                rejected: 2,
+                failed: 0,
+                failure: 'model unavailable',
+            },
+        });
+        fixture.detectChanges();
+
+        expect(component.triggerLabelKey('SCHEDULED')).toBe('artemisApp.hyperion.quizQuestionPool.progress.trigger.SCHEDULED');
+        expect(fixture.nativeElement.querySelector('[data-testid="pool-last-build"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="pool-last-build-failure"]')).not.toBeNull();
+    });
+
+    it('should list the lecture units per competency and exclude one only after confirmation', () => {
+        const units = [
+            {
+                competencyId: 9,
+                competencyTitle: 'Arrays',
+                lectureUnitId: 4,
+                lectureUnitName: 'Arrays in Java',
+                excluded: false,
+                materialChanged: true,
+                questionCount: 12,
+                approvedCount: 3,
+            },
+            {
+                competencyId: 9,
+                competencyTitle: 'Arrays',
+                lectureUnitId: 6,
+                lectureUnitName: 'Arrays, continued',
+                excluded: true,
+                materialChanged: false,
+                questionCount: 0,
+                approvedCount: 0,
+            },
+            {
+                competencyId: 10,
+                competencyTitle: 'Loops',
+                lectureUnitId: 4,
+                lectureUnitName: 'Arrays in Java',
+                excluded: false,
+                materialChanged: true,
+                questionCount: 12,
+                approvedCount: 3,
+            },
+        ];
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        vi.spyOn(poolService, 'getLectureUnits').mockReturnValue(of(units));
+        const relevanceSpy = vi.spyOn(poolService, 'updateLectureUnitRelevance').mockReturnValue(of(true));
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        component.refresh();
+        fixture.detectChanges();
+
+        expect(component.lectureUnitGroups().map((group) => [group.competencyId, group.units.length])).toEqual([
+            [9, 2],
+            [10, 1],
+        ]);
+        expect(component.excludedUnitCount()).toBe(1);
+        expect(component.changedUnitCount()).toBe(1);
+
+        component.toggleLectureUnit(units[0]);
+        expect(relevanceSpy).not.toHaveBeenCalled();
+        confirmationService.request(undefined)!.accept();
+        expect(relevanceSpy).toHaveBeenCalledWith(1, 4, true);
+
+        component.toggleLectureUnit(units[1]);
+        expect(relevanceSpy).toHaveBeenLastCalledWith(1, 6, false);
+    });
+
+    it('should not exclude a lecture unit of a course that is no longer shown when the confirmation is accepted', () => {
+        const params = new Subject<Record<string, string>>();
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true }, params.asObservable());
+        params.next({ courseId: '1' });
+        const relevanceSpy = vi.spyOn(poolService, 'updateLectureUnitRelevance').mockReturnValue(of(true));
+        const warningSpy = vi.spyOn(alertService, 'warning');
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+
+        component.toggleLectureUnit({
+            competencyId: 9,
+            competencyTitle: 'Arrays',
+            lectureUnitId: 4,
+            lectureUnitName: 'Arrays in Java',
+            excluded: false,
+            materialChanged: false,
+            questionCount: 12,
+            approvedCount: 0,
+        });
+        const confirmation = confirmationService.request(undefined)!;
+        params.next({ courseId: '2' });
+        confirmation.accept();
+
+        expect(relevanceSpy).not.toHaveBeenCalled();
+        expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.quizQuestionPool.courseChanged');
+    });
+
+    it('should explain a refused exclusion while a build runs', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        vi.spyOn(poolService, 'updateLectureUnitRelevance').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
+        const errorSpy = vi.spyOn(alertService, 'error');
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+
+        component.toggleLectureUnit({
+            competencyId: 9,
+            competencyTitle: 'Arrays',
+            lectureUnitId: 4,
+            lectureUnitName: 'Arrays in Java',
+            excluded: false,
+            materialChanged: false,
+            questionCount: 1,
+            approvedCount: 0,
+        });
+        confirmationService.request(undefined)!.accept();
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.quizQuestionPool.errors.buildRunning');
+        expect(component.busyLectureUnitIds().size).toBe(0);
+    });
+
+    it('should fold and unfold the lecture units from anywhere in their header row', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        const header = document.createElement('div');
+        header.className = 'tumaet-ui-panel-header';
+        const title = document.createElement('span');
+        header.append(title);
+
+        expect(component.unitsCollapsed()).toBe(true);
+        component.toggleUnitsFromHeader({ target: title } as unknown as MouseEvent);
+        expect(component.unitsCollapsed()).toBe(false);
     });
 
     it('should delete a question after the instructor confirms', () => {

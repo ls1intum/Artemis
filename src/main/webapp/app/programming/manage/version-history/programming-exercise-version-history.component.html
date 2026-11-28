@@ -2,11 +2,9 @@
     <jhi-exercise-version-history-layout>
         <div version-history-left class="timeline-pane">
             @if (timelineError(); as timelineErrorKey) {
-                <p-message severity="error">
-                    <ng-template pTemplate>
-                        <span [jhiTranslate]="timelineErrorKey"></span>
-                    </ng-template>
-                </p-message>
+                <tumaet-ui-message severity="error">
+                    <span [jhiTranslate]="timelineErrorKey"></span>
+                </tumaet-ui-message>
             }
 
             <jhi-exercise-version-history-timeline
@@ -23,17 +21,15 @@
 
         <div version-history-right class="snapshot-pane">
             @if (snapshotError(); as snapshotErrorKey) {
-                <p-message severity="error" styleClass="mb-3">
-                    <ng-template pTemplate>
-                        <span [jhiTranslate]="snapshotErrorKey"></span>
-                    </ng-template>
-                </p-message>
+                <tumaet-ui-message severity="error" class="mb-4">
+                    <span [jhiTranslate]="snapshotErrorKey"></span>
+                </tumaet-ui-message>
             }
 
             @if (isLoadingSnapshot()) {
                 <div class="snapshot-skeleton">
-                    <p-skeleton width="100%" height="10rem" styleClass="mb-3" />
-                    <p-skeleton width="100%" height="12rem" />
+                    <tumaet-ui-skeleton class="mb-4 h-40 w-full" />
+                    <tumaet-ui-skeleton class="h-48 w-full" />
                 </div>
             } @else if (selectedSnapshot(); as snapshot) {
                 <div class="snapshot-panels">
@@ -41,11 +37,9 @@
                     <jhi-programming-exercise-version-programming-metadata [programmingData]="snapshot.programmingData" />
                 </div>
             } @else if (!timelineError() && !snapshotError()) {
-                <p-message severity="info">
-                    <ng-template pTemplate>
-                        <span jhiTranslate="artemisApp.exercise.versionHistory.snapshot.empty"></span>
-                    </ng-template>
-                </p-message>
+                <tumaet-ui-message severity="info">
+                    <span jhiTranslate="artemisApp.exercise.versionHistory.snapshot.empty"></span>
+                </tumaet-ui-message>
             }
         </div>
     </jhi-exercise-version-history-layout>

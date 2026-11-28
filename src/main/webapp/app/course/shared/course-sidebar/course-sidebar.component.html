@@ -1,51 +1,65 @@
-<div class="mt-2 sidebar-container px-1 d-flex h-100 justify-content-between flex-column" [class]="{ collapsed: isNavbarCollapsed() || !canExpand() }">
+<div class="mt-2 sidebar-container px-1 flex h-full flex-col justify-between" [class]="{ collapsed: isNavbarCollapsed() || !canExpand() }">
     <div>
         <!-- NavItems -->
         <div>
-            <ul ngbDropdown #itemsDrop="ngbDropdown" container="body" placement="right" class="navbar-nav justify-content-end grow text-decoration-none">
+            <ul class="m-0 flex grow list-none flex-col justify-end p-0">
                 @for (sidebarItem of sidebarItemsTop(); track sidebarItem.routerLink) {
-                    <li class="nav-item" [hidden]="sidebarItem.hidden">
+                    <li [hidden]="sidebarItem.hidden">
                         <ng-template *ngTemplateOutlet="navItem; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText }" />
                     </li>
                 }
-                <li ngbDropdownToggle class="nav-item">
-                    <div [hidden]="!anyItemHidden()" class="three-dots nav-link nav-link-sidebar px-2" [class]="{ collapsed: isNavbarCollapsed() }">
+                <li>
+                    <button
+                        type="button"
+                        [hidden]="!anyItemHidden()"
+                        class="three-dots nav-link-sidebar px-2! py-2!"
+                        [class]="{ collapsed: isNavbarCollapsed() }"
+                        [tumAetUiMenuTrigger]="moreMenu"
+                        [tumAetUiMenuPosition]="moreMenuPositions"
+                    >
                         <fa-icon [fixedWidth]="true" [icon]="faEllipsis" />
                         <span
                             class="more ms-2"
                             [ngClass]="{ 'auto-collapse': !isNavbarCollapsed(), 'sidebar-collapsed-course-overview': isNavbarCollapsed() }"
                             [jhiTranslate]="'artemisApp.courseOverview.menu.more'"
                         ></span>
-                    </div>
-                </li>
-                <li class="list-none">
-                    <ul ngbDropdownMenu class="dropdown-content list-none m-0 p-0" [ngClass]="{ fixedContentSize: hiddenItems().length >= 4 }">
-                        @for (hiddenItem of hiddenItems(); track hiddenItem) {
-                            <li class="nav-item">
-                                <ng-template *ngTemplateOutlet="navItem; context: { $implicit: hiddenItem, iconTextTemplate: navIconAndTextHidden }" />
-                            </li>
-                        }
-                        @if (courseActionItems()?.length && anyItemHidden()) {
-                            @for (courseActionItem of courseActionItems(); track courseActionItem) {
-                                <li class="nav-item">
-                                    <a
-                                        class="nav-link nav-link-sidebar py-2"
-                                        [ngClass]="{ collapsed: isNavbarCollapsed() }"
-                                        (click)="courseActionItemClick.emit(courseActionItem)"
+                    </button>
+                    <ng-template #moreMenu>
+                        <tumaet-ui-menu
+                            class="more-menu"
+                            [class.fixedContentSize]="menuItems().length >= 4"
+                            [attr.aria-label]="'artemisApp.courseOverview.menu.more' | artemisTranslate"
+                        >
+                            @for (hiddenItem of menuItems(); track hiddenItem) {
+                                <a
+                                    tumAetUiMenuItem
+                                    class="nav-link-sidebar"
+                                    [id]="hiddenItem.testId ?? ''"
+                                    [class.newMessage]="!communicationRouteLoaded() && hasUnreadMessages() && hiddenItem.title === 'Communication'"
+                                    [routerLink]="hiddenItem.routerLink"
+                                    routerLinkActive="active"
+                                    [routerLinkActiveOptions]="hiddenItem?.isPrefix ? { exact: true } : { exact: false }"
+                                    [title]="hiddenItem.title"
+                                    (triggered)="onSidebarItemClick(hiddenItem)"
+                                >
+                                    <ng-template *ngTemplateOutlet="navIconAndTextHidden; context: { $implicit: hiddenItem }" />
+                                </a>
+                            }
+                            @if (courseActionItems()?.length && anyItemHidden()) {
+                                @for (courseActionItem of courseActionItems(); track courseActionItem) {
+                                    <button
+                                        type="button"
+                                        tumAetUiMenuItem
+                                        class="nav-link-sidebar more-menu-action"
                                         [title]="courseActionItem.title"
-                                        #keyboardAction30
-                                        role="button"
-                                        tabindex="0"
-                                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction30.click() : undefined"
-                                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction30.click() : undefined"
+                                        (triggered)="courseActionItemClick.emit(courseActionItem)"
                                     >
                                         <ng-template *ngTemplateOutlet="navIconAndTextHidden; context: { $implicit: courseActionItem }" />
-                                    </a>
-                                </li>
+                                    </button>
+                                }
                             }
-                        }
-                    </ul>
+                        </tumaet-ui-menu>
+                    </ng-template>
                 </li>
             </ul>
         </div>
@@ -53,12 +67,12 @@
     <!-- Course Action Items  -->
     <div>
         @if (courseActionItems()?.length && !anyItemHidden()) {
-            <ul ngbDropdown placement="top" class="navbar-nav mb-2">
-                <li class="nav-item">
+            <ul class="m-0 mb-2 flex list-none flex-col p-0">
+                <li>
                     @for (courseActionItem of courseActionItems(); track courseActionItem; let i = $index) {
                         <a
                             [id]="'action-item-' + i"
-                            class="nav-link nav-link-sidebar"
+                            class="nav-link-sidebar py-2!"
                             [ngClass]="{ collapsed: isNavbarCollapsed() }"
                             (click)="courseActionItemClick.emit(courseActionItem)"
                             [title]="courseActionItem.title"
@@ -76,13 +90,13 @@
             </ul>
         }
 
-        <div class="navbar-nav mb-2">
-            <ul class="navbar-nav">
+        <div class="mb-2 flex flex-col">
+            <ul class="m-0 flex list-none flex-col p-0">
                 @for (bottomItem of sidebarItemsBottom(); track bottomItem.routerLink; let isLast = $last) {
-                    <li class="nav-item" [hidden]="bottomItem.hidden">
-                        <div [class.d-flex]="!isNavbarCollapsed() && canExpand()">
+                    <li [hidden]="bottomItem.hidden">
+                        <div [class.flex]="!isNavbarCollapsed() && canExpand()">
                             <a
-                                class="nav-link nav-link-sidebar px-2 py-2"
+                                class="nav-link-sidebar px-2! py-2!"
                                 [id]="bottomItem.testId ?? ''"
                                 [ngClass]="{
                                     newMessage: !communicationRouteLoaded() && hasUnreadMessages() && bottomItem.title === 'Communication',
@@ -93,9 +107,9 @@
                                 [routerLinkActiveOptions]="bottomItem?.isPrefix ? { exact: true } : { exact: false }"
                                 [jhiFeatureToggleHide]="bottomItem.featureToggle"
                                 [title]="bottomItem.title"
-                                (click)="itemsDrop?.close()"
+                                (click)="itemsDrop().close()"
                             >
-                                <div class="d-flex align-items-center">
+                                <div class="flex items-center">
                                     @if (bottomItem.iconImage) {
                                         <span
                                             class="sidebar-icon-image"
@@ -107,7 +121,7 @@
                                         <fa-icon [fixedWidth]="true" [icon]="bottomItem.icon" [style.color]="bottomItem.iconColor" />
                                     }
                                     @if (!isNavbarCollapsed()) {
-                                        <span class="auto-collapse text-truncate ms-2" [jhiTranslate]="bottomItem.translation"></span>
+                                        <span class="auto-collapse truncate ms-2" [jhiTranslate]="bottomItem.translation"></span>
                                     }
                                 </div>
                             </a>
@@ -115,9 +129,8 @@
                                 <div
                                     class="double-arrow pe-1"
                                     [ngClass]="{ 'menu-collapsed': isNavbarCollapsed() }"
-                                    [ngbTooltip]="'global.generic.collapseMenu' | artemisTranslate"
-                                    tooltipClass="double-arrow-tooltip"
-                                    [container]="'body'"
+                                    [tumAetUiTooltip]="'global.generic.collapseMenu' | artemisTranslate"
+                                    [tumAetUiTooltipDescribesHost]="false"
                                     (click)="toggleCollapseState.emit()"
                                     #keyboardAction93
                                     role="button"
@@ -140,10 +153,10 @@
             </ul>
             @if ((isNavbarCollapsed() || !sidebarItemsBottom().length) && canExpand()) {
                 <div
-                    class="double-arrow mb-3"
+                    class="double-arrow mb-4"
                     [ngClass]="{ 'menu-collapsed': isNavbarCollapsed() }"
-                    [tooltipClass]="isNavbarCollapsed() ? 'double-arrow-tooltip-collapsed' : 'double-arrow-tooltip-no-bottom-items'"
-                    [ngbTooltip]="(isNavbarCollapsed() ? 'global.generic.expandMenu' : 'global.generic.collapseMenu') | artemisTranslate"
+                    [tumAetUiTooltipDescribesHost]="false"
+                    [tumAetUiTooltip]="(isNavbarCollapsed() ? 'global.generic.expandMenu' : 'global.generic.collapseMenu') | artemisTranslate"
                     (click)="toggleCollapseState.emit()"
                     #keyboardAction112
                     role="button"
@@ -186,7 +199,7 @@
 
     <ng-template #navItem let-sidebarItem let-iconTextTemplate="iconTextTemplate">
         <a
-            class="nav-link nav-link-sidebar px-2 py-2"
+            class="nav-link-sidebar px-2! py-2!"
             [id]="sidebarItem.testId ?? ''"
             [ngClass]="{
                 newMessage: !communicationRouteLoaded() && hasUnreadMessages() && sidebarItem.title === 'Communication',
@@ -197,7 +210,7 @@
             [routerLinkActiveOptions]="sidebarItem?.isPrefix ? { exact: true } : { exact: false }"
             [jhiFeatureToggleHide]="sidebarItem.featureToggle"
             [title]="sidebarItem.title"
-            (click)="onSidebarItemClick(sidebarItem); itemsDrop?.close()"
+            (click)="onSidebarItemClick(sidebarItem)"
         >
             <ng-template *ngTemplateOutlet="iconTextTemplate; context: { $implicit: sidebarItem }" />
         </a>

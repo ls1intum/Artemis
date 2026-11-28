@@ -27,6 +27,7 @@ describe('QuizQuestionPoolItemComponent', () => {
                 flagged: true,
                 question: { id: 'pool-7', type: 'single-choice', title: 'Q7', questionText: 'What?', options: [{ text: 'A', correct: true }] },
                 decision: { accepted: true, aggregateScore: 0.6, verdicts: [verdict], rationale: 'checked' },
+                materialChanged: false,
                 updatedAt: '2026-10-13T10:00:00Z',
             },
             index: 2,
@@ -34,6 +35,8 @@ describe('QuizQuestionPoolItemComponent', () => {
             verdicts: [{ verdict, labelKey: 'artemisApp.hyperion.quizQuestionPool.list.failureModes.ILL_FORMED_DISTRACTORS', percent: 40 }],
             scorePercent: 60,
             expanded: false,
+            hasExplanations: false,
+            explanationsShown: false,
             busy: false,
             reviewSeverity: 'secondary',
             reviewLabelKey: 'artemisApp.hyperion.quizQuestionPool.list.reviewState.PENDING',
@@ -59,6 +62,17 @@ describe('QuizQuestionPoolItemComponent', () => {
 
         expect(emitted).toHaveBeenNthCalledWith(1, { questionId: 7, reviewState: 'PENDING' });
         expect(emitted).toHaveBeenNthCalledWith(2, { questionId: 7, reviewState: 'EXCLUDED' });
+    });
+
+    it('should tag a question whose lecture unit material changed', () => {
+        const item = view();
+        setup(item);
+        expect(fixture.debugElement.query(By.css('[data-testid="pool-material-changed-7"]'))).toBeNull();
+
+        fixture.componentRef.setInput('item', { ...item, question: { ...item.question, materialChanged: true } });
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="pool-material-changed-7"]'))).not.toBeNull();
     });
 
     it('should mark a triggered verdict with an icon and a text cue', () => {
@@ -94,6 +108,27 @@ describe('QuizQuestionPoolItemComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.debugElement.query(By.css('[data-testid="pool-item-context-7"]')).nativeElement.textContent).toContain('Arrays');
+    });
+
+    it('should offer the explanations only when the question has some, and show them on request', () => {
+        setup(view());
+        expect(fixture.debugElement.query(By.css('[data-testid="pool-toggle-explanations-7"]'))).toBeNull();
+
+        const explained = view();
+        explained.question.question!.explanation = 'Count the iterations.';
+        explained.question.question!.options[0].explanation = 'Holds for every input.';
+        fixture.componentRef.setInput('item', { ...explained, hasExplanations: true });
+        fixture.detectChanges();
+        const toggled = vi.fn();
+        component.toggleExplanations.subscribe(toggled);
+        fixture.debugElement.query(By.css('[data-testid="pool-toggle-explanations-7"]')).nativeElement.click();
+        expect(toggled).toHaveBeenCalledWith(7);
+        expect(fixture.debugElement.query(By.css('[data-testid="quiz-ai-generated-option-explanation"]'))).toBeNull();
+
+        fixture.componentRef.setInput('item', { ...explained, hasExplanations: true, explanationsShown: true });
+        fixture.detectChanges();
+        expect(fixture.debugElement.queryAll(By.css('[data-testid="quiz-ai-generated-option-explanation"]'))).toHaveLength(1);
+        expect(fixture.debugElement.query(By.css('[data-testid="quiz-ai-generated-question-explanation"]'))).not.toBeNull();
     });
 
     it('should hide the review buttons without review rights and ask to expand the rationale', () => {
