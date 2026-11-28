@@ -1,4 +1,5 @@
-import { TumAetUiButtonDirective, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';

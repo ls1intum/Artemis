@@ -1,4 +1,6 @@
-import { TumAetUiButtonComponent, TumAetUiDialogComponent, TumAetUiPanelComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
 import { By } from '@angular/platform-browser';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

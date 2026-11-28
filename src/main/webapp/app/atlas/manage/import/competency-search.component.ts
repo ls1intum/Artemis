@@ -1,4 +1,5 @@
-import { TumAetUiInputDirective, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 import { Component, model, signal } from '@angular/core';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';

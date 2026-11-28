@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
-import { TumAetUiButtonDirective, TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 export type CourseExamArchiveDialogMode = 'Exam' | 'Course';

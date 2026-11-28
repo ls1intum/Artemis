@@ -211,11 +211,17 @@ Some releases change behavior in a way that requires a one-time action on existi
 
 Artemis now refuses to start when the configuration sets a key that Spring Boot or one of its libraries marks as removed or deprecated without a replacement key of the same type (`spring.properties.migrator.fail: on-error`, using `spring-boot-properties-migrator`). Before, such a key was ignored without a message, so a setting could stop working unnoticed.
 
-**Some of these keys still work.** For example, Spring AI deprecated its chat memory, so `spring.ai.chat.memory.repository.jdbc.initialize-schema` is rejected although Spring AI still reads it. The check looks at every source of the environment, which includes environment variables, command-line arguments and a config server, not only the configuration files. A key that has a replacement of the same type is only renamed on the fly and logged as a warning, which does not stop the start.
+**Some of these keys still work.** For example, `server.forward-headers-strategy` is rejected although Spring Boot still reads it, see below. The check looks at every source of the environment, which includes environment variables, command-line arguments and a config server, not only the configuration files. A key that has a replacement of the same type is only renamed on the fly and logged as a warning, which does not stop the start.
 
 The error log names each key and its source at the end of the start-up. Remove the key or replace it as described there, then start again. To start anyway while you fix the configuration, set `spring.properties.migrator.fail` (or the environment variable `SPRING_PROPERTIES_MIGRATOR_FAIL`) to `never`. The report stays in the log.
 
 This release moves to Spring Boot 4.2, which renamed `server.forward-headers-strategy` to `server.request.header.forwarded.strategy` and its value `native` to `web-server` (`framework` and `none` keep their names). Artemis sets `web-server`. **If your configuration sets the old key, replace it with the new key before you upgrade, and map its value.** Do not only delete it: without a key, Artemis uses `web-server`, and then Tomcat believes `X-Forwarded-For` from the proxies in `server.tomcat.remoteip.internal-proxies`, see [Client Address of Requests](#108-client-address-of-requests). Spring Boot refuses to start when both keys are set, and the old key alone is rejected by the check above.
+
+### 10.8: Atlas Chat History in Spring AI Session Tables
+
+The Atlas chat agent stores conversation text in Spring AI session tables (`AI_SESSION`, `AI_SESSION_EVENT` and `AI_SESSION_INDEX`). The migration copies existing user and assistant messages from `spring_ai_chat_memory` on PostgreSQL and MySQL. Instructors see the full conversation. Each request loads the last 20 messages for the model and includes the start of the oldest turn when the window lands mid-turn. Tool calls and their results stay in memory for the duration of the request.
+
+The former table stays in the database and is not written any more. A later release drops it. The setting `spring.ai.chat.memory.max-messages` is not read any more. The sessions do not expire: a session has an expiry date ten years ahead, and nothing deletes sessions.
 
 ### 10.8: Relative Redirects
 

@@ -54,7 +54,8 @@ class LocalVCServletServiceRepositorySizeLimitTest {
                 mock(AuxiliaryRepositoryService.class), Optional.empty(), mock(ParticipationVCSAccessTokenRepository.class), mock(RepositoryVCSAccessTokenRepository.class),
                 mock(AuthorizationCheckService.class), mock(RateLimitService.class), mock(UserVcsAccessTokenService.class), repositoryResolver,
                 mock(LocalVCAccessLogRecorderService.class), mock(LocalVCBuildAgentAuthenticationService.class), mock(PasswordAuthenticationNoticeService.class),
-                new BuildAgentNetworkPolicy(new BuildAgentNetworkConfiguration(), new MockEnvironment()), maxRepositorySizeMb, maxTestsAndSolutionRepositorySizeMb);
+                new BuildAgentNetworkPolicy(new BuildAgentNetworkConfiguration(), new MockEnvironment()), mock(LocalVCAgentTokenService.class), maxRepositorySizeMb,
+                maxTestsAndSolutionRepositorySizeMb);
     }
 
     private Repository repositoryOfSlug(String slug) {

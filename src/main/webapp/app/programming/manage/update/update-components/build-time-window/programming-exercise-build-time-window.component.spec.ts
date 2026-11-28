@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseBuildTimeWindowComponent } from 'app/programming/manage/update/update-components/build-time-window/programming-exercise-build-time-window.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';

@@ -1,4 +1,6 @@
-import { TumAetUiButtonDirective, TumAetUiPanelComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiPanelComponent } from '@tumaet/ui-angular/panel';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
