@@ -3,12 +3,12 @@ import { SubmissionExportDialogComponent } from '../dialog/submission-export-dia
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { TumAetUiDialogService } from '@tumaet/ui-angular';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({

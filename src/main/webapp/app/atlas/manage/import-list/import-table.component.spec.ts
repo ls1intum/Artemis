@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
 import { PagingService } from 'app/exercise/services/paging.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Observable, Subject, of } from 'rxjs';

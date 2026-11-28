@@ -76,8 +76,8 @@ If the users have already been created, they still need to be logged in order to
 python3 authenticate_all_users.py
 ```
 
-### Creating a Course with Standard User Groups
-Creates a course for which the users are registered according to their user groups (students, tutors, editors, instructors).
+### Creating a Course with Default Users
+Creates a course and gives the default users their course roles (student, tutor, editor, instructor).
 
 ```shell
 python3 create_course.py
@@ -88,8 +88,7 @@ python3 create_course.py
 
 1.	Adjust `server_url` and `client_url` according to the test server.
 2.  Update `admin_user` and `admin_password` to valid values for the test server.
-3.  Set `is_local_course` in [config.ini](./config.ini) to `False`.
-4. Create a Course and Assign the Default Users
+3. Create a Course and Assign the Default Users
 
     | User Range | Role        |
     |------------|-------------|
@@ -98,8 +97,8 @@ python3 create_course.py
     | 11-15      | Instructors |
     | 16-20      | Editors     |
 
-5. Define the name of your course in the [config.ini](./config.ini) as `course_name`.
-6. Run the script to create a new course with the default users:
+4. Define the name of your course in the [config.ini](./config.ini) as `course_name`.
+5. Run the script to create a new course with the default users:
     ```shell  
     python3 create_course.py
     ```

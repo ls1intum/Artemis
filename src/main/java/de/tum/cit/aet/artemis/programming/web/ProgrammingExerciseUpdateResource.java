@@ -134,7 +134,7 @@ public class ProgrammingExerciseUpdateResource {
      * PUT /programming-exercises : Updates an existing programming exercise.
      *
      * @param updateDTO             the DTO containing the updated programming exercise data
-     * @param notificationText      to notify the student group about the update on the programming exercise
+     * @param notificationText      to notify the students about the update on the programming exercise
      * @param hyperionCompetencyIds IDs of links inferred through Hyperion's checklist
      * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the updated ProgrammingExercise
      *         is not valid, or with status 500 (Internal Server Error) if the updated ProgrammingExercise couldn't be saved to the database

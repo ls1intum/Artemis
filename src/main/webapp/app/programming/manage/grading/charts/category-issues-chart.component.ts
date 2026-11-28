@@ -1,7 +1,7 @@
 import { Component, computed, input } from '@angular/core';
 import { IssuesMap } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/programming/shared/entities/static-code-analysis-category.model';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 export interface IssueColumn {
     w: string;

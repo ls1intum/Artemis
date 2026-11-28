@@ -1,4 +1,4 @@
-import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { AlertService } from 'app/foundation/service/alert.service';

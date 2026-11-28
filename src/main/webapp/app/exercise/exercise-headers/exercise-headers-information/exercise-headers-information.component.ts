@@ -1,4 +1,4 @@
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 
 import { Component, computed, inject, input, model, output, viewChild } from '@angular/core';
 import { SortService } from 'app/foundation/service/sort.service';

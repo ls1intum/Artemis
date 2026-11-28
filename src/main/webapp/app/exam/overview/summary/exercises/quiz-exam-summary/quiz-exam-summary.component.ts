@@ -18,7 +18,7 @@ import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multi
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { captureException } from 'app/core/error-reporting/capture-exception';
-import { TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',

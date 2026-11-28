@@ -17,7 +17,8 @@ import { MetricsDatasourceComponent } from './blocks/metrics-datasource/metrics-
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/admin/shared/admin-title-bar-actions.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiButtonComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular/button';
+import { TumAetUiSelectComponent } from '@tumaet/ui-angular/select';
 interface NodeOption {
     label: string;
     value: string;

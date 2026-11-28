@@ -100,6 +100,9 @@
     z-index: 1000;
     overflow: visible;
     pointer-events: none;
+    transition:
+        max-height 0.2s 0.2s ease-in-out,
+        height 0.2s 0.2s ease-in-out;
 }
 
 /*
@@ -109,12 +112,6 @@
  */
 .course-notification-popup-overlay > .notification-animation-wrapper {
     pointer-events: auto;
-}
-
-.course-notification-popup-overlay {
-    transition:
-        max-height 0.2s 0.2s ease-in-out,
-        height 0.2s 0.2s ease-in-out;
 }
 
 /* No notifications: remove the overlay entirely so it never sits on top of the page and blocks clicks. */

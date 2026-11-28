@@ -4,13 +4,28 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.DEFAULT_FINAL_STATE_RESERVED_BYTES;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.DEFAULT_MAX_FILE_DIFF_BYTES;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.DEFAULT_MAX_FILE_INPUT_BYTES;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.DEFAULT_MAX_PARTICIPATIONS_PER_RUN;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.DEFAULT_MAX_PAYLOAD_BYTES;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.DEFAULT_MAX_WINDOW_DAYS;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.FINAL_STATE_RESERVED_BYTES_PROPERTY;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MAX_FILE_DIFF_BYTES_PROPERTY;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MAX_FILE_INPUT_BYTES_PROPERTY;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MAX_PARTICIPATIONS_PER_RUN_PROPERTY;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MAX_PAYLOAD_BYTES_PROPERTY;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MAX_WINDOW_DAYS_PROPERTY;
+import static de.tum.cit.aet.artemis.deimos.config.DeimosLimits.MIN_BYTE_LIMIT;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import jakarta.annotation.PostConstruct;
@@ -27,6 +42,7 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.core.exception.ConflictingPasskeyConfigurationException;
 import de.tum.cit.aet.artemis.core.exception.InsecureDefaultCredentialException;
 import de.tum.cit.aet.artemis.core.exception.InvalidAdminConfigurationException;
+import de.tum.cit.aet.artemis.deimos.exception.DeimosConfigurationException;
 import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateConfigurationException;
@@ -194,6 +210,76 @@ public class ConfigurationValidator {
         validateAdminConfiguration();
         validateNoShippedDefaultCredentials();
         validateWeaviateConfiguration();
+        validateDeimosConfiguration();
+    }
+
+    /**
+     * Validates the Deimos configuration at startup.
+     * <p>
+     * Only the payload and batch limits are checked here. The LLM preset that receives the student source code is checked
+     * by {@code LlmConfigurationValidator}, which refuses to start without an explicit assignment under
+     * {@code artemis.deimos.llm-preset}. Validation is skipped entirely when the module is disabled.
+     *
+     * @throws DeimosConfigurationException if Deimos is enabled but one of its limits is invalid
+     */
+    private void validateDeimosConfiguration() {
+        if (!artemisConfigHelper.isDeimosEnabled(environment)) {
+            return;
+        }
+
+        List<String> missingOrInvalidProperties = new ArrayList<>();
+
+        validateDeimosLimits(missingOrInvalidProperties);
+
+        if (!missingOrInvalidProperties.isEmpty()) {
+            String errorMessage = "Deimos is enabled but its configuration is incomplete or invalid: %s".formatted(missingOrInvalidProperties);
+            log.error(errorMessage);
+            throw new DeimosConfigurationException(errorMessage, missingOrInvalidProperties);
+        }
+    }
+
+    /**
+     * Validates the configurable Deimos payload and batch limits.
+     * <p>
+     * Read with the same property names and defaults as the services that apply them. The byte limits have a floor
+     * rather than only having to be positive: the notices and the header appended after the incremental snapshots must
+     * fit inside the final-state reservation, otherwise the payload would outgrow the configured total.
+     *
+     * @param missingOrInvalidProperties collects a description of every invalid property
+     */
+    private void validateDeimosLimits(List<String> missingOrInvalidProperties) {
+        int maxFileInputBytes = environment.getProperty(MAX_FILE_INPUT_BYTES_PROPERTY, Integer.class, DEFAULT_MAX_FILE_INPUT_BYTES);
+        int maxFileDiffBytes = environment.getProperty(MAX_FILE_DIFF_BYTES_PROPERTY, Integer.class, DEFAULT_MAX_FILE_DIFF_BYTES);
+        int maxPayloadBytes = environment.getProperty(MAX_PAYLOAD_BYTES_PROPERTY, Integer.class, DEFAULT_MAX_PAYLOAD_BYTES);
+        int finalStateReservedBytes = environment.getProperty(FINAL_STATE_RESERVED_BYTES_PROPERTY, Integer.class, DEFAULT_FINAL_STATE_RESERVED_BYTES);
+        long maxParticipationsPerRun = environment.getProperty(MAX_PARTICIPATIONS_PER_RUN_PROPERTY, Long.class, DEFAULT_MAX_PARTICIPATIONS_PER_RUN);
+        long maxWindowDays = environment.getProperty(MAX_WINDOW_DAYS_PROPERTY, Long.class, DEFAULT_MAX_WINDOW_DAYS);
+
+        Map<String, Integer> byteLimits = new LinkedHashMap<>();
+        byteLimits.put(MAX_FILE_INPUT_BYTES_PROPERTY, maxFileInputBytes);
+        byteLimits.put(MAX_FILE_DIFF_BYTES_PROPERTY, maxFileDiffBytes);
+        byteLimits.put(MAX_PAYLOAD_BYTES_PROPERTY, maxPayloadBytes);
+        byteLimits.put(FINAL_STATE_RESERVED_BYTES_PROPERTY, finalStateReservedBytes);
+        byteLimits.forEach((property, value) -> {
+            if (value < MIN_BYTE_LIMIT) {
+                missingOrInvalidProperties.add("%s (must be at least %d bytes, got %d)".formatted(property, MIN_BYTE_LIMIT, value));
+            }
+        });
+
+        if (finalStateReservedBytes >= maxPayloadBytes) {
+            missingOrInvalidProperties.add("%s (must be smaller than %s, got %d >= %d)".formatted(FINAL_STATE_RESERVED_BYTES_PROPERTY, MAX_PAYLOAD_BYTES_PROPERTY,
+                    finalStateReservedBytes, maxPayloadBytes));
+        }
+        if (maxFileDiffBytes > maxPayloadBytes) {
+            missingOrInvalidProperties
+                    .add("%s (must not exceed %s, got %d > %d)".formatted(MAX_FILE_DIFF_BYTES_PROPERTY, MAX_PAYLOAD_BYTES_PROPERTY, maxFileDiffBytes, maxPayloadBytes));
+        }
+        if (maxParticipationsPerRun <= 0) {
+            missingOrInvalidProperties.add("%s (must be positive, got %d)".formatted(MAX_PARTICIPATIONS_PER_RUN_PROPERTY, maxParticipationsPerRun));
+        }
+        if (maxWindowDays <= 0) {
+            missingOrInvalidProperties.add("%s (must be positive, got %d)".formatted(MAX_WINDOW_DAYS_PROPERTY, maxWindowDays));
+        }
     }
 
     /**
