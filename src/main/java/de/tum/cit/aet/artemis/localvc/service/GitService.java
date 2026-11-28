@@ -123,9 +123,7 @@ public class GitService extends AbstractGitService {
      */
     public Repository getOrCheckoutRepository(ProgrammingExerciseParticipation participation, Path targetPath, boolean writeAccess) throws GitAPIException, GitException {
         var repoUri = participation.getVcsRepositoryUri();
-        Repository repository = getOrCheckoutRepositoryWithTargetPath(repoUri, targetPath, true, writeAccess);
-        repository.setParticipation(participation);
-        return repository;
+        return getOrCheckoutRepositoryWithTargetPath(repoUri, targetPath, true, writeAccess);
     }
 
     /**
@@ -159,10 +157,7 @@ public class GitService extends AbstractGitService {
         }
         Path localPath = VcsRepositoryUri.resolveBelow(targetPath, updatedRepoFolderName);
 
-        Repository repository = getOrCheckoutRepositoryWithLocalPath(repoUri, localPath, true, false);
-        repository.setParticipation(participation);
-
-        return repository;
+        return getOrCheckoutRepositoryWithLocalPath(repoUri, localPath, true, false);
     }
 
     /**

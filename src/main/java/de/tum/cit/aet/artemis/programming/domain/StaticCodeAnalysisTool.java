@@ -35,6 +35,11 @@ public enum StaticCodeAnalysisTool {
     ;
     // @formatter:on
 
+    /**
+     * This is used as the category of all code issues if the analysis tool does not assign a category.
+     */
+    public static final String GENERIC_LINT_CATEGORY = "Lint";
+
     // @formatter:off
     private static final Map<ProgrammingLanguage, List<StaticCodeAnalysisTool>> TOOLS_OF_PROGRAMMING_LANGUAGE;
 

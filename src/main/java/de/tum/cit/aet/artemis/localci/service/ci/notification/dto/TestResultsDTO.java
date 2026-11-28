@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.localci.dto.BuildJobInterface;
 import de.tum.cit.aet.artemis.localci.service.ci.notification.BuildLogParseUtils;
@@ -80,9 +81,9 @@ public record TestResultsDTO(@JsonProperty("successful") int successful, @JsonPr
     }
 
     @Override
-    public List<BuildLogEntry> extractBuildLogs() {
+    public List<BuildLogDTO> extractBuildLogs() {
         var buildLogs = BuildLogParseUtils.parseBuildLogsFromLogs(logs());
-        return filterBuildLogs(buildLogs);
+        return filterBuildLogs(buildLogs).stream().map(log -> new BuildLogDTO(log.getTime(), log.getLog())).toList();
     }
 
     @Override

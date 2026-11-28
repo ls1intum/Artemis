@@ -9,7 +9,6 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 
@@ -55,8 +54,7 @@ public record BuildResult(String assignmentRepoBranchName, String assignmentRepo
     }
 
     @Override
-    public List<BuildLogEntry> extractBuildLogs() {
-        // convert the buildLogEntry DTOs to BuildLogEntry objects
-        return buildLogEntries.stream().map(log -> new BuildLogEntry(log.time(), log.log())).toList();
+    public List<BuildLogDTO> extractBuildLogs() {
+        return buildLogEntries;
     }
 }

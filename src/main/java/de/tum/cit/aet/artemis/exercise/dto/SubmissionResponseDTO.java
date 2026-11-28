@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO.TestCaseDTO;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingResultMapper;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
@@ -235,7 +236,8 @@ public record SubmissionResponseDTO(Long id, Boolean submitted, @Nullable Submis
                         ? GradingInstructionDTO.of(feedback.getGradingInstruction())
                         : null;
                 return new SubmissionFeedbackDTO(feedback.getId(), feedback.getText(), feedback.getDetailText(), feedback.getHasLongFeedbackText(), feedback.getReference(),
-                        feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), gradingInstruction, TestCaseDTO.of(feedback.getTestCase()));
+                        feedback.getCredits(), feedback.isPositive(), feedback.getType(), feedback.getVisibility(), gradingInstruction,
+                        ProgrammingResultMapper.testCase(feedback.getTestCase()));
             }
         }
     }

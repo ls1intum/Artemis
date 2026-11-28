@@ -2,7 +2,7 @@
 id: hyperion
 title: Hyperion Service
 sidebar_label: Hyperion Setup
-last_reviewed: 2026-11-20
+last_reviewed: 2026-11-28
 ---
 
 import { CalloutVariant } from '../../src/components/Callout/Callout.types';
@@ -624,7 +624,7 @@ and worker must be upgraded together after draining.
 
 ### Toolchains and deployment placement
 
-The standalone process uses the normal Artemis entry point with the `aiworker` profile. Its execution infrastructure has no Hyperion
+The standalone process runs `Artemis-aiworker.war` with the `aiworker` profile. Its execution infrastructure has no Hyperion
 imports. Hyperion supplies `HyperionWorkloadService`, which validates and decodes its
 bounded assignment, selects a qualified toolchain and returns typed generation evidence.
 The generic transport does not interpret briefs, tests, quality findings or exercise IDs.
@@ -851,9 +851,8 @@ only when `artemis.hyperion.exercise-generation.enabled=true`, even if its
 generation card is inactive. Set this flag on every writer before admitting
 generation on any node.
 
-The standalone worker is a separate process of the normal Artemis WAR, not an additional core
-profile. It uses the normal Artemis component scan, with profiles and feature
-conditions selecting worker services. It starts without an HTTP server. Provision access to the selected provider, an immutable sandbox image and positive
+The standalone worker runs the dedicated AI Worker WAR or the universal WAR with
+`prod,aiworker`. It starts without an HTTP server. Provision access to the selected provider, an immutable sandbox image and positive
 resource limits. An
 unconfigured worker fails startup; a transport-only worker without a generation
 engine does not advertise usable capacity. Core module flags do not stop a
@@ -873,7 +872,7 @@ continuation of interrupted runs.
 | ------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Standalone LocalCI build agent        | Artemis server artifact | `buildagent` disables feature modules and excludes database auto-configuration. Hyperion server services require `core` even if an external setting enables their flag.                            |
 | Combined core and LocalCI build agent | Artemis server artifact | Place `buildagent` before `core`; the core profile restores database configuration. Hyperion generation still needs both opt-ins and `localci,localvc`.                                            |
-| Hyperion generation worker            | Normal Artemis WAR      | The `aiworker` profile loads worker services and the selected Hyperion workload, not core or database services. It uses the distributed-data provider as a client and has no incoming HTTP server. |
+| Hyperion generation worker            | AI Worker WAR          | The `aiworker` profile loads worker services and the selected Hyperion workload, not core or database services. It uses the distributed-data provider as a client and has no incoming HTTP server. |
 
 The generation worker uses chat models only; its bundled configuration excludes
 OpenAI embedding, image, speech, transcription, and moderation auto-configuration.

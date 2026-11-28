@@ -1,0 +1,26 @@
+artemis:
+    version: '#project.version#'
+spring:
+    application:
+        name: Artemis
+    cloud:
+        service-registry:
+            auto-registration:
+                enabled: false # This headless process only fetches the Eureka registry.
+        config:
+            import-check:
+                enabled: false
+        refresh:
+            enabled: false
+    main:
+        keep-alive: true
+eureka:
+    client:
+        region: default
+        service-url:
+            defaultZone: http://admin:${jhipster.registry.password:admin}@localhost:8761/eureka/
+        fetch-registry: true
+        registry-fetch-interval-seconds: 15
+    instance:
+        prefer-ip-address: true
+        appname: Artemis

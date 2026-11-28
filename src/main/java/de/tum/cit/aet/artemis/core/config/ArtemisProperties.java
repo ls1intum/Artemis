@@ -4,8 +4,6 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.web.cors.CorsConfiguration;
 
-import de.tum.cit.aet.artemis.core.security.filter.CachingHttpHeadersFilter;
-
 /**
  * Inlined replacement for {@code tech.jhipster.config.JHipsterProperties}.
  * <p>
@@ -73,6 +71,9 @@ public class ArtemisProperties {
 
         public static class Cache {
 
+            /** Default cache lifetime for versioned assets served to browsers. */
+            public static final int DEFAULT_VERSIONED_ASSET_TTL_DAYS = 30;
+
             /**
              * How long files under {@code /public} may be cached. Those are not versioned in their URL — a changed
              * logo or an edited about-us page keeps its path — so this bounds how long a correction takes to reach a
@@ -86,7 +87,7 @@ public class ArtemisProperties {
              * translations, so a new build is a new URL and a cached response cannot go stale. The reason to keep the
              * lifetime above short — that a mistake would otherwise persist in browsers — does not apply here.
              */
-            private int versionedAssetsTimeToLiveInDays = CachingHttpHeadersFilter.DEFAULT_DAYS_TO_LIVE;
+            private int versionedAssetsTimeToLiveInDays = DEFAULT_VERSIONED_ASSET_TTL_DAYS;
 
             public int getTimeToLiveInDays() {
                 return timeToLiveInDays;

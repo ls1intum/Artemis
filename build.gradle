@@ -1,4 +1,6 @@
+import org.cyclonedx.gradle.CyclonedxDirectTask
 import org.cyclonedx.model.Component
+import org.springframework.boot.gradle.tasks.bundling.BootWar
 
 buildscript {
     // Force the patched Handlebars onto the build-script / plugin classpath. The
@@ -169,6 +171,64 @@ if (project.hasProperty("prod")) {
 
 if (project.hasProperty("war")) {
     apply from: "gradle/war.gradle"
+    ext.registerRoleWar = { String taskName, String role, String entryPoint, SourceSet sources ->
+        def runtime = configurations.named(sources.runtimeClasspathConfigurationName)
+        def includeSbom = project.hasProperty("prod") && project.hasProperty("sbom")
+        def repeatableBuild = project.hasProperty("reproducible")
+        def roleBom = tasks.register("${role}ServerSbom", CyclonedxDirectTask) {
+            includeConfigs = [sources.runtimeClasspathConfigurationName]
+            projectType = Component.Type.APPLICATION
+            includeBomSerialNumber = !repeatableBuild
+            if (repeatableBuild) {
+                includeBuildSystem = false
+                // The standalone workers can build on hosts with only a JDK. Normalize
+                // the CycloneDX generator timestamp without starting a Node toolchain.
+                doLast {
+                    def output = jsonOutput.get().asFile
+                    def bom = new groovy.json.JsonSlurper().parse(output)
+                    bom.metadata?.remove("timestamp")
+                    output.setText(groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(bom)) + "\n", "UTF-8")
+                }
+            }
+            inputs.property("reproducible", repeatableBuild)
+            includeLicenseText = false
+            jsonOutput = layout.buildDirectory.file("reports/role-sbom/${role}/server-sbom.json")
+            xmlOutput.unsetConvention()
+        }
+        def familyCheck = registerDependencyFamilyCheck("verify${role.capitalize()}DependencyFamilies", sources.runtimeClasspathConfigurationName)
+        def hygieneCheck = registerClasspathHygieneCheck("verify${role.capitalize()}ClasspathHygiene", sources.runtimeClasspathConfigurationName)
+        tasks.named("verifyRoleDependencies") { dependsOn familyCheck, hygieneCheck }
+        def archive = tasks.register(taskName, BootWar) {
+            group = "build"
+            description = "Build the executable ${role} WAR"
+            destinationDirectory = layout.buildDirectory.dir("role-wars")
+            archiveFileName = "Artemis-${role}.war"
+            mainClass = entryPoint
+            targetJavaVersion = JavaVersion.toVersion(java.toolchain.languageVersion.get().asInt())
+            setDependsOn([])
+            // Keep the War plugin's main webapp and main runtime out of this archive.
+            webAppDirectory = layout.projectDirectory.dir("src/${role}/webapp")
+            classpath = files(sources.output, runtime)
+            providedClasspath = files()
+            resolvedArtifacts(runtime.get().incoming.artifacts.resolvedArtifacts)
+            metaInf { from("src/main/webapp/META-INF/NOTICE") }
+            manifest.attributes("Implementation-Title": "Artemis ${role}", "Implementation-Version": project.version)
+            duplicatesStrategy = DuplicatesStrategy.FAIL
+            if (includeSbom) {
+                from(roleBom.flatMap { it.jsonOutput }) { into "WEB-INF/classes/sbom" }
+            }
+        }
+        tasks.named("roleWars") { dependsOn archive }
+    }
+    tasks.register("verifyRoleDependencies") { group = "verification" }
+    tasks.register("roleWars") {
+        group = "build"
+        description = "Build the dedicated Artemis node WARs"
+    }
+    apply from: "gradle/core.gradle"
+    apply from: "gradle/worker-provider.gradle"
+    apply from: "gradle/aiworker.gradle"
+    apply from: "gradle/buildagent.gradle"
 }
 
 defaultTasks "bootRun"
@@ -919,7 +979,8 @@ configurations.matching { it.name != 'mockitoAgent' }.configureEach {
 // versions exist, on every resolution. A single range therefore makes the whole build depend on Maven Central being
 // reachable, even when every artifact it needs is already cached - which is how one transitive webjar dependency took
 // the server tests down on develop. Failing here points at the offending dependency instead.
-configurations.matching { it.name in ["compileClasspath", "runtimeClasspath", "testCompileClasspath", "testRuntimeClasspath"] }.configureEach {
+configurations.matching { it.name in ["compileClasspath", "runtimeClasspath", "testCompileClasspath", "testRuntimeClasspath",
+                                    "coreCompileClasspath", "coreRuntimeClasspath", "buildagentCompileClasspath", "buildagentRuntimeClasspath", "aiworkerCompileClasspath", "aiworkerRuntimeClasspath"] }.configureEach {
     resolutionStrategy.failOnDynamicVersions()
 }
 
@@ -967,7 +1028,11 @@ checkstyle {
 // Test sources get their own configuration rather than config/checkstyle/checkstyle.xml, which requires Javadoc on public methods and
 // would therefore demand a comment on every test method. config/checkstyle/checkstyle-test.xml carries only the rules that apply to
 // test code; see the note at the top of that file.
+checkstyleMain {
+    source fileTree('src/core/java'), fileTree('src/buildagent/java'), fileTree('src/aiworker/java'), fileTree('src/worker/java')
+}
 checkstyleTest {
+    source fileTree('src/aiworkerTest/java')
     configFile = file("config/checkstyle/checkstyle-test.xml")
 }
 

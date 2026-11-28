@@ -1,0 +1,35 @@
+# Run this separate project on the designated worker daemon. The configuration
+# contains its worker ID, provider connection and LLM catalog.
+name: artemis-aiworker
+services:
+    artemis-app-aiworker:
+        image: ghcr.io/ls1intum/artemis-aiworker:${ARTEMIS_DOCKER_TAG:?set the same immutable tag as core}
+        restart: unless-stopped
+        read_only: true
+        cap_drop: [ALL]
+        security_opt: [no-new-privileges:true]
+        mem_limit: ${AI_WORKER_MEMORY:-8g}
+        cpus: ${AI_WORKER_CPUS:-2}
+        pids_limit: 512
+        stop_grace_period: 150s
+        group_add:
+            - ${AI_WORKER_DOCKER_GID:?set the group of the dedicated worker socket}
+        environment:
+            SPRING_PROFILES_ACTIVE: prod,aiworker
+            SPRING_CONFIG_ADDITIONAL_LOCATION: file:/config/application.yml
+        healthcheck:
+            disable: true
+        tmpfs:
+            - /tmp:rw,nosuid,nodev,size=128m,mode=1777
+        volumes:
+            - type: bind
+              source: ${AI_WORKER_CONFIG:?provide the absolute path to worker-only configuration}
+              target: /config/application.yml
+              read_only: true
+              bind:
+                  create_host_path: false
+            - type: bind
+              source: ${AI_WORKER_DOCKER_SOCKET:?provide the dedicated worker socket}
+              target: /var/run/docker.sock
+              bind:
+                  create_host_path: false

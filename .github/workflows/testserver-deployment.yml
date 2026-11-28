@@ -31,7 +31,6 @@ concurrency:
 permissions: {}
 
 env:
-  IMAGE_NAME: ghcr.io/ls1intum/artemis
   WORKFLOW_CHECKOUT_ROOT: .workflow-checkouts/${{ github.run_id }}-${{ github.run_attempt }}
 
 # The registry is the source of truth: resolve the commit to deploy, verify its immutable
@@ -50,6 +49,11 @@ jobs:
       head_sha: ${{ steps.resolve.outputs.head_sha }}
       tag: ${{ steps.resolve.outputs.tag }}
       needs_build: ${{ steps.resolve.outputs.needs_build }}
+      docker_file: ${{ steps.images.outputs.docker_file }}
+      build_matrix: ${{ steps.images.outputs.build_matrix }}
+      server_image: ${{ steps.images.outputs.server_image }}
+      role_topology: ${{ steps.images.outputs.role_topology }}
+      branch_tip: ${{ steps.resolve.outputs.branch_tip }}
     steps:
       - name: Resolve deploy target (commit / PR / branch)
         id: resolve
@@ -97,7 +101,8 @@ jobs:
           needs_build=false
           if [ "$count" -eq 1 ]; then
             pr_number=$(jq -r '.[0].number' <<<"$prs")
-            head_sha=${REQUESTED_SHA:-$(jq -r '.[0].sha' <<<"$prs")}
+            branch_tip=$(jq -r '.[0].sha' <<<"$prs")
+            head_sha=${REQUESTED_SHA:-$branch_tip}
           else
             pr_number=""
             branch_tip=$(gh api "repos/$REPO/git/refs/heads/$BRANCH_NAME" --jq '.object.sha')
@@ -117,14 +122,34 @@ jobs:
           {
             echo "pr_number=$pr_number"
             echo "head_sha=$head_sha"
+            echo "branch_tip=$branch_tip"
             echo "tag=sha-$head_sha"
             echo "needs_build=$needs_build"
           } >> "$GITHUB_OUTPUT"
           echo "Resolved commit $head_sha (pr='$pr_number', needs_build=$needs_build) -> deploy tag sha-$head_sha"
 
+      - name: Check out deployment resolver
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github/scripts/deployment-artifacts.mjs
+          sparse-checkout-cone-mode: false
+
+      - name: Resolve image repositories and Dockerfile for this revision
+        id: images
+        env:
+          TARGET: ${{ steps.resolve.outputs.head_sha }}
+          TIP: ${{ steps.resolve.outputs.branch_tip }}
+        run: |
+          set -Eeuo pipefail
+          git fetch --no-tags --depth=1 origin "$TARGET" "$TIP"
+          node .github/scripts/deployment-artifacts.mjs images "$TARGET" "$TIP"
+
   # Branch without a PR: build the image now, tagged with its immutable sha-<commit>.
   conditional-build:
-    name: Build Image On-The-Fly
+    name: Build ${{ matrix.image }} On-The-Fly
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.determine-build-context.outputs.build_matrix) }}
     if: ${{ needs.determine-build-context.outputs.needs_build == 'true' }}
     needs: determine-build-context
     # The reusable workflow checks out and pushes the image to GHCR via GITHUB_TOKEN; a called
@@ -135,65 +160,24 @@ jobs:
     uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@ee1b52f07891ed489887681c09c52b4a83fa9fb2  # v1.2.0
     with:
       ref: ${{ needs.determine-build-context.outputs.head_sha }}
-      image-name: ls1intum/artemis
-      docker-file: ./deployment/docker/artemis/Dockerfile
+      image-name: ls1intum/${{ matrix.image }}
+      build-args: ${{ matrix.args }}
+      docker-file: ${{ needs.determine-build-context.outputs.docker_file }}
       tags: ${{ needs.determine-build-context.outputs.tag }}
-
-  # PR / develop / main: the exact commit's `sha-<commit>` image must already exist in the registry.
-  # Checking the registry (not a per-run artifact) is immune to run ordering and artifact expiry.
-  verify-image-build:
-    name: Verify Deployable Image
-    if: ${{ needs.determine-build-context.outputs.needs_build == 'false' }}
-    needs: determine-build-context
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-      packages: read
-    steps:
-      # Check out only the verify action, from the workflow's own ref (Helios dispatches this workflow
-      # from the branch being deployed). Keep it out of the root workspace: sparse checkouts mutate
-      # the worktree.
-      - name: Check out verify action
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          sparse-checkout: .github/actions/verify-image-build
-          sparse-checkout-cone-mode: false
-          path: ${{ env.WORKFLOW_CHECKOUT_ROOT }}/verify-image-build
-
-      - name: Verify deployable image exists
-        env:
-          IMAGE: ${{ env.IMAGE_NAME }}
-          SHA: ${{ needs.determine-build-context.outputs.head_sha }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REGISTRY_USER: ${{ github.actor }}
-        run: |
-          set -Eeuo pipefail
-          bash "${WORKFLOW_CHECKOUT_ROOT}/verify-image-build/.github/actions/verify-image-build/verify-image-build.sh"
-
-      - name: Cleanup verify checkout
-        if: always()
-        run: rm -rf -- "${WORKFLOW_CHECKOUT_ROOT}/verify-image-build"
 
   deploy:
     name: Deploy to Test-Server
     needs:
       - determine-build-context
       - conditional-build
-      - verify-image-build
-    # Deploy once the image is ready (verified or just built) and the migration gate passed or did
-    # not apply. `!cancelled()` (not `always()`) so a Cancel truly stops a queued deploy.
-    #
-    # The migration check runs only when a PR exists (it needs a PR to check against), so accepting
-    # its "skipped" result also lets the PR-less conditional-build path deploy without it — an
-    # accepted risk (test servers are limited to accredited developers); a PR-less check is out of scope.
     if: >-
-      !cancelled()
-      && (needs.conditional-build.result == 'success' || needs.verify-image-build.result == 'success')
+      !cancelled() && needs.determine-build-context.result == 'success'
+      && (needs.conditional-build.result == 'success' || needs.conditional-build.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
+      packages: read
     environment:
       name: ${{ github.event.inputs.environment_name }}
       url: ${{ vars.DEPLOYMENT_URL }}
@@ -208,7 +192,10 @@ jobs:
       - name: Check out deploy CLI
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          sparse-checkout: deployment/artemis-server-cli
+          sparse-checkout: |
+            deployment/artemis-server-cli
+            deployment/docker/prepare-test-server-agent.sh
+            .github/actions/verify-image-build
           sparse-checkout-cone-mode: false
           path: ${{ env.WORKFLOW_CHECKOUT_ROOT }}/deploy-cli
 
@@ -226,6 +213,32 @@ jobs:
           ssh-add - <<< "$DEPLOYMENT_SSH_KEY"
           cat - <<< "$GATEWAY_HOST_PUBLIC_KEY" >> ~/.ssh/known_hosts
 
+      - name: Verify images for the target installation
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          DEPLOYMENT_USER: ${{ vars.DEPLOYMENT_USER }}
+          DEPLOYMENT_HOSTS: ${{ vars.DEPLOYMENT_HOSTS }}
+          DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
+          SHA: ${{ needs.determine-build-context.outputs.head_sha }}
+          SERVER_IMAGE: ${{ needs.determine-build-context.outputs.server_image }}
+          ROLE_TOPOLOGY: ${{ needs.determine-build-context.outputs.role_topology }}
+          REGISTRY_USER: ${{ github.actor }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -Eeuo pipefail
+          verify="${WORKFLOW_CHECKOUT_ROOT}/deploy-cli/.github/actions/verify-image-build/verify-image-build.sh"
+          IMAGE="ghcr.io/ls1intum/$SERVER_IMAGE" bash "$verify"
+          if [[ "$ROLE_TOPOLOGY" == true ]]; then
+            [[ "$DEPLOYMENT_FOLDER" =~ ^/[A-Za-z0-9_./-]+$ ]]
+            topology=$(ssh -J "$GATEWAY_USER@$GATEWAY_HOST" -o StrictHostKeyChecking=no "$DEPLOYMENT_USER@$DEPLOYMENT_HOSTS" \
+              "bash -s -- '$DEPLOYMENT_FOLDER/artemis.env' --detect-topology" < "${WORKFLOW_CHECKOUT_ROOT}/deploy-cli/deployment/docker/prepare-test-server-agent.sh")
+            case "$topology" in
+              localci) IMAGE=ghcr.io/ls1intum/artemis-buildagent bash "$verify" ;;
+              core) ;;
+              *) echo "::error::Unrecognized test-server topology"; exit 1 ;;
+            esac
+          fi
+
       - name: Deploy Artemis with Docker
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
@@ -233,9 +246,16 @@ jobs:
           DEPLOYMENT_HOSTS: ${{ vars.DEPLOYMENT_HOSTS }}
           TAG: ${{ needs.determine-build-context.outputs.tag }}
           BRANCH_NAME: ${{ github.event.inputs.branch_name }}
+          BRANCH_TIP: ${{ needs.determine-build-context.outputs.branch_tip }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
         run: |
           set -Eeuo pipefail
+          current=$(gh api "repos/$GITHUB_REPOSITORY/git/refs/heads/$BRANCH_NAME" --jq '.object.sha')
+          if [[ "$current" != "$BRANCH_TIP" ]]; then
+            echo "::error::The Compose branch moved during deployment preparation. Re-dispatch to validate its current topology."
+            exit 1
+          fi
           chmod +x "${WORKFLOW_CHECKOUT_ROOT}/deploy-cli/deployment/artemis-server-cli"
           "${WORKFLOW_CHECKOUT_ROOT}/deploy-cli/deployment/artemis-server-cli" docker-deploy "$DEPLOYMENT_USER@$DEPLOYMENT_HOSTS" \
             -g "$GATEWAY_USER@$GATEWAY_HOST" \

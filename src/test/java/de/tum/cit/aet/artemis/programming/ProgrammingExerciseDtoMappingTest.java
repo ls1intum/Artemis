@@ -60,6 +60,7 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingParticipationLatestResultDTO;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.dto.SubmissionPolicyDTO;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingResultMapper;
 
 /**
  * Mapping and wire-shape tests for the shared programming DTOs. Deliberately a plain unit test in the module root:
@@ -644,7 +645,7 @@ class ProgrammingExerciseDtoMappingTest {
         result.setScore(100.0);
         result.setSubmission(null);
 
-        ResultDTO dto = ResultDTO.ofNested(result, List.of(feedback));
+        ResultDTO dto = ProgrammingResultMapper.ofNested(result, List.of(feedback));
 
         assertThat(dto.id()).isEqualTo(1L);
         assertThat(dto.score()).isEqualTo(100.0);
@@ -660,7 +661,7 @@ class ProgrammingExerciseDtoMappingTest {
         Result result = new Result();
         result.setId(3L);
 
-        ResultDTO dto = ResultDTO.ofNested(result, null);
+        ResultDTO dto = ProgrammingResultMapper.ofNested(result, null);
 
         assertThat(dto.id()).isEqualTo(3L);
         assertThat(dto.feedbacks()).isNull();

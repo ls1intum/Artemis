@@ -9,8 +9,10 @@ import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.lang.annotation.Annotation;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 
 import org.apache.commons.lang3.ClassUtils;
 import org.junit.jupiter.api.BeforeAll;
@@ -27,6 +29,8 @@ import com.tngtech.archunit.core.domain.JavaParameter;
 import com.tngtech.archunit.core.domain.properties.HasAnnotations;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
+import com.tngtech.archunit.core.importer.Location;
+import com.tngtech.archunit.core.importer.Locations;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ConditionEvents;
 
@@ -47,10 +51,16 @@ public abstract class AbstractArchitectureTest {
     static void loadClasses() {
         if (allClasses == null) {
             testClasses = new ClassFileImporter().withImportOption(new ImportOption.OnlyIncludeTests()).importPackages(ARTEMIS_PACKAGE);
-            productionClasses = new ClassFileImporter().withImportOption(new ImportOption.DoNotIncludeTests()).importPackages(ARTEMIS_PACKAGE);
-            allClasses = new ClassFileImporter().importPackages(ARTEMIS_PACKAGE);
-            // Also include hazelcast to find usages of hazelcast methods. (see testNoHazelcastUsageInConstructors)
-            allClassesWithHazelcast = new ClassFileImporter().importPackages(ARTEMIS_PACKAGE, "com.hazelcast.core");
+            var artemisLocations = new HashSet<>(Locations.ofPackage(ARTEMIS_PACKAGE));
+            String roleClasses = System.getProperty("artemis.architecture.roleClasses");
+            if (roleClasses != null) {
+                artemisLocations.add(Location.of(Path.of(roleClasses)));
+            }
+            productionClasses = new ClassFileImporter().withImportOption(new ImportOption.DoNotIncludeTests()).importLocations(artemisLocations);
+            allClasses = new ClassFileImporter().importLocations(artemisLocations);
+            // Also include Hazelcast method declarations for testNoHazelcastUsageInConstructors.
+            artemisLocations.addAll(Locations.ofPackage("com.hazelcast.core"));
+            allClassesWithHazelcast = new ClassFileImporter().importLocations(artemisLocations);
         }
         ensureClassSetsNonEmpty();
         ensureAllClassesFound();

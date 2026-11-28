@@ -9,9 +9,8 @@ services:
     artemis-app-node-1:
         container_name: artemis-app-node-1
         extends:
-            file: ./artemis.yml
-            service: artemis-app
-        image: ghcr.io/ls1intum/artemis:${ARTEMIS_DOCKER_TAG:-latest}
+            file: ./test-server-services.yml
+            service: artemis-app-core
         depends_on:
             mysql:
                 condition: service_healthy
@@ -19,25 +18,28 @@ services:
                 condition: service_healthy
             activemq-broker:
                 condition: service_healthy
-        pull_policy: always
-        restart: always
-        group_add:
-            - ${DOCKER_GROUP_ID:-0}
+        environment:
+            SPRING_PROFILES_ACTIVE: prod,core,localvc,localci,scheduling,docker
+            ARTEMIS_VERSIONCONTROL_SSHPROXYPROTOCOL_TRUSTEDSOURCES: "172.16.0.0/12,10.0.0.0/8,192.168.0.0/16"
+            SPRING_JPA_DATABASE: MYSQL
+            ARTEMIS_DISTRIBUTEDDATA_PROVIDER: Hazelcast
+            EUREKA_CLIENT_ENABLED: "true"
+            EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://admin:${REGISTRY_PASSWORD:-admin}@artemis-jhipster-registry:8761/eureka/
+            JHIPSTER_REGISTRY_PASSWORD: ${REGISTRY_PASSWORD:-admin}
         env_file:
+            - ./artemis/config/test-server-localci.env
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
             - ${ARTEMIS_NODE_1_ENV_FILE:-./artemis/config/node1.env}
         volumes:
             - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
             - ${ARTEMIS_LEGAL_MOUNT:-./.docker-data/artemis-legal}:/opt/artemis/legal
             - ${ARTEMIS_DATA_EXPORT_MOUNT:-./.docker-data/artemis-data-exports}:/opt/artemis/data-exports
-            - /var/run/docker.sock:/var/run/docker.sock
 
     artemis-app-node-2:
         container_name: artemis-app-node-2
         extends:
-            file: ./artemis.yml
-            service: artemis-app
-        image: ghcr.io/ls1intum/artemis:${ARTEMIS_DOCKER_TAG:-latest}
+            file: ./test-server-services.yml
+            service: artemis-app-core
         depends_on:
             mysql:
                 condition: service_healthy
@@ -47,46 +49,22 @@ services:
                 condition: service_healthy
             artemis-app-node-1:
                 condition: service_healthy
-        pull_policy: always
-        restart: always
-        group_add:
-            - ${DOCKER_GROUP_ID:-0}
+        environment:
+            SPRING_PROFILES_ACTIVE: prod,core,localvc,localci,docker
+            ARTEMIS_VERSIONCONTROL_SSHPROXYPROTOCOL_TRUSTEDSOURCES: "172.16.0.0/12,10.0.0.0/8,192.168.0.0/16"
+            SPRING_JPA_DATABASE: MYSQL
+            ARTEMIS_DISTRIBUTEDDATA_PROVIDER: Hazelcast
+            EUREKA_CLIENT_ENABLED: "true"
+            EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://admin:${REGISTRY_PASSWORD:-admin}@artemis-jhipster-registry:8761/eureka/
+            JHIPSTER_REGISTRY_PASSWORD: ${REGISTRY_PASSWORD:-admin}
         env_file:
+            - ./artemis/config/test-server-localci.env
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
             - ${ARTEMIS_NODE_2_ENV_FILE:-./artemis/config/node2.env}
         volumes:
             - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
             - ${ARTEMIS_LEGAL_MOUNT:-./.docker-data/artemis-legal}:/opt/artemis/legal
             - ${ARTEMIS_DATA_EXPORT_MOUNT:-./.docker-data/artemis-data-exports}:/opt/artemis/data-exports
-            - /var/run/docker.sock:/var/run/docker.sock
-
-    artemis-app-node-3:
-        container_name: artemis-app-node-3
-        extends:
-            file: ./artemis.yml
-            service: artemis-app
-        image: ghcr.io/ls1intum/artemis:${ARTEMIS_DOCKER_TAG:-latest}
-        depends_on:
-            mysql:
-                condition: service_healthy
-            jhipster-registry:
-                condition: service_healthy
-            activemq-broker:
-                condition: service_healthy
-            artemis-app-node-1:
-                condition: service_healthy
-        pull_policy: always
-        restart: always
-        group_add:
-            - ${DOCKER_GROUP_ID:-0}
-        env_file:
-            - ${ARTEMIS_ENV_FILE:-./artemis/config/prod-multinode.env}
-            - ${ARTEMIS_NODE_3_ENV_FILE:-./artemis/config/node3.env}
-        volumes:
-            - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
-            - ${ARTEMIS_LEGAL_MOUNT:-./.docker-data/artemis-legal}:/opt/artemis/legal
-            - ${ARTEMIS_DATA_EXPORT_MOUNT:-./.docker-data/artemis-data-exports}:/opt/artemis/data-exports
-            - /var/run/docker.sock:/var/run/docker.sock
 
     jhipster-registry:
         extends:
@@ -113,6 +91,20 @@ services:
         volumes:
             - ${DATABASE_VOLUME_MOUNT:-./.docker-data/artemis-mysql-data}:/var/lib/mysql
 
+    artemis-app-buildagent:
+        extends:
+            file: ./test-server-services.yml
+            service: artemis-app-buildagent
+        depends_on:
+            artemis-app-node-1:
+                condition: service_healthy
+        environment:
+            ARTEMIS_VERSIONCONTROL_URL: http://artemis-app-node-1:8080
+            ARTEMIS_DISTRIBUTEDDATA_PROVIDER: Hazelcast
+            EUREKA_CLIENT_ENABLED: "true"
+            EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://admin:${REGISTRY_PASSWORD:-admin}@artemis-jhipster-registry:8761/eureka/
+            JHIPSTER_REGISTRY_PASSWORD: ${REGISTRY_PASSWORD:-admin}
+
     nginx:
         extends:
             file: ./nginx.yml
@@ -122,12 +114,14 @@ services:
                 condition: service_started
             artemis-app-node-2:
                 condition: service_started
-            artemis-app-node-3:
-                condition: service_started
         restart: always
+        networks:
+            artemis:
+                aliases:
+                    - ${NGINX_PUBLIC_HOSTNAME:-artemis-nginx}
         volumes:
             - ./nginx/artemis-upstream-multi-node.conf:/etc/nginx/includes/artemis-upstream.conf:ro
-            - ./nginx/artemis-ssh-upstream-multi-node.conf:/etc/nginx/includes/artemis-ssh-upstream.conf:ro
+            - ./nginx/artemis-ssh-upstream-two-nodes.conf:/etc/nginx/includes/artemis-ssh-upstream.conf:ro
             - type: bind
               source: ${NGINX_PROXY_SSL_CERTIFICATE_PATH:-../../src/test/playwright/certs/artemis-nginx+4.pem}
               target: "/certs/fullchain.pem"
@@ -139,3 +133,6 @@ networks:
     artemis:
         driver: "bridge"
         name: artemis
+
+volumes:
+    buildagent-data:

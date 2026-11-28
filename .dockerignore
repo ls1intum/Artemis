@@ -28,6 +28,7 @@ www/
 # the .war exception feeds the external_builder stage, which packages a WAR built outside Docker
 build/*
 !build/libs/*.war
+!build/role-wars/*.war
 
 # local config and private keys; never re-admit
 /src/main/resources/config/application-local*.yml

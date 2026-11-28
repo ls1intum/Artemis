@@ -15,11 +15,11 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
-import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.localci.dto.CourseFinishedBuildJobDTO;
+import de.tum.cit.aet.artemis.localci.service.FinishedBuildJobMapper;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
@@ -94,7 +94,7 @@ class BuildJobTest {
 
     @Test
     void finishedJobRetainsAgentNameWhenTheAgentHasLeft() {
-        var finished = FinishedBuildJobDTO.of(new BuildJob(finishedQueueItem(), BuildStatus.SUCCESSFUL, null));
+        var finished = FinishedBuildJobMapper.of(new BuildJob(finishedQueueItem(), BuildStatus.SUCCESSFUL, null));
         var courseView = CourseFinishedBuildJobDTO.of(finished, List.of());
 
         assertThat(courseView.buildAgentDisplayName()).isEqualTo("agent-display-name");
@@ -105,7 +105,7 @@ class BuildJobTest {
     @Test
     void finishedJobBoundsAnUnrestrictedConfiguredNameToTheStorageLimit() {
         String displayName = "Long agent name ".repeat(30);
-        var finished = FinishedBuildJobDTO.of(new BuildJob(finishedQueueItem(displayName), BuildStatus.SUCCESSFUL, null));
+        var finished = FinishedBuildJobMapper.of(new BuildJob(finishedQueueItem(displayName), BuildStatus.SUCCESSFUL, null));
 
         assertThat(CourseFinishedBuildJobDTO.of(finished, List.of()).buildAgentDisplayName()).isEqualTo(displayName.substring(0, 255));
     }
@@ -113,7 +113,7 @@ class BuildJobTest {
     @Test
     void finishedJobDoesNotSplitASupplementaryCharacterAtTheStorageLimit() {
         String expectedName = "a".repeat(254) + "😀";
-        var finished = FinishedBuildJobDTO.of(new BuildJob(finishedQueueItem(expectedName + " suffix"), BuildStatus.SUCCESSFUL, null));
+        var finished = FinishedBuildJobMapper.of(new BuildJob(finishedQueueItem(expectedName + " suffix"), BuildStatus.SUCCESSFUL, null));
 
         assertThat(CourseFinishedBuildJobDTO.of(finished, List.of()).buildAgentDisplayName()).isEqualTo(expectedName);
     }
@@ -122,7 +122,7 @@ class BuildJobTest {
     @NullAndEmptySource
     @ValueSource(strings = { " ", "\t\n" })
     void finishedJobRetainsShortNameWhenConfiguredDisplayNameIsBlank(String displayName) {
-        var finished = FinishedBuildJobDTO.of(new BuildJob(finishedQueueItem(displayName), BuildStatus.SUCCESSFUL, null));
+        var finished = FinishedBuildJobMapper.of(new BuildJob(finishedQueueItem(displayName), BuildStatus.SUCCESSFUL, null));
 
         assertThat(CourseFinishedBuildJobDTO.of(finished, List.of()).buildAgentDisplayName()).isEqualTo("agent-name");
     }
@@ -137,7 +137,7 @@ class BuildJobTest {
         legacyJob.setCourseId(1L);
         legacyJob.setExerciseId(3L);
         var agent = new BuildAgentInformation(new BuildAgentDTO("agent-name", "10.0.0.5:5999", displayName), 1, 0, List.of(), null, null, null, 0);
-        var finished = FinishedBuildJobDTO.of(legacyJob);
+        var finished = FinishedBuildJobMapper.of(legacyJob);
 
         assertThat(CourseFinishedBuildJobDTO.of(finished, List.of(agent)).buildAgentDisplayName()).isEqualTo("agent-name");
         assertThat(CourseFinishedBuildJobDTO.of(finished, List.of()).buildAgentDisplayName()).isNull();

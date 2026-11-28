@@ -261,7 +261,7 @@ public class SharedQueueManagementService {
             buildJobRepository.updateBuildJobStatus(queuedJob.id(), BuildStatus.CANCELLED);
             // Send WebSocket notification for the cancelled job (only on scheduling node)
             localCIQueueWebsocketService.ifPresent(websocketService -> buildJobRepository.findByBuildJobId(queuedJob.id()).ifPresent(buildJob -> {
-                FinishedBuildJobDTO finishedBuildJobDTO = FinishedBuildJobDTO.of(buildJob);
+                FinishedBuildJobDTO finishedBuildJobDTO = FinishedBuildJobMapper.of(buildJob);
                 websocketService.sendFinishedBuildJobOverWebsocket(finishedBuildJobDTO);
             }));
         }

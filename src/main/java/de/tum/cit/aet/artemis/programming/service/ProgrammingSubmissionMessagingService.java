@@ -12,8 +12,8 @@ import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionMapper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 
@@ -38,7 +38,7 @@ public class ProgrammingSubmissionMessagingService {
      * @param exerciseId used to build the correct topic
      */
     public void notifyUserAboutSubmission(ProgrammingSubmission submission, Long exerciseId) {
-        var submissionDTO = SubmissionDTO.of(submission, false, null, null);
+        var submissionDTO = SubmissionMapper.of(submission, false, null, null);
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
             if (studentParticipation.getParticipant() instanceof Team team) {
                 // eager load the team with students so their information can be used for the messages below

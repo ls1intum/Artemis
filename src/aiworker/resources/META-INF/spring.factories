@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.AutoConfigurationImportFilter=de.tum.cit.aet.artemis.core.config.SpringAIAutoConfigurationFilter
+org.springframework.context.ApplicationContextInitializer=de.tum.cit.aet.artemis.core.config.BeanNamesByTypeCacheWorkaround
+org.springframework.boot.EnvironmentPostProcessor=de.tum.cit.aet.artemis.core.config.RedisDiscoveryEnvironmentPostProcessor

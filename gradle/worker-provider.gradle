@@ -1,0 +1,51 @@
+// Compile the provider protocol, adapters and discovery code against each dedicated worker's own classpath.
+ext.configureWorkerProviderSources = { java ->
+    java.srcDirs 'src/main/java', 'src/worker/java'
+    def base = 'de/tum/cit/aet/artemis/'
+    [
+        'config/DisableRedisAutoConfig.java',
+        'core/config/ArtemisProperties.java',
+        'core/config/BeanNamesByTypeCacheWorkaround.java',
+        'core/config/Constants.java',
+        'core/config/DistributedDataProviderResolver.java',
+        'core/config/EurekaClientConfiguration.java',
+        'core/config/EurekaHazelcastDiscoveryStrategy*.java',
+        'core/config/EurekaInstanceHelper.java',
+        'core/config/HazelcastDistributedDataCondition.java',
+        'core/config/HazelcastPathSerializer.java',
+        'core/config/NotRedisCondition.java',
+        'core/config/RedisCondition.java',
+        'core/config/RedisDiscoveryEnvironmentPostProcessor.java',
+        'core/config/RedisDistributedDataCondition.java',
+        'core/config/RedissonCodecConfiguration.java',
+        'core/config/WorkerProviderConfiguration.java',
+        'core/service/distributed/DistributedDataSchema.java',
+        'core/service/distributed/DistributedDataTypeFilter.java',
+        'core/service/distributed/api/**',
+        'core/service/distributed/hazelcast/**',
+        'core/service/distributed/redisson/**'
+    ].each { java.include(base + it) }
+}
+
+ext.addWorkerProviderDependencies = { configurationName ->
+    // Preserve the reviewed versions and security pins of shared libraries without bringing unrelated modules into either WAR.
+    configurations.implementation.dependencies.withType(ExternalModuleDependency).all { dependency ->
+        if (dependency.version && dependency.attributes.getAttribute(Category.CATEGORY_ATTRIBUTE)?.name != Category.REGULAR_PLATFORM) {
+            dependencies.constraints.add(configurationName, [group: dependency.group, name: dependency.name, version: dependency.version])
+        }
+    }
+    configurations.implementation.dependencyConstraints.all { constraint ->
+        dependencies.constraints.add(configurationName, constraint)
+    }
+    def providerLibraries = ['hazelcast-spring', 'redisson-spring-boot-starter', 'spring-cloud-starter-netflix-eureka-client']
+    configurations.implementation.dependencies.withType(ExternalModuleDependency).all { dependency ->
+        if (dependency.name in providerLibraries) {
+            def library = dependency.copy()
+            if (library.name == 'spring-cloud-starter-netflix-eureka-client') {
+                library.exclude group: 'javax.servlet', module: 'servlet-api' // Legacy Netflix eventbus dependency for servlet containers.
+            }
+            dependencies.add(configurationName, library)
+        }
+    }
+    dependencies.add(configurationName, 'org.springframework.boot:spring-boot-starter-restclient')
+}

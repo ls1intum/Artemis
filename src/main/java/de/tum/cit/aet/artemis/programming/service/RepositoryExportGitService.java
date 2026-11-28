@@ -114,10 +114,11 @@ public class RepositoryExportGitService {
      * Stager Task #6: Combine all commits after last instructor commit
      *
      * @param repository             Local Repository Object.
+     * @param participation          participation whose authors are combined
      * @param overwriteDefaultBranch If false keeps the default branch and creates squash commit in separate branch, if true squashes the default branch
      * @param latestSetupCommitHash  The commit hash of the latest setup commit in the student repository
      */
-    public void combineAllStudentCommits(Repository repository, boolean overwriteDefaultBranch, String latestSetupCommitHash) {
+    public void combineAllStudentCommits(Repository repository, StudentParticipation participation, boolean overwriteDefaultBranch, String latestSetupCommitHash) {
         try (Git studentGit = new Git(repository)) {
             gitService.setRemoteUrl(repository);
 
@@ -135,7 +136,7 @@ public class RepositoryExportGitService {
 
             studentGit.reset().setMode(ResetCommand.ResetType.SOFT).setRef(latestSetupCommitHash).call();
             studentGit.add().addFilepattern(".").call();
-            var optionalStudent = ((StudentParticipation) repository.getParticipation()).getStudents().stream().findFirst();
+            var optionalStudent = participation.getStudents().stream().findFirst();
             var name = optionalStudent.map(User::getName).orElse(artemisGitName);
             var email = optionalStudent.map(User::getEmail).orElse(artemisGitEmail);
             GitService.commit(studentGit).setMessage("All student changes in one commit").setCommitter(name, email).call();

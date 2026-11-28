@@ -13,6 +13,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.dto.UserNameDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationMapper;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionMapper;
 
 /**
  * DTO containing {@link Result} information for the assessment (text) module.
@@ -38,9 +40,9 @@ public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successfu
         SubmissionDTO submissionDTO = null;
         ParticipationDTO participationDTO = null;
         if (Hibernate.isInitialized(result.getSubmission()) && result.getSubmission() != null) {
-            submissionDTO = SubmissionDTO.of(result.getSubmission(), false, null, null);
+            submissionDTO = SubmissionMapper.of(result.getSubmission(), false, null, null);
             if (Hibernate.isInitialized(result.getSubmission().getParticipation())) {
-                participationDTO = ParticipationDTO.of(result.getSubmission().getParticipation());
+                participationDTO = ParticipationMapper.of(result.getSubmission().getParticipation());
             }
         }
         List<FeedbackDTO> feedbackDTOs = null;

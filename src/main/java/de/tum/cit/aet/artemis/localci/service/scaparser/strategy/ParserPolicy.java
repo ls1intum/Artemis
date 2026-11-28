@@ -20,11 +20,6 @@ import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 public class ParserPolicy {
 
     /**
-     * This is used as the category of all code issues if the analysis tool does not assign a category.
-     */
-    public static final String GENERIC_LINT_CATEGORY = "Lint";
-
-    /**
      * Selects the appropriate parsing strategy based on the filename of the static code analysis XML report.
      *
      * @param fileName Name of the file that contains the static code analysis report
@@ -38,14 +33,14 @@ public class ParserPolicy {
 
         return switch (tool) {
             case CHECKSTYLE -> new CheckstyleParser();
-            case CLANG_TIDY -> new SarifParser(StaticCodeAnalysisTool.CLANG_TIDY, new SingleCategoryCategorizer(GENERIC_LINT_CATEGORY));
+            case CLANG_TIDY -> new SarifParser(StaticCodeAnalysisTool.CLANG_TIDY, new SingleCategoryCategorizer(StaticCodeAnalysisTool.GENERIC_LINT_CATEGORY));
             case CLIPPY -> new SarifParser(StaticCodeAnalysisTool.CLIPPY, new ClippyCategorizer());
             case DART_ANALYZE -> new SarifParser(StaticCodeAnalysisTool.DART_ANALYZE, new DartAnalyzeCategorizer());
             case DETEKT -> new SarifParser(StaticCodeAnalysisTool.DETEKT, new DetektCategorizer());
-            case ESLINT -> new SarifParser(StaticCodeAnalysisTool.ESLINT, new SingleCategoryCategorizer(GENERIC_LINT_CATEGORY));
+            case ESLINT -> new SarifParser(StaticCodeAnalysisTool.ESLINT, new SingleCategoryCategorizer(StaticCodeAnalysisTool.GENERIC_LINT_CATEGORY));
             case GCC -> new GccParser();
-            case GOLANGCI_LINT -> new SarifParser(StaticCodeAnalysisTool.GOLANGCI_LINT, new SingleCategoryCategorizer(GENERIC_LINT_CATEGORY));
-            case LINTR -> new SarifParser(StaticCodeAnalysisTool.LINTR, new SingleCategoryCategorizer(GENERIC_LINT_CATEGORY));
+            case GOLANGCI_LINT -> new SarifParser(StaticCodeAnalysisTool.GOLANGCI_LINT, new SingleCategoryCategorizer(StaticCodeAnalysisTool.GENERIC_LINT_CATEGORY));
+            case LINTR -> new SarifParser(StaticCodeAnalysisTool.LINTR, new SingleCategoryCategorizer(StaticCodeAnalysisTool.GENERIC_LINT_CATEGORY));
             case PMD -> new PMDParser();
             case PMD_CPD -> new PMDCPDParser();
             case ROSLYN -> new SarifParser(StaticCodeAnalysisTool.ROSLYN, new RoslynCategorizer());

@@ -62,6 +62,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionMapper;
 import de.tum.cit.aet.artemis.localci.service.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -86,6 +87,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingResultMapper;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
@@ -199,7 +201,7 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     private static List<ResultDTO> mapResults(Collection<Result> results) {
-        return results.stream().filter(Objects::nonNull).map(ResultDTO::ofNested).toList();
+        return results.stream().filter(Objects::nonNull).map(ProgrammingResultMapper::ofNested).toList();
     }
 
     /**
@@ -384,7 +386,7 @@ public class ProgrammingExerciseParticipationResource {
 
         // Remove participation, is not needed in the response.
         programmingSubmission.setParticipation(null);
-        var submissionDTO = SubmissionDTO.of(programmingSubmission, isSubmissionProcessing, buildStartDate, estimatedCompletionDate);
+        var submissionDTO = SubmissionMapper.of(programmingSubmission, isSubmissionProcessing, buildStartDate, estimatedCompletionDate);
         return ResponseEntity.ok(submissionDTO);
     }
 

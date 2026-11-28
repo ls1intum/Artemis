@@ -4,11 +4,19 @@ on:
   workflow_dispatch:
     inputs:
       branch_name:
-        description: 'Branch to deploy'
-        required: true
+        description: 'Branch for a CI deployment'
+        required: false
       commit_sha:
-        description: 'Commit SHA to deploy'
-        required: true
+        description: 'Exact commit SHA for a CI deployment'
+        required: false
+      release_tag:
+        description: 'Numeric release tag to deploy (instead of a CI branch and SHA)'
+        required: false
+        type: string
+      universal_rollback:
+        description: 'Use the universal WAR of the specified rollback release'
+        type: boolean
+        default: false
       environment_name:
         description: 'Environment to deploy to'
         required: true
@@ -25,7 +33,7 @@ on:
 concurrency: ${{ github.event.inputs.environment_name }}
 
 env:
-  # The single CI entry point that publishes the Artemis.war artifact (via ci-build.yml).
+  # The CI entry point that publishes the role WARs (via ci-build.yml).
   build_workflow_name: ci.yml
 
 # Default-deny; each job opts into the minimum scope it needs.
@@ -39,6 +47,8 @@ jobs:
       actions: read
     outputs:
       build_workflow_run_id: ${{ steps.resolve.outputs.run-id }}
+      artifact: ${{ steps.artifact.outputs.artifact }}
+      legacy_filename: ${{ steps.artifact.outputs.legacy_filename }}
     env:
       BRANCH_NAME: ${{ github.event.inputs.branch_name }}
       COMMIT_SHA: ${{ github.event.inputs.commit_sha }}
@@ -54,25 +64,53 @@ jobs:
           echo "Environment: $ENVIRONMENT_NAME"
           echo "Triggered by: $TRIGGERED_BY"
 
+      - name: Validate deployment source
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          UNIVERSAL_ROLLBACK: ${{ inputs.universal_rollback }}
+        run: |
+          set -Eeuo pipefail
+          if [[ -n "$RELEASE_TAG" ]]; then
+            [[ "$RELEASE_TAG" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?$ && -z "$BRANCH_NAME" && -z "$COMMIT_SHA" ]]
+          else
+            [[ "$COMMIT_SHA" =~ ^[0-9a-f]{40}$ && -n "$BRANCH_NAME" && "$UNIVERSAL_ROLLBACK" != true ]]
+          fi
+
       # Check out only the resolver action, from the workflow's own ref (Helios dispatches this
       # workflow from the branch being deployed). Run-resolution is a build-correctness helper.
       - name: Check out resolver action
+        if: inputs.release_tag == ''
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          sparse-checkout: .github/actions/resolve-artifact-run
+          sparse-checkout: |
+            .github/actions/resolve-artifact-run
+            .github/scripts/deployment-artifacts.mjs
           sparse-checkout-cone-mode: false
 
-      # Resolve the CI run that actually carries Artemis.war for this exact commit — enumerating all
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: inputs.release_tag == ''
+        with:
+          node-version: '26'
+
+      - name: Select the artifact format supported by this exact revision
+        id: artifact
+        if: inputs.release_tag == ''
+        run: |
+          git fetch --no-tags --depth=1 origin "$COMMIT_SHA"
+          node .github/scripts/deployment-artifacts.mjs wars "$COMMIT_SHA"
+
+      # Resolve the CI run that actually carries the selected WARs for this exact commit — enumerating all
       # runs for the SHA rather than trusting `.workflow_runs[0]`, which fails when a superseded or
       # artifact-less run for the same commit sorts first (Helios#1196).
       - name: Resolve build run for the commit
+        if: inputs.release_tag == ''
         id: resolve
         uses: ./.github/actions/resolve-artifact-run
         with:
           workflow: ${{ env.build_workflow_name }}
           sha: ${{ github.event.inputs.commit_sha }}
           branch: ${{ github.event.inputs.branch_name }}
-          artifact-name: Artemis.war
+          artifact-name: ${{ steps.artifact.outputs.artifact }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
   deploy:
@@ -102,6 +140,7 @@ jobs:
           chmod 700 ~/.ssh
 
           # Write private key
+          # shellcheck disable=SC2001 # Secrets can contain literal backslash-n separators.
           echo "$DEPLOYMENT_SSH_KEY" | sed 's/\\n/\n/g' > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
@@ -114,11 +153,13 @@ jobs:
         with:
           repository: 'ls1intum/artemis-ansible'
 
-      - name: Check out Python dependency lock
+      - name: Check out deployment configuration and Python dependency lock
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          path: artemis-dependency-lock
-          sparse-checkout: .github/python-dependencies
+          path: artemis-deployment
+          sparse-checkout: |
+            .github/python-dependencies
+            deployment/ansible
           sparse-checkout-cone-mode: false
 
       - name: Set up Python
@@ -128,26 +169,61 @@ jobs:
 
       - name: Install Artemis-Ansible dependencies
         run: |
-          python3 -m pip install --require-hashes -r artemis-dependency-lock/.github/python-dependencies/requirements.txt
+          python3 -m pip install --require-hashes -r artemis-deployment/.github/python-dependencies/requirements.txt
           ansible-galaxy collection install -r requirements.yml --force
           ansible-galaxy install -r requirements.yml --force
           ansible-galaxy install -r ~/.ansible/collections/ansible_collections/ls1intum/artemis/requirements.yml
 
-      - name: Download artifact
+      - name: Download role WARs
+        if: inputs.release_tag == ''
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: Artemis.war
-          path: /tmp/artifact
+          name: ${{ needs.check-build-status.outputs.artifact }}
+          digest-mismatch: error
+          path: ${{ runner.temp }}/artemis-role-wars-${{ github.run_id }}-${{ github.run_attempt }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ env.WORKFLOW_RUN_ID  }}
 
+      # Historic CI artifacts did not include a separate SHA256SUMS. download-artifact
+      # verifies the archive against GitHub's digest before the exact member is staged.
+      - name: Stage the universal WAR from a pre-split build
+        if: needs.check-build-status.outputs.legacy_filename != ''
+        env:
+          WAR_DIRECTORY: ${{ runner.temp }}/artemis-role-wars-${{ github.run_id }}-${{ github.run_attempt }}
+          LEGACY_FILENAME: ${{ needs.check-build-status.outputs.legacy_filename }}
+        run: |
+          set -Eeuo pipefail
+          cd "$WAR_DIRECTORY"
+          test -s "$LEGACY_FILENAME"
+          mv -- "$LEGACY_FILENAME" Artemis.war
+          sha256sum Artemis.war > SHA256SUMS
+
       - name: Deploy Artemis
         env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          UNIVERSAL_ROLLBACK: ${{ inputs.universal_rollback }}
+          LEGACY_FILENAME: ${{ needs.check-build-status.outputs.legacy_filename }}
+          DEPLOYMENT_ENVIRONMENT: ${{ inputs.environment_name }}
+          WAR_DIRECTORY: ${{ runner.temp }}/artemis-role-wars-${{ github.run_id }}-${{ github.run_attempt }}
           ANSIBLE_PLAYBOOK_PATH: ${{ vars.ANSIBLE_PLAYBOOK_PATH }}
         run: |
-          WAR_FILE=$(ls -1 /tmp/artifact/*.war | head -n 1)
-
-          ansible-playbook "$ANSIBLE_PLAYBOOK_PATH" -e artemis_version="$WAR_FILE" -e ansible_user="$DEPLOYMENT_USER"
+          set -Eeuo pipefail
+          case "$DEPLOYMENT_ENVIRONMENT" in
+            staging1.artemis.cit.tum.de) cluster=artemis_staging1 ;;
+            staging2.artemis.cit.tum.de) cluster=artemis_staging2 ;;
+            artemis.tum.de) cluster=artemis_production ;;
+            *) exit 1 ;;
+          esac
+          if [[ -n "$RELEASE_TAG" ]]; then
+            source_args=(-e "artemis_release=$RELEASE_TAG" -e "artemis_universal_rollback=$UNIVERSAL_ROLLBACK")
+          else
+            source_args=(-e "artemis_war_directory=$WAR_DIRECTORY")
+            if [[ -n "$LEGACY_FILENAME" ]]; then source_args+=(-e artemis_universal_rollback=true); fi
+          fi
+          ansible-playbook artemis-deployment/deployment/ansible/deploy-role-wars.yml \
+            -e @artemis-deployment/deployment/ansible/role-wars.yml \
+            -e "artemis_update_playbook=$(realpath -- "$ANSIBLE_PLAYBOOK_PATH")" \
+            -e "artemis_cluster=$cluster" -e "ansible_user=$DEPLOYMENT_USER" "${source_args[@]}"
 
       # The ansible role itself already waits for node 1 individually (management/info, up to
       # 10 minutes) before restarting the other nodes, so ansible-playbook failing already
@@ -183,4 +259,4 @@ jobs:
         if: always()
         run: |
           rm -f ~/.ssh/id_ed25519
-          rm -rf /tmp/artifact/*
+          rm -rf -- "${RUNNER_TEMP}/artemis-role-wars-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"

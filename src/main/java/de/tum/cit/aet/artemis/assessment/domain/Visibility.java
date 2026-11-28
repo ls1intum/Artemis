@@ -1,11 +1,9 @@
 package de.tum.cit.aet.artemis.assessment.domain;
 
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
-
 /**
  * Used to define when students are able to see a {@link Feedback}.
  * <p>
- * Currently, this is only used for Feedbacks linked to a {@link ProgrammingExerciseTestCase}.
+ * Currently, this is only used for Feedbacks linked to a programming exercise test case.
  * <p>
  * Tutors/Instructors/Admins should always see all levels of visibility.
  * <p>

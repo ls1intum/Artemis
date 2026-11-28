@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingResultMapper;
 
 /**
  * A programming submission with its results nested underneath, exactly where the entity wire puts them today.
@@ -52,7 +53,7 @@ public record ProgrammingSubmissionWithResultsDTO(Long id, String submissionExer
         // Hibernate.isInitialized(null) is true, so the null check has to stand next to it.
         if (submission.getResults() != null && Hibernate.isInitialized(submission.getResults())) {
             // the results collection can hold null elements; Submission's own accessors guard against them too
-            resultDTOs = submission.getResults().stream().filter(Objects::nonNull).map(ResultDTO::ofNested).toList();
+            resultDTOs = submission.getResults().stream().filter(Objects::nonNull).map(ProgrammingResultMapper::ofNested).toList();
         }
         return of(submission, resultDTOs);
     }

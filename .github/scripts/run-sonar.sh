@@ -4,6 +4,10 @@ set -Eeuo pipefail
 : "${SONAR_BRANCH_NAME:?Missing analyzed branch}"
 : "${SONAR_TOKEN:?Missing Sonar analysis token}"
 tasks=(compileJava)
+# The trusted workflow can analyze an earlier release which predates the dedicated WARs.
+if [[ -f gradle/core.gradle ]]; then
+    tasks+=(-Pwar compileCoreJava compileBuildagentJava compileAiworkerJava)
+fi
 args=("-Dsonar.scm.revision=${SONAR_REVISION}" -Dsonar.qualitygate.wait=true -Dsonar.qualitygate.timeout=900)
 if [[ "${SONAR_SELECTED_SERVER:-false}" == true ]]; then
     script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"

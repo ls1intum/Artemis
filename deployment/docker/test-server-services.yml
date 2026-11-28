@@ -1,0 +1,69 @@
+# Common services for the role-specific test-server installations.
+services:
+    artemis-app-core:
+        extends:
+            file: ./artemis.yml
+            service: artemis-app
+        image: ghcr.io/ls1intum/artemis-core:${ARTEMIS_DOCKER_TAG:-latest}
+        build:
+            args:
+                ARTEMIS_ROLE: core
+        pull_policy: always
+        restart: always
+
+    artemis-app-buildagent:
+        image: ghcr.io/ls1intum/artemis-buildagent:${ARTEMIS_DOCKER_TAG:-latest}
+        build:
+            context: ../..
+            dockerfile: deployment/docker/artemis/Dockerfile
+            args:
+                ARTEMIS_ROLE: buildagent
+        pull_policy: always
+        restart: always
+        networks: [artemis]
+        group_add:
+            - ${DOCKER_GROUP_ID:-0}
+        env_file:
+            - ./artemis/config/test-server-agent.env
+            - ${ARTEMIS_BUILDAGENT_ENV_FILE:-${ARTEMIS_ENV_FILE:-./artemis/config/test-server}.runner.env}
+        environment:
+            SPRING_PROFILES_ACTIVE: prod,buildagent
+        volumes:
+            - buildagent-data:/opt/artemis/data
+            - /var/run/docker.sock:/var/run/docker.sock
+        healthcheck:
+            test: wget -q -t1 -T5 -O - http://localhost:8080/management/health/readiness | grep -xq '{"status":"UP"}'
+            start_period: 120s
+            interval: 5s
+
+    redis:
+        extends:
+            file: ./redis.yml
+            service: redis
+        restart: always
+        # The default user is disabled, so only the `artemis` user can connect. Protected mode would otherwise refuse
+        # every connection from outside the container, because it only checks whether the default user has a password.
+        # AOF persistence keeps queued build jobs, locks and the other shared state across a restart of the container.
+        command:
+            - valkey-server
+            - --appendonly
+            - "yes"
+            - --protected-mode
+            - "no"
+            - --user
+            - default
+            - "off"
+            - --user
+            - artemis
+            - "on"
+            - ">${REDIS_PASSWORD:-artemis}"
+            - "~*"
+            - "&*"
+            - "+@all"
+        environment:
+            REDISCLI_AUTH: ${REDIS_PASSWORD:-artemis}
+        healthcheck:
+            # redis-cli exits with 0 on an error reply such as NOAUTH, so the reply itself is checked.
+            test: ["CMD-SHELL", "redis-cli --no-auth-warning --user artemis ping | grep -q PONG"]
+        volumes:
+            - ${REDIS_DATA_VOLUME:-./.docker-data/redis-data}:/data

@@ -8,24 +8,26 @@
 services:
     artemis-app:
         extends:
-            file: ./artemis.yml
-            service: artemis-app
-        image: ghcr.io/ls1intum/artemis:${ARTEMIS_DOCKER_TAG:-latest}
+            file: ./test-server-services.yml
+            service: artemis-app-core
         depends_on:
+            redis:
+                condition: service_healthy
             mysql:
                 condition: service_healthy
-        pull_policy: always
-        restart: always
-        group_add:
-            - ${DOCKER_GROUP_ID:-0}
+        environment:
+            SPRING_PROFILES_ACTIVE: prod,core,localvc,localci,scheduling,docker
+            SPRING_DATA_REDIS_CLIENTNAME: artemis-node-1
+            SPRING_JPA_DATABASE: MYSQL
         env_file:
+            - ./artemis/config/test-server-localci.env
             - ${ARTEMIS_ENV_FILE:-./artemis/config/prod.env}
             - ./artemis/config/prod-singlenode.env
+            - ./artemis/config/test-server-redis.env
         volumes:
             - ${ARTEMIS_VOLUME_MOUNT:-./.docker-data/artemis-data}:/opt/artemis/data
             - ${ARTEMIS_LEGAL_MOUNT:-./.docker-data/artemis-legal}:/opt/artemis/legal
             - ${ARTEMIS_DATA_EXPORT_MOUNT:-./.docker-data/artemis-data-exports}:/opt/artemis/data-exports
-            - /var/run/docker.sock:/var/run/docker.sock
 
     mysql:
         extends:
@@ -38,6 +40,24 @@ services:
         volumes:
             - ${DATABASE_VOLUME_MOUNT:-./.docker-data/artemis-mysql-data}:/var/lib/mysql
 
+    artemis-app-buildagent:
+        extends:
+            file: ./test-server-services.yml
+            service: artemis-app-buildagent
+        depends_on:
+            artemis-app:
+                condition: service_healthy
+        environment:
+            ARTEMIS_VERSIONCONTROL_URL: http://artemis-app:8080
+            SPRING_DATA_REDIS_CLIENTNAME: artemis-buildagent
+        env_file:
+            - ./artemis/config/test-server-redis.env
+
+    redis:
+        extends:
+            file: ./test-server-services.yml
+            service: redis
+
     nginx:
         extends:
             file: ./nginx.yml
@@ -46,6 +66,10 @@ services:
             artemis-app:
                 condition: service_started
         restart: always
+        networks:
+            artemis:
+                aliases:
+                    - ${NGINX_PUBLIC_HOSTNAME:-artemis-nginx}
         volumes:
             - type: bind
               source: ${NGINX_PROXY_SSL_CERTIFICATE_PATH:-../../src/test/playwright/certs/artemis-nginx+4.pem}
@@ -58,3 +82,6 @@ networks:
     artemis:
         driver: "bridge"
         name: artemis
+
+volumes:
+    buildagent-data:

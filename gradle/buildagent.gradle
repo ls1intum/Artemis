@@ -1,0 +1,52 @@
+def agent = sourceSets.create('buildagent')
+configureWorkerProviderSources(agent.java)
+def base = 'de/tum/cit/aet/artemis/'
+[
+    'buildagent/**',
+    'aiworker/api/JUnitXmlParser.java',
+    'assessment/domain/AssessmentType.java', 'assessment/domain/Visibility.java', 'assessment/domain/FeedbackType.java',
+    'core/config/ArtemisConstants.java', 'core/config/ArtemisJacksonDefaults.java', 'core/config/BuildAgentGitPasswordValidator.java', 'core/config/ProgrammingLanguageConfiguration.java',
+    'core/exception/EntityNotFoundException.java', 'core/exception/InsecureDefaultCredentialException.java',
+    'core/exception/failureAnalyzer/InsecureDefaultCredentialFailureAnalyzer.java', 'core/service/TempFileUtilService.java',
+    'core/util/JsonObjectMapper.java', 'core/util/TimeLogUtil.java',
+    'exercise/domain/ExerciseType.java', 'exercise/domain/InitializationState.java', 'exercise/domain/SubmissionType.java',
+    'exercise/dto/ParticipationDTO.java', 'exercise/dto/SubmissionDTO.java',
+    'localci/dto/BuildJobInterface.java', 'localci/exception/**',
+    'localci/service/DistributedDataAccessService.java', 'localci/service/LocalCIPriorityQueueComparator.java',
+    'localci/service/scaparser/**',
+    'localvc/dto/ObservedClientAddressDTO.java', 'localvc/dto/SshHostKeyFingerprint*.java',
+    'localvc/exception/LocalVCInternalException.java', 'localvc/service/AbstractGitService.java',
+    'localvc/service/LocalVCRepositoryUri.java', 'localvc/service/WorkingCopyLocks.java', 'localvc/service/ssh/HashUtils.java',
+    'programming/domain/File.java', 'programming/domain/ProgrammingLanguage.java', 'programming/domain/ProjectType.java',
+    'programming/domain/Repository.java', 'programming/domain/RepositoryType.java', 'programming/domain/StaticCodeAnalysisTool.java',
+    'programming/domain/VcsRepositoryUri.java', 'programming/domain/build/BuildStatus.java',
+    'programming/dto/BuildPlanCheckoutDirectoriesDTO.java', 'programming/dto/BuildResultNotification.java',
+    'programming/dto/CheckoutDirectoriesDTO.java', 'programming/dto/ResultDTO.java', 'programming/dto/StaticCodeAnalysisIssue.java', 'programming/dto/StaticCodeAnalysisReportDTO.java',
+    'programming/dto/TestCaseBase.java', 'programming/exception/ContinuousIntegrationException.java',
+    'programming/exception/GitException.java', 'programming/exception/VersionControlException.java', 'programming/service/RepositoryCheckoutService.java'
+].each { agent.java.include(base + it) }
+
+tasks.named(agent.processResourcesTaskName) {
+    inputs.property('version', version)
+    filesMatching('config/application.yml') { filter { it.replace('#project.version#', project.version.toString()) } }
+    from('src/main/resources') {
+        include 'config/application-buildagent.yml', 'banner.txt', 'META-INF/licenses/**'
+    }
+    from(tasks.named('generateGitProperties')) { include '**/git.properties' }
+}
+
+addWorkerProviderDependencies(agent.implementationConfigurationName)
+// Use the same versions, constraints and module exclusions as the universal WAR.
+def agentLibraries = [
+    'docker-java-core', 'docker-java-transport-zerodep', 'kubernetes-client', 'kubernetes-httpclient-okhttp',
+    'org.eclipse.jgit', 'org.eclipse.jgit.ssh.apache', 'sshd-core', 'sshd-sftp', 'commons-codec',
+    'commons-compress', 'commons-io', 'commons-lang3', 'jackson-dataformat-xml', 'jspecify',
+    'spring-boot-starter-web', 'spring-boot-starter-actuator', 'spring-boot-starter-validation'
+]
+configurations.implementation.dependencies.all { dependency ->
+    if (dependency.name in agentLibraries) {
+        dependencies.add(agent.implementationConfigurationName, dependency.copy())
+    }
+}
+
+registerRoleWar('bootBuildAgentWar', 'buildagent', 'de.tum.cit.aet.artemis.buildagent.BuildAgentApplication', agent)

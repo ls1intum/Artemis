@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
-import de.tum.cit.aet.artemis.localci.service.scaparser.strategy.ParserPolicy;
 import de.tum.cit.aet.artemis.localci.service.scaparser.strategy.SwiftLintRuleKinds;
 import de.tum.cit.aet.artemis.localci.service.scaparser.strategy.sarif.ClippyCategorizer;
 import de.tum.cit.aet.artemis.localci.service.scaparser.strategy.sarif.DetektCategorizer;
@@ -96,19 +95,19 @@ public class StaticCodeAnalysisConfigurer {
     static {
         Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> map = new EnumMap<>(ProgrammingLanguage.class);
         map.put(ProgrammingLanguage.C, createDefaultCategoriesForC());
-        map.put(ProgrammingLanguage.C_PLUS_PLUS, createDefaultCategoriesSingleTool(List.of(ParserPolicy.GENERIC_LINT_CATEGORY), StaticCodeAnalysisTool.CLANG_TIDY));
+        map.put(ProgrammingLanguage.C_PLUS_PLUS, createDefaultCategoriesSingleTool(List.of(StaticCodeAnalysisTool.GENERIC_LINT_CATEGORY), StaticCodeAnalysisTool.CLANG_TIDY));
         map.put(ProgrammingLanguage.C_SHARP, createDefaultCategoriesSingleTool(RoslynCategorizer.CATEGORY_NAMES, StaticCodeAnalysisTool.ROSLYN));
         map.put(ProgrammingLanguage.DART, createDefaultCategoriesSingleTool(CATEGORY_NAMES_DART_ANALYZE, StaticCodeAnalysisTool.DART_ANALYZE));
-        map.put(ProgrammingLanguage.GO, createDefaultCategoriesSingleTool(List.of(ParserPolicy.GENERIC_LINT_CATEGORY), StaticCodeAnalysisTool.GOLANGCI_LINT));
+        map.put(ProgrammingLanguage.GO, createDefaultCategoriesSingleTool(List.of(StaticCodeAnalysisTool.GENERIC_LINT_CATEGORY), StaticCodeAnalysisTool.GOLANGCI_LINT));
         map.put(ProgrammingLanguage.JAVA, createDefaultCategoriesForJava());
-        map.put(ProgrammingLanguage.JAVASCRIPT, createDefaultCategoriesSingleTool(List.of(ParserPolicy.GENERIC_LINT_CATEGORY), StaticCodeAnalysisTool.ESLINT));
+        map.put(ProgrammingLanguage.JAVASCRIPT, createDefaultCategoriesSingleTool(List.of(StaticCodeAnalysisTool.GENERIC_LINT_CATEGORY), StaticCodeAnalysisTool.ESLINT));
         map.put(ProgrammingLanguage.KOTLIN, createDefaultCategoriesSingleTool(DetektCategorizer.CATEGORY_NAMES, StaticCodeAnalysisTool.DETEKT));
         map.put(ProgrammingLanguage.PYTHON, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUFF, StaticCodeAnalysisTool.RUFF));
-        map.put(ProgrammingLanguage.R, createDefaultCategoriesSingleTool(List.of(ParserPolicy.GENERIC_LINT_CATEGORY), StaticCodeAnalysisTool.LINTR));
+        map.put(ProgrammingLanguage.R, createDefaultCategoriesSingleTool(List.of(StaticCodeAnalysisTool.GENERIC_LINT_CATEGORY), StaticCodeAnalysisTool.LINTR));
         map.put(ProgrammingLanguage.RUBY, createDefaultCategoriesSingleTool(CATEGORY_NAMES_RUBOCOP, StaticCodeAnalysisTool.RUBOCOP));
         map.put(ProgrammingLanguage.RUST, createDefaultCategoriesSingleTool(ClippyCategorizer.CATEGORY_NAMES, StaticCodeAnalysisTool.CLIPPY));
         map.put(ProgrammingLanguage.SWIFT, createDefaultCategoriesForSwift());
-        map.put(ProgrammingLanguage.TYPESCRIPT, createDefaultCategoriesSingleTool(List.of(ParserPolicy.GENERIC_LINT_CATEGORY), StaticCodeAnalysisTool.ESLINT));
+        map.put(ProgrammingLanguage.TYPESCRIPT, createDefaultCategoriesSingleTool(List.of(StaticCodeAnalysisTool.GENERIC_LINT_CATEGORY), StaticCodeAnalysisTool.ESLINT));
 
         languageToDefaultCategories = Collections.unmodifiableMap(map);
     }

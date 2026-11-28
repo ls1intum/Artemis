@@ -3,8 +3,20 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 import java.time.Duration
 
+// ArchUnit reads these class files directly. Adding them to the test runtime classpath would make Spring
+// discover the dedicated applications and worker beans in universal integration tests.
+def compileRoleArchitecture = tasks.register('compileRoleArchitectureJava', JavaCompile) {
+    source(['core', 'buildagent', 'aiworker', 'worker'].collect { fileTree("src/${it}/java") { include '**/*.java' } })
+    classpath = files(sourceSets.main.output.classesDirs, sourceSets.main.compileClasspath)
+    destinationDirectory = layout.buildDirectory.dir('classes/java/roleArchitecture')
+    javaCompiler = javaToolchains.compilerFor(java.toolchain)
+}
+def roleArchitectureClasses = compileRoleArchitecture.flatMap { it.destinationDirectory }
+
 // Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
 tasks.withType(Test).configureEach {
+    inputs.dir(roleArchitectureClasses).withPathSensitivity(PathSensitivity.RELATIVE)
+    systemProperty 'artemis.architecture.roleClasses', roleArchitectureClasses.get().asFile.absolutePath
 
     // Tests depend on Docker, Testcontainers and images that Gradle does not see as inputs, and CI reads the
     // console log of every run (failed tests, server starts), so a test result must never come from the build cache.

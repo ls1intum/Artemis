@@ -1,0 +1,72 @@
+def aiworker = sourceSets.create('aiworker')
+configureWorkerProviderSources(aiworker.java)
+def base = 'de/tum/cit/aet/artemis/'
+[
+    'aiworker/AiWorkerApplication.java',
+    'aiworker/api/**',
+    'aiworker/config/DockerConfiguration.java',
+    'aiworker/config/WorkerMessaging.java',
+    'aiworker/config/WorkerSandbox*.java',
+    'aiworker/config/WorkerSettings.java',
+    'aiworker/config/telemetry/**',
+    'aiworker/domain/**',
+    'aiworker/dto/**',
+    'aiworker/service/WorkerSupervisorService.java',
+    'aiworker/service/messaging/**',
+    'aiworker/service/sandbox/**',
+    'core/config/AiWorkerProfileValidation.java',
+    'core/config/SpringAIAutoConfigurationFilter.java',
+    'core/config/TaskSchedulingConfiguration.java',
+    'core/config/llm/**',
+    'core/service/llm/**',
+    'hyperion/protocol/**',
+    'hyperion/runtime/**',
+    'hyperion/service/worker/**'
+].each { aiworker.java.include(base + it) }
+aiworker.java.exclude(base + 'aiworker/api/AiWorkerApi.java') // Core-side assignment and registry.
+
+tasks.named(aiworker.processResourcesTaskName) {
+    inputs.property('version', project.version)
+    filesMatching('config/application.yml') { filter { it.replace('#project.version#', project.version.toString()) } }
+    from('src/main/resources') {
+        include 'config/application-aiworker.yml', 'banner.txt', 'META-INF/licenses/**'
+        include 'prompts/hyperion/critic/**', 'templates/hyperion/**'
+        include 'templates/phases/java/plain_gradle.yaml', 'templates/phases/java/plain_maven.yaml'
+        include 'templates/java/exercise/**', 'templates/java/solution/**', 'templates/java/gradle_gradle/exercise/**'
+        include 'templates/java/gradle_gradle/solution/**', 'templates/java/gradle_gradle/readme'
+        include 'templates/java/test/testFiles/behavior/**', 'templates/java/test/testFiles/structural/**'
+    }
+}
+
+addWorkerProviderDependencies(aiworker.implementationConfigurationName)
+// Share module versions, platform attributes and exclusions with the universal executable.
+def workerLibraries = [
+    'spring-ai-bom', 'spring-ai-starter-model-openai', 'spring-boot-starter-actuator', 'spring-boot-starter-opentelemetry',
+    'jackson-dataformat-xml', 'jackson-dataformat-yaml', 'opentelemetry-exporter-otlp',
+    'docker-java-core', 'docker-java-transport-zerodep', 'jtokkit', 'org.eclipse.jgit', 'qdox', 'plantuml-mit',
+    'commons-compress', 'commons-lang3', 'commons-io'
+]
+configurations.implementation.dependencies.withType(ExternalModuleDependency).all { dependency ->
+    if (dependency.name in workerLibraries) {
+        dependencies.add(aiworker.implementationConfigurationName, dependency.copy())
+    }
+}
+dependencies.add(aiworker.implementationConfigurationName, 'org.springframework.boot:spring-boot-starter-jackson')
+
+registerRoleWar('bootAiWorkerWar', 'aiworker', 'de.tum.cit.aet.artemis.aiworker.AiWorkerApplication', aiworker)
+
+def aiworkerTest = sourceSets.create('aiworkerTest')
+aiworkerTest.compileClasspath += files(aiworker.output.classesDirs, aiworker.compileClasspath)
+def aiworkerArchive = tasks.named('bootAiWorkerWar').flatMap { it.archiveFile }
+def verifyWorkerResources = tasks.register('verifyAiWorkerWarResources', JavaExec) {
+    group = 'verification'
+    description = 'Read Hyperion prompts, recipes and teaching fixtures using the executable WAR classloader'
+    dependsOn tasks.named(aiworkerTest.classesTaskName)
+    inputs.files(aiworkerTest.output.classesDirs)
+    classpath = files(aiworkerArchive)
+    mainClass = 'org.springframework.boot.loader.launch.PropertiesLauncher'
+    doFirst { workingDir = temporaryDir }
+    systemProperty 'loader.main', 'de.tum.cit.aet.artemis.aiworker.PackagedGenerationResourcesCheck'
+    systemProperty 'loader.path', "WEB-INF/classes/,WEB-INF/lib/,${aiworkerTest.output.classesDirs.asPath}"
+}
+tasks.named('roleWars') { dependsOn verifyWorkerResources }

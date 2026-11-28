@@ -64,6 +64,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -859,6 +860,15 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule usage = noClasses().should().callMethod(Git.class, "commit").because("You should use GitService.commit() instead");
         var classesWithoutGitService = allClasses.that(not(assignableTo(GitService.class)));
         usage.check(classesWithoutGitService);
+    }
+
+    @Test
+    @EnabledIfSystemProperty(named = "artemis.architecture.roleClasses", matches = ".+")
+    void dedicatedRoleClassesAreIncludedInProductionRules() {
+        var productionNames = productionClasses.stream().map(JavaClass::getName).toList();
+        assertThat(productionNames).as("Role Java roots must be compiled for ArchUnit").contains(ARTEMIS_PACKAGE + ".CoreApp",
+                ARTEMIS_PACKAGE + ".buildagent.BuildAgentApplication", ARTEMIS_PACKAGE + ".aiworker.AiWorkerApplication",
+                ARTEMIS_PACKAGE + ".core.config.WorkerProviderConfiguration", ARTEMIS_PACKAGE + ".core.service.distributed.hazelcast.WorkerHazelcastConfiguration");
     }
 
     @Test

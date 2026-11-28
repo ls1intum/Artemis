@@ -242,7 +242,7 @@ public class ProgrammingExerciseGradingService {
 
             if (buildResult.hasLogs()) {
                 var programmingLanguage = exercise.getProgrammingLanguage();
-                var buildLogs = buildResult.extractBuildLogs();
+                var buildLogs = buildResult.extractBuildLogs().stream().map(logEntry -> new BuildLogEntry(logEntry.time(), logEntry.log())).toList();
 
                 if (latestSubmission.isBuildFailed()) {
                     // Check the unfiltered logs (asynchronously, so result processing is not delayed), as the filtering below can remove dependency download errors.
