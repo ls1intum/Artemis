@@ -118,10 +118,13 @@ export async function createMockPlatform({ key, output, fetchArtemis = fetch }) 
             }
             if (path === api + '/exercise/import') {
                 const exerciseUrl = localArtemisUrl(url.searchParams.get('exerciseUrl'));
-                if (!exerciseUrl || !/^\/api\/programming\/sharing\/export\/[\w-]+$/.test(exerciseUrl.pathname) || !exerciseUrl.searchParams.get('sec')) {
-                    return send(400, 'Expected a signed export URL on the local Artemis instance');
-                }
-                const response = await fetchArtemis(exerciseUrl, { redirect: 'error', signal: AbortSignal.timeout(30000) });
+                const token = exerciseUrl?.pathname.match(/^\/api\/programming\/sharing\/export\/([\w-]+)$/)?.[1];
+                const secret = exerciseUrl?.searchParams.get('sec');
+                if (!token || !secret) return send(400, 'Expected a signed export URL on the local Artemis instance');
+                const download = new URL(artemis);
+                download.pathname = '/api/programming/sharing/export/' + encodeURIComponent(token);
+                download.searchParams.set('sec', secret);
+                const response = await fetchArtemis(download, { redirect: 'error', signal: AbortSignal.timeout(30000) });
                 if (!response.ok) return send(502, 'Artemis export returned HTTP ' + response.status);
                 const bytes = Buffer.from(await response.arrayBuffer());
                 const receipt = inspectArchive(bytes);

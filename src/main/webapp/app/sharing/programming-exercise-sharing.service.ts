@@ -4,8 +4,8 @@ import { Service, inject } from '@angular/core';
 import type { ProgrammingExercise, ProgrammingExerciseExportAction } from 'app/programming/api/programming-exercise-extensions';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { SharingInfo, ShoppingBasket } from 'app/sharing/sharing.model';
-import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 /** the programming exercise sharing service */
@@ -71,10 +71,9 @@ export class ProgrammingExerciseSharingService {
 
     /** A configured platform can accept exports once it has connected to Artemis. */
     getExportAction(): Observable<ProgrammingExerciseExportAction | undefined> {
-        return this.http.get<boolean>(`${this.baseSharingConfigUrl}/is-enabled`).pipe(
-            map((connected) => (connected ? { label: 'artemisApp.sharing.export', run: (id: number) => this.openExport(id) } : undefined)),
-            catchError(() => of(undefined)),
-        );
+        return this.http
+            .get<boolean>(`${this.baseSharingConfigUrl}/is-enabled`)
+            .pipe(map((connected) => (connected ? { label: 'artemisApp.sharing.export', run: (id: number) => this.openExport(id) } : undefined)));
     }
 
     private openExport(exerciseId: number) {

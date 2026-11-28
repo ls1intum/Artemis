@@ -50,6 +50,18 @@ describe('Sharing integration', () => {
         },
     );
 
+    it('keeps the optional export action absent when its lazy module cannot load', async () => {
+        active.mockReturnValue(true);
+        vi.doMock('./programming-exercise-sharing.service', () => {
+            throw new Error('Chunk unavailable');
+        });
+        try {
+            await expect(firstValueFrom(TestBed.inject(PROGRAMMING_EXERCISE_EXPORT_ACTION))).resolves.toBeUndefined();
+        } finally {
+            vi.doUnmock('./programming-exercise-sharing.service');
+        }
+    });
+
     it('offers the export action only after confirming the configured connection', async () => {
         active.mockReturnValue(true);
         const actions = TestBed.inject(PROGRAMMING_EXERCISE_EXPORT_ACTION);

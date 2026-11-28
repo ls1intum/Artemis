@@ -54,6 +54,9 @@ import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
+import { DeimosBatchTriggerResponse, DeimosService } from 'app/programming/shared/services/deimos.service';
+import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
+import { ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
@@ -305,6 +308,61 @@ describe('ProgrammingExerciseDetailComponent', () => {
         fixture.detectChanges();
 
         expect(fixture.nativeElement.querySelector('[data-testid="exercise-more-actions"]')).toBeNull();
+    });
+
+    it('shows the linked competencies on the imported exercise detail page', () => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.competencyLinks = [
+            { competency: { title: 'Sorting' }, weight: 1 },
+            { competency: { title: 'Searching' }, weight: 1 },
+        ];
+        expect(comp.getExerciseDetailsProblemSection(exercise).details).toContainEqual({
+            title: 'artemisApp.competency.link.title',
+            type: DetailType.Text,
+            data: { text: 'Sorting, Searching' },
+        });
+    });
+
+    it('runs the selected Deimos batch and restores the action after success or failure', () => {
+        const response = new Subject<DeimosBatchTriggerResponse>();
+        const trigger = vi
+            .spyOn(TestBed.inject(DeimosService), 'triggerExerciseBatch')
+            .mockReturnValueOnce(response)
+            .mockReturnValueOnce(throwError(() => new Error('Unavailable')));
+        const success = vi.spyOn(alertService, 'success');
+        const error = vi.spyOn(alertService, 'error');
+        const selection = { from: dayjs('2026-01-01'), to: dayjs('2026-01-07') };
+        comp.programmingExercise.set(new ProgrammingExercise(new Course(), undefined));
+        comp.triggerExerciseDeimosBatch(selection);
+        expect(trigger).not.toHaveBeenCalled();
+
+        comp.programmingExercise.set(mockProgrammingExercise);
+        comp.triggerExerciseDeimosBatch(selection);
+        expect(trigger).toHaveBeenCalledWith(mockProgrammingExercise.id, selection.from, selection.to);
+        expect(comp['deimosSubmitting']()).toBe(true);
+        response.next({ runId: 'batch', status: 'queued' });
+        expect(comp['deimosSubmitting']()).toBe(false);
+        expect(success).toHaveBeenCalledWith('artemisApp.deimos.trigger.success');
+        comp.triggerExerciseDeimosBatch(selection);
+        expect(comp['deimosSubmitting']()).toBe(false);
+        expect(error).toHaveBeenCalledWith('artemisApp.deimos.trigger.error');
+    });
+
+    it('checks the displayed exercise for inconsistencies when an editor opens its details', () => {
+        const check = vi.spyOn(TestBed.inject(ConsistencyCheckService), 'checkConsistencyForProgrammingExercise').mockReturnValue(of([{ type: ErrorType.TEMPLATE_REPO_MISSING }]));
+        const warning = vi.spyOn(alertService, 'warning');
+        comp.programmingExercise.set({ ...mockProgrammingExercise, isAtLeastEditor: false });
+        comp.checkAndAlertInconsistencies();
+        expect(check).not.toHaveBeenCalled();
+
+        const exercise = { ...mockProgrammingExercise, isAtLeastEditor: true };
+        comp.programmingExercise.set(exercise);
+        comp.checkAndAlertInconsistencies();
+        expect(check).toHaveBeenCalledWith(exercise.id);
+        expect(warning).toHaveBeenCalledWith('artemisApp.consistencyCheck.inconsistenciesFoundAlert');
+        comp.checkConsistencies(exercise);
+        expect(comp.consistencyExercises()).toEqual([exercise]);
+        expect(comp.showConsistencyCheck()).toBe(true);
     });
 
     it('downloads the selected exercise and reports a failed download', () => {

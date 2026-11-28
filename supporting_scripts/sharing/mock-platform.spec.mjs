@@ -65,7 +65,7 @@ test('authenticates reinitialization and registers the local callback API', asyn
 test('verifies and saves an Artemis export and rejects invalid archives or other destinations', async (t) => {
     let calls = 0;
     const { request, output } = await platform(t, (url, options) => {
-        assert.equal(url.origin, 'http://localhost:18280');
+        assert.equal(url.href, 'http://localhost:18280/api/programming/sharing/export/example?sec=signature');
         assert.equal(options.redirect, 'error');
         return new Response(calls++ === 0 ? archive : Buffer.from('invalid archive'));
     });
@@ -79,7 +79,7 @@ test('verifies and saves an Artemis export and rejects invalid archives or other
         assert.equal((await request(endpoint + encodeURIComponent(url))).status, 400);
     }
     assert.equal(calls, 0);
-    const result = await request(endpoint + encodeURIComponent(callback));
+    const result = await request(endpoint + encodeURIComponent(callback + '&platformMetadata=extra'));
     assert.equal(result.status, 200);
     const html = await result.text();
     assert.match(html, /JUnit IO Tests/);

@@ -148,6 +148,13 @@ describe('SharingComponent', () => {
         expect(alertService.error).toHaveBeenCalled();
     });
 
+    it('keeps an incomplete basket out of the import editor', () => {
+        vi.spyOn(alertService, 'error');
+        fixture.componentInstance.navigateToImportFromSharing();
+        expect(router.navigate).not.toHaveBeenCalled();
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.sharing.error.missingParameters');
+    });
+
     it('sorts the course table by the column and direction of the clicked header', () => {
         const component = fixture.componentInstance;
         const unsorted: SharingCourse[] = [

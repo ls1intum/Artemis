@@ -4,7 +4,7 @@ import { MODULE_FEATURE_SHARING } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IS_AT_LEAST_EDITOR } from 'app/foundation/constants/authority.constants';
 import { PROGRAMMING_EXERCISE_EXPORT_ACTION } from 'app/programming/api/programming-exercise-extensions';
-import { defer, of, switchMap } from 'rxjs';
+import { catchError, defer, of, switchMap } from 'rxjs';
 
 function sharingEnabled() {
     return inject(ProfileService).isModuleFeatureActive(MODULE_FEATURE_SHARING);
@@ -28,6 +28,9 @@ export const sharingExportProvider: Provider = {
     useFactory: () => {
         if (!sharingEnabled()) return of(undefined);
         const injector = inject(Injector);
-        return defer(() => import('./programming-exercise-sharing.service')).pipe(switchMap((m) => injector.get(m.ProgrammingExerciseSharingService).getExportAction()));
+        return defer(() => import('./programming-exercise-sharing.service')).pipe(
+            switchMap((m) => injector.get(m.ProgrammingExerciseSharingService).getExportAction()),
+            catchError(() => of(undefined)),
+        );
     },
 };
