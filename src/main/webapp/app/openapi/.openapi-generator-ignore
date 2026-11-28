@@ -52,6 +52,7 @@ api/quiz-exercise-resources.ts
 api/calendar-resources.ts
 api/lecture-unit-resources.ts
 api/complaint-resources.ts
+api/competency-resources.ts
 api/quiz-exercise-creation-update-resources.ts
 api/result-resources.ts
 api/rating-resources.ts
@@ -72,6 +73,7 @@ api/quiz-exercise-batch-resources.ts
 api/text-unit-resources.ts
 api/tutorial-group-resources.ts
 api/exercise-unit-resources.ts
+api/prerequisite-resources.ts
 api/admin-ai-worker-resources.ts
 api/bonus-resources.ts
 api/quiz-exercise-retrieval-resources.ts

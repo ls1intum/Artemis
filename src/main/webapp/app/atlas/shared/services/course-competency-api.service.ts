@@ -13,6 +13,7 @@ import {
     CourseCompetencyProgressDTO,
     CourseCompetencyResponseDTO,
     toCompetency,
+    toCompetencyRelationDTO,
     toPrerequisite,
 } from 'app/atlas/shared/dto/course-competency-response.dto';
 
@@ -32,7 +33,7 @@ export class CourseCompetencyApiService extends BaseApiHttpService {
                     ? toPrerequisite(entry.competency)
                     : toCompetency(entry.competency)
                 : undefined,
-            tailRelations: entry.tailRelations,
+            tailRelations: entry.tailRelations?.map(toCompetencyRelationDTO),
         }));
     }
 

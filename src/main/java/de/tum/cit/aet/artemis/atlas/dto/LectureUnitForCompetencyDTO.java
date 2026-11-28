@@ -12,8 +12,8 @@ import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record LectureUnitForCompetencyDTO(Long id, LectureReferenceDTO lecture, String name, @Nullable ZonedDateTime releaseDate, Boolean completed, Boolean visibleToStudents,
-        String type, @Nullable String description, @Nullable String source, @Nullable String content, @Nullable AttachmentForCompetencyDTO attachment,
+public record LectureUnitForCompetencyDTO(Long id, @Nullable LectureReferenceDTO lecture, String name, @Nullable ZonedDateTime releaseDate, Boolean completed,
+        Boolean visibleToStudents, String type, @Nullable String description, @Nullable String source, @Nullable String content, @Nullable AttachmentForCompetencyDTO attachment,
         @Nullable String videoSource) {
 
     /**

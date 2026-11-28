@@ -308,6 +308,11 @@ paths:
       responses:
         '201':
           description: The competency was created.
+          headers:
+            Location:
+              description: URI of the created competency.
+              style: simple
+              schema: {type: string, format: uri-reference}
           content:
             application/json:
               schema: {$ref: '#/components/schemas/CourseCompetencyResponseDTO'}
@@ -571,6 +576,11 @@ paths:
       responses:
         '201':
           description: The competencies were imported.
+          headers:
+            Location:
+              description: URI of the course competencies collection.
+              style: simple
+              schema: {type: string, format: uri-reference}
           content:
             application/json:
               schema:
@@ -608,6 +618,11 @@ paths:
       responses:
         '201':
           description: The competencies were created.
+          headers:
+            Location:
+              description: URI of the course competencies collection.
+              style: simple
+              schema: {type: string, format: uri-reference}
           content:
             application/json:
               schema:
@@ -2152,12 +2167,14 @@ components:
         weight: {type: number, format: double}
         generatedByAi: {type: boolean}
         exercise: {$ref: '#/components/schemas/ExerciseForCompetencyDTO'}
+      required: [generatedByAi, weight]
     CompetencyLectureUnitLinkResponseDTO:
       type: object
       properties:
         weight: {type: number, format: double}
         generatedByAi: {type: boolean}
         lectureUnit: {$ref: '#/components/schemas/LectureUnitForCompetencyDTO'}
+      required: [generatedByAi, weight]
     CompetencyProgressDTO:
       type: object
       properties:
@@ -2181,7 +2198,9 @@ components:
         masteryThreshold: {type: integer, format: int32}
         optional: {type: boolean}
         generatedByAi: {type: boolean}
-        type: {type: string}
+        type:
+          type: string
+          enum: [competency, prerequisite]
         linkedCourseCompetency: {$ref: '#/components/schemas/LinkedCourseCompetencyDTO'}
         linkedStandardizedCompetencyId: {type: integer, format: int64}
         userProgress:
@@ -2197,6 +2216,7 @@ components:
           type: array
           items: {$ref: '#/components/schemas/CompetencyLectureUnitLinkResponseDTO'}
           maxItems: 10000
+      required: [generatedByAi, id, masteryThreshold, optional, type]
     CourseInfoDTO:
       type: object
       properties:
@@ -2557,6 +2577,7 @@ components:
         generatedByAi: {type: boolean}
         courseId: {type: integer, format: int64}
         linkedStandardizedCompetencyId: {type: integer, format: int64}
+      required: [generatedByAi, id, optional]
     ProgrammingExerciseTestCaseDTO:
       type: object
       properties:

@@ -15,7 +15,9 @@ import java.util.Set;
 import java.util.function.Function;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockHttpServletResponse;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
@@ -30,6 +32,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyResponseDTO;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -361,15 +365,24 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     abstract CourseCompetency createCall(long courseId, CourseCompetency competency, HttpStatus expectedStatus) throws Exception;
 
     // Test
-    void shouldCreateValidCompetency(CourseCompetency newCompetency) throws Exception {
-        newCompetency.setTitle("FreshlyCreatedCompetency");
-        newCompetency.setDescription("This is an example of a freshly created competency");
-        newCompetency.setCourse(course);
-        newCompetency.setMasteryThreshold(42);
+    void shouldCreateValidCompetency(String collectionPath, String expectedType) throws Exception {
+        var payload = new CourseCompetencyRequestDTO(null, "FreshlyCreatedCompetency", "This is an example of a freshly created competency", null, 42, null, false);
+        var response = request.postWithoutResponseBody(collectionPath, payload, HttpStatus.CREATED, null);
+        var result = readCreatedCourseCompetency(collectionPath, response);
+        var json = request.getObjectMapper().readTree(response.getContentAsString());
 
-        CourseCompetency result = createCall(course.getId(), newCompetency, HttpStatus.CREATED);
+        assertThat(result.type()).isEqualTo(expectedType);
+        assertThat(json.path("optional").isBoolean()).isTrue();
+        assertThat(json.path("optional").booleanValue()).isFalse();
+        assertThat(json.path("generatedByAi").isBoolean()).isTrue();
+        assertThat(json.path("generatedByAi").booleanValue()).isFalse();
+    }
 
-        assertThat(result.getId()).isNotNull();
+    CourseCompetencyResponseDTO readCreatedCourseCompetency(String collectionPath, MockHttpServletResponse response) throws Exception {
+        var result = request.getObjectMapper().readValue(response.getContentAsString(), CourseCompetencyResponseDTO.class);
+        assertThat(result.id()).isPositive();
+        assertThat(response.getHeader(HttpHeaders.LOCATION)).isEqualTo(collectionPath + "/" + result.id());
+        return result;
     }
 
     // Test

@@ -9,20 +9,33 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+/**
+ * Editable properties of a course competency or prerequisite.
+ *
+ * @param id               the id for an update
+ * @param title            the title
+ * @param description      the optional description
+ * @param softDueDate      the optional target date for reaching mastery
+ * @param masteryThreshold the percentage of progress required for mastery
+ * @param taxonomy         the optional taxonomy level
+ * @param optional         whether the course competency is optional
+ */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseCompetencyRequestDTO(@Schema(description = "The id of the competency. Required to update one, omitted to create one.") Long id,
+public record CourseCompetencyRequestDTO(@Schema(description = "The id of the competency. Required to update one, omitted to create one.") @Nullable Long id,
         @Schema(description = "The title of the competency, at most 255 characters.") @NotBlank @Size(max = 255) String title,
-        @Schema(description = "A description of what the student should be able to do, at most 10000 characters.") @Size(max = 10000) String description,
-        @Schema(description = "A soft due date for reaching the competency. Optional.") ZonedDateTime softDueDate,
+        @Schema(description = "A description of what the student should be able to do, at most 10000 characters.") @Nullable @Size(max = 10000) String description,
+        @Schema(description = "A soft due date for reaching the competency. Optional.") @Nullable ZonedDateTime softDueDate,
         @Schema(description = "The progress, from 1 to 100 percent, at which the competency counts as mastered.") @NotNull @Min(1) @Max(100) Integer masteryThreshold,
-        @Schema(description = "The taxonomy level of the competency. Optional.") CompetencyTaxonomy taxonomy,
-        @Schema(description = "Whether the competency is optional. Defaults to false.") Boolean optional) {
+        @Schema(description = "The taxonomy level of the competency. Optional.") @Nullable CompetencyTaxonomy taxonomy,
+        @Schema(description = "Whether the competency is optional. Defaults to false.") @Nullable Boolean optional) {
 
     /**
      * Maps a request DTO to a course competency entity.
