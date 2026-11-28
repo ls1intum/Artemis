@@ -86,7 +86,8 @@ class HyperionAssessmentCriteriaGenerationServiceTest {
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
         lenient().when(chatModel.getOptions()).thenReturn(ChatOptions.builder().build());
-        service = new HyperionAssessmentCriteriaGenerationService(ChatClient.create(chatModel), new HyperionPromptTemplateService(), llmTokenUsageService, userRepository);
+        service = new HyperionAssessmentCriteriaGenerationService(HyperionTestChatClients.returning(ChatClient.create(chatModel)), new HyperionPromptTemplateService(),
+                llmTokenUsageService, userRepository);
     }
 
     @AfterEach
@@ -245,14 +246,6 @@ class HyperionAssessmentCriteriaGenerationServiceTest {
         mockResponse(VALID_RESPONSE.replace("\"title\": \"Correctness\"", "\"id\": 123, \"title\": \"Correctness\""));
 
         assertThatThrownBy(() -> service.generateAssessmentCriteria(course(1L), textRequest())).isInstanceOf(InternalServerErrorAlertException.class);
-    }
-
-    @Test
-    void generateAssessmentCriteriaRejectsMissingChatClient() {
-        var unconfiguredService = new HyperionAssessmentCriteriaGenerationService(null, new HyperionPromptTemplateService(), llmTokenUsageService, userRepository);
-
-        assertThatThrownBy(() -> unconfiguredService.generateAssessmentCriteria(course(1L), textRequest())).isInstanceOf(InternalServerErrorAlertException.class)
-                .hasMessageContaining("not configured");
     }
 
     private void mockResponse(String json) {

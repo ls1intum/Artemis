@@ -1,4 +1,4 @@
-import { TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
 import { AfterViewChecked, Component, OnDestroy, OnInit, input, output, signal, viewChild } from '@angular/core';
 import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { Exercise, ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -15,7 +15,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-team-config-form-group',
     templateUrl: './team-config-form-group.component.html',
-    styleUrls: ['./team-config-form-group.component.scss'],
+    styleUrls: ['./team-config-form-group.component.css'],
     imports: [TumAetUiInputDirective, TranslateDirective, HelpIconComponent, ModePickerComponent, FormsModule, KeyValuePipe, RemoveKeysPipe],
 })
 export class TeamConfigFormGroupComponent implements AfterViewChecked, OnDestroy, OnInit {

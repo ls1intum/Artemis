@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.exception.BuildOutsideTimeWindowException;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -152,14 +153,13 @@ public class LocalVCPushProcessingService {
      * @param user                the user who pushed the commit, used for logging and access control.
      * @param cachedExercise      the exercise which is potentially already loaded
      * @param cachedParticipation the participation which is potentially already loaded
-     * @param vcsAccessLog        the vcsAccessLog which is potentially already loaded
      * @throws ContinuousIntegrationException if something goes wrong with the CI configuration.
      * @throws VersionControlException        if the commit belongs to the wrong branch (i.e. not the default branch of the participation).
      */
     public void processNewPush(String commitHash, Repository repository, User user, Optional<ProgrammingExercise> cachedExercise,
-            Optional<ProgrammingExerciseParticipation> cachedParticipation, Optional<VcsAccessLog> vcsAccessLog) {
-        // A git push knows the id it pushed, so it is also the commit that triggered this call
-        processNewPush(commitHash, repository, user, cachedExercise, cachedParticipation, vcsAccessLog, commitHash);
+            Optional<ProgrammingExerciseParticipation> cachedParticipation) {
+        // A git push knows the id it pushed, so it is also the commit that triggered this call. Its access log entry is completed by the hook that received the push.
+        processNewPush(commitHash, repository, user, cachedExercise, cachedParticipation, Optional.empty(), commitHash);
     }
 
     /**
@@ -227,9 +227,16 @@ public class LocalVCPushProcessingService {
 
             // Process push to any repository other than the test repository. The repository type is passed on so the build
             // trigger can reuse the hash this push already carries instead of reading it back off the repository.
-            processNewPushToRepository(participation, commit, user, repositoryType);
+            try {
+                processNewPushToRepository(participation, commit, user, repositoryType);
+            }
+            catch (BuildOutsideTimeWindowException e) {
+                // the push is valid and stays in the repository, so it has to remain auditable although no build follows
+                completeAccessLog(vcsAccessLog, commitHash);
+                throw e;
+            }
 
-            completeAccessLog(vcsAccessLog, participation, commitHash);
+            completeAccessLog(vcsAccessLog, commitHash);
         }
         catch (GitAPIException | IOException e) {
             // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.
@@ -273,20 +280,19 @@ public class LocalVCPushProcessingService {
     }
 
     /**
-     * Completes the access log of a push with the hash of the commit, which is only known once the push is processed.
+     * Completes the preliminary access log entry of a commit from the online editor with the hash of the commit, which is only known once the commit is processed.
+     * <p>
+     * A push over git is not handled here. Its entry is written when the git command starts and gets its commit hash from the hook that receives the push, so that it stays
+     * correct however the processing of the push ends.
      *
-     * @param vcsAccessLog  the preliminary entry, if the transport kept one (ssh), otherwise the newest entry of the participation is updated
-     * @param participation the participation that was pushed to
-     * @param commitHash    the hash of the pushed commit
+     * @param vcsAccessLog the preliminary entry the online editor created, empty for a push over git
+     * @param commitHash   the hash of the committed commit
      */
-    private void completeAccessLog(Optional<VcsAccessLog> vcsAccessLog, ProgrammingExerciseParticipation participation, String commitHash) {
-        if (vcsAccessLog.isPresent()) {
-            vcsAccessLog.get().setCommitHash(commitHash);
-            vcsAccessLogService.ifPresent(service -> service.saveVcsAccesslog(vcsAccessLog.get()));
-        }
-        else {
-            vcsAccessLogService.ifPresent(service -> service.updateCommitHash(participation, commitHash));
-        }
+    private void completeAccessLog(Optional<VcsAccessLog> vcsAccessLog, String commitHash) {
+        vcsAccessLog.ifPresent(accessLog -> {
+            accessLog.setCommitHash(commitHash);
+            vcsAccessLogService.ifPresent(service -> service.saveVcsAccesslog(accessLog));
+        });
     }
 
     /**

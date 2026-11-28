@@ -25,7 +25,7 @@ import { Submission, getSubmissionResultByCorrectionRound, getSubmissionResultBy
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { ExampleSubmissionApi } from 'app/openapi/api/example-submission-api';
 import { onError } from 'app/foundation/util/global.utils';
 import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
 import { parseCorrectionRound } from 'app/assessment/shared/util/correction-round.util';
@@ -51,13 +51,14 @@ import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-w
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { FEEDBACK_CREDITS_OUT_OF_BOUNDS, alertUpdateAfterComplaintFailure, isCreditsOutOfBounds } from 'app/assessment/shared/util/feedback-credits-bounds.util';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
     templateUrl: './modeling-assessment-editor.component.html',
-    styleUrls: ['./modeling-assessment-editor.component.scss'],
+    styleUrls: ['./modeling-assessment-editor.component.css'],
     imports: [
         AssessmentLayoutComponent,
         ComplaintsForTutorComponent,
@@ -90,7 +91,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private complaintService = inject(ComplaintService);
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private submissionService = inject(SubmissionService);
-    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private exampleSubmissionApi = inject(ExampleSubmissionApi);
     private athenaService = inject(AthenaService);
 
     readonly totalScore = signal(0);
@@ -374,6 +375,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.result.set(this.result());
             }
             this.handleFeedback(this.result()?.feedbacks);
+            // The submission was validated before the suggestions arrived. Validate again, otherwise the Submit button stays disabled until an assessor edits a feedback.
+            this.validateFeedback();
         } finally {
             if (this.submission() == submissionAtStart) {
                 this.loadingFeedbackSuggestions.set(false);
@@ -704,7 +707,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     useStudentSubmissionAsExampleSubmission(): void {
         if (this.submission() && this.modelingExercise()) {
-            this.exampleSubmissionService.import(this.submission()!.id!, this.modelingExercise()!.id!).subscribe({
+            this.exampleSubmissionApi.importExampleSubmission(this.modelingExercise()!.id!, this.submission()!.id!).subscribe({
                 next: () => this.alertService.success('artemisApp.exampleSubmission.submitSuccessful'),
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });

@@ -1,20 +1,24 @@
-<ng-template #popTitle> <span class="font-weight-bold" jhiTranslate="artemisApp.competency.competencyPopover.connectedCompetencies"></span></ng-template>
-<ng-template #popContent>
-    @if (competencyLinks()?.length) {
-        <div>
-            <small jhiTranslate="artemisApp.competency.competencyPopover.explanation"></small>
-            <ul class="list-group">
-                @for (competencyLink of competencyLinks(); track competencyLink) {
-                    @if (competencyLink.competency?.title) {
-                        <a class="list-group-item" [routerLink]="navigationArray()">{{ competencyLink.competency!.title }}</a>
-                    }
-                }
-            </ul>
-        </div>
-    } @else {
-        <a [routerLink]="navigationArray()" jhiTranslate="artemisApp.competency.competencyPopover.noCompetencies"></a>
-    }
-</ng-template>
-<button type="button" class="btn btn-sm btn-primary competency-button" [ngbPopover]="popContent" [popoverTitle]="popTitle" popoverClass="competency-popover">
+<button tumAetUiButton size="small" type="button" class="w-full" [tumAetUiPopoverTrigger]="competenciesPopover">
     <fa-icon [icon]="faFlag" [fixedWidth]="true" />
 </button>
+<tumaet-ui-popover #competenciesPopover [ariaLabel]="'artemisApp.competency.competencyPopover.connectedCompetencies' | artemisTranslate">
+    <div class="max-w-[min(1000px,90dvw)]">
+        <div class="mb-2 font-bold" jhiTranslate="artemisApp.competency.competencyPopover.connectedCompetencies"></div>
+        @if (competencyLinks()?.length) {
+            <div>
+                <small jhiTranslate="artemisApp.competency.competencyPopover.explanation"></small>
+                <ul class="m-0 mt-2 flex list-none flex-col divide-y divide-solid divide-(--border-color) rounded-md border border-(--border-color) p-0">
+                    @for (competencyLink of competencyLinks(); track competencyLink) {
+                        @if (competencyLink.competency?.title) {
+                            <li>
+                                <a class="block px-4 py-2" [routerLink]="navigationArray()" (click)="competenciesPopover.close()">{{ competencyLink.competency!.title }}</a>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+        } @else {
+            <a [routerLink]="navigationArray()" (click)="competenciesPopover.close()" jhiTranslate="artemisApp.competency.competencyPopover.noCompetencies"></a>
+        }
+    </div>
+</tumaet-ui-popover>

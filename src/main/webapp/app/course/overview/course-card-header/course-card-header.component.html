@@ -1,24 +1,24 @@
 <div
     id="course-{{ courseId() }}-header"
     class="course-card-header text-white"
-    [ngClass]="{ 'rounded-bottom-4': archiveMode(), 'archive-mode-card': archiveMode(), 'dual-zone-card': showArchiveManagementAction() }"
+    [ngClass]="{ 'rounded-b-lg': archiveMode(), 'archive-mode-card': archiveMode(), 'dual-zone-card': showArchiveManagementAction() }"
     [style]="{ '--background-color-for-hover': color(), '--title-color': titleColor() }"
 >
     <ng-template #courseIdentity>
-        <div class="position-relative">
-            <jhi-course-notification-bubble class="card-header-notification-bubble" [totalAmount]="courseNotificationCount()" />
+        <div class="relative">
+            <jhi-course-notification-bubble class="notification-bubble-anchor" [totalAmount]="courseNotificationCount()" />
             @if (courseIcon()) {
-                <div class="col-auto">
+                <div>
                     <jhi-image [src]="courseIcon()" />
                 </div>
             } @else {
-                <div class="course-circle d-flex align-items-center justify-content-center">
-                    <span class="fs-4">{{ courseTitle() | slice: 0 : 1 }}</span>
+                <div class="course-circle">
+                    <span class="course-initial">{{ courseTitle() | slice: 0 : 1 }}</span>
                 </div>
             }
         </div>
         <div class="course-title-container text-center px-2">
-            <h5 class="card-title" [title]="courseTitle()">
+            <h5 class="course-title" [title]="courseTitle()">
                 {{ courseTitle() }}
             </h5>
         </div>
@@ -35,9 +35,9 @@
             </a>
         </div>
     } @else {
-        <div class="flex h-full items-center justify-between gap-1 px-3">
+        <div class="flex h-full items-center justify-between gap-1 px-4">
             <ng-container *ngTemplateOutlet="courseIdentity" />
-            <a class="stretched-link" [routerLink]="['/courses', courseId()]" [title]="courseTitle()"></a>
+            <a class="cover-link" [routerLink]="['/courses', courseId()]" [title]="courseTitle()"></a>
         </div>
     }
 </div>

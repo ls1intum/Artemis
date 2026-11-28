@@ -14,11 +14,13 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.test_repository.StudentScoreTestRepository;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
@@ -46,6 +48,9 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegrationTest {
+
+    @Autowired
+    private StudentScoreTestRepository studentScoreDates;
 
     private static final String TEST_PREFIX = "coursecompetency";
 
@@ -283,6 +288,16 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
+        void shouldRejectCompetencyOfAnotherCourse() throws Exception {
+            var otherCourse = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+            var otherCompetency = competencyUtilService.createCompetency(otherCourse);
+
+            request.get("/api/atlas/courses/" + course.getId() + "/course-competencies/" + otherCompetency.getId() + "/course-progress", HttpStatus.BAD_REQUEST,
+                    CourseCompetencyProgressDTO.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "USER")
         void shouldGetCompetencyCourseProgress() throws Exception {
             User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
             User student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
@@ -360,6 +375,11 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
             studentScoreUtilService.createStudentScore(programmingExercises[1], student1, programming2Result);
             studentScoreUtilService.createStudentScore(programmingExercises[2], student1, programming3Result);
 
+            // This case tests difficulty/quick-solving confidence, not the second in which each score happened to be saved.
+            assertThat(studentScoreDates.setLastModifiedDate(student1.getId(),
+                    List.of(textExercise.getId(), programmingExercises[0].getId(), programmingExercises[1].getId(), programmingExercises[2].getId()),
+                    java.time.Instant.parse("2026-01-01T00:00:00Z"))).isEqualTo(4);
+
             CompetencyProgress studentCompetencyProgress = request.get(
                     "/api/atlas/courses/" + course.getId() + "/course-competencies/" + courseCompetency.getId() + "/student-progress?refresh=true", HttpStatus.OK,
                     CompetencyProgress.class);
@@ -411,6 +431,13 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         void shouldReturnCompetencyTitleWhenCompetencyExists() throws Exception {
             String title = request.get("/api/atlas/course-competencies/" + courseCompetency.getId() + "/title", HttpStatus.OK, String.class);
             assertThat(title).isEqualTo(courseCompetency.getTitle());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "outsider", roles = "USER")
+        void shouldRefuseUserOutsideTheCourse() throws Exception {
+            userUtilService.createAndSaveUser(TEST_PREFIX + "outsider");
+            request.get("/api/atlas/course-competencies/" + courseCompetency.getId() + "/title", HttpStatus.FORBIDDEN, String.class);
         }
 
         @Test

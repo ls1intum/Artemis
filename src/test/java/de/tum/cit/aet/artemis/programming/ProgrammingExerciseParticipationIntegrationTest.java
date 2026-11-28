@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -27,6 +28,7 @@ import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.jspecify.annotations.NonNull;
@@ -48,6 +50,7 @@ import org.springframework.util.MultiValueMap;
 
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -80,14 +83,19 @@ import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestReposito
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.localvc.service.WorkingCopyReplacement;
+import de.tum.cit.aet.artemis.localvc.util.LocalVCTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
+import de.tum.cit.aet.artemis.programming.domain.BuildTimeWindow;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
@@ -232,6 +240,27 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
             var requestedResult = results.iterator().next();
             assertThat(requestedResult.getFeedbacks()).noneMatch(Feedback::isInvisible);
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetParticipationWithLatestResultCarriesOnlyTheBuildTimeWindowForTheEditor() throws Exception {
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+        var window = new BuildTimeWindow(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2));
+        var buildConfig = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        buildConfig.setBuildTimeWindow(window);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
+        var result = addStudentParticipationWithResult(AssessmentType.AUTOMATIC, null);
+        StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
+
+        String body = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK, String.class);
+
+        var exerciseBuildConfig = JsonMapper.builder().build().readTree(body).get("exercise").get("buildConfig");
+        assertThat(exerciseBuildConfig).isNotNull();
+        assertThat(ZonedDateTime.parse(exerciseBuildConfig.get("advancedSettings").get("buildTimeWindow").get("start").asString()).toInstant())
+                .isEqualTo(window.start().toInstant());
+        assertThat(exerciseBuildConfig.propertyNames()).doesNotContain("buildPlanConfiguration", "dockerFlags", "theiaImage");
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -1402,11 +1431,11 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         // The exercises of the group are absent on purpose: the collection is lazy, never fetched here, and it would
         // re-enter the very exercise this group hangs under.
         Map<String, Object> exam = mapOf(exerciseGroup, "exam");
-        assertThat(exam).containsOnlyKeys("id", "title", "testExam", "examWithAttendanceCheck", "visibleDate", "startDate", "endDate", "publishResultsDate",
+        assertThat(exam).containsOnlyKeys("id", "title", "examMode", "examWithAttendanceCheck", "visibleDate", "startDate", "endDate", "publishResultsDate",
                 "examStudentReviewStart", "examStudentReviewEnd", "examSummaryPublicationDate", "exampleSolutionPublicationDate", "gracePeriod", "workingTime", "startText",
                 "endText", "confirmationStartText", "confirmationEndText", "examMaxPoints", "numberOfExercisesInExam", "numberOfCorrectionRoundsInExam", "randomizeExerciseOrder",
                 "examiner", "moduleNumber", "courseName", "examArchivePath", "course");
-        assertThat(exam.get("testExam")).isEqualTo(false);
+        assertThat(exam.get("examMode")).isEqualTo("REAL");
         assertThat(exam.get("examWithAttendanceCheck")).isEqualTo(true);
         assertThat(exam.get("gracePeriod")).isEqualTo(210);
         assertThat(exam.get("workingTime")).isEqualTo(7200);
@@ -1922,6 +1951,19 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
                 null, HttpStatus.BAD_REQUEST, "gradedParticipationMismatch");
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void checkResetRepository_gradedParticipationIsTheParticipationItself_badRequest() throws Exception {
+        startProgrammingExercise();
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        participation.setPracticeMode(true);
+        participationRepository.save(participation);
+
+        request.putAndExpectError(
+                "/api/programming/programming-exercise-participations/" + participation.getId() + "/reset-repository?gradedParticipationId=" + participation.getId(), null,
+                HttpStatus.BAD_REQUEST, "gradedParticipationIsTarget");
+    }
+
     /**
      * The access to the graded participation is validated before its exercise is compared, so the answer for a participation that may not be read is the same for every
      * exercise.
@@ -2002,6 +2044,83 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         request.put("/api/programming/programming-exercise-participations/" + participation.getId() + "/reset-repository", null, HttpStatus.OK);
 
         verify(localCITriggerService).triggerBuild(any(ProgrammingExerciseParticipation.class), eq(true));
+    }
+
+    /**
+     * The server keeps a working copy of every student repository. When the student pushes from their own IDE while that working copy holds an unsaved edit of the same file,
+     * pulling it fails with a checkout conflict and stays failing. Resetting the exercise replaces the whole repository anyway, so it must not depend on that pull.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void checkResetRepository_serverWorkingCopyBehindAndModified_ok() throws Exception {
+        startProgrammingExerciseWithRepositories();
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        LocalVCTestRepository studentRepository = RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
+        participation = studentParticipationRepository.save(participation);
+        LocalVCRepositoryUri participationUri = participation.getVcsRepositoryUri();
+        doNothing().when(localCITriggerService).triggerBuild(any(ProgrammingExerciseParticipation.class), eq(true));
+
+        commitAndPush(studentRepository, "regression.py", "first version");
+        Repository serverWorkingCopy = gitService.getOrCheckoutRepository(participationUri, false, true);
+        commitAndPush(studentRepository, "regression.py", "pushed from the IDE of the student");
+        FileUtils.writeStringToFile(serverWorkingCopy.getLocalPath().resolve("regression.py").toFile(), "unsaved edit of the online editor", StandardCharsets.UTF_8);
+        assertThatThrownBy(() -> gitService.getOrCheckoutRepository(participationUri, true, true)).isInstanceOf(CheckoutConflictException.class);
+
+        request.put("/api/programming/programming-exercise-participations/" + participation.getId() + "/reset-repository", null, HttpStatus.OK);
+
+        assertThat(studentRepository.bareRepositoryCommits().getFirst().getShortMessage()).isEqualTo("Reset Exercise");
+        assertThat(serverWorkingCopy.getLocalPath().resolve("regression.py")).doesNotExist();
+        verify(localCITriggerService).triggerBuild(any(ProgrammingExerciseParticipation.class), eq(true));
+    }
+
+    /**
+     * Two replacements of the same repository must not interleave: the second one waits until the first one has committed.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void replaceWorkingCopyContent_twoReplacementsOfTheSameRepositoryDoNotOverlap() throws Exception {
+        startProgrammingExerciseWithRepositories();
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
+        LocalVCRepositoryUri participationUri = studentParticipationRepository.save(participation).getVcsRepositoryUri();
+        var running = new java.util.concurrent.atomic.AtomicInteger();
+        var maxRunning = new java.util.concurrent.atomic.AtomicInteger();
+        WorkingCopyReplacement replacement = targetRepository -> {
+            maxRunning.accumulateAndGet(running.incrementAndGet(), Math::max);
+            try {
+                Thread.sleep(300);
+            }
+            catch (InterruptedException exception) {
+                Thread.currentThread().interrupt();
+            }
+            running.decrementAndGet();
+        };
+
+        var executor = java.util.concurrent.Executors.newFixedThreadPool(2);
+        try {
+            var first = executor.submit(() -> {
+                gitService.replaceWorkingCopyContent(participationUri, replacement);
+                return null;
+            });
+            var second = executor.submit(() -> {
+                gitService.replaceWorkingCopyContent(participationUri, replacement);
+                return null;
+            });
+            first.get();
+            second.get();
+        }
+        finally {
+            executor.shutdownNow();
+        }
+
+        assertThat(maxRunning.get()).isEqualTo(1);
+    }
+
+    private void commitAndPush(LocalVCTestRepository repository, String fileName, String content) throws Exception {
+        FileUtils.writeStringToFile(repository.workingCopyPath().resolve(fileName).toFile(), content, StandardCharsets.UTF_8);
+        repository.workingCopy().add().addFilepattern(".").call();
+        GitService.commit(repository.workingCopy()).setMessage("Update " + fileName).call();
+        repository.workingCopy().push().call();
     }
 
     @Test

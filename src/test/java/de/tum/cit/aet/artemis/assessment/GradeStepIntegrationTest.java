@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.assessment.dto.GradeStepsDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamMode;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -214,7 +215,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentBatch
     @ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllGradeStepsForExam(boolean testExam) throws Exception {
-        exam.setTestExam(testExam);
+        exam.setExamMode(testExam ? ExamMode.TEST : ExamMode.REAL);
         // Practice results and their theoretical grading key are available without a publication date.
         exam.setPublishResultsDate(testExam ? null : ZonedDateTime.now().minusMinutes(1));
         examRepository.save(exam);
@@ -246,7 +247,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentBatch
     @Test
     @WithMockUser(username = OTHER_PREFIX + "student1", roles = "USER")
     void testGetAllGradeStepsForTestExamStudentNotInCourse() throws Exception {
-        exam.setTestExam(true);
+        exam.setExamMode(ExamMode.TEST);
         examRepository.save(exam);
         gradingScaleRepository.save(examGradingScale);
 
@@ -256,7 +257,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentBatch
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllGradeStepsForTestExamRejectsUnrelatedCourse() throws Exception {
-        exam.setTestExam(true);
+        exam.setExamMode(ExamMode.TEST);
         exam.setCourse(courseUtilService.createCourse());
         examRepository.save(exam);
         gradingScaleRepository.save(examGradingScale);

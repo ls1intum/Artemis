@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exam.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.security.SecureRandom;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,12 +25,14 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.security.RandomUtil;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamConductionCountsDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamStudentDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamSubmissionGateDTO;
@@ -58,7 +59,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             SELECT COUNT(se.id)
             FROM StudentExam se
             WHERE se.exam.course.id IN :courseIds
-                AND se.exam.testExam = FALSE
+                AND se.exam.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND LOWER(se.exam.title) NOT LIKE 'test%'
                 AND LOWER(se.exam.title) NOT LIKE 'mock%'
                 AND se.started = TRUE
@@ -81,6 +82,20 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             WHERE se.id = :studentExamId
             """)
     Optional<StudentExam> findWithExercisesById(@Param("studentExamId") Long studentExamId);
+
+    /**
+     * Finds the id of the exam a student exam belongs to, without loading the student exam or the exam.
+     *
+     * @param studentExamId the id of the student exam
+     * @return the id of the exam, or empty if the student exam does not exist
+     */
+    @Query("""
+            SELECT e.id
+            FROM StudentExam se
+                JOIN se.exam e
+            WHERE se.id = :studentExamId
+            """)
+    Optional<Long> findExamIdById(@Param("studentExamId") Long studentExamId);
 
     // exercises.exerciseGroup and its exam are eager @ManyToOne associations, so without them here Hibernate issues one
     // secondary select per exercise of the student exam
@@ -141,6 +156,16 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     List<StudentExamSubmissionGateDTO> findSubmissionGatesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId, @Param("exerciseId") long exerciseId,
             @Param("isTestRun") boolean isTestRun);
+
+    @Query("""
+            SELECT DISTINCT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises e
+            WHERE se.testRun = :isTestRun
+                AND se.exam.id = :examId
+                AND se.user.id = :userId
+            """)
+    List<StudentExam> findAllWithExercisesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId, @Param("isTestRun") boolean isTestRun);
 
     @Query("""
             SELECT DISTINCT se
@@ -283,6 +308,23 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     long countStudentExamsSubmittedByExamIdIgnoreTestRuns(@Param("examId") long examId);
 
     /**
+     * Counts conduction progress in one database snapshot, treating an unset test-run flag as a regular attempt.
+     *
+     * @param examId the exam whose attempts are counted
+     * @return generated, started and submitted counts, excluding only explicit test runs
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamConductionCountsDTO(
+                COUNT(se),
+                COUNT(CASE WHEN se.started = TRUE THEN 1 ELSE NULL END),
+                COUNT(CASE WHEN se.submitted = TRUE THEN 1 ELSE NULL END))
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
+                AND (se.testRun = FALSE OR se.testRun IS NULL)
+            """)
+    ExamConductionCountsDTO countConductionByExamId(@Param("examId") long examId);
+
+    /**
      * Finds all student exams for a user with basic exercise data.
      * This is a simplified query that only fetches the student exam structure needed for grouping and iteration.
      * It might happen that multiple test exams exist for a combination of userId/examId, that's why we return a set here.
@@ -316,6 +358,8 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             WHERE se.testRun = FALSE
             	AND se.exam.id = :examId
             	AND se.user.id = :userId
+            ORDER BY se.createdDate ASC, se.id ASC
+            LIMIT 1
             """)
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
@@ -494,6 +538,26 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      */
     boolean existsByExam_CourseIdAndExamIdAndUserId(long courseId, long examId, long userId);
 
+    /**
+     * The submitted flags of the attempts of a user at a real exam (no test runs) that contain the given exercise.
+     * An empty result means the exercise is not part of any student exam of the user.
+     *
+     * @param examId     the id of the exam
+     * @param userId     the id of the user
+     * @param exerciseId the id of the exercise
+     * @return the submitted flag of each matching attempt
+     */
+    @Query("""
+            SELECT se.submitted
+            FROM StudentExam se
+                JOIN se.exercises e
+            WHERE (se.testRun IS NULL OR se.testRun = FALSE)
+                AND se.exam.id = :examId
+                AND se.user.id = :userId
+                AND e.id = :exerciseId
+            """)
+    List<Boolean> findSubmittedFlagsOfAttemptsContainingExercise(@Param("examId") long examId, @Param("userId") long userId, @Param("exerciseId") long exerciseId);
+
     @Query("""
             SELECT COUNT(studentExam) > 0
             FROM StudentExam studentExam
@@ -509,6 +573,24 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 AND studentExam.user.login = :login
             """)
     boolean existsByExamIdAndUserLogin(@Param("examId") long examId, @Param("login") String login);
+
+    /**
+     * Checks whether an attempt at the exam was started in the half-open interval {@code [from, to)}. Test runs are ignored.
+     *
+     * @param examId the id of the exam
+     * @param from   the inclusive start of the interval
+     * @param to     the exclusive end of the interval
+     * @return true if at least one attempt was started in the interval
+     */
+    @Query("""
+            SELECT COUNT(studentExam) > 0
+            FROM StudentExam studentExam
+            WHERE studentExam.exam.id = :examId
+                AND studentExam.testRun = FALSE
+                AND studentExam.startedDate >= :from
+                AND studentExam.startedDate < :to
+            """)
+    boolean existsAttemptStartedBetween(@Param("examId") long examId, @Param("from") ZonedDateTime from, @Param("to") ZonedDateTime to);
 
     @Query("""
             SELECT DISTINCT se
@@ -578,7 +660,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.exam.course.id = :courseId
-                AND se.exam.testExam = TRUE
+                AND se.exam.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND se.testRun = FALSE
             """)
     List<StudentExam> findStudentExamsForTestExamsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
@@ -588,7 +670,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.exam.id = :examId
-                AND se.exam.testExam = TRUE
+                AND se.exam.examMode <> de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND se.testRun = FALSE
             """)
     List<StudentExam> findStudentExamsForTestExamsByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
@@ -763,7 +845,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      */
     default List<StudentExam> createRandomStudentExams(Exam exam, Set<Long> userIds) {
         List<StudentExam> studentExams = new ArrayList<>();
-        SecureRandom random = new SecureRandom();
 
         // In case the total number of exercises in the exam is not set by the instructor
         if (exam.getNumberOfExercisesInExam() == null) {
@@ -802,7 +883,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             List<Integer> assembledIndices = assembleIndicesListWithRandomSelection(indicesOfMandatoryExerciseGroups, indicesOfOptionalExerciseGroups, numberOfOptionalExercises);
             for (Integer index : assembledIndices) {
                 // We get one random exercise from all preselected exercise groups
-                studentExam.addExercise(selectRandomExercise(random, exam.getExerciseGroups().get(index)));
+                studentExam.addExercise(selectRandomExercise(exam.getExerciseGroups().get(index)));
             }
 
             // Apply random exercise order
@@ -831,9 +912,9 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
         return indices;
     }
 
-    private Exercise selectRandomExercise(SecureRandom random, ExerciseGroup exerciseGroup) {
+    private Exercise selectRandomExercise(ExerciseGroup exerciseGroup) {
         List<Exercise> exercises = new ArrayList<>(exerciseGroup.getExercises());
-        int randomIndex = random.nextInt(exercises.size());
+        int randomIndex = RandomUtil.nextInt(exercises.size());
         return exercises.get(randomIndex);
     }
 
@@ -851,7 +932,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             FROM StudentExam se
             WHERE se.user.id = :userId
                 AND se.testRun = FALSE
-                AND se.exam.testExam = FALSE
+                AND se.exam.examMode = de.tum.cit.aet.artemis.exam.domain.ExamMode.REAL
                 AND se.exam.course.id IN :courseIds
             """)
     Set<Long> findRegisteredNonTestExamIdsByUserIdAndCourseIds(@Param("userId") long userId, @Param("courseIds") Collection<Long> courseIds);

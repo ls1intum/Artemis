@@ -3,9 +3,11 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/atlas/shared/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { Subscription, merge } from 'rxjs';
-import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular/date-picker';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
 import { DatePickerControlDirective } from 'app/shared-ui/date-picker-control/date-picker-control.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -16,9 +18,7 @@ import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco
 @Component({
     selector: 'jhi-common-course-competency-form',
     templateUrl: './common-course-competency-form.component.html',
-    styleUrls: ['./common-course-competency-form.component.scss'],
     imports: [
-        NgbDropdownModule,
         ReactiveFormsModule,
         TumAetUiDatePickerComponent,
         DatePickerControlDirective,
@@ -27,6 +27,9 @@ import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco
         HelpIconComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
     ],
 })
 export class CommonCourseCompetencyFormComponent {

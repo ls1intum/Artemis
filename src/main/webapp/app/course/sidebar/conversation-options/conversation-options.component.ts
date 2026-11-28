@@ -9,8 +9,9 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService } from 'primeng/dynamicdialog';
+import { TranslateService } from '@ngx-translate/core';
+import { TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
+import { TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective } from '@tumaet/ui-angular/menu';
 
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/communication/course-conversations-components/other/conversation.util';
@@ -28,16 +29,17 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-conversation-options',
     templateUrl: './conversation-options.component.html',
-    styleUrls: ['./conversation-options.component.scss'],
+    styleUrls: ['./conversation-options.component.css'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, RouterLink, NgbDropdownButtonItem, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, RouterLink, ArtemisTranslatePipe],
 })
 export class ConversationOptionsComponent implements OnInit, OnDestroy {
     conversationService = inject(ConversationService);
     private communicationService = inject(CommunicationService);
     private alertService = inject(AlertService);
-    private dialogService = inject(DialogService);
+    private dialogService = inject(TumAetUiDialogService);
+    private translateService = inject(TranslateService);
 
     private ngUnsubscribe = new Subject<void>();
 
@@ -79,8 +81,7 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
         this.channelSubTypeReferenceRouterLink.set(this.communicationService.getLinkForChannelSubType(conversationAsChannel));
     }
 
-    onArchiveClicked(event: MouseEvent) {
-        event.stopPropagation();
+    onArchiveClicked() {
         const conversation = this.conversation();
         if (!this.course.id || !conversation.id) {
             return;
@@ -115,24 +116,24 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
         this.favorite$.next(!conversation.isFavorite);
     }
 
-    onMuteClicked($event: MouseEvent) {
-        $event.stopPropagation();
+    onMuteClicked() {
         this.mute$.next(!this.conversation().isMuted);
     }
 
-    openConversationDetailDialog(event: MouseEvent) {
-        event.stopPropagation();
+    openConversationDetailDialog() {
+        const conversation = this.conversation();
         const ref = this.dialogService.open(
             ConversationDetailDialogComponent,
             cloneWith(defaultFirstLayerDialogOptions, {
+                ariaLabel: this.conversationService.getConversationName(conversation, true) || this.translateService.instant('artemisApp.dialogs.conversationDetail.tabs.settings'),
                 data: {
                     course: this.course,
-                    activeConversation: this.conversation(),
+                    activeConversation: conversation,
                     selectedTab: ConversationDetailTabs.SETTINGS,
                 },
             }),
         );
-        ref?.onClose
+        ref.onClose
             .pipe(
                 filter((result) => !!result),
                 takeUntil(this.ngUnsubscribe),

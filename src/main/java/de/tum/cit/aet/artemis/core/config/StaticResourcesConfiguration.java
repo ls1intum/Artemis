@@ -24,7 +24,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * This includes:
  * <ul>
  * <li>Static resources from /public (both classpath and file system)</li>
- * <li>Uploaded files such as course icons, profile pictures, drag-and-drop images, markdown files, and exam user images</li>
+ * <li>Uploaded files such as course icons, profile pictures, and drag-and-drop images. Markdown files and exam user images are served by the endpoints under /api/core/files</li>
  * </ul>
  * <p>
  * Cache control headers are set to enable browser caching for these resources, improving performance
@@ -72,12 +72,8 @@ public class StaticResourcesConfiguration implements WebMvcConfigurer {
 
         registry.addResourceHandler("/drag-and-drop/**").addResourceLocations("file:" + fileUploadPath + "/images/drag-and-drop/").setCacheControl(defaultCacheControl);
 
-        registry.addResourceHandler("/markdown/**").addResourceLocations("file:" + fileUploadPath + "/markdown/").setCacheControl(defaultCacheControl);
-
-        registry.addResourceHandler("/exam-user/signatures/**").addResourceLocations("file:" + fileUploadPath + "/images/exam-user/signatures/")
-                .setCacheControl(defaultCacheControl);
-
-        registry.addResourceHandler("/exam-user/**").addResourceLocations("file:" + fileUploadPath + "/images/exam-user/").setCacheControl(defaultCacheControl);
+        // Markdown uploads and the images and signatures of exam users are not served from here. They are served by the endpoints under /api/core/files,
+        // which check who may read them.
     }
 
     /**

@@ -1,20 +1,25 @@
-import { NgClass } from '@angular/common';
 import { Component, input } from '@angular/core';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TumAetUiOverlayPlacement } from '@tumaet/ui-angular/overlay';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-feature-overlay',
     template: `
-        <div class="d-inline-block" ngbTooltip="{{ enabled() ? null : ('featureOverview.overlay.title' | artemisTranslate) }}" [placement]="placement()">
-            <div [ngClass]="{ 'pe-none': !enabled(), 'opacity-50': !enabled() }">
-                <ng-content></ng-content>
+        <div
+            class="inline-block"
+            data-testid="feature-overlay-host"
+            [tumAetUiTooltip]="enabled() ? undefined : ('featureOverview.overlay.title' | artemisTranslate)"
+            [tumAetUiTooltipPlacement]="placement()"
+        >
+            <div [class.pointer-events-none]="!enabled()" [class.opacity-50]="!enabled()" data-testid="feature-overlay-content">
+                <ng-content />
             </div>
         </div>
     `,
-    imports: [NgbTooltip, NgClass, ArtemisTranslatePipe],
+    imports: [TumAetUiTooltipDirective, ArtemisTranslatePipe],
 })
 export class FeatureOverlayComponent {
     enabled = input<boolean>(true);
-    placement = input<string>('left');
+    placement = input<TumAetUiOverlayPlacement>('left');
 }

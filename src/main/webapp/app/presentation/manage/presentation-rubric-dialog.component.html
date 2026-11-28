@@ -1,0 +1,18 @@
+@if (form(); as form) {
+    <div class="flex flex-col gap-6">
+        <jhi-presentation-rubric-editor [form]="form" [locked]="locked()" [showErrors]="showErrors()" />
+        <div class="flex justify-end gap-2">
+            <tumaet-ui-button severity="secondary" type="button" data-testid="cancel-rubric-button" (clicked)="cancel()">
+                <span jhiTranslate="entity.action.cancel"></span>
+            </tumaet-ui-button>
+            <tumaet-ui-button type="button" data-testid="save-rubric-button" [disabled]="isSaving()" (clicked)="save()">
+                <span jhiTranslate="entity.action.save"></span>
+            </tumaet-ui-button>
+        </div>
+    </div>
+} @else if (isLoading()) {
+    <div class="flex justify-center p-6">
+        <tumaet-ui-progress-spinner [ariaLabel]="'artemisApp.presentationAssessment.rubric.loading' | artemisTranslate" />
+    </div>
+}
+<tumaet-ui-confirm-dialog />

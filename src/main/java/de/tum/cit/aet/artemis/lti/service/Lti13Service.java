@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.lti.service;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -14,14 +16,12 @@ import java.util.stream.Collectors;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.Authentication;
@@ -31,7 +31,7 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import tools.jackson.core.JacksonException;
@@ -98,6 +98,12 @@ public class Lti13Service {
     /** A carriage return or a line feed, removed so that a logged user name cannot forge a second log line. */
     private static final Pattern LINE_BREAK = Pattern.compile("[\r\n]");
 
+    /**
+     * ISO 8601 with millisecond precision and the offset of the server ("Z" for UTC), the format Joda-Time's DateTime.toString() produced
+     * for the score timestamp of the LTI Assignment and Grade Services.
+     */
+    private static final DateTimeFormatter SCORE_TIMESTAMP_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+
     /** One address: a local part and a domain, separated by exactly one at sign, without whitespace. */
     private static final Pattern USABLE_EMAIL = Pattern.compile("[^@\\s]+@[^@\\s]+");
 
@@ -127,7 +133,7 @@ public class Lti13Service {
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    private final RestTemplate restTemplate;
+    private final RestClient restClient;
 
     private static final Map<String, DeepLinkingType> TARGET_LINK_PATTERNS = Map.of(COMPETENCY_PATH_PATTERN, DeepLinkingType.COMPETENCY, LEARNING_PATH_PATH_PATTERN,
             DeepLinkingType.LEARNING_PATH, IRIS_PATH_PATTERN, DeepLinkingType.IRIS, IRIS_LEGACY_DASHBOARD_PATH_PATTERN, DeepLinkingType.IRIS, LECTURE_PATH_PATTERN,
@@ -135,7 +141,7 @@ public class Lti13Service {
 
     public Lti13Service(UserRepository userRepository, ExerciseRepository exerciseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
             CourseRepository courseRepository, Lti13ResourceLaunchRepository launchRepository, LtiService ltiService, ResultGradeRepository resultGradeRepository,
-            Lti13TokenRetriever tokenRetriever, OnlineCourseConfigurationService onlineCourseConfigurationService, RestTemplate restTemplate,
+            Lti13TokenRetriever tokenRetriever, OnlineCourseConfigurationService onlineCourseConfigurationService, @Qualifier("ltiRestClient") RestClient restClient,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository,
             OnlineCourseConfigurationRepository onlineCourseConfigurationRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.userRepository = userRepository;
@@ -148,7 +154,7 @@ public class Lti13Service {
         this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
         this.tokenRetriever = tokenRetriever;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
-        this.restTemplate = restTemplate;
+        this.restClient = restClient;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.ltiPlatformConfigurationRepository = ltiPlatformConfigurationRepository;
         this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
@@ -350,12 +356,10 @@ public class Lti13Service {
         }
 
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.valueOf("application/vnd.ims.lis.v1.score+json"));
-            headers.setBearerAuth(token);
             String body = getScoreBody(launch.getSub(), comment, score);
-            HttpEntity<String> httpRequest = new HttpEntity<>(body, headers);
-            restTemplate.postForEntity(scoreLineItemUrl, httpRequest, Object.class);
+            // The response body is not needed, and the platform may answer without a content type that could be read as a JSON object.
+            restClient.post().uri(scoreLineItemUrl).contentType(MediaType.valueOf("application/vnd.ims.lis.v1.score+json")).headers(headers -> headers.setBearerAuth(token))
+                    .body(body).retrieve().toBodilessEntity();
             log.info("Submitted score for {} to client {}", launch.getUser().getLogin(), clientRegistration.getClientId());
         }
         catch (HttpClientErrorException | JacksonException e) {
@@ -392,7 +396,7 @@ public class Lti13Service {
     }
 
     private String getScoreBody(String userId, String comment, Double score) {
-        ScorePublishRequest requestBody = new ScorePublishRequest(userId, new DateTime().toString(), "Submitted", "FullyGraded", comment, score, 100D);
+        ScorePublishRequest requestBody = new ScorePublishRequest(userId, SCORE_TIMESTAMP_FORMAT.format(ZonedDateTime.now()), "Submitted", "FullyGraded", comment, score, 100D);
         return JsonObjectMapper.get().writeValueAsString(requestBody);
     }
 

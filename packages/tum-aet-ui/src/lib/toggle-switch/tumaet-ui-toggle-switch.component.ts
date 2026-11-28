@@ -17,7 +17,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 @Component({
     selector: 'tumaet-ui-toggle-switch',
     templateUrl: './tumaet-ui-toggle-switch.component.html',
-    styleUrl: './tumaet-ui-toggle-switch.component.scss',
+    styleUrl: './tumaet-ui-toggle-switch.component.css',
     host: {
         class: 'tumaet-ui-toggle-switch',
         '[class]': 'hostClasses()',

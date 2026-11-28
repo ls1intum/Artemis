@@ -9,7 +9,7 @@ type Day = { date: Dayjs; isSelected: boolean; id: string };
     selector: 'jhi-calendar-mobile-day-presentation',
     imports: [CalendarDayBadgeComponent, CalendarEventsPerDaySectionComponent],
     templateUrl: './calendar-mobile-day-presentation.component.html',
-    styleUrl: './calendar-mobile-day-presentation.component.scss',
+    styleUrl: './calendar-mobile-day-presentation.component.css',
 })
 export class CalendarMobileDayPresentationComponent implements AfterViewInit {
     private static readonly INITIAL_SCROLL_HOURS_AFTER_MIDNIGHT = 7.5;

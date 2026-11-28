@@ -5,7 +5,7 @@ import { combineLatest, finalize } from 'rxjs';
 import { HasAnyAuthorityDirective } from 'app/foundation/auth/has-any-authority.directive';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faChevronDown, faSave } from '@fortawesome/free-solid-svg-icons';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
 import { LOGIN_PATTERN, LTI_USER_PREFIX_MAX_LENGTH } from 'app/foundation/constants/input.constants';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
@@ -14,8 +14,13 @@ import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configu
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiInputDirective } from '@tumaet/ui-angular/input';
+import { TumAetUiMessageComponent } from '@tumaet/ui-angular/message';
+import { TumAetUiPaginatorComponent } from '@tumaet/ui-angular/paginator';
+import { TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular/popover';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -31,12 +36,13 @@ import { AccountService } from 'app/core/auth/account.service';
         FormsModule,
         ReactiveFormsModule,
         TranslateDirective,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
-        NgbDropdownButtonItem,
-        NgbDropdownItem,
-        NgbTooltip,
+        TumAetUiButtonDirective,
+        TumAetUiCheckboxComponent,
+        TumAetUiInputDirective,
+        TumAetUiMessageComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiTooltipDirective,
         TumAetUiPaginatorComponent,
         FaIconComponent,
         KeyValuePipe,
@@ -58,6 +64,7 @@ export class EditCourseLtiConfigurationComponent implements OnInit {
 
     protected readonly faBan = faBan;
     protected readonly faSave = faSave;
+    protected readonly faChevronDown = faChevronDown;
 
     readonly scrollableContent = viewChild.required<ElementRef>('scrollableContent');
 

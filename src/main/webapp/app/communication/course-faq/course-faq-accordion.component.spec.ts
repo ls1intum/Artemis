@@ -24,13 +24,24 @@ describe('CourseFaqAccordionComponent', () => {
     });
 
     afterEach(() => {
-        courseFaqAccordionComponent.ngOnDestroy();
         courseFaqAccordionComponentFixture.destroy();
     });
 
     it('should initialize', () => {
         courseFaqAccordionComponentFixture.detectChanges();
         expect(courseFaqAccordionComponent).not.toBeNull();
-        courseFaqAccordionComponent.ngOnDestroy();
+    });
+
+    it('should show the title and keep the categories to the right of it', () => {
+        courseFaqAccordionComponentFixture.componentRef.setInput('faq', {
+            id: 1,
+            questionTitle: 'Title?',
+            questionAnswer: 'Answer',
+            categories: [{ category: 'a', color: '#ffffff' }],
+        });
+        courseFaqAccordionComponentFixture.detectChanges();
+        const element: HTMLElement = courseFaqAccordionComponentFixture.nativeElement;
+        expect(element.querySelector('h5')?.textContent).toBe('Title?');
+        expect(element.querySelectorAll('jhi-custom-exercise-category-badge')).toHaveLength(1);
     });
 });

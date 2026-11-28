@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
@@ -400,6 +401,9 @@ public class LearningPathResource {
         final var user = userRepository.getUserWithAuthorities();
 
         checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.of(user));
+        if (learningPath.getCompetencies().stream().noneMatch(competency -> competency.getId() == competencyId)) {
+            throw new BadRequestAlertException("The competency is not part of the learning path", "learningPath", "competencyNotInLearningPath");
+        }
 
         List<LearningPathNavigationObjectDTO> learningObjects = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(competencyId, user).stream()
                 .map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, false, learningObjectService.isCompletedByUser(learningObject, user), competencyId))

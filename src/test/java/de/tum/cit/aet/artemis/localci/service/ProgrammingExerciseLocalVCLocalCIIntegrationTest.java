@@ -27,6 +27,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.junit.jupiter.api.AfterEach;
@@ -60,8 +62,10 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.domain.InitialCommitAuthorMode;
 import de.tum.cit.aet.artemis.course.dto.CourseMaterialImportOptionsDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseMaterialImportResultDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -149,6 +153,15 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @Value("${artemis.repo-clone-path}")
     private String repoClonePath;
+
+    @Value("${artemis.git.name}")
+    private String artemisGitName;
+
+    @Value("${artemis.git.email}")
+    private String artemisGitEmail;
+
+    @Autowired
+    private CourseConfigurationRepository courseConfigurationRepository;
 
     @Autowired
     private AsyncDeletionTestUtilService asyncDeletionTestUtilService;
@@ -953,13 +966,101 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     }
 
     /**
-     * The plain import copies an exercise of another course, so it drops the competency links the client posts, the way
-     * it did before the request DTO existed. This pins that asymmetry with the from-file and the sharing import, which
-     * do create the links the author picked.
+     * The import form lets the author pick competencies of the target course. The plain import has to create those links with the exercise, like the from-file and the sharing
+     * import do: the client drops the competencies of the source exercise, so what it posts is the author's selection, and the exercise was imported without it.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
-    void testImportProgrammingExercise_withCompetencyLinks_persistsNoLinks() throws Exception {
+    void testImportProgrammingExercise_withCompetencyLinksOfTheTargetCourse_persistsTheLinks() throws Exception {
+        mockDockerForAnImportThatDoesNotRecreateBuildPlans();
+
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Competency targetCourseCompetency = competencyUtilService.createCompetency(targetCourse);
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("LinkTitle", "linkimport", programmingExercise, targetCourse);
+        exerciseToBeImported.setChannelName("testchannel-pe-linkimport");
+        exerciseToBeImported.setCompetencyLinks(Set.of(new CompetencyExerciseLink(targetCourseCompetency, exerciseToBeImported, 0.5)));
+        exerciseToBeImported.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
+
+        var importedExercise = importWithoutRecreatingBuildPlans(exerciseToBeImported);
+
+        // read the rows back, not the in-memory graph: the links are persisted only after the exercise has an id
+        List<CompetencyExerciseLink> storedLinks = competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importedExercise.id());
+        assertThat(storedLinks).singleElement().satisfies(link -> {
+            assertThat(link.getCompetency().getId()).isEqualTo(targetCourseCompetency.getId());
+            assertThat(link.getWeight()).isEqualTo(0.5);
+            assertThat(link.isGeneratedByAi()).isFalse();
+        });
+    }
+
+    /**
+     * A competency of another course, such as one still carried by a client that did not drop the links of the source exercise, is not linked to the imported exercise. The
+     * import itself goes through.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportProgrammingExercise_withCompetencyLinksOfAnotherCourse_skipsThemAndImports() throws Exception {
+        mockDockerForAnImportThatDoesNotRecreateBuildPlans();
+
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        Competency targetCourseCompetency = competencyUtilService.createCompetency(targetCourse);
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ForeignLinkTitle", "foreignlinkimport", programmingExercise,
+                targetCourse);
+        exerciseToBeImported.setChannelName("testchannel-pe-foreignimport");
+        // `competency` belongs to the course of the source exercise
+        exerciseToBeImported.setCompetencyLinks(
+                Set.of(new CompetencyExerciseLink(competency, exerciseToBeImported, 1), new CompetencyExerciseLink(targetCourseCompetency, exerciseToBeImported, 1)));
+        exerciseToBeImported.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
+
+        var importedExercise = importWithoutRecreatingBuildPlans(exerciseToBeImported);
+
+        assertThat(competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importedExercise.id())).extracting(link -> link.getCompetency().getId())
+                .containsExactly(targetCourseCompetency.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportProgrammingExercise_withoutCompetencyLinks_persistsNoLinks() throws Exception {
+        mockDockerForAnImportThatDoesNotRecreateBuildPlans();
+
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        competencyUtilService.createCompetency(targetCourse);
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("NoLinkTitle", "nolinkimport", programmingExercise,
+                targetCourse);
+        exerciseToBeImported.setChannelName("testchannel-pe-nolinkimport");
+
+        var importedExercise = importWithoutRecreatingBuildPlans(exerciseToBeImported);
+
+        assertThat(competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importedExercise.id())).isEmpty();
+    }
+
+    /**
+     * A competency that was deleted while the import form was open must refuse the import before anything is written. Resolving it after the first save would leave an
+     * exercise without participations, repositories and test cases behind.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportProgrammingExercise_withDeletedCompetency_isRefusedAndWritesNothing() throws Exception {
+        mockDockerForAnImportThatDoesNotRecreateBuildPlans();
+
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        // the id of a competency that exists no more
+        Competency deletedCompetency = new Competency();
+        deletedCompetency.setId(Long.MAX_VALUE);
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("MissingCompetencyTitle", "missingcompetencyimport",
+                programmingExercise, targetCourse);
+        exerciseToBeImported.setChannelName("testchannel-pe-missingcomp");
+        exerciseToBeImported.setCompetencyLinks(Set.of(new CompetencyExerciseLink(deletedCompetency, exerciseToBeImported, 1)));
+        long exercisesBefore = programmingExerciseRepository.count();
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("recreateBuildPlans", "false");
+        request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), exerciseToBeImported,
+                ProgrammingExerciseResponseDTO.class, params, HttpStatus.NOT_FOUND);
+
+        assertThat(programmingExerciseRepository.count()).isEqualTo(exercisesBefore);
+    }
+
+    private void mockDockerForAnImportThatDoesNotRecreateBuildPlans() throws Exception {
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
                 Map.of("assignmentComitHash", DUMMY_COMMIT_HASH), Map.of("assignmentComitHash", DUMMY_COMMIT_HASH));
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
@@ -968,22 +1069,13 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+    }
 
-        // the competency belongs to the target course, so nothing but the deliberate drop can keep it out of the database
-        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
-        Competency targetCourseCompetency = competencyUtilService.createCompetency(targetCourse);
-        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("NoLinkTitle", "nolinkimport", programmingExercise,
-                targetCourse);
-        exerciseToBeImported.setChannelName("testchannel-pe-nolinkimport");
-        exerciseToBeImported.setCompetencyLinks(Set.of(new CompetencyExerciseLink(targetCourseCompetency, exerciseToBeImported, 1)));
-        exerciseToBeImported.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
-
+    private ProgrammingExerciseResponseDTO importWithoutRecreatingBuildPlans(ProgrammingExercise exerciseToBeImported) throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
-        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), exerciseToBeImported,
+        return request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), exerciseToBeImported,
                 ProgrammingExerciseResponseDTO.class, params, HttpStatus.OK);
-
-        assertThat(competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importedExercise.id())).isEmpty();
     }
 
     /**
@@ -1018,6 +1110,84 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         assertThat(importedExercise.exerciseVariantGroup()).isNull();
         assertNotInAnyVariantGroup(importedExercise.id());
         assertVariantGroupMembers(group, programmingExercise.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSetupProgrammingExercise_placeholderAuthorsTheRootCommitOfAllRepositoriesOfACourseExercise() throws Exception {
+        courseConfigurationRepository.updateInitialCommitAuthor(course.getId(), InitialCommitAuthorMode.PLACEHOLDER, null, null);
+        mockDockerForTheBuildsCreatingAnExerciseTriggers();
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        newExercise.setChannelName("pe-placeholder-author");
+
+        var response = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED);
+        ProgrammingExercise created = programmingExerciseRepository.findWithAllParticipationsById(response.id()).orElseThrow();
+        createdExercisesToCleanUp.add(created);
+
+        assertRootCommitsAreAuthoredBy(created, artemisGitName, artemisGitEmail);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSetupProgrammingExercise_placeholderAuthorsTheRootCommitOfAllRepositoriesOfAnExamExercise() throws Exception {
+        courseConfigurationRepository.updateInitialCommitAuthor(course.getId(), InitialCommitAuthorMode.PLACEHOLDER, null, null);
+        mockDockerForTheBuildsCreatingAnExerciseTriggers();
+        var exam = examUtilService.addExamWithExerciseGroup(course, true);
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(exam.getExerciseGroups().getFirst());
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+
+        var response = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED);
+        ProgrammingExercise created = programmingExerciseRepository.findWithAllParticipationsById(response.id()).orElseThrow();
+        createdExercisesToCleanUp.add(created);
+
+        assertRootCommitsAreAuthoredBy(created, artemisGitName, artemisGitEmail);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testSetupProgrammingExercise_withoutAChoiceTheExerciseCreatorAuthorsTheRootCommit() throws Exception {
+        mockDockerForTheBuildsCreatingAnExerciseTriggers();
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        newExercise.setChannelName("pe-creator-author");
+
+        var response = request.postWithResponseBody("/api/programming/programming-exercises/setup",
+                CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()), ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED);
+        ProgrammingExercise created = programmingExerciseRepository.findWithAllParticipationsById(response.id()).orElseThrow();
+        createdExercisesToCleanUp.add(created);
+
+        var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        assertRootCommitsAreAuthoredBy(created, instructor.getName(), instructor.getEmail());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "USER")
+    void testImportProgrammingExerciseFromFile_theCourseSettingAuthorsTheRootCommitOfAllRepositories() throws Exception {
+        courseConfigurationRepository.updateInitialCommitAuthor(course.getId(), InitialCommitAuthorMode.CUSTOM, "Course Team", "team@university.example");
+
+        ImportFileResult importResult = programmingExerciseImportTestService.prepareExerciseImport("test-data/import-from-file/valid-import.zip", course, body -> body);
+        ProgrammingExercise imported = programmingExerciseRepository.findWithAllParticipationsById(importResult.importedExercise().id()).orElseThrow();
+        createdExercisesToCleanUp.add(imported);
+
+        assertRootCommitsAreAuthoredBy(imported, "Course Team", "team@university.example");
+    }
+
+    private void assertRootCommitsAreAuthoredBy(ProgrammingExercise exercise, String name, String email) throws Exception {
+        for (LocalVCRepositoryUri uri : List.of(exercise.getVcsTemplateRepositoryUri(), exercise.getVcsSolutionRepositoryUri(), exercise.getVcsTestRepositoryUri())) {
+            try (Git git = Git.open(uri.getLocalRepositoryPath(localVCBasePath).toFile())) {
+                List<RevCommit> commits = new ArrayList<>();
+                git.log().call().forEach(commits::add);
+                RevCommit root = commits.getLast();
+                assertThat(root.getParentCount()).as("the root commit of %s", uri).isZero();
+                assertThat(root.getAuthorIdent().getName()).as("author of the root commit of %s", uri).isEqualTo(name);
+                assertThat(root.getAuthorIdent().getEmailAddress()).isEqualTo(email);
+                assertThat(root.getCommitterIdent().getName()).isEqualTo(name);
+                assertThat(root.getCommitterIdent().getEmailAddress()).isEqualTo(email);
+            }
+        }
     }
 
     @Test
@@ -1183,8 +1353,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // Create the exercise and verify status code 201. The query cap guards against the response mapping pulling
         // additional sub-graphs into the creation flow. An SCA-enabled exercise also inserts its default
         // category entities (Python has 60); auxiliary repositories add one insert each. These caps cover
-        // PostgreSQL (73/133 statements) and MySQL (74/134 statements).
-        int queryLimit = (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled()) ? 134 : 74) + newExercise.getAuxiliaryRepositories().size();
+        // PostgreSQL (74/134 statements) and MySQL (75/135 statements). Each includes one SELECT that reads the setting of the course for the author of the first commit
+        // (CourseConfigurationRepository, during the setup of the repositories), which raised the caps by one.
+        int queryLimit = (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled()) ? 135 : 75) + newExercise.getAuxiliaryRepositories().size();
         var response = assertThatDb(() -> request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, buildConfig),
                 ProgrammingExerciseResponseDTO.class, params, HttpStatus.CREATED)).hasBeenCalledAtMostTimes(queryLimit);
         assertCreationResponseReadContract(response, newExercise);
@@ -1218,7 +1389,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     /**
      * Pins the traced client read contract of the creation response: the redirect and the access-rights computation
-     * need the id and the nested course with its group names, the AI generation path routes into the template editor
+     * need the id and the nested course, the AI generation path routes into the template editor
      * via {@code templateParticipation.id}, and the constant discriminator drives the client-side type switches.
      *
      * @param response          the body of {@code POST programming-exercises/setup}

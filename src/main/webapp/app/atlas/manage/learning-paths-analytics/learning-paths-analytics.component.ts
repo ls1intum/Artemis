@@ -5,15 +5,17 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';
 import { onError } from 'app/foundation/util/global.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { CommonModule } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiRadioButtonComponent } from '@tumaet/ui-angular/radio-button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-learning-paths-analytics',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [CompetencyGraphComponent, TranslateDirective, CommonModule, ArtemisTranslatePipe],
+    imports: [CompetencyGraphComponent, TranslateDirective, NgTemplateOutlet, FormsModule, ArtemisTranslatePipe, TumAetUiProgressSpinnerComponent, TumAetUiRadioButtonComponent],
     templateUrl: './learning-paths-analytics.component.html',
-    styleUrl: './learning-paths-analytics.component.scss',
 })
 export class LearningPathsAnalyticsComponent {
     private readonly learningPathApiService = inject(LearningPathApiService);

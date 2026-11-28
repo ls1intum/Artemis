@@ -3,8 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { TumAetUiDialogRef, TumAetUiDialogService } from '@tumaet/ui-angular/dialog';
 import { Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
@@ -21,7 +20,6 @@ import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conv
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import { By } from '@angular/platform-browser';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
@@ -66,7 +64,6 @@ examples.forEach((activeConversation) => {
             TestBed.configureTestingModule({
                 imports: [
                     ConversationMemberRowComponent,
-                    NgbTooltipModule,
                     FaIconComponent,
                     MockPipe(ArtemisTranslatePipe),
                     MockComponent(ProfilePictureComponent),
@@ -74,7 +71,7 @@ examples.forEach((activeConversation) => {
                 ],
                 providers: [
                     MockProvider(AccountService),
-                    MockProvider(DialogService),
+                    MockProvider(TumAetUiDialogService),
                     MockProvider(TranslateService),
                     MockProvider(ChannelService),
                     MockProvider(GroupChatService),
@@ -192,8 +189,18 @@ examples.forEach((activeConversation) => {
             }
         });
 
+        /** The actions of a member are entries of a menu that only exists in the document while it is open. */
+        function menuEntry(selector: string): HTMLElement | null {
+            const trigger = fixture.nativeElement.querySelector('[data-testid="member-actions-button"]') as HTMLElement | null;
+            if (trigger && !document.querySelector('[role="menu"]')) {
+                trigger.click();
+                fixture.detectChanges();
+            }
+            return document.querySelector(selector);
+        }
+
         function checkGrantModeratorButton(shouldExist: boolean) {
-            const grantModeratorRoleButton = fixture.debugElement.query(By.css('.grant-moderator'));
+            const grantModeratorRoleButton = menuEntry('.grant-moderator');
             if (shouldExist) {
                 expect(grantModeratorRoleButton).toBeTruthy();
             } else {
@@ -202,7 +209,7 @@ examples.forEach((activeConversation) => {
         }
 
         function checkRevokeModeratorButton(shouldExist: boolean) {
-            const revokeModeratorRoleButton = fixture.debugElement.query(By.css('.revoke-moderator'));
+            const revokeModeratorRoleButton = menuEntry('.revoke-moderator');
             if (shouldExist) {
                 expect(revokeModeratorRoleButton).toBeTruthy();
             } else {
@@ -211,13 +218,31 @@ examples.forEach((activeConversation) => {
         }
 
         function checkRemoveMemberButton(shouldExist: boolean) {
-            const removeMemberButton = fixture.debugElement.query(By.css('.remove-member'));
+            const removeMemberButton = menuEntry('.remove-member');
             if (shouldExist) {
                 expect(removeMemberButton).toBeTruthy();
             } else {
                 expect(removeMemberButton).toBeFalsy();
             }
         }
+
+        it('should open the confirmation dialog when the remove entry of the actions menu is chosen', async () => {
+            fixture.detectChanges();
+            await fixture.whenStable();
+            vi.advanceTimersByTime(0);
+            fixture.changeDetectorRef.detectChanges();
+            if ((isChannelDTO(activeConversation) || isGroupChatDTO(activeConversation)) && component.canBeRemovedFromConversation()) {
+                const dialogService = TestBed.inject(TumAetUiDialogService);
+                const openDialogSpy = vi
+                    .spyOn(dialogService, 'open')
+                    .mockReturnValue({ onClose: new Subject<boolean>().asObservable(), close: vi.fn() } as unknown as TumAetUiDialogRef);
+
+                menuEntry('.remove-member')!.click();
+
+                expect(openDialogSpy).toHaveBeenCalledOnce();
+                expect(openDialogSpy).toHaveBeenCalledWith(GenericConfirmationDialogComponent, expect.objectContaining({ showHeader: false, autoFocus: 'first-tabbable' }));
+            }
+        });
 
         it('should open the grant channel moderator role dialog', async () => {
             fixture.detectChanges();
@@ -351,23 +376,25 @@ examples.forEach((activeConversation) => {
             expect(component.userTooltip()).toBe(expectedTooltip);
         });
 
-        function genericConfirmationDialogTest(method: (event: MouseEvent) => void) {
-            const dialogService = TestBed.inject(DialogService);
+        function genericConfirmationDialogTest(method: () => void) {
+            const dialogService = TestBed.inject(TumAetUiDialogService);
             const mockOnClose = new Subject<any>();
             const mockDialogRef = {
                 onClose: mockOnClose.asObservable(),
                 close: vi.fn(),
             };
-            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef as unknown as DynamicDialogRef);
+            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef as unknown as TumAetUiDialogRef);
 
-            const fakeClickEvent = new MouseEvent('click');
-            method(fakeClickEvent);
+            method();
             mockOnClose.next(true);
             mockOnClose.complete();
             vi.advanceTimersByTime(0);
 
             expect(openDialogSpy).toHaveBeenCalledOnce();
-            expect(openDialogSpy).toHaveBeenCalledWith(GenericConfirmationDialogComponent, expect.anything());
+            expect(openDialogSpy).toHaveBeenCalledWith(
+                GenericConfirmationDialogComponent,
+                expect.objectContaining({ showHeader: false, ariaLabel: expect.any(String), autoFocus: 'first-tabbable' }),
+            );
         }
     });
 });

@@ -8,8 +8,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
-import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 
@@ -20,10 +20,10 @@ class AthenaConnectorTest {
     @ParameterizedTest
     @EnumSource(value = HttpStatus.class, names = { "UNPROCESSABLE_CONTENT", "INTERNAL_SERVER_ERROR" })
     void wrapsHttpErrorsAsNetworkingExceptions(HttpStatus status) {
-        var restTemplate = new RestTemplate();
-        var server = MockRestServiceServer.createServer(restTemplate);
+        var builder = RestClient.builder();
+        var server = MockRestServiceServer.bindTo(builder).build();
         server.expect(requestTo(ATHENA_URL)).andRespond(withStatus(status));
-        var connector = new AthenaConnector<String, String>(restTemplate, String.class);
+        var connector = new AthenaConnector<String, String>(builder.build(), String.class);
 
         assertThatExceptionOfType(NetworkingException.class).isThrownBy(() -> connector.invokeWithRetry(ATHENA_URL, "{}", 0))
                 .withRootCauseInstanceOf(RestClientResponseException.class);

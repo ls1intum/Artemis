@@ -13,7 +13,7 @@ import java.util.Optional;
 public enum AgentScope {
 
     COURSES_READ("courses:read"), COMPETENCIES_READ("competencies:read"), COMPETENCIES_WRITE("competencies:write"), ANNOUNCEMENTS_POST("announcements:post"),
-    EXERCISES_DRAFT("exercises:draft"), PROGRAMMING_DRAFT("programming:draft"), LECTURES_WRITE("lectures:write");
+    EXERCISES_DRAFT("exercises:draft"), PROGRAMMING_DRAFT("programming:draft"), PROGRAMMING_REPOSITORIES("programming:repositories"), LECTURES_WRITE("lectures:write");
 
     private final String value;
 

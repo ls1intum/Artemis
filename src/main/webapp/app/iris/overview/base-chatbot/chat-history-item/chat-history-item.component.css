@@ -1,0 +1,33 @@
+.chat-history-item {
+    border-radius: 6px;
+}
+
+.chat-history-item:hover,
+.chat-history-item:focus-within {
+    background-color: var(--iris-accent-background);
+}
+
+.chat-history-item--selected {
+    background-color: var(--iris-tertiary-background);
+}
+
+.chat-history-item__menu-trigger {
+    opacity: 0;
+}
+
+/* The menu opens in an overlay outside the row, so keep its trigger visible while it is open. */
+.chat-history-item__menu-trigger[aria-expanded='true'] {
+    opacity: 1;
+}
+
+.chat-history-item:hover .chat-history-item__menu-trigger,
+.chat-history-item:focus-within .chat-history-item__menu-trigger,
+.chat-history-item--selected .chat-history-item__menu-trigger {
+    opacity: 1;
+}
+
+@media (hover: none) {
+    .chat-history-item__menu-trigger {
+        opacity: 1;
+    }
+}

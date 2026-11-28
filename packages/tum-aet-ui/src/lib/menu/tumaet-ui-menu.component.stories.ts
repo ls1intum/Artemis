@@ -3,13 +3,20 @@ import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { TumAetUiButtonDirective } from '../button/tumaet-ui-button.directive';
 import { TumAetUiMenuComponent } from './tumaet-ui-menu.component';
+import { TumAetUiMenuGroupComponent } from './tumaet-ui-menu-group.component';
 import { TumAetUiMenuItemDirective } from './tumaet-ui-menu-item.directive';
+import { TumAetUiMenuSeparatorComponent } from './tumaet-ui-menu-separator.component';
 import { TumAetUiMenuTriggerDirective } from './tumaet-ui-menu-trigger.directive';
 
 const meta = {
     title: 'Navigation/Menu',
     component: TumAetUiMenuComponent,
-    decorators: [moduleMetadata({ imports: [TumAetUiButtonDirective, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective] })],
+    subcomponents: { TumAetUiMenuGroupComponent, TumAetUiMenuSeparatorComponent },
+    decorators: [
+        moduleMetadata({
+            imports: [TumAetUiButtonDirective, TumAetUiMenuGroupComponent, TumAetUiMenuItemDirective, TumAetUiMenuSeparatorComponent, TumAetUiMenuTriggerDirective],
+        }),
+    ],
     render: () => ({
         template: `
             <button tumAetUiButton [tumAetUiMenuTrigger]="actions">Course actions</button>
@@ -40,6 +47,40 @@ export const Opened: Story = {
         const menu = within(document.body).getByRole('menu');
         await expect(menu).toBeInTheDocument();
         await expect(within(menu).getByRole('menuitem', { name: 'Add students' })).toHaveFocus();
+    },
+};
+
+/**
+ * Separators divide a longer menu and a group puts related entries under a visible label. Neither is an entry: the arrow
+ * keys move from "Settings" straight to "English".
+ */
+export const SeparatorsAndGroup: Story = {
+    render: () => ({
+        template: `
+            <button tumAetUiButton [tumAetUiMenuTrigger]="account">Account</button>
+            <ng-template #account>
+                <tumaet-ui-menu>
+                    <button tumAetUiMenuItem>Settings</button>
+                    <tumaet-ui-menu-separator />
+                    <tumaet-ui-menu-group label="Language">
+                        <button tumAetUiMenuItem>English</button>
+                        <button tumAetUiMenuItem>Deutsch</button>
+                    </tumaet-ui-menu-group>
+                    <tumaet-ui-menu-separator />
+                    <button tumAetUiMenuItem>Sign out</button>
+                </tumaet-ui-menu>
+            </ng-template>
+        `,
+    }),
+    play: async ({ canvasElement }) => {
+        await userEvent.click(within(canvasElement).getByRole('button', { name: 'Account' }));
+
+        const menu = within(document.body).getByRole('menu');
+        await expect(within(menu).getAllByRole('separator')).toHaveLength(2);
+        const group = within(menu).getByRole('group', { name: 'Language' });
+        await waitFor(() => expect(within(menu).getByRole('menuitem', { name: 'Settings' })).toHaveFocus());
+        await userEvent.keyboard('{ArrowDown}');
+        await expect(within(group).getByRole('menuitem', { name: 'English' })).toHaveFocus();
     },
 };
 

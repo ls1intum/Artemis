@@ -114,7 +114,7 @@ public class ExamRegistrationService {
      * In case the user cannot be found, it additionally searches the connected LDAP in case it is configured.
      * <p>
      * Users who hold a staff role (instructor, editor, tutor, or admin) in the course are rejected and reported back
-     * in {@link ExamRegistrationResultDTO#rejectedStaffUsers()}. Such users are NOT added to the course student group,
+     * in {@link ExamRegistrationResultDTO#rejectedStaffUsers()}. Such users do NOT get the student role in the course,
      * so a failed registration leaves no side effect on the user's course membership.
      *
      * @param courseId     the id of the course
@@ -126,7 +126,7 @@ public class ExamRegistrationService {
         var course = courseRepository.findByIdElseThrow(courseId);
         var exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
 
-        if (exam.isTestExam()) {
+        if (exam.isTestOrPractice(ZonedDateTime.now())) {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
@@ -269,7 +269,7 @@ public class ExamRegistrationService {
     public void checkRegistrationOrRegisterStudentToTestExam(Course course, long examId, User currentUser) {
         Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
-        if (!exam.isTestExam()) {
+        if (exam.getExamMode().isReal()) {
             throw new BadRequestAlertException("Self-Registration is only allowed for test exams", "ExamRegistrationService", "SelfRegistrationOnlyForRealExams");
         }
 
@@ -308,9 +308,10 @@ public class ExamRegistrationService {
 
         examUserService.deleteAvailableExamUserImages(registeredExamUser);
 
-        // The student exam might already be generated, then we need to delete it
-        Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), exam.getId(), IS_TEST_RUN);
-        optionalStudentExam.ifPresent(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
+        // The student exam(s) might already be generated, then we need to delete them.
+        // In practice exams with a supervised session, a student can have multiple attempts, so we must handle a list.
+        List<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByUserIdAndExamId(student.getId(), exam.getId(), IS_TEST_RUN);
+        studentExams.forEach(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
         studentExamService.invalidateExerciseStartStatus(exam.getId());
 
         User currentUser = userRepository.getUserWithAuthorities();

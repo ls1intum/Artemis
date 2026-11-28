@@ -1,13 +1,10 @@
 import { Component, DestroyRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import {
-    TumAetUiButtonDirective,
-    TumAetUiCheckboxComponent,
-    TumAetUiDialogConfig,
-    TumAetUiDialogRef,
-    TumAetUiProgressSpinnerComponent,
-    TumAetUiTableDirective,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular/button';
+import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular/checkbox';
+import { TumAetUiDialogConfig, TumAetUiDialogRef } from '@tumaet/ui-angular/dialog';
+import { TumAetUiProgressSpinnerComponent } from '@tumaet/ui-angular/progress-spinner';
+import { TumAetUiTableDirective } from '@tumaet/ui-angular/table-directive';
 import { mapValues } from 'lodash-es';
 import {
     ActionType,
@@ -35,7 +32,7 @@ let nextSummaryId = 0;
 @Component({
     selector: 'jhi-delete-dialog',
     templateUrl: './delete-dialog.component.html',
-    styleUrls: ['./delete-dialog.component.scss'],
+    styleUrls: ['./delete-dialog.component.css'],
     imports: [
         FormsModule,
         TranslateDirective,
@@ -75,6 +72,8 @@ export class DeleteDialogComponent implements OnInit {
     entitySummary = signal<EntitySummary | undefined>({});
     categorizedEntitySummary = signal<EntitySummaryCategory[] | undefined>(undefined);
     isLoadingSummary = signal(false);
+    // The summary lists two items per row (label and value each), but a table in which no category has a second item per row only needs one pair of columns
+    readonly summaryColumnCount = computed(() => (this.categorizedEntitySummary()?.some((category) => this.getItemPairs(category.items).some((pair) => pair.length > 1)) ? 4 : 2));
     // warn when the summary lists a lot of data, so nobody deletes an entity with much student work by accident
     readonly hasLargeCount = computed(() => hasLargeSummaryCount(this.categorizedEntitySummary()));
 

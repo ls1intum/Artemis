@@ -4,6 +4,7 @@ import java.io.StringWriter;
 
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.core.JsonParser;
+import tools.jackson.core.ObjectWriteContext;
 import tools.jackson.databind.DeserializationContext;
 import tools.jackson.databind.ValueDeserializer;
 
@@ -18,7 +19,7 @@ public class RawJsonStringDeserializer extends ValueDeserializer<String> {
     @Override
     public String deserialize(JsonParser parser, DeserializationContext context) {
         StringWriter writer = new StringWriter();
-        try (JsonGenerator generator = context.tokenStreamFactory().createGenerator(writer)) {
+        try (JsonGenerator generator = context.tokenStreamFactory().createGenerator(ObjectWriteContext.empty(), writer)) {
             generator.copyCurrentStructure(parser);
         }
         return writer.toString();

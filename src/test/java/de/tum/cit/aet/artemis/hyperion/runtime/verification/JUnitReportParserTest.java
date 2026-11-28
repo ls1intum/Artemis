@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.runtime.verification;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,6 +16,25 @@ class JUnitReportParserTest {
     private final List<TestCaseResult> failedTests = new ArrayList<>();
 
     private final List<TestCaseResult> successfulTests = new ArrayList<>();
+
+    @Test
+    void keepsFeedbackLimitsIndependentBetweenParserInstances() throws IOException {
+        String report = "<testsuite><testcase name=\"fails\"><failure message=\"long message\"/></testcase></testsuite>";
+        var shortParser = new JUnitReportParser(3);
+        var emptyParser = new JUnitReportParser(0);
+
+        shortParser.processTestResultFile(report, failedTests, successfulTests);
+        emptyParser.processTestResultFile(report, failedTests, successfulTests);
+        shortParser.processTestResultFile(report, failedTests, successfulTests);
+
+        assertThat(failedTests).map(TestCaseResult::testMessages).containsExactly(List.of("lon"), List.of(""), List.of("lon"));
+        assertThat(successfulTests).isEmpty();
+    }
+
+    @Test
+    void rejectsNegativeFeedbackLimits() {
+        assertThatThrownBy(() -> new JUnitReportParser(-1)).isInstanceOf(IllegalArgumentException.class).hasMessage("Feedback length must not be negative");
+    }
 
     @Test
     void testParseResultXmlInnerText() throws IOException {

@@ -13,7 +13,7 @@ import { ImportFlowStep, TutorialRegistrationsImportModalComponent } from './tut
 import { LoadingIndicatorOverlayComponent } from 'app/shared-ui/loading-indicator-overlay/loading-indicator-overlay.component';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { LoadingIndicatorOverlayStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/loading-indicator-overlay-stub.component';
-import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular/dialog';
 import { DialogStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/dialog-stub.component';
 import { TutorialRegistrationsImportModalTableStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/tutorial-registrations-import-modal-table-stub.component';
 import { TutorialRegistrationsImportModalTableRow } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal-table/tutorial-registrations-import-modal-table.component';
