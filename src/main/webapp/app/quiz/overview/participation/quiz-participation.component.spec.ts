@@ -226,6 +226,42 @@ describe('QuizParticipationComponent - live mode', () => {
         else expect(alerts).not.toHaveBeenCalled();
     });
 
+    it.each([false, true])('keeps the latest drag-and-drop edit while its previous save is pending (final submit=%s)', (submit) => {
+        fixture.detectChanges();
+        component.remainingTimeSeconds.set(10);
+        const mapping = new DragAndDropMapping({ id: 11, invalid: false }, { id: 12, invalid: false });
+        const saveUrl = '/api/quiz/exercises/1/submissions/live?submit=false';
+        component.onDragAndDropMappingsChange(1, [mapping]);
+        const first = httpMock.expectOne(saveUrl);
+        expect(first.request.body.submittedAnswers).toContainEqual({
+            type: 'drag-and-drop',
+            quizQuestion: { id: 1 },
+            mappings: [{ dragItem: { id: 11 }, dropLocation: { id: 12 } }],
+        });
+
+        component.onDragAndDropMappingsChange(1, []);
+        component.triggerSave();
+        httpMock.expectNone(saveUrl);
+        expect(component.unsavedChanges()).toBe(true);
+        if (submit) {
+            component.submitExercise();
+        } else {
+            first.flush({ id: 7, submissionDate: now.toISOString() });
+        }
+
+        const latest = httpMock.expectOne('/api/quiz/exercises/1/submissions/live?submit=' + submit);
+        expect(latest.request.body.submittedAnswers).toContainEqual({ type: 'drag-and-drop', quizQuestion: { id: 1 }, mappings: [] });
+        expect(component.unsavedChanges()).toBe(true);
+        latest.flush({ id: 7, submitted: submit, submittedAnswers: [], submissionDate: now.toISOString() });
+        if (submit) {
+            // The server rejects an autosave arriving after the final submit.
+            const alerts = vi.spyOn(TestBed.inject(AlertService), 'addAlert');
+            first.flush({}, { status: 400, statusText: 'Already submitted' });
+            expect(alerts).not.toHaveBeenCalled();
+        }
+        expect(component.unsavedChanges()).toBe(false);
+    });
+
     it('submits live answers and emits the confirmed submission once', () => {
         fixture.detectChanges();
         component.remainingTimeSeconds.set(10);

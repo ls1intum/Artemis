@@ -36,6 +36,7 @@ import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { getIsMobileSignal, onError } from 'app/foundation/util/global.utils';
@@ -128,7 +129,8 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     runningTimeouts = new Array<ReturnType<typeof setTimeout>>(); // handles returned by setTimeout(), cleared via clearTimeout()
 
     readonly isSubmitting = signal(false);
-    // isSaving = false;
+    private savingSubmission?: QuizSubmission;
+    private answerRevision = 0;
     readonly lastSavedTimeText = signal('');
     readonly justSaved = signal(false);
     readonly waitingForQuizStart = signal(false);
@@ -154,7 +156,6 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
     readonly dragAndDropMappings = this.answerSelection.dragAndDropMappings;
     readonly shortAnswerSubmittedTexts = this.answerSelection.shortAnswerSubmittedTexts;
     readonly onSelectedAnswerOptionsChange = this.answerSelection.onSelectedAnswerOptionsChange;
-    readonly onDragAndDropMappingsChange = this.answerSelection.onDragAndDropMappingsChange;
     readonly onShortAnswerSubmittedTextsChange = this.answerSelection.onShortAnswerSubmittedTextsChange;
 
     readonly result = signal<Result>(undefined!);
@@ -857,7 +858,16 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
      * Callback method to be triggered when the user changes any of the answers in the quiz (in sub components based on the question type)
      */
     onSelectionChanged() {
+        this.answerRevision++;
         this.unsavedChanges.set(true);
+    }
+
+    onDragAndDropMappingsChange(questionId: number, mappings: DragAndDropMapping[]): void {
+        this.answerSelection.onDragAndDropMappingsChange(questionId, mappings);
+        this.onSelectionChanged();
+        if (this.mode() === 'live') {
+            this.triggerSave();
+        }
     }
 
     // Bound once and handed to the question components by reference. `onSelectionChanged.bind(this)` in the template
@@ -869,20 +879,46 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
         if (resetAutoSaveTimer) {
             this.autoSaveTimer = 0;
         }
-        if (this.unsavedChanges() && !this.isSubmitting()) {
-            this.applySelection();
-            this.submission().submissionDate = this.serverDateService.now();
-            this.quizSubmissionApi
-                .saveOrSubmitForLiveMode(this.quizId, toQuizSubmissionFromLiveClient(this.submission()), false)
-                .pipe(take(1))
-                .subscribe({
-                    next: () => {
-                        this.unsavedChanges.set(false);
-                        this.updateSubmissionTime();
-                    },
-                    error: (error: HttpErrorResponse) => this.onSaveError(error.message),
-                });
+        const submission = this.submission();
+        if (!this.unsavedChanges() || this.isSubmitting() || submission.submitted || this.savingSubmission === submission) {
+            return;
         }
+
+        this.applySelection();
+        const revision = this.answerRevision;
+        this.savingSubmission = submission;
+        this.quizSubmissionApi
+            .saveOrSubmitForLiveMode(this.quizId, toQuizSubmissionFromLiveClient(submission), false)
+            .pipe(take(1))
+            .subscribe({
+                next: (saved) => {
+                    if (!this.finishLiveSave(submission)) {
+                        return;
+                    }
+                    submission.submissionDate = saved.submissionDate ? dayjs(saved.submissionDate) : this.serverDateService.now();
+                    this.updateSubmissionTime();
+                    if (this.answerRevision === revision) {
+                        this.unsavedChanges.set(false);
+                    } else {
+                        // Send the latest answers after the older write finishes, even if the end-of-quiz timer has already stopped.
+                        this.triggerSave();
+                    }
+                },
+                error: (error: HttpErrorResponse) => {
+                    if (this.finishLiveSave(submission)) {
+                        this.onSaveError(error.message);
+                    }
+                },
+            });
+    }
+
+    /** An autosave response can update the UI only while the same attempt is still being edited. */
+    private finishLiveSave(submission: QuizSubmission): boolean {
+        if (this.savingSubmission !== submission) {
+            return false;
+        }
+        this.savingSubmission = undefined;
+        return this.submission() === submission && !this.isSubmitting();
     }
 
     /**
@@ -989,7 +1025,7 @@ export class QuizParticipationComponent extends QuizParticipationBase implements
                     }
                     break;
                 case 'live':
-                    // copy submission and send it through websocket with 'submitted = true'
+                    // The server locks the submission and rejects any autosave that arrives after this final submission.
                     const quizSubmission = new QuizSubmission();
                     quizSubmission.submittedAnswers = this.submission().submittedAnswers;
                     this.quizSubmissionApi.saveOrSubmitForLiveMode(this.quizId, toQuizSubmissionFromLiveClient(quizSubmission), true).subscribe({
