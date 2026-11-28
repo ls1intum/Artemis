@@ -11,8 +11,6 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 
 import { faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 
-import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-
 import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular/tooltip';
@@ -51,7 +49,6 @@ export class ExerciseDetailsStudentActionsComponent extends StudentExerciseActio
 
     protected readonly ExerciseType = ExerciseType;
     protected readonly InitializationState = InitializationState;
-    protected readonly AssessmentType = AssessmentType;
 
     readonly equalColumns = input(true);
     readonly smallColumns = input(false);

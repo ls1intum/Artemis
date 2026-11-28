@@ -413,7 +413,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             WHERE e.id = :exerciseId
                 AND p.student.id = :studentId
                 AND r.score IS NOT NULL
-                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
+                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR (r.successful = TRUE AND TYPE(e) <> ProgrammingExercise))
                 AND r.completionDate IS NOT NULL
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
@@ -428,7 +428,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             WHERE e.id = :exerciseId
                 AND p.team.id = :teamId
                 AND r.score IS NOT NULL
-                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
+                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR (r.successful = TRUE AND TYPE(e) <> ProgrammingExercise))
                 AND r.completionDate IS NOT NULL
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
@@ -443,7 +443,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             WHERE e.id = :exerciseId
                 AND p.student.id = :studentId
                 AND r.score IS NOT NULL
-                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
+                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR (r.successful = TRUE AND TYPE(e) <> ProgrammingExercise))
                 AND r.completionDate IS NOT NULL
                 AND r.rated = TRUE
             ORDER BY p.id DESC, s.id DESC, r.id DESC
@@ -459,7 +459,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             WHERE e.id = :exerciseId
                 AND p.team.id = :teamId
                 AND r.score IS NOT NULL
-                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR r.successful = TRUE)
+                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA OR (r.successful = TRUE AND TYPE(e) <> ProgrammingExercise))
                 AND r.completionDate IS NOT NULL
                 AND r.rated = TRUE
             ORDER BY p.id DESC, s.id DESC, r.id DESC

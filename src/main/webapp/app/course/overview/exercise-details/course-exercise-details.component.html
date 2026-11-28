@@ -24,6 +24,7 @@
             (newParticipation)="onNewParticipation($event)"
             (toggleSidebar)="toggleSidebar()"
             (showsPillsChange)="titleBarShowsPills.set($event)"
+            [(displayedResult)]="displayedHistoryResult"
         />
 
         <jhi-programming-exercise-build-window-notice [exercise]="exercise" [participation]="activeParticipation()" [practiceMode]="participationMode() === 'practice'" />
@@ -46,6 +47,7 @@
             [athenaEnabled]="athenaEnabled"
             [quizLiveStatus]="participationMode() === 'graded' ? liveQuizStatus() : undefined"
             [titleBarShowsPills]="titleBarShowsPills()"
+            [(displayedResult)]="displayedHistoryResult"
             [collapseSidePanels]="focusMode() ?? false"
             (quizSubmitted)="onQuizSubmitted($event)"
             (liveQuizStatusChange)="onLiveQuizStatusChange($event)"
