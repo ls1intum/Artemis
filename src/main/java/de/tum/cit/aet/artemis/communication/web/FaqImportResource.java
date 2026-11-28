@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,6 +36,10 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.FaqSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /** REST endpoints for finding and copying individual FAQs into a course. */
 @Profile(PROFILE_CORE)
@@ -80,8 +85,9 @@ public class FaqImportResource {
      */
     @GetMapping("courses/{courseId}/faqs/for-import")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<FaqImportSearchResultDTO> searchForImport(@PathVariable long courseId, @RequestParam(defaultValue = "") @Size(max = 200) String searchTerm,
-            @RequestParam(defaultValue = "0") @Min(0) int page) {
+    public ResponseEntity<FaqImportSearchResultDTO> searchForImport(@PathVariable long courseId,
+            @Parameter(description = "Literal, case-insensitive substring of the question, answer or source course title; an empty term matches every visible FAQ") @RequestParam(defaultValue = "") @Size(max = 200) String searchTerm,
+            @Parameter(description = "Zero-based page of ten results, ordered by question and ID") @RequestParam(defaultValue = "0") @Min(0) int page) {
         return ResponseEntity.ok(faqImportService.searchForImport(courseId, searchTerm, page, userRepository.getUserWithAuthorities()));
     }
 
@@ -92,6 +98,7 @@ public class FaqImportResource {
      * @param options  the selected source IDs
      * @return the created copies; source FAQs are unchanged
      */
+    @ApiResponse(responseCode = "201", description = "The created FAQ copies", headers = @Header(name = HttpHeaders.LOCATION, description = "The path of the target course's FAQ list, /api/communication/courses/{courseId}/faqs", schema = @Schema(type = "string")))
     @PostMapping("courses/{courseId}/faqs/import")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<List<FaqDTO>> importSelected(@PathVariable long courseId, @Valid @RequestBody ImportFaqsDTO options) {

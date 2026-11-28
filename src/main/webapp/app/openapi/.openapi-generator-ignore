@@ -43,6 +43,7 @@ api/quiz-training-resources.ts
 api/lecture-transcription-resources.ts
 api/example-submission-resources.ts
 api/hyperion-code-generation-resources.ts
+api/faq-resources.ts
 api/quiz-participation-resources.ts
 api/hyperion-assessment-criteria-generation-resources.ts
 api/athena-resources.ts
@@ -67,6 +68,7 @@ api/hyperion-problem-statement-resources.ts
 api/long-feedback-text-resources.ts
 api/admin-hyperion-generation-resources.ts
 api/online-unit-resources.ts
+api/faq-import-resources.ts
 api/quiz-assessment-resources.ts
 api/quiz-exercise-batch-resources.ts
 api/text-unit-resources.ts

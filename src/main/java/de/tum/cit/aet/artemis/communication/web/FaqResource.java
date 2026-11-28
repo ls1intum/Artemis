@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,6 +50,10 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.FaqSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 /**
  * REST controller for managing Faqs.
@@ -63,6 +68,18 @@ public class FaqResource {
     private static final Logger log = LoggerFactory.getLogger(FaqResource.class);
 
     private static final String ENTITY_NAME = "faq";
+
+    /**
+     * Spring Security sets {@code X-Frame-Options: DENY} on every response (see {@code SecurityConfiguration}). Declaring this existing header makes the generated
+     * client return the full {@code HttpResponse} that the FAQ client service exposes to its callers.
+     */
+    private static final String FRAME_OPTIONS_HEADER = "X-Frame-Options";
+
+    private static final String FRAME_OPTIONS_DESCRIPTION = "Always DENY, set by the security configuration for every response";
+
+    private static final String STATE_DESCRIPTION = "Only ACCEPTED is available to this audience; any other state is rejected with 403, regardless of the caller's course role";
+
+    private static final String MANAGEMENT_STATE_DESCRIPTION = "Optional state filter; all states are returned when omitted";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -95,9 +112,10 @@ public class FaqResource {
      *         if the faq has already an ID or if the faq course id does not match with the path variable
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
+    @ApiResponse(responseCode = "201", description = "The created FAQ", headers = @Header(name = HttpHeaders.LOCATION, description = "The path of the created FAQ, /api/communication/courses/{courseId}/faqs/{faqId}", schema = @Schema(type = "string")))
     @PostMapping("courses/{courseId}/faqs")
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<FaqDTO> createFaq(@Valid @RequestBody CreateFaqDTO createFaqDTO, @PathVariable Long courseId) throws URISyntaxException {
+    public ResponseEntity<FaqDTO> createFaq(@PathVariable Long courseId, @Valid @RequestBody CreateFaqDTO createFaqDTO) throws URISyntaxException {
         log.debug("REST request to save Faq : {}", createFaqDTO);
 
         checkIsInstructorForAcceptedFaq(createFaqDTO.faqState(), courseId);
@@ -124,9 +142,10 @@ public class FaqResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated faq, or with status 400 (Bad Request)
      *         if the faq is not valid or if the faq course id does not match with the path variable
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @PutMapping("courses/{courseId}/faqs/{faqId}")
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<FaqDTO> updateFaq(@Valid @RequestBody UpdateFaqDTO updateFaqDTO, @PathVariable Long faqId, @PathVariable Long courseId) {
+    public ResponseEntity<FaqDTO> updateFaq(@PathVariable Long courseId, @PathVariable Long faqId, @Valid @RequestBody UpdateFaqDTO updateFaqDTO) {
         log.debug("REST request to update Faq : {}", updateFaqDTO);
         if (faqId == null || !faqId.equals(updateFaqDTO.id())) {
             throw new BadRequestAlertException("Id of FAQ and path must match", ENTITY_NAME, "idNull");
@@ -155,9 +174,10 @@ public class FaqResource {
      * @param courseId the id of the course the faq belongs to
      * @return the ResponseEntity with status 200 (OK) and with body the faq, or with status 404 (Not Found)
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @GetMapping("courses/{courseId}/faqs/{faqId}")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<FaqDTO> getFaq(@PathVariable Long faqId, @PathVariable Long courseId) {
+    public ResponseEntity<FaqDTO> getFaq(@PathVariable Long courseId, @PathVariable Long faqId) {
         Faq faq = loadFaqInCourse(faqId, courseId);
         checkAcceptedFaq(faq.getFaqState());
         return ResponseEntity.ok(new FaqDTO(faq));
@@ -170,9 +190,10 @@ public class FaqResource {
      * @param courseId the course owning the FAQ
      * @return the FAQ, or 404 if it does not exist
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @GetMapping("courses/{courseId}/faqs/{faqId}/for-management")
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<FaqDTO> getFaqForManagement(@PathVariable Long faqId, @PathVariable Long courseId) {
+    public ResponseEntity<FaqDTO> getFaqForManagement(@PathVariable Long courseId, @PathVariable Long faqId) {
         return ResponseEntity.ok(new FaqDTO(loadFaqInCourse(faqId, courseId)));
     }
 
@@ -191,9 +212,12 @@ public class FaqResource {
      * @param courseId the id of the course the faq belongs to
      * @return the ResponseEntity with status 200 (OK)
      */
+    @ApiResponse(responseCode = "200", description = "The FAQ was deleted; the response has no body", headers = {
+            @Header(name = "X-artemisApp-alert", description = "The translation key of the deletion alert, artemisApp.faq.deleted; the prefix is the configured jhipster.clientApp.name", schema = @Schema(type = "string")),
+            @Header(name = "X-artemisApp-params", description = "The URL-encoded ID of the deleted FAQ", schema = @Schema(type = "string")) })
     @DeleteMapping("courses/{courseId}/faqs/{faqId}")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> deleteFaq(@PathVariable Long faqId, @PathVariable Long courseId) {
+    public ResponseEntity<Void> deleteFaq(@PathVariable Long courseId, @PathVariable Long faqId) {
 
         log.debug("REST request to delete faq {}", faqId);
         Faq existingFaq = faqRepository.findByIdElseThrow(faqId);
@@ -213,6 +237,7 @@ public class FaqResource {
      * @param courseId the courseId of the course for which all faqs should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of faqs in body
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @GetMapping("courses/{courseId}/faqs")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<FaqDTO>> getFaqsForCourse(@PathVariable Long courseId) {
@@ -226,9 +251,11 @@ public class FaqResource {
      * @param faqState optional data filter
      * @return the FAQs ordered by creation date, newest first
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @GetMapping("courses/{courseId}/faqs/for-management")
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<List<FaqDTO>> getFaqsForManagement(@PathVariable Long courseId, @RequestParam(required = false) FaqState faqState) {
+    public ResponseEntity<List<FaqDTO>> getFaqsForManagement(@PathVariable Long courseId,
+            @Parameter(description = MANAGEMENT_STATE_DESCRIPTION) @RequestParam(required = false) FaqState faqState) {
         return ResponseEntity.ok(loadFaqs(courseId, faqState));
     }
 
@@ -245,9 +272,10 @@ public class FaqResource {
      * @param faqState the state of all returned FAQs
      * @return the ResponseEntity with status 200 (OK) and the list of faqs in body
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @GetMapping("courses/{courseId}/faq-state/{faqState}")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<FaqDTO>> getAllFaqsForCourseByStatus(@PathVariable Long courseId, @PathVariable FaqState faqState) {
+    public ResponseEntity<List<FaqDTO>> getAllFaqsForCourseByStatus(@PathVariable Long courseId, @Parameter(description = STATE_DESCRIPTION) @PathVariable FaqState faqState) {
         log.debug("REST request to get all Faqs for the course with id {} and status {}", courseId, faqState);
         checkAcceptedFaq(faqState);
         return ResponseEntity.ok(loadFaqs(courseId, faqState));
@@ -260,6 +288,7 @@ public class FaqResource {
      * @param courseId the courseId of the course for which the faq categories should be returned
      * @return the ResponseEntity with status 200 (OK) and the categories of the accepted faqs in body
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @GetMapping("courses/{courseId}/faq-categories")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<Set<String>> getFaqCategoriesForCourse(@PathVariable Long courseId) {
@@ -268,9 +297,17 @@ public class FaqResource {
         return ResponseEntity.ok().body(faqs);
     }
 
+    /**
+     * GET /courses/:courseId/faq-categories/:faqState : get the categories of the FAQs of a course in the given state, which must be accepted for this audience.
+     *
+     * @param courseId the course whose FAQ categories are requested
+     * @param faqState the state of the FAQs; any state other than accepted is forbidden
+     * @return the ResponseEntity with status 200 (OK) and the categories, each a JSON string
+     */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @GetMapping("courses/{courseId}/faq-categories/{faqState}")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Set<String>> getFaqCategoriesForCourseByState(@PathVariable Long courseId, @PathVariable FaqState faqState) {
+    public ResponseEntity<Set<String>> getFaqCategoriesForCourseByState(@PathVariable Long courseId, @Parameter(description = STATE_DESCRIPTION) @PathVariable FaqState faqState) {
         log.debug("REST request to get all Faq Categories for the course with id : {} and the state {}", courseId, faqState);
         checkAcceptedFaq(faqState);
         Set<String> faqs = faqRepository.findAllCategoriesByCourseIdAndState(courseId, faqState);
@@ -284,9 +321,11 @@ public class FaqResource {
      * @param faqState optional data filter
      * @return the matching category names
      */
+    @ApiResponse(responseCode = "200", headers = @Header(name = FRAME_OPTIONS_HEADER, description = FRAME_OPTIONS_DESCRIPTION, schema = @Schema(type = "string")))
     @GetMapping("courses/{courseId}/faq-categories/for-management")
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<Set<String>> getFaqCategoriesForManagement(@PathVariable Long courseId, @RequestParam(required = false) FaqState faqState) {
+    public ResponseEntity<Set<String>> getFaqCategoriesForManagement(@PathVariable Long courseId,
+            @Parameter(description = MANAGEMENT_STATE_DESCRIPTION) @RequestParam(required = false) FaqState faqState) {
         return ResponseEntity.ok(faqState == null ? faqRepository.findAllCategoriesByCourseId(courseId) : faqRepository.findAllCategoriesByCourseIdAndState(courseId, faqState));
     }
 

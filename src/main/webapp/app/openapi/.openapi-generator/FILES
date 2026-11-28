@@ -11,6 +11,8 @@ api/complaint-api.ts
 api/complaint-response-api.ts
 api/example-submission-api.ts
 api/exercise-unit-api.ts
+api/faq-api.ts
+api/faq-import-api.ts
 api/global-search-api.ts
 api/grade-step-api.ts
 api/grading-scale-api.ts
@@ -109,6 +111,7 @@ model/course-grade-score.ts
 model/course-with-id.ts
 model/course.ts
 model/create-exercise-variant-group.ts
+model/create-faq.ts
 model/create-or-update-tutorial-group-request.ts
 model/create-or-update-tutorial-group-session-request.ts
 model/difficulty-assessment.ts
@@ -173,6 +176,9 @@ model/exercise-variant-group-reference.ts
 model/exercise.ts
 model/external-submission-candidate.ts
 model/external-submission-result.ts
+model/faq-import-candidate.ts
+model/faq-import-search-result.ts
+model/faq.ts
 model/feedback-affected-student.ts
 model/feedback-analysis-response.ts
 model/feedback-detail.ts
@@ -196,6 +202,7 @@ model/grading-scale-update.ts
 model/grading-scale.ts
 model/hidden-page-info.ts
 model/hyperion-course-settings.ts
+model/import-faqs.ts
 model/indexed-content-object.ts
 model/indexed-content-presence.ts
 model/indexed-entity-record.ts
@@ -425,6 +432,7 @@ model/tutorial-group-student.ts
 model/tutorial-group-summary-schedule.ts
 model/tutorial-group-summary-session.ts
 model/tutorial-group-summary.ts
+model/update-faq.ts
 model/update-quiz-exercise.ts
 model/user-name.ts
 model/user-public-info.ts
