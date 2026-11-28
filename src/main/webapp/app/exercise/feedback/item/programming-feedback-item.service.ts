@@ -41,14 +41,14 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      * @param showTestDetails
      */
     private createFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
-        if (Feedback.isSubmissionPolicyFeedback(feedback)) {
+        if (Feedback.isTestCaseFeedback(feedback)) {
+            return this.createAutomaticFeedbackItem(feedback, showTestDetails);
+        } else if (Feedback.isSubmissionPolicyFeedback(feedback)) {
             return this.createSubmissionPolicyFeedbackItem(feedback);
         } else if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
             return this.createScaFeedbackItem(feedback, showTestDetails);
         } else if (Feedback.isFeedbackSuggestion(feedback)) {
             return this.createFeedbackSuggestionItem(feedback, showTestDetails);
-        } else if (feedback.type === FeedbackType.AUTOMATIC && !Feedback.isNonGradedFeedbackSuggestion(feedback)) {
-            return this.createAutomaticFeedbackItem(feedback, showTestDetails);
         } else if (feedback.type === FeedbackType.AUTOMATIC && Feedback.isNonGradedFeedbackSuggestion(feedback)) {
             return this.createNonGradedFeedbackItem(feedback);
         } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {

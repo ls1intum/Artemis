@@ -672,7 +672,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             { type: FeedbackType.AUTOMATIC, testCase: { visibility: Visibility.AfterDueDate }, positive: true, credits: 1 },
             { type: FeedbackType.AUTOMATIC, testCase: { testName: 'zero-point pass' }, positive: true, credits: 0 },
             { type: FeedbackType.AUTOMATIC, testCase: { testName: 'partial credit' }, positive: false, credits: 0.5 },
+            { type: FeedbackType.AUTOMATIC, text: 'legacyTest', positive: true, credits: 0 },
             { type: FeedbackType.AUTOMATIC, text: 'SubPolFeedbackIdentifier:No penalty', credits: 0 },
+            { type: FeedbackType.AUTOMATIC, text: 'SCAFeedbackIdentifier:Style', detailText: '{"rule":"Indentation","message":"Check indentation"}', credits: 0 },
+            { type: FeedbackType.AUTOMATIC, text: 'FeedbackSuggestion:Reviewer note', credits: 0 },
+            { type: FeedbackType.AUTOMATIC, text: 'NonGradedFeedbackSuggestion:File detail', credits: 0 },
         ];
         exercise.type = ExerciseType.PROGRAMMING;
         fixture.detectChanges();
@@ -680,14 +684,14 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         fixture.detectChanges();
 
         const badge: ResultComponent = debugElement.query(By.directive(ResultComponent)).componentInstance;
-        expect(badge.result()).toMatchObject({ score: 1.5, testCaseCount: 4, passedTestCaseCount: 2 });
+        expect(badge.result()).toMatchObject({ score: 1.5, testCaseCount: 5, passedTestCaseCount: 3 });
 
         const firstPreview = badge.result();
         const instruction = { id: 1, credits: 2, gradingScale: 'Good', instructionDescription: 'Clear structure', feedback: 'Well structured' };
         comp.validateUpdatedFeedback([{ type: FeedbackType.MANUAL_UNREFERENCED, gradingInstruction: instruction, credits: 2 }]);
         fixture.detectChanges();
         expect(badge.result()).not.toBe(firstPreview);
-        expect(badge.result()).toMatchObject({ score: expect.closeTo(3.5), testCaseCount: 4, passedTestCaseCount: 2 });
+        expect(badge.result()).toMatchObject({ score: expect.closeTo(3.5), testCaseCount: 5, passedTestCaseCount: 3 });
         expect(result.testCaseCount).toBe(1);
     });
 
